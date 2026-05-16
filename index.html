@@ -151,11 +151,12 @@
       .mobile-cart-summ > div:active { transform: scale(0.98); }
 
       /* ========================================= */
-      /* GRID POS SYSTEM (LUXURY 3 COLUMNS)        */
+      /* GRID POS SYSTEM (LUXURY COLUMNS)          */
       /* ========================================= */
       .pos-grid-container {
         display: grid;
-        grid-template-columns: repeat(3, 1fr); 
+        /* Variabel ini yang akan dikendalikan oleh Kasir/Admin melalui JS */
+        grid-template-columns: repeat(var(--pos-grid-cols, 3), 1fr); 
         gap: 20px; 
         padding-bottom: calc(var(--bottom-nav-height) + 80px);
         width: 100%;
@@ -215,8 +216,12 @@
       }
       .pos-price { font-size: clamp(0.8rem, 1vw, 0.95rem); color: var(--primary-gold); font-weight: 800; }
 
-      @media (max-width: 992px) { .pos-grid-container { grid-template-columns: repeat(2, 1fr) !important; } }
-      @media (max-width: 500px) { .pos-grid-container { grid-template-columns: 1fr !important; } }
+      @media (max-width: 992px) { 
+        .pos-grid-container { grid-template-columns: repeat(var(--pos-grid-cols, 2), 1fr); } 
+      }
+      @media (max-width: 500px) { 
+        .pos-grid-container { grid-template-columns: repeat(var(--pos-grid-cols, 1), 1fr); } 
+      }
 
       /* ========================================= */
       /* EFEK PRODUK & TOMBOL                      */
@@ -519,10 +524,8 @@
 
     <div id="main-container" class="d-none">
       
-      <!-- HEADER ATAS (BARU: Pengganti Sidebar) -->
       <div class="app-top-header shadow-sm">
         <div class="d-flex align-items-center gap-2">
-          <!-- Logo Toko & Identitas -->
           <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center overflow-hidden" style="width: 35px; height: 35px;">
              <img id="uiLogo" src="" style="width: 20px; height: 20px; object-fit: contain; display:none;">
           </div>
@@ -532,13 +535,19 @@
           </div>
         </div>
         
+        <div id="topSearchBarContainer" class="d-flex flex-grow-1 mx-3" style="max-width: 400px; display: none;">
+          <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white" style="border: 1px solid #eee; height: 38px;">
+            <span class="input-group-text bg-transparent border-0"><i class="fas fa-search text-muted"></i></span>
+            <input type="text" id="searchPOS" class="form-control border-0 shadow-none bg-transparent fw-bold" placeholder="Cari menu POS..." oninput="filterPOS()">
+          </div>
+        </div>
+
         <div class="d-flex align-items-center gap-2">
-          
-          <div class="input-group shadow-sm me-2" style="width: auto; height: 38px;">
-            <span class="input-group-text bg-white border-end-0 rounded-start-pill"><i class="fas fa-user-circle text-muted"></i></span>
-            <select id="topCashierSelect" class="form-select border-start-0 rounded-end-pill fw-bold text-dark" style="cursor:pointer; font-size: 0.85rem;" onchange="handleTopCashierChange(this.value)">
+          <div class="input-group shadow-sm me-2 rounded-pill overflow-hidden bg-white" style="width: auto; height: 38px; border: 1px solid #eee;">
+            <span class="input-group-text bg-transparent border-0"><i class="fas fa-user-circle text-muted"></i></span>
+            <select id="topCashierSelect" class="form-select border-0 shadow-none bg-transparent fw-bold text-dark px-2" style="cursor:pointer; font-size: 0.85rem;" onchange="handleTopCashierChange(this.value)">
               <option value="" disabled selected>Pilih Kasir...</option>
-              </select>
+            </select>
           </div>
 
           <button id="btnRefresh" onclick="refreshAllData()" class="btn btn-light btn-sm rounded-circle shadow-sm border" style="width: 38px; height: 38px;" title="Refresh Data">
@@ -560,34 +569,31 @@
               
               <div class="d-flex gap-2 align-items-center flex-wrap">
                 
-                <div class="input-group shadow-sm" style="width: auto;">
-                  <span class="input-group-text bg-white border-end-0 rounded-start-pill"><i class="fas fa-layer-group text-muted"></i></span>
-                  <select id="categoryFilterPOS" class="form-select border-start-0 rounded-end-pill fw-bold" style="cursor:pointer;" onchange="filterPOS()">
+                <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white" style="width: auto; border: 1px solid #eee; height: 38px;">
+                  <span class="input-group-text bg-transparent border-0"><i class="fas fa-layer-group text-muted"></i></span>
+                  <select id="categoryFilterPOS" class="form-select border-0 shadow-none bg-transparent fw-bold px-2" style="cursor:pointer;" onchange="filterPOS()">
                     <option value="ALL">Semua Kategori</option>
-                    </select>
+                  </select>
                 </div>
                 
                 <div class="vr mx-2 d-none d-md-block"></div> 
 
                 <div class="d-flex gap-2 align-items-center">
-                  <!-- TOMBOL BARU: Toggle Mode Edit Urutan -->
-                  <button id="btnReorderToggle" class="btn btn-white shadow-sm rounded-3 border-0" onclick="toggleReorderMode()" title="Atur Urutan Menu">
-                    <i class="fas fa-sort text-muted"></i>
+                  <button class="btn btn-white shadow-sm rounded-pill border px-3 fw-bold text-dark d-flex align-items-center" onclick="showGridConfigModal()" title="Atur Grid">
+                    <i class="fas fa-border-all text-primary me-2"></i>Atur Grid
                   </button>
 
-                  <button class="btn btn-white shadow-sm rounded-3 border-0" onclick="resetGridOrder()" title="Reset Urutan Menu">
-                    <i class="fas fa-th-large text-warning"></i>
+                  <button id="btnReorderToggle" class="btn btn-white shadow-sm rounded-pill border px-3 fw-bold text-dark d-flex align-items-center" onclick="toggleReorderMode()" title="Atur Urutan Menu">
+                    <i class="fas fa-sort text-muted me-2"></i>Atur Urutan
                   </button>
-                  
-                  <div class="input-group shadow-sm" style="max-width: 220px;">
-                    <span class="input-group-text bg-white border-0"><i class="fas fa-search text-muted"></i></span>
-                    <input type="text" id="searchPOS" class="form-control border-0" placeholder="Cari menu..." oninput="filterPOS()">
-                  </div>
+
+                  <button class="btn btn-white shadow-sm rounded-pill border px-3 fw-bold text-dark d-flex align-items-center" onclick="resetGridOrder()" title="Reset Urutan Menu">
+                    <i class="fas fa-sync-alt text-warning me-2"></i>Reset
+                  </button>
                 </div>
               </div>
             </div>
             
-            <!-- Grid Produk (Class Baru) -->
             <div class="pos-grid-container" id="productGrid"></div>
           </div>
           
@@ -1171,6 +1177,59 @@
       let MATERIALS_DATA = []; // Global storage untuk data stok
       let POS_SORTABLE = null;
       let IS_REORDER_MODE = false;
+      let CURRENT_GRID_COLS = 3;
+      
+      function loadGridConfig() {
+        let savedCols = localStorage.getItem('pos_grid_cols');
+        if(savedCols) {
+          CURRENT_GRID_COLS = parseInt(savedCols);
+          applyGridCols(CURRENT_GRID_COLS);
+        }
+      }
+
+      function showGridConfigModal() {
+        document.getElementById('gridColCount').innerText = CURRENT_GRID_COLS;
+        updateGridVisualizer(CURRENT_GRID_COLS);
+        document.getElementById('modalGridConfig').style.display = 'flex';
+      }
+
+      function closeGridConfigModal() {
+        document.getElementById('modalGridConfig').style.display = 'none';
+      }
+
+      function adjustGridCols(delta) {
+        let current = parseInt(document.getElementById('gridColCount').innerText);
+        let newVal = current + delta;
+        // Batasi grid minimal 1, maksimal 6 kolom
+        if(newVal >= 1 && newVal <= 6) {
+          document.getElementById('gridColCount').innerText = newVal;
+          updateGridVisualizer(newVal);
+        }
+      }
+
+      function updateGridVisualizer(cols) {
+        const vis = document.getElementById('gridVisualizer');
+        vis.innerHTML = '';
+        for(let i=0; i<cols; i++) {
+          vis.innerHTML += `<div class="bg-primary rounded-3 opacity-75" style="flex: 1; min-width: 15px; height: 25px;"></div>`;
+        }
+      }
+
+      function saveGridConfig() {
+        let newVal = parseInt(document.getElementById('gridColCount').innerText);
+        CURRENT_GRID_COLS = newVal;
+        localStorage.setItem('pos_grid_cols', CURRENT_GRID_COLS);
+        applyGridCols(CURRENT_GRID_COLS);
+        closeGridConfigModal();
+      }
+
+      function applyGridCols(cols) {
+        const grid = document.getElementById('productGrid');
+        if(grid) {
+          // Terapkan ke variabel CSS agar responsif tidak rusak
+          grid.style.setProperty('--pos-grid-cols', cols);
+        }
+      }
 
       // [2026-01-16] Fungsi Login Manual (Triggered by Button or Enter Key)
       function handleLogin() {
@@ -1214,13 +1273,11 @@
           
           buildNavigation();
           renderCashierButtons();
-          renderProductGrid();  // Langsung render karena data sudah ada
-          renderProductTable(); // Langsung render
-
-          // Pemicu Data Awal
-          fetchInitialData(true); // <--- NYALAKAN AI (Pemuatan pertama)
-          startLiveSync(); // Mulai Sinkronisasi Otomatis
-
+          renderProductGrid();
+          renderProductTable();
+          loadGridConfig(); // <--- BARU: Panggil config grid yang tersimpan
+          fetchInitialData(true);
+          startLiveSync();
           switchView('pos');
         } else {
           document.getElementById('loginStatus').innerText = 'PIN Salah!';
@@ -1563,7 +1620,6 @@
           ATTENDANCE_STREAM = null;
         }
         
-        // Keamanan tambahan: Pastikan elemen video benar-benar kosong
         ['attendanceVideo', 'regVideo'].forEach(id => {
           const v = document.getElementById(id);
           if (v) {
@@ -1574,50 +1630,56 @@
 
         // 2. Sembunyikan semua view utama
         document.querySelectorAll('.app-view').forEach(v => v.style.display = 'none');
-        
         const targetView = document.getElementById('view-' + viewId);
         if (!targetView) return;
 
-        // 3. Logika Khusus Tab Absensi agar List Muncul
+        // [BARU] Logika Tampil/Sembunyi Search Bar di Top Header
+        const topSearchContainer = document.getElementById('topSearchBarContainer');
+        if (topSearchContainer) {
+          if (viewId === 'pos') {
+            topSearchContainer.classList.remove('d-none');
+            topSearchContainer.classList.add('d-flex');
+          } else {
+            topSearchContainer.classList.remove('d-flex');
+            topSearchContainer.classList.add('d-none');
+          }
+        }
+
+        // 3. Logika Khusus Tab Absensi
         if (viewId === 'absensi') {
-          renderAttendanceStaff(); // Render tombol nama kasir
-          
+          renderAttendanceStaff();
           const adminDetail = document.getElementById('adminAttendanceDetail');
           const scannerArea = document.getElementById('attendanceScannerArea');
 
           if (USER_ROLE === 'ADMIN' && adminDetail) {
-            adminDetail.style.display = 'block'; // PAKSA MUNCUL: List Riwayat
-            if (scannerArea) scannerArea.className = 'col-12 col-lg-5'; // Mode Split
-            renderAttendanceLogsUI(); // Render data dari memori lokal
+            adminDetail.style.display = 'block';
+            if (scannerArea) scannerArea.className = 'col-12 col-lg-5';
+            renderAttendanceLogsUI();
           } else if (scannerArea) {
-            if (adminDetail) adminDetail.style.display = 'none'; // Sembunyikan jika bukan admin
-            scannerArea.className = 'col-12'; // Mode Full Screen Kasir
+            if (adminDetail) adminDetail.style.display = 'none';
+            scannerArea.className = 'col-12';
           }
-          
-          // Nyalakan kamera dengan delay kecil agar DOM siap
           setTimeout(() => startCamera('attendanceVideo'), 300);
         } 
         // 4. Logika Khusus Tab Laporan
         else if (viewId === 'finance' && USER_ROLE === 'ADMIN') {
-          renderFinanceUI(); 
+          renderFinanceUI();
           setTimeout(() => { loadIndoMarketPulse(); }, 100);
         }
+        // 5. Logika Khusus Tab Stok
+        else if (viewId === 'stock' && USER_ROLE === 'ADMIN') {
+          loadStockData();
+        }
 
-        // 5. Tampilkan view tujuan
-        targetView.style.display = (viewId === 'pos' && window.innerWidth > 768) ?
-        'flex' : 'block';
+        // 6. Tampilkan view tujuan
+        targetView.style.display = (viewId === 'pos' && window.innerWidth > 768) ? 'flex' : 'block';
 
-        // 6. Update Indikator Navigasi Aktif
+        // 7. Update Indikator Navigasi Aktif
         document.querySelectorAll('.nav-item-custom, .nav-icon-mob').forEach(el => el.classList.remove('active'));
         const dEl = document.getElementById('desk-' + viewId);
         const mEl = document.getElementById('mob-' + viewId);
         if (dEl) dEl.classList.add('active');
         if (mEl) mEl.classList.add('active');
-
-        // 7. Logika Khusus Tab Laporan
-        else if (viewId === 'stock' && USER_ROLE === 'ADMIN') {
-          loadStockData();
-        }
       }
 
       function loadProducts() {
@@ -1792,37 +1854,25 @@
         const btn = document.getElementById('btnReorderToggle');
         
         if (IS_REORDER_MODE) {
-          // MODE EDIT AKTIF
-          // Ubah icon tombol jadi centang hijau tanda selesai
-          btn.innerHTML = '<i class="fas fa-check text-success"></i>'; 
+          // MODE EDIT AKTIF: Update Teks Tombol Baru
+          btn.innerHTML = '<i class="fas fa-check text-success me-2"></i>Selesai Edit';
           btn.classList.add('btn-light', 'border-success');
           
-          // Aktifkan Sortable agar bisa di-drag
           if(POS_SORTABLE) POS_SORTABLE.option("disabled", false);
-          
-          // Tambahkan efek visual ke semua kartu & matikan onclick cart
-          // Ini memberi tahu user bahwa kartu sekarang bisa digeser
           document.querySelectorAll('.pos-product-card').forEach(el => {
             el.classList.add('reorder-mode');
-            el.removeAttribute('onclick'); // Matikan fungsi klik beli sementara
+            el.removeAttribute('onclick');
           });
-          
         } else {
-          // MODE EDIT MATI (KEMBALI KE NORMAL)
-          // Kembalikan icon tombol jadi sort normal
-          btn.innerHTML = '<i class="fas fa-sort text-muted"></i>'; 
+          // MODE EDIT MATI: Kembalikan Teks Tombol Baru
+          btn.innerHTML = '<i class="fas fa-sort text-muted me-2"></i>Atur Urutan';
           btn.classList.remove('btn-light', 'border-success');
           
-          // Matikan Sortable (Agar bisa scroll lancar di HP)
           if(POS_SORTABLE) POS_SORTABLE.option("disabled", true);
-          
-          // Render ulang grid secara total.
-          // Ini cara paling bersih untuk mengembalikan fungsi 'onclick' (beli) 
-          // dan menghapus class visual 'reorder-mode' dari semua kartu.
           renderProductGrid();
         }
       }
-
+      
       // [UPDATE] Fungsi Reset Grid yang Memanggil Data Asli
       // [UPDATE] Fungsi Reset Grid dengan Loading di Tengah Layar
       function resetGridOrder() {
@@ -3103,6 +3153,32 @@
         }
       }
     </script>
+
+    <div id="modalGridConfig" class="payment-overlay" style="z-index: 12000;">
+      <div class="bg-white p-4 rounded-5 shadow-lg text-center" style="width: 90%; max-width: 350px;">
+        <h5 class="fw-bold mb-3"><i class="fas fa-th text-primary me-2"></i>Atur Grid Layar</h5>
+        <p class="text-muted small mb-4">Atur distribusi jumlah kotak gambar ke samping (kolom).</p>
+
+        <div class="d-flex align-items-center justify-content-center gap-4 mb-4">
+          <button class="btn btn-light rounded-circle shadow-sm border" style="width: 55px; height: 55px; font-size: 1.2rem;" onclick="adjustGridCols(-1)"><i class="fas fa-minus text-danger"></i></button>
+
+          <div class="text-center" style="min-width: 80px;">
+            <h1 class="fw-bold m-0 text-dark" id="gridColCount" style="font-size: 3rem;">3</h1>
+            <small class="text-muted fw-bold" style="letter-spacing: 2px; font-size: 0.65rem;">KOLOM</small>
+          </div>
+
+          <button class="btn btn-light rounded-circle shadow-sm border" style="width: 55px; height: 55px; font-size: 1.2rem;" onclick="adjustGridCols(1)"><i class="fas fa-plus text-success"></i></button>
+        </div>
+
+        <div class="d-flex justify-content-center flex-wrap gap-2 mb-4 p-3 bg-light rounded-4" id="gridVisualizer" style="min-height: 50px;">
+          </div>
+
+        <div class="d-flex gap-2">
+          <button class="btn btn-light w-100 rounded-pill fw-bold py-3" onclick="closeGridConfigModal()">BATAL</button>
+          <button class="btn btn-primary w-100 rounded-pill fw-bold py-3 shadow-sm" onclick="saveGridConfig()">TERAPKAN</button>
+        </div>
+      </div>
+    </div>
 
     <div id="modalPayment" class="payment-overlay">
       <div class="payment-box shadow-lg">
