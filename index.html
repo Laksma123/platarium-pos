@@ -554,25 +554,25 @@
         
         <div class="d-flex align-items-center gap-2 ms-auto">
           
-          <div class="d-none d-md-flex align-items-center bg-white border rounded px-3 shadow-sm calendar-bg" style="height: 38px;">
-             <i class="far fa-calendar-alt text-warning me-2" style="font-size: 1.1rem; opacity: 0.8;"></i>
+          <div class="d-none d-md-flex align-items-center px-2" style="min-width: 130px; font-variant-numeric: tabular-nums;">
+             <i class="far fa-calendar-alt text-warning me-2" style="font-size: 1.1rem;"></i>
              <div class="d-flex flex-column justify-content-center lh-1">
                 <span id="realDate" class="fw-bold text-muted" style="font-size: 0.6rem; letter-spacing: 0.5px;">--/--/----</span>
                 <span id="realTime" class="fw-bold text-dark" style="font-size: 0.85rem;">--:--:--</span>
              </div>
           </div>
 
-          <div class="input-group shadow-sm mx-2 rounded-pill overflow-hidden bg-white" style="min-width: 170px; height: 38px; border: 1px solid #eee;">
+          <div class="input-group shadow-sm mx-1 rounded-pill overflow-hidden bg-white flex-shrink-0" style="min-width: 170px; height: 38px; border: 1px solid #eee;">
             <span class="input-group-text bg-transparent border-0"><i class="fas fa-user-circle text-muted"></i></span>
             <select id="topCashierSelect" class="form-select border-0 shadow-none bg-transparent fw-bold text-dark px-2 pe-4" style="cursor:pointer; font-size: 0.85rem;" onchange="handleTopCashierChange(this.value)">
               <option value="" disabled selected>Pilih Kasir...</option>
             </select>
           </div>
 
-          <button id="btnRefresh" onclick="refreshAllData()" class="btn btn-light btn-sm rounded-circle shadow-sm border" style="width: 38px; height: 38px;" title="Refresh Data">
+          <button id="btnRefresh" onclick="refreshAllData()" class="btn btn-light btn-sm rounded-circle shadow-sm border flex-shrink-0" style="width: 38px; height: 38px;" title="Refresh Data">
             <i class="fas fa-sync-alt text-secondary"></i>
           </button>
-          <button onclick="doLogout()" class="btn btn-danger btn-sm rounded-circle shadow-sm border-0" style="width: 38px; height: 38px;" title="Logout">
+          <button onclick="doLogout()" class="btn btn-danger btn-sm rounded-circle shadow-sm border-0 flex-shrink-0" style="width: 38px; height: 38px;" title="Logout">
             <i class="fas fa-sign-out-alt text-white"></i>
           </button>
         </div>
@@ -585,7 +585,7 @@
           <div class="pos-menu bg-light">
             
             <div class="d-flex flex-wrap align-items-center mb-3 gap-3">
-              <div class="input-group shadow-sm rounded-pill overflow-hidden flex-grow-1" style="background-color: rgba(139, 69, 19, 0.05); border: 1px solid rgba(139, 69, 19, 0.2); height: 42px;">
+              <div class="input-group shadow-sm rounded-pill overflow-hidden" style="max-width: 300px; background-color: rgba(139, 69, 19, 0.05); border: 1px solid rgba(139, 69, 19, 0.2); height: 42px;">
                 <span class="input-group-text bg-transparent border-0"><i class="fas fa-search" style="color: #8b4513;"></i></span>
                 <input type="text" id="searchPOS" class="form-control border-0 shadow-none bg-transparent fw-bold" placeholder="Cari menu POS..." style="color: #5c2c0b;" oninput="filterPOS()">
                 <span class="input-group-text bg-transparent border-0 pe-3">
@@ -1347,7 +1347,7 @@
           // [BARU] Panggil fungsi inisialisasi di sini
           startRealtimeClock();
           initCategoryScroller();
-          
+
         } else {
           document.getElementById('loginStatus').innerText = 'PIN Salah!';
           document.getElementById('passInput').value = '';
@@ -1815,14 +1815,17 @@
         const grid = document.getElementById('productGrid');
         if (!grid) return; 
 
-        // [FIX UTAMA MASALAH LAYOUT RUSAK SETELAH RESET]
-        // Hapus style inline (display:flex) yang ditinggalkan oleh loading screen
-        // Ini akan mengembalikan grid ke perilaku CSS aslinya (.pos-grid-container { display: grid })
-        grid.removeAttribute('style'); 
-
-        // Paksa class container agar layout tetap 8 kolom
-        grid.className = 'pos-grid-container'; 
+        // [FIX] Bersihkan inline style display loading TANPA menghapus variabel --pos-grid-cols
+        grid.style.display = '';
+        grid.style.height = '';
+        grid.style.alignItems = '';
+        grid.style.justifyContent = '';
         
+        // Memastikan konfigurasi grid kolom tetap teraplikasikan dengan memanggil fungsi ini:
+        applyGridCols(CURRENT_GRID_COLS);
+        
+        grid.className = 'pos-grid-container';
+
         const searchKeyword = document.getElementById('searchPOS').value;
 
         // Clone array agar tidak mengubah urutan PRODUCTS asli secara permanen
@@ -1831,12 +1834,14 @@
         // Logika Sorting (Hanya jika tidak sedang search)
         if (!searchKeyword) {
           const savedOrder = JSON.parse(localStorage.getItem('pos_grid_order') || '[]');
+
           if (savedOrder.length > 0) {
             displayData.sort((a, b) => {
               let indexA = savedOrder.indexOf(a.id);
               let indexB = savedOrder.indexOf(b.id);
               if (indexA === -1) indexA = 999;
               if (indexB === -1) indexB = 999;
+       
               return indexA - indexB;
             });
           }
@@ -1849,6 +1854,7 @@
 
           let icons = [];
           if (p.category === 'Best Seller') {
+           
             classes.push("effect-best-seller");
             icons.push(`<i class="fas fa-crown crown-anim"></i>`);
           }
@@ -1857,6 +1863,7 @@
             icons.push(`<i class="fas fa-snowflake ice-anim"></i>`);
           } else if (p.name.includes('(Hot)')) {
             classes.push("effect-hot");
+         
             icons.push(`<i class="fas fa-fire hot-anim"></i>`);
           }
 
@@ -1869,45 +1876,51 @@
                 ${iconHTML}
                 <img src="${p.img || 'https://via.placeholder.com/150'}" class="pos-img-thumb">
                 <div class="pos-card-body">
+               
                   <div class="pos-title" title="${p.name}">${p.name}</div>
                   <div class="pos-price">Rp ${p.price.toLocaleString()}</div>
                 </div>
               </div>
             </div>
           `;
+
         }).join('');
 
         // Inisialisasi Sortable (Drag & Drop)
         if (!searchKeyword) {
           if (POS_SORTABLE) {
             POS_SORTABLE.destroy();
+
             POS_SORTABLE = null;
           }
 
-          // [UPDATE 2] Konfigurasi Auto Scroll Final Fix
+          // Konfigurasi Auto Scroll Final Fix
           POS_SORTABLE = new Sortable(grid, {
             animation: 150,
             ghostClass: 'opacity-50',
             disabled: !IS_REORDER_MODE, 
-            delay: 200, // Sedikit delay lebih lama untuk membedakan tap vs drag
+            delay: 200, 
+   
             delayOnTouchOnly: true,
             
             // Konfigurasi Scroll Touchscreen
-            // Menggunakan .pos-menu sebagai target scroll container
             scroll: document.querySelector('.pos-menu'), 
-            scrollSensitivity: 150, // Zona sensitif 150px dari tepi
-            scrollSpeed: 25, // Kecepatan scroll ditingkatkan
+            scrollSensitivity: 150, 
+            
+            scrollSpeed: 25, 
             bubbleScroll: true,
-            forceFallback: true, // WAJIB: Memaksa browser menggunakan emulasi drag agar scroll event terdeteksi
+            forceFallback: true, 
 
             onEnd: function() {
               const newOrder = Array.from(grid.querySelectorAll('[data-id]')).map(el => el.dataset.id);
               localStorage.setItem('pos_grid_order', JSON.stringify(newOrder));
+
             }
           });
+
         }
       }
-
+      
       function toggleReorderMode() {
         IS_REORDER_MODE = !IS_REORDER_MODE;
         const btn = document.getElementById('btnReorderToggle');
