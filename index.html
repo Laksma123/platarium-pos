@@ -562,7 +562,7 @@
              </div>
           </div>
 
-          <div class="input-group shadow-sm mx-1 rounded-pill overflow-hidden bg-white flex-shrink-0" style="width: 180px; height: 38px; border: 1px solid #eee;">
+          <div id="topCashierContainer" class="input-group shadow-sm mx-1 rounded-pill overflow-hidden bg-white flex-shrink-0" style="width: 180px; height: 38px; border: 1px solid #eee;">
             <span class="input-group-text bg-transparent border-0 pe-1"><i class="fas fa-user-circle text-muted"></i></span>
             <select id="topCashierSelect" class="form-select border-0 shadow-none bg-transparent fw-bold text-dark px-1 pe-3" style="cursor:pointer; font-size: 0.85rem;" onchange="handleTopCashierChange(this.value)">
               <option value="" disabled selected>Pilih Kasir...</option>
@@ -1701,6 +1701,18 @@
         const targetView = document.getElementById('view-' + viewId);
         if (!targetView) return;
 
+        // [UPDATE] Logika Tampil/Sembunyi Elemen Header Khusus POS (Search & Dropdown Kasir)
+        const topSearchContainer = document.getElementById('topSearchBarContainer');
+        const topCashierContainer = document.getElementById('topCashierContainer');
+
+        if (viewId === 'pos') {
+          if (topSearchContainer) { topSearchContainer.classList.remove('d-none'); topSearchContainer.classList.add('d-flex'); }
+          if (topCashierContainer) { topCashierContainer.classList.remove('d-none'); topCashierContainer.classList.add('input-group'); } // Menggunakan input-group agar styling Bootstrap tetap jalan
+        } else {
+          if (topSearchContainer) { topSearchContainer.classList.remove('d-flex'); topSearchContainer.classList.add('d-none'); }
+          if (topCashierContainer) { topCashierContainer.classList.remove('input-group'); topCashierContainer.classList.add('d-none'); }
+        }
+
         // Logika Khusus Tab Absensi
         if (viewId === 'absensi') {
           renderAttendanceStaff();
@@ -1737,7 +1749,7 @@
         if (dEl) dEl.classList.add('active');
         if (mEl) mEl.classList.add('active');
       }
-
+      
       function loadProducts() {
         google.script.run.withSuccessHandler(data => {
           PRODUCTS = data;
