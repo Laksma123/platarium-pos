@@ -222,6 +222,23 @@
       @media (max-width: 500px) { 
         .pos-grid-container { grid-template-columns: repeat(var(--pos-grid-cols, 1), 1fr); } 
       }
+      
+      /* ========================================= */
+      /* TAMBAHAN UI POS BARU (SEARCH & CATEGORY)  */
+      /* ========================================= */
+      .category-scroller::-webkit-scrollbar {
+        display: none; /* Menyembunyikan scrollbar bawaan browser */
+      }
+      .category-scroller.active {
+        cursor: grabbing !important;
+      }
+      /* Efek Transparan Background Tema Kalender */
+      .calendar-bg {
+        background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z' stroke='rgba(197, 160, 89, 0.10)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M16 2V6' stroke='rgba(197, 160, 89, 0.10)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M8 2V6' stroke='rgba(197, 160, 89, 0.10)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M3 10H21' stroke='rgba(197, 160, 89, 0.10)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-repeat: repeat;
+        background-size: 30px;
+        position: relative;
+      }
 
       /* ========================================= */
       /* EFEK PRODUK & TOMBOL                      */
@@ -535,17 +552,19 @@
           </div>
         </div>
         
-        <div id="topSearchBarContainer" class="d-flex flex-grow-1 mx-3" style="max-width: 400px; display: none;">
-          <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white" style="border: 1px solid #eee; height: 38px;">
-            <span class="input-group-text bg-transparent border-0"><i class="fas fa-search text-muted"></i></span>
-            <input type="text" id="searchPOS" class="form-control border-0 shadow-none bg-transparent fw-bold" placeholder="Cari menu POS..." oninput="filterPOS()">
+        <div class="d-flex align-items-center gap-2 ms-auto">
+          
+          <div class="d-none d-md-flex align-items-center bg-white border rounded px-3 shadow-sm calendar-bg" style="height: 38px;">
+             <i class="far fa-calendar-alt text-warning me-2" style="font-size: 1.1rem; opacity: 0.8;"></i>
+             <div class="d-flex flex-column justify-content-center lh-1">
+                <span id="realDate" class="fw-bold text-muted" style="font-size: 0.6rem; letter-spacing: 0.5px;">--/--/----</span>
+                <span id="realTime" class="fw-bold text-dark" style="font-size: 0.85rem;">--:--:--</span>
+             </div>
           </div>
-        </div>
 
-        <div class="d-flex align-items-center gap-2">
-          <div class="input-group shadow-sm me-2 rounded-pill overflow-hidden bg-white" style="width: auto; height: 38px; border: 1px solid #eee;">
+          <div class="input-group shadow-sm mx-2 rounded-pill overflow-hidden bg-white" style="min-width: 170px; height: 38px; border: 1px solid #eee;">
             <span class="input-group-text bg-transparent border-0"><i class="fas fa-user-circle text-muted"></i></span>
-            <select id="topCashierSelect" class="form-select border-0 shadow-none bg-transparent fw-bold text-dark px-2" style="cursor:pointer; font-size: 0.85rem;" onchange="handleTopCashierChange(this.value)">
+            <select id="topCashierSelect" class="form-select border-0 shadow-none bg-transparent fw-bold text-dark px-2 pe-4" style="cursor:pointer; font-size: 0.85rem;" onchange="handleTopCashierChange(this.value)">
               <option value="" disabled selected>Pilih Kasir...</option>
             </select>
           </div>
@@ -564,34 +583,34 @@
         
         <div id="view-pos" class="app-view pos-layout" style="display:none;">
           <div class="pos-menu bg-light">
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-              <h4 class="fw-bold m-0">Menu Produk</h4>
-              
-              <div class="d-flex gap-2 align-items-center flex-wrap">
-                
-                <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white" style="width: auto; border: 1px solid #eee; height: 38px;">
-                  <span class="input-group-text bg-transparent border-0"><i class="fas fa-layer-group text-muted"></i></span>
-                  <select id="categoryFilterPOS" class="form-select border-0 shadow-none bg-transparent fw-bold px-2" style="cursor:pointer;" onchange="filterPOS()">
-                    <option value="ALL">Semua Kategori</option>
-                  </select>
-                </div>
-                
-                <div class="vr mx-2 d-none d-md-block"></div> 
-
-                <div class="d-flex gap-2 align-items-center">
-                  <button class="btn btn-white shadow-sm rounded-pill border px-3 fw-bold text-dark d-flex align-items-center" onclick="showGridConfigModal()" title="Atur Grid">
-                    <i class="fas fa-border-all text-primary me-2"></i>Atur Grid
-                  </button>
-
-                  <button id="btnReorderToggle" class="btn btn-white shadow-sm rounded-pill border px-3 fw-bold text-dark d-flex align-items-center" onclick="toggleReorderMode()" title="Atur Urutan Menu">
-                    <i class="fas fa-sort text-muted me-2"></i>Atur Urutan
-                  </button>
-
-                  <button class="btn btn-white shadow-sm rounded-pill border px-3 fw-bold text-dark d-flex align-items-center" onclick="resetGridOrder()" title="Reset Urutan Menu">
-                    <i class="fas fa-sync-alt text-warning me-2"></i>Reset
-                  </button>
-                </div>
+            
+            <div class="d-flex flex-wrap align-items-center mb-3 gap-3">
+              <div class="input-group shadow-sm rounded-pill overflow-hidden flex-grow-1" style="background-color: rgba(139, 69, 19, 0.05); border: 1px solid rgba(139, 69, 19, 0.2); height: 42px;">
+                <span class="input-group-text bg-transparent border-0"><i class="fas fa-search" style="color: #8b4513;"></i></span>
+                <input type="text" id="searchPOS" class="form-control border-0 shadow-none bg-transparent fw-bold" placeholder="Cari menu POS..." style="color: #5c2c0b;" oninput="filterPOS()">
+                <span class="input-group-text bg-transparent border-0 pe-3">
+                  <i class="fas fa-leaf" style="color: #6F4E37; transform: rotate(45deg);" title="Coffee Theme"></i>
+                </span>
               </div>
+              
+              <div class="vr mx-2 d-none d-md-block"></div> 
+
+              <div class="d-flex gap-2 align-items-center">
+                <button class="btn btn-white shadow-sm rounded-pill border px-3 fw-bold text-dark d-flex align-items-center" onclick="showGridConfigModal()" title="Atur Grid">
+                  <i class="fas fa-border-all text-primary me-2"></i>Atur Grid
+                </button>
+                <button id="btnReorderToggle" class="btn btn-white shadow-sm rounded-pill border px-3 fw-bold text-dark d-flex align-items-center" onclick="toggleReorderMode()" title="Atur Urutan Menu">
+                  <i class="fas fa-sort text-muted me-2"></i>Atur Urutan
+                </button>
+                <button class="btn btn-white shadow-sm rounded-pill border px-3 fw-bold text-dark d-flex align-items-center" onclick="resetGridOrder()" title="Reset Urutan Menu">
+                  <i class="fas fa-sync-alt text-warning me-2"></i>Reset
+                </button>
+              </div>
+            </div>
+            
+            <div class="mb-4">
+              <div id="categoryScroller" class="category-scroller d-flex gap-2" style="overflow-x: auto; white-space: nowrap; cursor: grab; padding-bottom: 5px;">
+                </div>
             </div>
             
             <div class="pos-grid-container" id="productGrid"></div>
@@ -1157,6 +1176,7 @@
       let SELECTED_FILE_NAME = ''; // Menyimpan nama file asli
       let SORT_CRITERIA = 'id'; // Default filter diubah ke ID
       let SORT_ASC = true;
+      let CURRENT_CATEGORY = "ALL";
       let CURRENT_TOTAL = 0;
       let SELECTED_CASHIER = null;
       let TEMP_CASHIER = null;
@@ -1178,7 +1198,51 @@
       let POS_SORTABLE = null;
       let IS_REORDER_MODE = false;
       let CURRENT_GRID_COLS = 3;
+
+      function startRealtimeClock() {
+        setInterval(() => {
+          const now = new Date();
+          const d = document.getElementById('realDate');
+          const t = document.getElementById('realTime');
+          if(d && t) {
+            d.innerText = now.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+            t.innerText = now.toLocaleTimeString('id-ID', { hour12: false });
+          }
+        }, 1000);
+      }
+
+      function initCategoryScroller() {
+        const slider = document.getElementById('categoryScroller');
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        if(!slider) return;
+
+        slider.addEventListener('mousedown', (e) => {
+          isDown = true;
+          slider.classList.add('active');
+          startX = e.pageX - slider.offsetLeft;
+          scrollLeft = slider.scrollLeft;
+        });
+        slider.addEventListener('mouseleave', () => {
+          isDown = false;
+          slider.classList.remove('active');
+        });
+        slider.addEventListener('mouseup', () => {
+          isDown = false;
+          slider.classList.remove('active');
+        });
+        slider.addEventListener('mousemove', (e) => {
+          if (!isDown) return;
+          e.preventDefault();
+          const x = e.pageX - slider.offsetLeft;
+          const walk = (x - startX) * 2.5; // Kecepatan scroll drag
+          slider.scrollLeft = scrollLeft - walk;
+        });
+      }
       
+
       function loadGridConfig() {
         let savedCols = localStorage.getItem('pos_grid_cols');
         if(savedCols) {
@@ -1279,6 +1343,11 @@
           fetchInitialData(true);
           startLiveSync();
           switchView('pos');
+
+          // [BARU] Panggil fungsi inisialisasi di sini
+          startRealtimeClock();
+          initCategoryScroller();
+          
         } else {
           document.getElementById('loginStatus').innerText = 'PIN Salah!';
           document.getElementById('passInput').value = '';
@@ -1611,11 +1680,10 @@
       }
 
       function switchView(viewId) {
-        // 1. Matikan kamera total secara menyeluruh
+        // Matikan kamera total secara menyeluruh
         if (ATTENDANCE_STREAM) {
           ATTENDANCE_STREAM.getTracks().forEach(track => {
             track.stop();
-            console.log("Track " + track.label + " stopped");
           });
           ATTENDANCE_STREAM = null;
         }
@@ -1628,24 +1696,12 @@
           }
         });
 
-        // 2. Sembunyikan semua view utama
+        // Sembunyikan semua view utama
         document.querySelectorAll('.app-view').forEach(v => v.style.display = 'none');
         const targetView = document.getElementById('view-' + viewId);
         if (!targetView) return;
 
-        // [BARU] Logika Tampil/Sembunyi Search Bar di Top Header
-        const topSearchContainer = document.getElementById('topSearchBarContainer');
-        if (topSearchContainer) {
-          if (viewId === 'pos') {
-            topSearchContainer.classList.remove('d-none');
-            topSearchContainer.classList.add('d-flex');
-          } else {
-            topSearchContainer.classList.remove('d-flex');
-            topSearchContainer.classList.add('d-none');
-          }
-        }
-
-        // 3. Logika Khusus Tab Absensi
+        // Logika Khusus Tab Absensi
         if (viewId === 'absensi') {
           renderAttendanceStaff();
           const adminDetail = document.getElementById('adminAttendanceDetail');
@@ -1661,20 +1717,20 @@
           }
           setTimeout(() => startCamera('attendanceVideo'), 300);
         } 
-        // 4. Logika Khusus Tab Laporan
+        // Logika Khusus Tab Laporan
         else if (viewId === 'finance' && USER_ROLE === 'ADMIN') {
           renderFinanceUI();
           setTimeout(() => { loadIndoMarketPulse(); }, 100);
         }
-        // 5. Logika Khusus Tab Stok
+        // Logika Khusus Tab Stok
         else if (viewId === 'stock' && USER_ROLE === 'ADMIN') {
           loadStockData();
         }
 
-        // 6. Tampilkan view tujuan
+        // Tampilkan view tujuan
         targetView.style.display = (viewId === 'pos' && window.innerWidth > 768) ? 'flex' : 'block';
 
-        // 7. Update Indikator Navigasi Aktif
+        // Update Indikator Navigasi Aktif
         document.querySelectorAll('.nav-item-custom, .nav-icon-mob').forEach(el => el.classList.remove('active'));
         const dEl = document.getElementById('desk-' + viewId);
         const mEl = document.getElementById('mob-' + viewId);
@@ -1696,24 +1752,28 @@
       
       // Fungsi untuk meng-generate kategori otomatis berdasarkan data dari GSheet
       function updateCategoryDropdown() {
-        const catSelect = document.getElementById('categoryFilterPOS');
-        if (!catSelect) return;
+        const scroller = document.getElementById('categoryScroller');
+        if (!scroller) return;
 
         // Ambil kategori unik dari array PRODUCTS, abaikan yang kosong
         const uniqueCategories = [...new Set(PRODUCTS.map(p => p.category))].filter(Boolean);
-        const currentVal = catSelect.value;
 
-        let html = '<option value="ALL">Semua Kategori</option>';
+        // Tombol default "Semua Kategori"
+        let html = `<button class="btn btn-sm rounded-pill fw-bold px-3 ${CURRENT_CATEGORY === 'ALL' ? 'btn-luxury text-white shadow-sm' : 'btn-white text-muted border shadow-sm'}" onclick="setCategoryFilter('ALL')">Semua Kategori</button>`;
+        
+        // Loop kategori dinamis
         uniqueCategories.forEach(cat => {
-          html += `<option value="${cat}">${cat}</option>`;
+          let activeClass = CURRENT_CATEGORY === cat ? 'btn-luxury text-white shadow-sm' : 'btn-white text-muted border shadow-sm';
+          html += `<button class="btn btn-sm rounded-pill fw-bold px-3 ${activeClass}" onclick="setCategoryFilter('${cat}')">${cat}</button>`;
         });
 
-        catSelect.innerHTML = html;
+        scroller.innerHTML = html;
+      }
 
-        // Kembalikan ke pilihan sebelumnya jika kategori tersebut masih ada
-        if (uniqueCategories.includes(currentVal) || currentVal === "ALL") {
-          catSelect.value = currentVal;
-        }
+      function setCategoryFilter(cat) {
+        CURRENT_CATEGORY = cat;
+        updateCategoryDropdown(); // Render ulang agar styling tombol aktif berpindah
+        filterPOS();              // Terapkan ke grid produk
       }
 
       // Handler ketika kasir dipilih dari Top Header Dropdown
@@ -1731,14 +1791,13 @@
 
       function filterPOS() {
         const keyword = document.getElementById('searchPOS').value.toLowerCase();
-        const catFilter = document.getElementById('categoryFilterPOS').value;
+        const catFilter = CURRENT_CATEGORY;
 
         const filtered = PRODUCTS.filter(p => {
           const matchKeyword = p.name.toLowerCase().includes(keyword) || p.category.toLowerCase().includes(keyword);
           const matchCategory = (catFilter === "ALL") || (p.category === catFilter);
           return matchKeyword && matchCategory;
         });
-        
         renderProductGrid(filtered);
       }
 
@@ -1872,7 +1931,7 @@
           renderProductGrid();
         }
       }
-      
+
       // [UPDATE] Fungsi Reset Grid yang Memanggil Data Asli
       // [UPDATE] Fungsi Reset Grid dengan Loading di Tengah Layar
       function resetGridOrder() {
