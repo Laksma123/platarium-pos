@@ -738,7 +738,7 @@
   <body>
 
     <div id="loginOverlay" class="login-overlay">
-      <img src="<?= bgImageUrl ?>" id="loginBg" alt="background" onload="showUI()">
+      <img src="https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=2071" id="loginBg" alt="background" onload="showUI()">
       
       <div class="login-box">
         <p class="text-white-50 small mb-4 fw-bold" style="letter-spacing: 3px; font-size: 0.6rem; opacity: 0.8;">SECURED SYSTEM</p>
@@ -906,7 +906,6 @@
                     <div class="scan-line"></div>
                     <div class="face-overlay"></div>
                   </div>
-                  <div id="cameraLogArea" class="mt-3 p-3 bg-dark text-warning small rounded-4 text-start overflow-auto shadow-inner d-none" style="max-height: 200px; font-size: 0.75rem; font-family: monospace;"></div>
                 </div>
                 
                 <div id="absensiActionArea">
@@ -1083,15 +1082,10 @@
             <select id="regStaffSelect" class="form-select mb-3 fw-bold rounded-pill border-2">
               </select>
 
-            <div class="scanner-box mx-auto mb-4" style="width: 200px; height: 200px; cursor: pointer; background: #111;" onclick="document.getElementById('regCameraInput').click()">
-              <img id="regPreviewImg" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-              <div id="regPlaceholder" class="d-flex flex-column justify-content-center align-items-center h-100 w-100 text-muted position-absolute top-0 start-0">
-                <i class="fas fa-camera fa-2x mb-2 text-primary"></i>
-                <span class="small fw-bold text-white text-center px-2">Tap Buka<br>Kamera</span>
-              </div>
+            <div class="scanner-box mx-auto mb-4" style="width: 200px; height: 200px;">
+              <video id="regVideo" autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
               <div class="face-overlay" style="margin: 20px;"></div>
             </div>
-            <input type="file" id="regCameraInput" accept="image/*" capture="user" style="display:none;" onchange="handleRegCamera(event)">
 
             <div class="d-flex gap-2">
               <button class="btn btn-light w-100 rounded-pill fw-bold" onclick="closeModalRegisterFace()">BATAL</button>
@@ -1325,56 +1319,66 @@
     </div>
 
     <script>
-      // =========================================================================
-      // JEMBATAN API PROXIMAL (POLYFILL SHIM)
-      // =========================================================================
-      // GANTI teks di bawah ini dengan URL Web App yang kamu salin di Langkah 2!
-      const GAS_API_URL = "PASTE_URL_WEB_APP_KAMU_DISINI";
+      // URL Web App GAS kamu yang BARU (Nanti diganti setelah di-deploy ulang)
+      const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxFU_z7PDvjM4ZurXgGNuALwqxMk_RZE2bIfCuNV1vlBTeG4reGDBJ2QWcdhGk-hy28/exec";
 
-      window.google = {
+      // MOCK PROXY: Menggantikan google.script.run tanpa perlu mengubah logika UI original
+      const google = {
         script: {
-          run: {
-            withSuccessHandler: function(successCallback) {
-              const bridgeObject = {};
-              // Daftar semua fungsi Code.gs yang dipanggil dari frontend kamu
-              const serverFunctions = [
-                'loginUser', 'getProducts', 'verifyCashierPIN', 'recordAttendance', 
-                'getAttendanceLogs', 'registerStaffFace', 'getStaffMasterFaces', 
-                'deleteMasterFaceRecord', 'deleteAttendanceRecord', 'getAllTransactionData', 
-                'deleteTransactionRecord', 'getMaterialsData', 'clearMarketCache', 
-                'getNextOrderId', 'saveTransaction', 'getMaterialsStock', 'updateMaterialStockManual'
-              ];
-              
-              serverFunctions.forEach(funcName => {
-                bridgeObject[funcName] = function(...args) {
-                  // Menggunakan fetch untuk menembus dinding Iframe secara total
-                  fetch(GAS_API_URL, {
-                    method: 'POST',
-                    // Mengirim data tanpa header Content-Type kustom untuk menghindari CORS preflight (OPTIONS request) yang bermasalah di GAS
-                    body: JSON.stringify({
-                      action: funcName,
-                      args: args
-                    })
-                  })
-                  .then(response => response.json())
-                  .then(data => {
-                    if (successCallback) successCallback(data);
-                  })
-                  .catch(error => {
-                    console.error(`Gagal mengeksekusi API [${funcName}]:`, error);
-                  });
+          run: new Proxy({}, {
+            get: function(target, prop) {
+              if (prop === 'withSuccessHandler') {
+                return function(onSuccess) {
+                  return createProxy(onSuccess, function(err) { console.error("GAS Error:", err); });
                 };
-              });
-              return bridgeObject;
-            },
-            withFailureHandler: function(failureCallback) {
-              // Fallback jika terjadi kegagalan sistem sistemis
-              return this.withSuccessHandler();
+              } else if (prop === 'withFailureHandler') {
+                return function(onFailure) {
+                  return {
+                    withSuccessHandler: function(onSuccess) {
+                      return createProxy(onSuccess, onFailure);
+                    }
+                  };
+                };
+              } else {
+                // Jika dipanggil langsung tanpa success handler
+                return function(...args) {
+                  fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: prop, args: args }),
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                  }).catch(console.error);
+                };
+              }
             }
-          }
+          })
         }
       };
-      // =========================================================================
+
+      function createProxy(onSuccess, onFailure) {
+        return new Proxy({}, {
+          get: function(target, prop) {
+            return function(...args) {
+              fetch(GAS_WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: prop, args: args }),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' } // Hindari preflight CORS
+              })
+              .then(res => res.json())
+              .then(data => {
+                if (data && data.status === 'error' && data.message) {
+                  onFailure(new Error(data.message));
+                } else {
+                  onSuccess(data);
+                }
+              })
+              .catch(err => {
+                console.error("Fetch Error:", err);
+                onFailure(err);
+              });
+            };
+          }
+        });
+      }
 
       let USER_ROLE = '';
       let CART = [];
@@ -1462,23 +1466,15 @@
         }
       }
 
-      // [2026-01-17] Perbaikan fungsi Logout untuk menghindari White Blank Screen
+      // Perbaikan fungsi Logout untuk GitHub Pages
       function doLogout() {
-        // Menampilkan indikator loading sederhana agar user tahu proses sedang berjalan
         const btn = event.currentTarget;
         if(btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Logging out...';
         
-        const url = '<?!= scriptUrl ?>';
-        
-        if (url && url !== "") {
-          // window.top.location.href adalah cara mutlak untuk refresh/redirect Web App GAS
-          window.top.location.href = url;
-        } else {
-          // Fallback jika variabel server-side gagal dimuat
-          google.script.run.withSuccessHandler(function(serverUrl) {
-            window.top.location.href = serverUrl;
-          }).getScriptUrl();
-        }
+        // Cukup segarkan halaman ke root untuk mereset memori dan kembali ke halaman login
+        setTimeout(() => {
+          window.location.reload();
+        }, 800);
       }
 
       function refreshAllData() {
@@ -1796,46 +1792,70 @@
       }
 
       function switchView(viewId) {
+        // 1. Matikan kamera total secara menyeluruh
+        if (ATTENDANCE_STREAM) {
+          ATTENDANCE_STREAM.getTracks().forEach(track => {
+            track.stop();
+            console.log("Track " + track.label + " stopped");
+          });
+          ATTENDANCE_STREAM = null;
+        }
+        
+        // Keamanan tambahan: Pastikan elemen video benar-benar kosong
+        ['attendanceVideo', 'regVideo'].forEach(id => {
+          const v = document.getElementById(id);
+          if (v) {
+            v.srcObject = null;
+            v.pause();
+          }
+        });
+
+        // 2. Sembunyikan semua view utama
         document.querySelectorAll('.app-view').forEach(v => v.style.display = 'none');
         
         const targetView = document.getElementById('view-' + viewId);
         if (!targetView) return;
 
+        // 3. Logika Khusus Tab Absensi agar List Muncul
         if (viewId === 'absensi') {
-          renderAttendanceStaff(); 
+          renderAttendanceStaff(); // Render tombol nama kasir
           
           const adminDetail = document.getElementById('adminAttendanceDetail');
           const scannerArea = document.getElementById('attendanceScannerArea');
 
           if (USER_ROLE === 'ADMIN' && adminDetail) {
-            adminDetail.style.display = 'block'; 
-            if (scannerArea) scannerArea.className = 'col-12 col-lg-5'; 
-            renderAttendanceLogsUI(); 
+            adminDetail.style.display = 'block'; // PAKSA MUNCUL: List Riwayat
+            if (scannerArea) scannerArea.className = 'col-12 col-lg-5'; // Mode Split
+            renderAttendanceLogsUI(); // Render data dari memori lokal
           } else if (scannerArea) {
-            if (adminDetail) adminDetail.style.display = 'none'; 
-            scannerArea.className = 'col-12'; 
+            if (adminDetail) adminDetail.style.display = 'none'; // Sembunyikan jika bukan admin
+            scannerArea.className = 'col-12'; // Mode Full Screen Kasir
           }
           
-          // Reset preview saat masuk tab absensi
-          const imgEl = document.getElementById('attendancePreviewImg');
-          const placeholder = document.getElementById('attendancePlaceholder');
-          if (imgEl) { imgEl.src = ''; imgEl.style.display = 'none'; }
-          if (placeholder) placeholder.style.display = 'flex';
-          
-        } else if (viewId === 'finance' && USER_ROLE === 'ADMIN') {
+          // Nyalakan kamera dengan delay kecil agar DOM siap
+          setTimeout(() => startCamera('attendanceVideo'), 300);
+        } 
+        // 4. Logika Khusus Tab Laporan
+        else if (viewId === 'finance' && USER_ROLE === 'ADMIN') {
           renderFinanceUI(); 
           setTimeout(() => { loadIndoMarketPulse(); }, 100);
-        } else if (viewId === 'stock' && USER_ROLE === 'ADMIN') {
-          loadStockData();
         }
 
-        targetView.style.display = (viewId === 'pos' && window.innerWidth > 768) ? 'flex' : 'block';
+        // 5. Tampilkan view tujuan
+        targetView.style.display = (viewId === 'pos' && window.innerWidth > 768) ?
+        'flex' : 'block';
 
+        // 6. Update Indikator Navigasi Aktif
         document.querySelectorAll('.nav-item-custom, .nav-icon-mob').forEach(el => el.classList.remove('active'));
         const dEl = document.getElementById('desk-' + viewId);
         const mEl = document.getElementById('mob-' + viewId);
         if (dEl) dEl.classList.add('active');
         if (mEl) mEl.classList.add('active');
+
+        // 7. Logika Khusus Tab Laporan
+        else if (viewId === 'stock' && USER_ROLE === 'ADMIN') {
+          loadStockData();
+        }
       }
 
       // Modifikasi loadProducts agar hanya mengambil data tanpa render otomatis jika belum login
@@ -2367,133 +2387,28 @@
         startCamera('attendanceVideo');
       }
 
-      // Timpa fungsi startCamera dengan versi Diagnostic
-      async function startCamera(videoId) {
+      function startCamera(videoId) {
         const video = document.getElementById(videoId);
-        if (!video) return;
+        if (!video) return; 
 
-        // 1. Matikan stream lama jika masih menyangkut
-        if (ATTENDANCE_STREAM) {
-          ATTENDANCE_STREAM.getTracks().forEach(track => {
-            track.stop();
-            console.log("Track " + track.label + " stopped");
-          });
-          ATTENDANCE_STREAM = null;
+        // Lebih universal: tidak memaksa 'facingMode: "user"', cukup minta akses video apa saja
+        const constraints = { video: true };
+
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          navigator.mediaDevices.getUserMedia(constraints)
+            .then(stream => {
+              ATTENDANCE_STREAM = stream;
+              video.srcObject = stream;
+              // Tambahkan event onloadedmetadata agar play() lebih stabil di berbagai browser
+              video.onloadedmetadata = () => {
+                video.play(); 
+              };
+            })
+            .catch(err => {
+              console.log("Kamera Error: " + err);
+              alert("Gagal mengakses kamera. Pastikan kamera tidak sedang dipakai aplikasi lain (seperti OBS) dan izin browser diberikan.");
+            });
         }
-
-        // 2. Siapkan UI Kotak Log Diagnostik
-        const logArea = document.getElementById('cameraLogArea');
-        if (logArea) {
-          logArea.classList.remove('d-none');
-          logArea.innerHTML = '<strong class="text-white">Mulai Diagnostik Kamera...</strong><br>';
-        }
-
-        const logMsg = (msg, isError = false) => {
-          console.log(msg);
-          if (logArea) {
-            const color = isError ? '#ff7675' : '#55efc4';
-            logArea.innerHTML += `<span style="color: ${color}">> ${msg}</span><br>`;
-            logArea.scrollTop = logArea.scrollHeight;
-          }
-        };
-
-        // Cek dukungan dasar browser
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          logMsg("FATAL: Browser tidak mendukung navigator.mediaDevices.", true);
-          return;
-        }
-
-        // 3. Daftar Strategi Kamera yang akan diuji
-        const strategies = [
-          { 
-            name: "STRATEGI 1: Default Ideal (Kamera Depan)", 
-            constraints: { video: { facingMode: "user" } } 
-          },
-          { 
-            name: "STRATEGI 2: Polos (Apapun yang tersedia)", 
-            constraints: { video: true } 
-          },
-          { 
-            name: "STRATEGI 3: Resolusi Rendah (Untuk Mobile/Tablet Lama)", 
-            constraints: { video: { width: { ideal: 320 }, height: { ideal: 240 }, facingMode: "user" } } 
-          },
-          { 
-            name: "STRATEGI 4: Paksa Kamera Belakang (Environment)", 
-            constraints: { video: { facingMode: { exact: "environment" } } } 
-          },
-          { 
-            name: "STRATEGI 5: Audio + Video (Bypass Bug Browser Lawas)", 
-            constraints: { video: true, audio: true } 
-          } 
-        ];
-
-        let success = false;
-
-        // 4. Looping eksekusi strategi
-        for (let i = 0; i < strategies.length; i++) {
-          const strategy = strategies[i];
-          logMsg(`Mencoba ${strategy.name}...`);
-          
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia(strategy.constraints);
-            logMsg(`BERHASIL! Koneksi tembus menggunakan ${strategy.name}`);
-            
-            ATTENDANCE_STREAM = stream;
-            video.srcObject = stream;
-            
-            // Menggunakan event listener agar lebih aman lintas browser
-            video.onloadedmetadata = () => {
-              video.play();
-            };
-            
-            success = true;
-            break; // Hentikan loop jika sudah ada yang berhasil
-            
-          } catch (err) {
-            logMsg(`GAGAL: ${err.name} - ${err.message}`, true);
-          }
-        }
-
-        if (!success) {
-          logMsg("KESIMPULAN: Semua strategi ditolak.", true);
-          logMsg("Penyebab Utama: OS/Browser secara ketat memblokir akses hardware di dalam Iframe Google Apps Script.", true);
-        }
-      }
-
-      // Fungsi Baru: Handle tangkapan dari kamera bawaan HP untuk Absensi
-      function handleAbsensiCamera(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const imgEl = document.getElementById('attendancePreviewImg');
-          const placeholder = document.getElementById('attendancePlaceholder');
-          
-          imgEl.src = e.target.result;
-          imgEl.style.display = 'block';
-          placeholder.style.display = 'none';
-        };
-        reader.readAsDataURL(file);
-        event.target.value = ''; // Reset input agar bisa foto ulang
-      }
-
-      // Fungsi Baru: Handle tangkapan dari kamera bawaan HP untuk Register Wajah
-      function handleRegCamera(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const imgEl = document.getElementById('regPreviewImg');
-          const placeholder = document.getElementById('regPlaceholder');
-          
-          imgEl.src = e.target.result;
-          imgEl.style.display = 'block';
-          placeholder.style.display = 'none';
-        };
-        reader.readAsDataURL(file);
-        event.target.value = '';
       }
 
       function openModalRegisterFace() {
@@ -2507,12 +2422,11 @@
         checkMasterFace(select.value); // Langsung cek kasir pertama yang terpilih
       }
 
-      // Timpa fungsi checkMasterFace agar menyesuaikan dengan UI Native Camera yang baru
       function checkMasterFace(staffName) {
-        const imgEl = document.getElementById('regPreviewImg');
-        const placeholder = document.getElementById('regPlaceholder');
-        const previewArea = imgEl.parentElement; 
+        const video = document.getElementById('regVideo');
+        const previewArea = video.parentElement; // .scanner-box
         
+        // Hapus UI lama jika ada
         const oldImg = document.getElementById('masterPreviewImg');
         if (oldImg) oldImg.remove();
         const oldBtns = document.getElementById('masterBtnGroup');
@@ -2522,15 +2436,15 @@
           const existingUrl = faceMap[staffName];
 
           if (existingUrl && existingUrl !== "") {
-            if(imgEl) imgEl.style.display = 'none';
-            if(placeholder) placeholder.style.display = 'none';
-            
+            // Jika ada Master: Sembunyikan video, tunjukkan gambar
+            video.style.display = 'none';
             const img = document.createElement('img');
             img.id = 'masterPreviewImg';
             img.src = existingUrl;
             img.style = "width:100%; height:100%; object-fit:cover; border-radius:40px;";
             previewArea.appendChild(img);
 
+            // Tambahkan tombol Ganti & Hapus di pojok
             const btnGroup = document.createElement('div');
             btnGroup.id = 'masterBtnGroup';
             btnGroup.className = 'position-absolute bottom-0 end-0 m-3 d-flex gap-2';
@@ -2539,27 +2453,27 @@
               <button class="btn btn-sm btn-light rounded-circle shadow" onclick="deleteMasterPhoto('${staffName}')"><i class="fas fa-trash text-danger"></i></button>
             `;
             previewArea.appendChild(btnGroup);
+            
+            // Matikan stream jika tidak dipakai
+            if (ATTENDANCE_STREAM) {
+              ATTENDANCE_STREAM.getTracks().forEach(t => t.stop());
+              ATTENDANCE_STREAM = null;
+            }
           } else {
+            // Jika tidak ada: Pastikan kamera aktif
             reopenRegCamera();
           }
         }).getStaffMasterFaces();
       }
 
-      // Timpa fungsi reopenRegCamera
       function reopenRegCamera() {
-        const imgEl = document.getElementById('regPreviewImg');
-        const placeholder = document.getElementById('regPlaceholder');
-        
-        if(imgEl) {
-          imgEl.src = '';
-          imgEl.style.display = 'none';
-        }
-        if(placeholder) placeholder.style.display = 'flex';
-        
+        const video = document.getElementById('regVideo');
+        video.style.display = 'block';
         const img = document.getElementById('masterPreviewImg');
         if (img) img.remove();
         const btns = document.getElementById('masterBtnGroup');
         if (btns) btns.remove();
+        startCamera('regVideo');
       }
 
       function deleteMasterPhoto(name) {
@@ -2581,18 +2495,16 @@
         startCamera('attendanceVideo'); // Kembalikan ke scanner utama
       }
 
-      // Timpa fungsi executeRegisterFace
       function executeRegisterFace() {
         const name = document.getElementById('regStaffSelect').value;
         const btn = document.getElementById('btnCaptureMaster');
+        const video = document.getElementById('regVideo');
         
-        const imgEl = document.getElementById('regPreviewImg');
-        if (!imgEl || !imgEl.src || !imgEl.src.startsWith('data:image')) {
-          alert("Silakan tap kotak scanner dan ambil foto wajah Kasir terlebih dahulu!");
-          return;
-        }
-        
-        const imgData = imgEl.src;
+        // Capture frame
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const imgData = canvas.toDataURL('image/jpeg', 0.8);
 
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Mendaftarkan...';
@@ -2601,11 +2513,6 @@
           btn.disabled = false; btn.innerText = 'AMBIL FOTO';
           if(res.status === 'success') {
             alert(`Wajah master ${name} berhasil didaftarkan!`);
-            
-            imgEl.style.display = 'none';
-            imgEl.src = '';
-            document.getElementById('regPlaceholder').style.display = 'flex';
-            
             closeModalRegisterFace();
           } else { alert(res.message); }
         }).registerStaffFace(name, imgData);
@@ -2744,23 +2651,13 @@
         const scannerLine = document.querySelector('.scan-line');
         scannerLine.style.animationDuration = '0.5s';
         
+        // Ambil foto bukti saat ini secara diam-diam
         const proofImg = captureFaceFrame();
-        if (!proofImg) {
-          alert("Silakan tap kotak scanner dan ambil foto selfie kehadiran terlebih dahulu!");
-          scannerLine.style.animationDuration = '2s';
-          return;
-        }
 
         google.script.run.withSuccessHandler(res => {
           scannerLine.style.animationDuration = '2s';
           if (res.status === 'success') {
             alert(`Berhasil! ${CURRENT_ABSENSI_NAME} ${type} jam ${res.time}`);
-            
-            // Reset UI kembali ke state awal
-            document.getElementById('attendancePreviewImg').style.display = 'none';
-            document.getElementById('attendancePreviewImg').src = '';
-            document.getElementById('attendancePlaceholder').style.display = 'flex';
-            
             cancelAbsensi();
             if (USER_ROLE === 'ADMIN') loadAttendanceLogs();
           } else {
@@ -2771,11 +2668,13 @@
 
       // Fungsi untuk mengambil frame dari video stream absensi
       function captureFaceFrame() {
-        const imgEl = document.getElementById('attendancePreviewImg');
-        if (imgEl && imgEl.src && imgEl.src.startsWith('data:image')) {
-          return imgEl.src;
-        }
-        return null; 
+        const video = document.getElementById('attendanceVideo');
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/jpeg', 0.8); // Kembalikan Base64
       }
 
       function startFaceRegistration(name) {
@@ -3501,5 +3400,24 @@
       </div>
     </div>
 
+    <div id="modalRegisterFace" class="payment-overlay" style="z-index: 11000;">
+      <div class="bg-white p-4 rounded-5 shadow-lg text-center" style="width: 90%; max-width: 400px;">
+        <h5 class="fw-bold mb-2">Daftarkan Wajah Master</h5>
+        <p class="text-muted small mb-4">Pilih kasir untuk menyimpan foto referensi resmi.</p>
+        
+        <select id="regStaffSelect" class="form-select mb-3 fw-bold rounded-pill border-2">
+          </select>
+
+        <div class="scanner-box mx-auto mb-4" style="width: 200px; height: 200px;">
+          <video id="regVideo" autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+          <div class="face-overlay" style="margin: 20px;"></div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button class="btn btn-light w-100 rounded-pill fw-bold" onclick="closeModalRegisterFace()">BATAL</button>
+          <button class="btn btn-luxury w-100 rounded-pill fw-bold" id="btnCaptureMaster" onclick="executeRegisterFace()">AMBIL FOTO</button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
