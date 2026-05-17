@@ -525,23 +525,27 @@
           border-radius: 15px;
           padding-bottom: 80px; /* Gunakan padding dalam kontainer, bukan margin tabel */
       }
+
+      .cropper-circle .cropper-view-box,
+      .cropper-circle .cropper-face {
+        border-radius: 50% !important;
+      }
     </style>
   </head>
   <body>
 
     <div id="loginOverlay" class="login-overlay">
-      <img src="https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=2071" id="loginBg" alt="background" onload="showUI()">
+      <button class="btn btn-dark rounded-circle shadow" style="position: absolute; top: 20px; right: 20px; z-index: 10000; width: 45px; height: 45px; opacity: 0.8; border: 2px solid rgba(255,255,255,0.5);" onclick="openWallpaperManager()" title="Edit Wallpaper">
+        <i class="fas fa-image" style="color: white; font-size: 1.2rem;"></i>
+      </button>
+      
+      <img src="<?= typeof bgImageUrl !== 'undefined' && bgImageUrl ? bgImageUrl : 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=2071' ?>" id="loginBg" alt="background" onload="showUI()">
       
       <div class="login-box">
         <p class="text-white-50 small mb-4 fw-bold" style="letter-spacing: 3px; font-size: 0.6rem; opacity: 0.8;">SECURED SYSTEM</p>
         <div class="px-2">
-          <input type="password" id="passInput" class="form-control text-center mb-3" 
-                placeholder="••••" onkeydown="if(event.key === 'Enter') handleLogin()" autofocus>
-          
-          <button onclick="handleLogin()" class="btn btn-luxury w-100 py-2 rounded-3 fw-bold mb-2" style="letter-spacing: 2px;">
-            LOGIN
-          </button>
-          
+          <input type="password" id="passInput" class="form-control text-center mb-3" placeholder="••••" onkeydown="if(event.key === 'Enter') handleLogin()" autofocus>
+          <button onclick="handleLogin()" class="btn btn-luxury w-100 py-2 rounded-3 fw-bold mb-2" style="letter-spacing: 2px;">LOGIN</button>
           <div id="loginStatus" class="small fw-bold mt-2" style="min-height: 20px; color: #ff7675;"></div>
         </div>
       </div>
@@ -564,8 +568,9 @@
       
       <div class="app-top-header shadow-sm">
         <div class="d-flex align-items-center gap-2">
-          <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center overflow-hidden" style="width: 35px; height: 35px;">
-             <img id="uiLogo" src="" style="width: 20px; height: 20px; object-fit: contain; display:none;">
+          <div class="rounded-circle bg-white border d-flex align-items-center justify-content-center overflow-hidden shadow-sm" style="width: 45px; height: 45px; cursor: pointer; flex-shrink: 0;" onclick="openLogoManager()" title="Atur Logo">
+             <img id="uiLogo" src="<?= typeof logoUrl !== 'undefined' && logoUrl ? logoUrl : '' ?>" style="width: 100%; height: 100%; object-fit: cover; display: <?= typeof logoUrl !== 'undefined' && logoUrl ? 'block' : 'none' ?>;">
+             <i class="fas fa-store text-muted opacity-50" id="uiLogoPlaceholder" style="font-size: 1.2rem; display: <?= typeof logoUrl !== 'undefined' && logoUrl ? 'none' : 'block' ?>;"></i>
           </div>
           <div>
             <h6 class="fw-bold m-0 lh-1 text-dark" id="uiStoreName">Platarium</h6>
@@ -898,6 +903,28 @@
             <div class="d-flex gap-2">
               <button class="btn btn-light w-100 rounded-pill fw-bold" onclick="closeModalRegisterFace()">BATAL</button>
               <button class="btn btn-luxury w-100 rounded-pill fw-bold" id="btnCaptureMaster" onclick="executeRegisterFace()">AMBIL FOTO</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="modalConfigPreview" class="preview-overlay" onclick="if(event.target === this) closeConfigPreview()" style="z-index: 25000; display: none;">
+          <div class="preview-content">
+            <div class="preview-header">
+              <button class="btn-close-preview" onclick="closeConfigPreview()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="preview-img-wrapper d-flex justify-content-center align-items-center" style="background: #f0f2f5; padding: 30px;">
+              <img id="imgConfigPreview" src="" class="shadow-sm" style="width: 100%; height: 100%; object-fit: cover; max-width: 250px; max-height: 250px; transition: 0.3s;">
+            </div>
+            <div class="preview-footer">
+              <h5 id="txtConfigTitle" class="fw-bold mb-4">Pengaturan Gambar</h5>
+              <div class="d-flex gap-2">
+                <button class="btn btn-light w-100 py-3 rounded-pill fw-bold text-danger border shadow-sm" id="btnDeleteConfig">
+                  <i class="fas fa-trash me-2"></i>HAPUS
+                </button>
+                <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm" id="btnReplaceConfig">
+                  <i class="fas fa-folder-open me-2"></i>REPLACE
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -2044,30 +2071,42 @@
         reader.onload = function(e) {
           const imageElement = document.getElementById('imageToCrop');
           imageElement.src = e.target.result;
-          
           const modal = document.getElementById('modalCrop');
           modal.classList.remove('d-none');
           modal.style.display = "flex";
 
           if (CROPPER) { CROPPER.destroy(); }
 
+          // Logika Ratio & Border Radius berdasarkan target
+          let aspectR = 1/1;
+          const cropContainer = imageElement.parentElement;
+          
+          if(CURRENT_UPLOAD_ID === 'LOGO') {
+            aspectR = 1/1;
+            cropContainer.classList.add('cropper-circle'); // Terapkan efek bulat
+          } else if (CURRENT_UPLOAD_ID === 'WALLPAPER') {
+            aspectR = 16/9; // Landscape
+            cropContainer.classList.remove('cropper-circle');
+          } else {
+            aspectR = 1/1; // Produk biasa
+            cropContainer.classList.remove('cropper-circle');
+          }
+
           setTimeout(() => {
             CROPPER = new Cropper(imageElement, {
-              aspectRatio: 1 / 1,
-              viewMode: 0, 
+              aspectRatio: aspectR,
+              viewMode: 1, // Kunci drag di dalam gambar
               dragMode: 'move',
               autoCropArea: 1,
               restore: false,
-              guides: false, // CLEAN LOOK: Matikan garis grid
-              center: false, // CLEAN LOOK: Matikan tanda plus di tengah
+              guides: false,
+              center: false,
               highlight: false,
               cropBoxMovable: false,
               cropBoxResizable: false,
               toggleDragModeOnDblclick: false,
               ready: function() {
                 initZoomSlider();
-                // Opsional: Paksa gambar mengisi bingkai di awal
-                // this.cropper.zoomTo(1); 
               }
             });
           }, 150);
@@ -2083,28 +2122,103 @@
         document.getElementById('imageToCrop').src = '';
       }
 
-      // [2026-01-18] Alur Baru: Crop tidak langsung upload jika tambah produk baru
       function executeCropAndUpload() {
         if (!CROPPER) return;
         const btn = document.getElementById('btnExecuteCrop');
         btn.disabled = true;
         
-        const canvas = CROPPER.getCroppedCanvas({ width: 600, height: 600, fillColor: '#ffffff' });
+        // Sesuaikan tinggi resolusi canvas wallpaper
+        const canvasHeight = CURRENT_UPLOAD_ID === 'WALLPAPER' ? 450 : 800;
+        const canvas = CROPPER.getCroppedCanvas({ width: 800, height: canvasHeight, fillColor: '#ffffff' });
         const base64Data = canvas.toDataURL('image/jpeg', 0.90);
 
         if (CURRENT_UPLOAD_ID === 'NEW_PRODUCT') {
-          // Hanya simpan di variabel sementara
           TEMP_IMAGE_BASE64 = base64Data;
           document.getElementById('tempImgPreview').innerHTML = `<img src="${base64Data}" style="width:100%; height:100%; object-fit:cover;">`;
           btn.disabled = false;
           cancelCrop();
-        } else {
-          // Alur lama: Langsung upload untuk ganti foto produk yang sudah ada
+        } 
+        else if (CURRENT_UPLOAD_ID === 'LOGO' || CURRENT_UPLOAD_ID === 'WALLPAPER') {
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> MENYIMPAN...';
+          google.script.run.withSuccessHandler(res => {
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-check me-2"></i> SIMPAN FOTO';
+            if(res.status === 'success') {
+              if(CURRENT_UPLOAD_ID === 'LOGO') {
+                  document.getElementById('uiLogo').src = res.newUrl;
+                  document.getElementById('uiLogo').style.display = 'block';
+                  document.getElementById('uiLogoPlaceholder').style.display = 'none';
+              } else {
+                  document.getElementById('loginBg').src = res.newUrl;
+              }
+              cancelCrop();
+              closeConfigPreview();
+            } else {
+              alert(res.message);
+            }
+          }).uploadConfigImage(CURRENT_UPLOAD_ID, base64Data, 'cropped_' + SELECTED_FILE_NAME);
+        } 
+        else {
           btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Mengupdate...';
           google.script.run.withSuccessHandler(res => {
             btn.disabled = false; btn.innerHTML = '<i class="fas fa-check me-2"></i> SIMPAN FOTO';
             if(res.status === 'success') { loadProductsTable(); loadProducts(); cancelCrop(); }
           }).uploadProductImage(CURRENT_UPLOAD_ID, base64Data, 'cropped_' + SELECTED_FILE_NAME);
+        }
+      }
+
+      function openLogoManager() {
+        const imgEl = document.getElementById('uiLogo');
+        const isSet = imgEl.style.display !== 'none' && imgEl.src !== window.location.href;
+        
+        document.getElementById('imgConfigPreview').src = isSet ? imgEl.src : 'https://via.placeholder.com/300x300?text=KOSONG';
+        document.getElementById('imgConfigPreview').style.borderRadius = '50%'; // Preview bulat
+        document.getElementById('txtConfigTitle').innerText = 'Manajemen Logo Toko';
+        
+        document.getElementById('btnDeleteConfig').onclick = () => deleteConfigData('LOGO');
+        document.getElementById('btnReplaceConfig').onclick = () => { closeConfigPreview(); triggerUpload('LOGO'); };
+        
+        document.getElementById('modalConfigPreview').style.display = 'flex';
+      }
+
+      function openWallpaperManager() {
+        const currentSrc = document.getElementById('loginBg').src;
+        document.getElementById('imgConfigPreview').src = currentSrc;
+        document.getElementById('imgConfigPreview').style.borderRadius = '8px'; // Preview kotak landscape
+        document.getElementById('txtConfigTitle').innerText = 'Wallpaper Login Screen';
+        
+        document.getElementById('btnDeleteConfig').onclick = () => deleteConfigData('WALLPAPER');
+        document.getElementById('btnReplaceConfig').onclick = () => { closeConfigPreview(); triggerUpload('WALLPAPER'); };
+        
+        document.getElementById('modalConfigPreview').style.display = 'flex';
+      }
+      
+      function closeConfigPreview() {
+        document.getElementById('modalConfigPreview').style.display = 'none';
+      }
+
+      function deleteConfigData(type) {
+        if(confirm(`Hapus ${type === 'LOGO' ? 'Logo' : 'Wallpaper'} ini dan kembali ke default?`)) {
+            const btn = document.getElementById('btnDeleteConfig');
+            const ogText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+            
+            google.script.run.withSuccessHandler(res => {
+              btn.innerHTML = ogText;
+              btn.disabled = false;
+              if(res.status === 'success') {
+                  if(type === 'LOGO') {
+                    document.getElementById('uiLogo').src = '';
+                    document.getElementById('uiLogo').style.display = 'none';
+                    document.getElementById('uiLogoPlaceholder').style.display = 'block';
+                  } else {
+                    document.getElementById('loginBg').src = 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=2071'; // default unsplash original
+                  }
+                  closeConfigPreview();
+              } else {
+                  alert(res.message);
+              }
+            }).deleteConfigImage(type);
         }
       }
 
