@@ -3207,10 +3207,11 @@
 
         google.script.run
           .withSuccessHandler(res => {
+            // Tangkap jika respon kosong atau backend mengembalikan objek error
             if (!res || res.error || (Array.isArray(res) && res.length === 0)) {
-              // FIX TICKER BLANK: Hapus padding agar elemen kembali ke kiri layar saat animasi dimatikan
-              tickerContent.style.paddingLeft = '20px';
-              tickerContent.innerHTML = `<span class="text-danger small fw-bold p-4">DATA PASAR TIDAK TERSEDIA (OFFLINE)</span>`;
+              tickerContent.style.paddingLeft = '20px'; // Reset padding agar teks terlihat
+              const errorMsg = res && res.error ? res.error : "DATA PASAR TIDAK TERSEDIA";
+              tickerContent.innerHTML = `<span class="text-danger small fw-bold p-4"><i class="fas fa-exclamation-triangle me-2"></i>${errorMsg}</span>`;
               tickerContent.style.animation = "none";
               return;
             }
@@ -3227,12 +3228,12 @@
               </div>
             `).join('');
 
+            // Gandakan konten agar efek looping tidak terputus
             tickerContent.innerHTML = content + content + content;
 
             const updateAnimation = () => {
               const pixelsPerSecond = 25;
               const totalWidth = tickerContent.scrollWidth / 3;
-              // Jika lebar terdeteksi 0 (karena view hidden), gunakan fallback lebar
               const safeWidth = totalWidth > 100 ? totalWidth : 1500;
               const dynamicDuration = safeWidth / pixelsPerSecond;
               
@@ -3242,6 +3243,13 @@
 
             updateAnimation();
             window.addEventListener('resize', updateAnimation);
+          })
+          // [BARU] Wajib ditambahkan untuk menangkap error dari sistem Proxy GitHub Pages
+          .withFailureHandler(err => {
+            console.error("Gagal mengambil data pasar:", err);
+            tickerContent.style.paddingLeft = '20px'; // Reset padding agar teks terlihat
+            tickerContent.innerHTML = `<span class="text-danger small fw-bold p-4"><i class="fas fa-wifi me-2"></i>KONEKSI KE SERVER GAGAL / TIMEOUT</span>`;
+            tickerContent.style.animation = "none";
           })
           .getMaterialsData();
       }
