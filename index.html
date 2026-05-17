@@ -536,9 +536,14 @@
   </head>
   <body>
 
+    <div id="initialSystemLoader" style="position: fixed; inset: 0; background: #ffffff; z-index: 999999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease;">
+      <div class="spinner-border text-warning" style="width: 3.5rem; height: 3.5rem; border-width: 0.3rem;" role="status"></div>
+      <div class="mt-4 fw-bold text-muted" style="letter-spacing: 3px; font-size: 0.8rem;">MEMUAT SISTEM...</div>
+    </div>
+
     <div id="loginOverlay" class="login-overlay">
       <button type="button" class="btn btn-dark rounded-circle shadow d-flex justify-content-center align-items-center" style="position: absolute; top: 20px; right: 20px; z-index: 10000; width: 45px; height: 45px; opacity: 0.8; border: 2px solid rgba(255,255,255,0.5);"
-      onclick="openWallpaperManager()" title="Edit Wallpaper">
+        onclick="openWallpaperManager()" title="Edit Wallpaper">
         <i class="fas fa-image" style="color: white; font-size: 1.2rem;"></i>
       </button>
       
@@ -555,15 +560,30 @@
     </div>
 
     <script>
+      let isConfigChecked = false;
+      let isCustomBgLoading = false;
+
       function showUI() {
-        const overlay = document.getElementById('loginOverlay');
-        overlay.style.opacity = '1';
+        // Tahan UI jika custom background masih dalam proses unduh, atau config belum selesai dicek
+        if (isCustomBgLoading || !isConfigChecked) return;
+        removeLoaderAndShowUI();
       }
 
-      // Backup: Jika gambar gagal dimuat dalam 3 detik, paksa UI muncul
-      setTimeout(() => {
+      function removeLoaderAndShowUI() {
+        const loader = document.getElementById('initialSystemLoader');
+        if (loader) {
+          loader.style.opacity = '0';
+          setTimeout(() => loader.remove(), 500); // Hapus elemen dari DOM setelah transisi opacity
+        }
         document.getElementById('loginOverlay').style.opacity = '1';
-      }, 3000);
+      }
+
+      // Backup: Timeout diperpanjang ke 5 detik untuk mengantisipasi koneksi lambat saat memuat gambar berat
+      setTimeout(() => {
+        isConfigChecked = true;
+        isCustomBgLoading = false;
+        removeLoaderAndShowUI();
+      }, 5000);
     </script>
 
     <div id="main-container" class="d-none">
@@ -576,7 +596,7 @@
              <div id="uiLogoPlaceholder" style="width: 100%; height: 100%; background-color: #ffffff; display: block;"></div>
           </div>
           <div>
-            <h6 class="fw-bold m-0 lh-1 text-dark" id="uiStoreName">Platarium</h6>
+            <h6 class="fw-bold m-0 lh-1 text-dark" id="uiStoreName">Gord Cafe</h6>
             <span class="badge bg-warning text-dark border-0 rounded-pill" id="roleLabel" style="font-size: 0.6rem; padding: 2px 8px;">Role</span>
           </div>
         </div>
@@ -1327,11 +1347,21 @@
       }
 
       // [BARU] Panggil data Logo & Wallpaper sesaat setelah proxy API siap
-      google.script.run.withSuccessHandler(res => {
+      google.script.run
+      .withSuccessHandler(res => {
         if(res && res.status === 'success') {
           // Timpa wallpaper jika ada di GSheet
           if (res.wallpaper && res.wallpaper.includes("http")) {
-            document.getElementById('loginBg').src = res.wallpaper;
+            isCustomBgLoading = true; // Tandai bahwa gambar sedang dimuat
+            const bgImg = document.getElementById('loginBg');
+            
+            // Pasang event pendengar baru khusus untuk custom image
+            bgImg.onload = () => {
+              isCustomBgLoading = false;
+              showUI(); 
+            };
+            
+            bgImg.src = res.wallpaper;
           }
           
           // Timpa logo jika ada di GSheet
@@ -1342,7 +1372,21 @@
             document.getElementById('uiLogoPlaceholder').style.display = 'none';
           }
         }
-      }).getAppConfig();
+        
+        // Beri tahu sistem bahwa config sudah selesai dicek
+        isConfigChecked = true;
+        
+        // Coba tampilkan UI. Jika gambar custom ada dan belum selesai, fungsi ini otomatis tertahan (return).
+        showUI();
+        
+      })
+      .withFailureHandler(err => {
+        // Jika API gagal (misal koneksi terputus), paksa UI muncul menggunakan placeholder bawaan
+        isConfigChecked = true;
+        isCustomBgLoading = false;
+        showUI();
+      })
+      .getAppConfig();
 
       // [PRE-LOAD] Panggil data segera setelah script dimuat di browser
       // Data akan disimpan di variabel global PRODUCTS
