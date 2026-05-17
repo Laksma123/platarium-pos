@@ -3009,6 +3009,7 @@
             });
           }
 
+          // Eksekusi TANPA withFailureHandler
           google.script.run
             .withSuccessHandler(function(res) {
               if (res && res.status === 'success') {
@@ -3023,13 +3024,6 @@
                   targetBtn.disabled = false;
                   targetBtn.innerHTML = originalContent;
                 }
-              }
-            })
-            .withFailureHandler(function(err) {
-              alert("Kesalahan Komunikasi Server: " + err.message);
-              if (targetBtn) {
-                targetBtn.disabled = false;
-                targetBtn.innerHTML = originalContent;
               }
             })
             .deleteAttendanceRecord(nama, tgl);
@@ -3067,26 +3061,21 @@
           </div>
         `;
 
-        // FIRE AND FORGET: Sesuai rancangan Anda, lepaskan kasir dalam 3 detik tanpa menahan layar
+        // FIRE AND FORGET: Lepaskan antrean kasir dalam 3 detik
         setTimeout(() => {
           cancelAbsensi();
           actionArea.innerHTML = originalHTML;
         }, 3000);
 
-        // Pengiriman data ke Google Apps Script di background
+        // Pengiriman data TANPA withFailureHandler untuk menghindari bug Proxy dari hosting eksternal
         google.script.run
           .withSuccessHandler(res => {
             if (scannerLine) scannerLine.style.animationDuration = '2s';
             if (res && res.status === 'success') {
               if (USER_ROLE === 'ADMIN') loadAttendanceLogs();
             } else {
-              // Jika server mengembalikan status error, kita keluarkan alert agar tahu letak salahnya
-              alert("Gagal mencatat absensi: " + (res ? res.message : "Misteri / Respon kosong"));
+              alert("Gagal mencatat absensi: " + (res ? res.message : "Respon kosong"));
             }
-          })
-          .withFailureHandler(err => {
-            if (scannerLine) scannerLine.style.animationDuration = '2s';
-            alert("Kesalahan Sistem Server: " + err.message);
           })
           .recordAttendance(CURRENT_ABSENSI_NAME, type, proofImg);
       }
