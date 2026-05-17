@@ -1545,7 +1545,8 @@
       // Perbaikan fungsi Logout untuk GitHub Pages
       function doLogout() {
         const btn = event.currentTarget;
-        if(btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Logging out...';
+        // Hilangkan teks, ganti seluruh innerHTML dengan icon spinner saja
+        if(btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin text-white"></i>';
         
         // Cukup segarkan halaman ke root untuk mereset memori dan kembali ke halaman login
         setTimeout(() => {
@@ -1557,11 +1558,12 @@
         const btn = document.getElementById('btnRefresh');
         const originalContent = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-sync-alt fa-spin me-2"></i> Force Updating...';
-
+        // Hilangkan teks, putar icon sync yang sudah ada
+        btn.innerHTML = '<i class="fas fa-sync-alt fa-spin text-secondary"></i>';
+        
         // Langsung panggil fetchInitialData dengan AI aktif.
         // Karena clearMarketCache dihapus, Gemini hanya dipanggil jika cache > 1 jam.
-        fetchInitialData(true); 
+        fetchInitialData(true);
         
         setTimeout(() => {
           btn.disabled = false;
@@ -1634,10 +1636,10 @@
 
       function loadProductsTable() {
         const tbody = document.getElementById('productTableBody');
-        // Perbaikan: Tambahkan div pembungkus dan teks agar rapi & center
+        // Perbaikan: Ubah colspan dari 5 menjadi 6 agar sel loading memakan seluruh kolom dan rata tengah sempurna
         tbody.innerHTML = `
           <tr>
-            <td colspan="5" class="text-center p-5">
+            <td colspan="6" class="text-center p-5">
               <div class="d-flex flex-column align-items-center justify-content-center">
                 <div class="spinner-border text-warning mb-3" role="status"></div>
                 <span class="fw-bold text-secondary">Memuat data produk...</span>
@@ -1645,7 +1647,6 @@
             </td>
           </tr>
         `;
-        
         google.script.run.withSuccessHandler(data => {
           PRODUCTS = data;
           renderProductTable();
@@ -2198,16 +2199,19 @@
           }).uploadProductImage(CURRENT_UPLOAD_ID, base64Data, 'cropped_' + SELECTED_FILE_NAME);
         }
       }
-      
+
       function openLogoManager() {
-        // [PERBAIKAN] Pindahkan modal secara dinamis ke root body agar tidak disembunyikan oleh parent element
         document.body.appendChild(document.getElementById('modalConfigPreview'));
-        
         const imgEl = document.getElementById('uiLogo');
         const isSet = imgEl.style.display !== 'none' && imgEl.src !== window.location.href;
         
-        document.getElementById('imgConfigPreview').src = isSet ? imgEl.src : 'https://via.placeholder.com/300x300?text=KOSONG';
-        document.getElementById('imgConfigPreview').style.borderRadius = '50%';
+        const imgPreview = document.getElementById('imgConfigPreview');
+        const wrapper = imgPreview.parentElement;
+        
+        imgPreview.src = isSet ? imgEl.src : 'https://via.placeholder.com/300x300?text=KOSONG';
+        imgPreview.style.borderRadius = '50%';
+        wrapper.style.aspectRatio = '1/1'; // Pastikan preview logo kembali 1:1 (Persegi)
+        
         document.getElementById('txtConfigTitle').innerText = 'Manajemen Logo Toko';
         
         document.getElementById('btnDeleteConfig').onclick = () => deleteConfigData('LOGO');
@@ -2217,12 +2221,16 @@
       }
 
       function openWallpaperManager() {
-        // [PERBAIKAN] Pindahkan modal secara dinamis ke root body agar bisa tampil di depan layar login
         document.body.appendChild(document.getElementById('modalConfigPreview'));
-        
         const currentSrc = document.getElementById('loginBg').src;
-        document.getElementById('imgConfigPreview').src = currentSrc;
-        document.getElementById('imgConfigPreview').style.borderRadius = '8px'; 
+        
+        const imgPreview = document.getElementById('imgConfigPreview');
+        const wrapper = imgPreview.parentElement;
+        
+        imgPreview.src = currentSrc;
+        imgPreview.style.borderRadius = '8px'; 
+        wrapper.style.aspectRatio = '16/9'; // Ubah rasio wrapper menjadi landscape secara dinamis
+        
         document.getElementById('txtConfigTitle').innerText = 'Wallpaper Login Screen';
         
         document.getElementById('btnDeleteConfig').onclick = () => deleteConfigData('WALLPAPER');
