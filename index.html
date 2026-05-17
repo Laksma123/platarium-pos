@@ -1380,12 +1380,6 @@
         showUI();
         
       })
-      .withFailureHandler(err => {
-        // Jika API gagal (misal koneksi terputus), paksa UI muncul menggunakan placeholder bawaan
-        isConfigChecked = true;
-        isCustomBgLoading = false;
-        showUI();
-      })
       .getAppConfig();
 
       // [PRE-LOAD] Panggil data segera setelah script dimuat di browser
