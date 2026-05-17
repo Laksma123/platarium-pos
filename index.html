@@ -3201,12 +3201,9 @@
         const tickerContent = document.getElementById('tickerContent');
         if (!tickerContent) return;
 
-        // Set padding awal sebelum request AI
         tickerContent.style.paddingLeft = '100%';
-        tickerContent.innerHTML = '<span class="text-white-50 small p-4"><i class="fas fa-sync fa-spin me-2"></i>Menghubungkan ke Gemini AI...</span>';
+        tickerContent.innerHTML = '<span class="text-white-50 small p-4"><i class="fas fa-sync fa-spin me-2"></i>Menganalisa Pasar Live...</span>';
 
-        // PERBAIKAN: Posisi withFailureHandler HARUS diletakkan sebelum withSuccessHandler 
-        // agar tidak menghancurkan proxy GitHub Pages.
         google.script.run
           .withFailureHandler(err => {
             console.error("Gagal mengambil data pasar:", err);
@@ -3223,19 +3220,36 @@
               return;
             }
 
-            // Kembalikan padding jika data berhasil didapat
             tickerContent.style.paddingLeft = '100%';
+            
+            let contentHtml = '';
+            
+            res.forEach(m => {
+              // Jika array variants kosong (AI tidak menemukan harga)
+              if (!m.variants || m.variants.length === 0) {
+                contentHtml += `
+                  <div class="ticker-item">
+                    <span>${m.name.toUpperCase()}</span>
+                    <span class="text-danger fw-bold ms-2" style="font-size: 0.8rem; letter-spacing: 0;">Data Pasar Tidak Tersedia</span>
+                    <div class="ticker-dot"></div>
+                  </div>
+                `;
+              } else {
+                // Loop semua varian (maksimal 3 sesuai prompt)
+                m.variants.forEach(v => {
+                  contentHtml += `
+                    <div class="ticker-item">
+                      <span>${v.variant.toUpperCase()}</span>
+                      <span class="ticker-price">Rp ${Number(v.price).toLocaleString('id-ID')}</span>
+                      <span class="small opacity-50 ms-1">/${m.unit}</span>
+                      <div class="ticker-dot"></div>
+                    </div>
+                  `;
+                });
+              }
+            });
 
-            const content = res.map(m => `
-              <div class="ticker-item">
-                <span>${m.name.toUpperCase()}</span>
-                <span class="ticker-price">Rp ${Number(m.price).toLocaleString()}</span>
-                <span class="small opacity-50 ms-1">/${m.unit}</span>
-                <div class="ticker-dot"></div>
-              </div>
-            `).join('');
-
-            tickerContent.innerHTML = content + content + content;
+            tickerContent.innerHTML = contentHtml + contentHtml + contentHtml;
 
             const updateAnimation = () => {
               const pixelsPerSecond = 25;
@@ -3252,7 +3266,7 @@
           })
           .getMaterialsData();
       }
-
+      
       function Utilities_formatDateIndo(date) {
         const d = new Date(date);
         return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
