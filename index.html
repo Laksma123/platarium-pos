@@ -650,25 +650,30 @@
               <h3 class="fw-bold m-0"><i class="fas fa-boxes me-2 text-warning"></i>Daftar Menu</h3>
               
               <div class="d-flex flex-wrap gap-2 align-items-center">
-                <div class="input-group input-group-sm shadow-sm" style="width: 200px;">
-                  <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
-                  <input type="text" id="searchTable" class="form-control border-start-0 ps-0" placeholder="Cari ID/Nama..." oninput="filterTable()">
+                
+                <button class="btn btn-outline-danger px-4 rounded-pill shadow-sm fw-bold border-2 d-flex align-items-center" onclick="openBulkRecipeModal()">
+                  <i class="fas fa-magic me-2"></i>Edit Resep Massal
+                </button>
+
+                <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: 250px; height: 38px;">
+                  <span class="input-group-text bg-transparent border-0"><i class="fas fa-search text-muted"></i></span>
+                  <input type="text" id="searchTable" class="form-control border-0 shadow-none bg-transparent fw-bold ps-0" placeholder="Cari ID/Nama..." oninput="filterTable()">
                 </div>
 
-                <div class="input-group input-group-sm shadow-sm" style="width: auto;">
-                  <span class="input-group-text bg-white border-end-0 text-muted small"><i class="fas fa-filter me-2"></i> Urut:</span>
-                  <select class="form-select border-start-0 ps-0 fw-bold" style="font-size: 0.85rem; cursor:pointer;" onchange="updateSort(this.value)">
+                <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
+                  <span class="input-group-text bg-transparent border-0 text-muted small"><i class="fas fa-filter"></i></span>
+                  <select class="form-select border-0 shadow-none fw-bold bg-transparent px-2" style="font-size: 0.85rem; cursor:pointer;" onchange="updateSort(this.value)">
                     <option value="id" selected>Nomor ID</option>
                     <option value="name">Alphabet</option>
                     <option value="category">Kategori</option>
                     <option value="price">Harga</option>
                   </select>
-                  <button class="btn btn-white border shadow-none" id="btnToggleSort" onclick="toggleSortDirection()">
+                  <button class="btn btn-light border-start rounded-0" id="btnToggleSort" onclick="toggleSortDirection()">
                     <i class="fas fa-sort-amount-down-alt"></i>
                   </button>
                 </div>
 
-                <button class="btn btn-primary px-4 rounded-pill shadow-sm fw-bold" onclick="showAddProductModal()">
+                <button class="btn btn-primary px-4 rounded-pill shadow-sm fw-bold d-flex align-items-center" onclick="showAddProductModal()" style="height: 38px;">
                   <i class="fas fa-plus-circle me-2"></i>Tambah
                 </button>
               </div>
@@ -679,11 +684,12 @@
               <table class="table table-hover align-middle m-0">
                 <thead class="bg-dark text-white">
                   <tr>
-                    <th class="ps-4 py-3">ID & Nama</th>
-                    <th>Harga</th>
-                    <th>Kategori</th>
-                    <th>Foto</th>
-                    <th class="text-center">Aksi Pengelola</th>
+                    <th class="ps-4 py-3" style="width: 25%;">ID & Nama</th>
+                    <th style="width: 15%;">Harga</th>
+                    <th style="width: 15%;">Kategori</th>
+                    <th class="text-center" style="width: 15%;">Resep</th>
+                    <th class="text-center" style="width: 15%;">Foto</th>
+                    <th class="text-center pe-4" style="width: 15%;">Aksi</th>
                   </tr>
                 </thead>
                 <tbody id="productTableBody">
@@ -942,6 +948,16 @@
               </select>
             </div>
 
+            <div class="mb-4 bg-light p-3 rounded-4 border border-warning border-opacity-25 d-flex justify-content-between align-items-center">
+              <div>
+                <label class="small fw-bold text-dark d-block m-0">RESEP BAHAN</label>
+                <small class="text-muted" style="font-size: 0.65rem;" id="newRecipeStatus">Belum ada bahan diatur</small>
+              </div>
+              <button class="btn btn-warning rounded-pill btn-sm px-3 fw-bold shadow-sm text-dark" onclick="openRecipeSettings('NEW', 'Menu Baru')">
+                <i class="fas fa-mortar-pestle me-1"></i> Atur Resep
+              </button>
+            </div>
+
             <div class="mb-4">
               <label class="small fw-bold text-muted d-block">FOTO PRODUK</label>
               <div class="d-flex align-items-center gap-3">
@@ -1055,21 +1071,22 @@
             </div>
             
             <div class="d-flex flex-wrap gap-2 align-items-center">
-              <div class="input-group input-group-sm shadow-sm" style="width: 200px;">
-                <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
-                <input type="text" id="searchStock" class="form-control border-start-0 ps-0" placeholder="Cari Material..." oninput="filterStockTable()">
+              
+              <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: 250px; height: 38px;">
+                <span class="input-group-text bg-transparent border-0"><i class="fas fa-search text-muted"></i></span>
+                <input type="text" id="searchStock" class="form-control border-0 shadow-none bg-transparent fw-bold ps-0" placeholder="Cari Material..." oninput="filterStockTable()">
               </div>
 
-              <div class="input-group input-group-sm shadow-sm" style="width: auto;">
-                <span class="input-group-text bg-white border-end-0 text-muted small"><i class="fas fa-filter me-2"></i> Urut:</span>
-                <select id="sortStock" class="form-select border-start-0 ps-0 fw-bold" style="font-size: 0.85rem; cursor:pointer;" onchange="updateStockSort(this.value)">
+              <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
+                <span class="input-group-text bg-transparent border-0 text-muted small"><i class="fas fa-filter"></i></span>
+                <select id="sortStock" class="form-select border-0 shadow-none fw-bold bg-transparent px-2" style="font-size: 0.85rem; cursor:pointer;" onchange="updateStockSort(this.value)">
                   <option value="id" selected>Nomor ID</option>
                   <option value="name">Alphabet</option>
                   <option value="stock">Stok Terendah</option>
                 </select>
               </div>
 
-              <div class="bg-dark text-white rounded-pill px-3 py-2 d-flex align-items-center shadow-lg" style="font-size: 0.65rem;">
+              <div class="bg-dark text-white rounded-pill px-3 d-flex align-items-center shadow-lg" style="height: 38px; font-size: 0.65rem;">
                 <span class="pulse-green me-2"></span> RECIPE ENGINE ACTIVE
               </div>
             </div>
@@ -1090,6 +1107,95 @@
                 <tbody id="stockTableBody" class="small bg-white">
                   </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+        
+        <div id="modalRecipeSettings" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10500; opacity: 1 !important;">
+          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 500px; height: 85vh; animation: slideUp 0.3s ease-out;">
+            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+              <div>
+                <h5 class="fw-bold m-0"><i class="fas fa-mortar-pestle text-warning me-2"></i>Komposisi Resep</h5>
+                <small class="text-muted fw-bold" id="recipeTargetName">Menu: ...</small>
+              </div>
+              <button class="btn-close shadow-none" onclick="closeRecipeSettings()"></button>
+            </div>
+            
+            <div class="bg-light p-3 rounded-4 mb-3 border">
+              <label class="small fw-bold text-muted mb-2">TAMBAH BAHAN</label>
+              
+              <select id="recipeMaterialSelect" class="form-select fw-bold mb-2 border-2" onchange="handleMaterialSelectChange()">
+                <option value="" selected disabled>Pilih bahan baku...</option>
+                <option value="NEW_MATERIAL" class="text-primary fw-bold">[+] Buat Bahan Baku Baru...</option>
+                </select>
+
+              <input type="text" id="recipeNewMaterialName" class="form-control fw-bold mb-2 border-2 d-none" placeholder="Ketik nama bahan baru...">
+
+              <div class="d-flex gap-2">
+                <div class="input-group">
+                  <input type="number" id="recipeQty" class="form-control fw-bold border-2" placeholder="Jumlah" step="0.1">
+                  <select id="recipeUnit" class="form-select border-2" style="max-width: 90px; font-weight: 600;">
+                    <option value="gr">gr</option>
+                    <option value="ml">ml</option>
+                    <option value="pcs">pcs</option>
+                    <option value="kg">kg</option>
+                    <option value="L">L</option>
+                  </select>
+                </div>
+                <button class="btn btn-dark px-3 rounded-3" onclick="addMaterialToTempBasket()"><i class="fas fa-plus"></i></button>
+              </div>
+            </div>
+
+            <div class="flex-fill overflow-auto border rounded-4 mb-3 bg-white">
+              <table class="table table-hover align-middle m-0 small">
+                <thead class="bg-light sticky-top">
+                  <tr><th class="ps-3">Nama Bahan</th><th class="text-center">Takaran</th><th class="text-center">#</th></tr>
+                </thead>
+                <tbody id="recipeBasketBody">
+                  <tr><td colspan="3" class="text-center p-4 text-muted">Belum ada bahan</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="saveRecipeSession()">
+              <i class="fas fa-save me-2"></i> SIMPAN & KEMBALI
+            </button>
+          </div>
+        </div>
+
+        <div id="modalBulkRecipe" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10500; opacity: 1 !important;">
+          <div class="bg-white p-4 rounded-5 shadow-lg" style="width: 95%; max-width: 500px; animation: slideUp 0.3s ease-out;">
+            <h5 class="fw-bold mb-1 text-center"><i class="fas fa-magic text-danger me-2"></i>Edit Massal Resep</h5>
+            <p class="text-center text-muted small mb-4">Ubah atau hapus satu bahan secara serentak di banyak menu.</p>
+            
+            <div class="mb-3">
+              <label class="small fw-bold text-muted">1. PILIH BAHAN TARGET</label>
+              <select id="bulkMaterialSelect" class="form-select fw-bold border-2"></select>
+            </div>
+
+            <div class="mb-3">
+              <label class="small fw-bold text-muted">2. AKSI</label>
+              <select id="bulkActionSelect" class="form-select fw-bold border-2" onchange="toggleBulkActionUI()">
+                <option value="EDIT">Ubah Nilai Takaran</option>
+                <option value="DELETE" class="text-danger">Hapus Total dari Menu</option>
+              </select>
+            </div>
+
+            <div class="mb-3" id="bulkValueArea">
+              <label class="small fw-bold text-muted">3. NILAI BARU</label>
+              <div class="input-group">
+                <input type="number" id="bulkNewQty" class="form-control fw-bold border-2" placeholder="0">
+                <span class="input-group-text bg-light border-2" id="bulkUnitLabel">unit</span>
+              </div>
+            </div>
+
+            <div class="p-3 bg-light rounded-4 mb-4 border text-center">
+              <span class="text-muted small italic">Sistem akan memindai menu yang terdampak setelah menekan tombol Lanjutkan.</span>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button class="btn btn-light w-100 py-2 fw-bold rounded-pill" onclick="closeBulkRecipeModal()">BATAL</button>
+              <button class="btn btn-danger w-100 py-2 fw-bold rounded-pill shadow-sm">LANJUTKAN <i class="fas fa-arrow-right ms-1"></i></button>
             </div>
           </div>
         </div>
@@ -1211,6 +1317,8 @@
       let POS_SORTABLE = null;
       let IS_REORDER_MODE = false;
       let CURRENT_GRID_COLS = 3;
+      let TEMP_RECIPE_BASKET = [];
+      let CURRENT_EDITING_RECIPE_ID = null; // Menyimpan ID 'NEW' atau ID 'P001'
 
       function startRealtimeClock() {
         setInterval(() => {
@@ -1499,7 +1607,6 @@
           return;
         }
 
-        // Tambahan penamaan (Ice) / (Hot)
         if(isIce) name += " (Ice)";
         if(isHot) name += " (Hot)";
 
@@ -1507,12 +1614,13 @@
         btnSubmit.disabled = true;
         btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Menyimpan...';
 
+        // KIRIM ARRAY RESEP SEBAGAI PARAMETER KE-6
         google.script.run
           .withSuccessHandler(res => {
             btnSubmit.disabled = false;
             btnSubmit.innerText = "SIMPAN";
             if(res.status === 'success') {
-              // Reset Form
+              // Reset Form & Memory Resep
               document.getElementById('newPId').value = '';
               document.getElementById('newPName').value = '';
               document.getElementById('newPPrice').value = '';
@@ -1521,6 +1629,9 @@
               TEMP_IMAGE_BASE64 = null;
               document.getElementById('tempImgPreview').innerHTML = '<i class="fas fa-image text-muted opacity-50"></i>';
               
+              TEMP_RECIPE_BASKET = []; // Reset keranjang resep
+              document.getElementById('newRecipeStatus').innerText = "Belum ada bahan diatur";
+              
               closeAddProductModal();
               loadProductsTable(); 
               loadProducts();
@@ -1528,7 +1639,191 @@
               alert(res.message);
             }
           })
-          .addProduct(idManual, name, price, cat, TEMP_IMAGE_BASE64);
+          .addProduct(idManual, name, price, cat, TEMP_IMAGE_BASE64, TEMP_RECIPE_BASKET);
+      }
+
+      // ==========================================
+      // FUNGSI RECIPE ENGINE (FRONTEND UI)
+      // ==========================================
+      
+      function openRecipeSettings(pid, productName) {
+        CURRENT_EDITING_RECIPE_ID = pid;
+        document.getElementById('recipeTargetName').innerText = `Menu: ${productName}`;
+        
+        // Populate Dropdown Materials
+        const select = document.getElementById('recipeMaterialSelect');
+        let optionsHtml = `<option value="" selected disabled>Pilih bahan baku...</option>
+                           <option value="NEW_MATERIAL" class="text-primary fw-bold">[+] Buat Bahan Baku Baru...</option>`;
+        
+        if(MATERIALS_DATA && MATERIALS_DATA.length > 0) {
+          // Sort alfabetis agar mudah dicari
+          let sortedMats = [...MATERIALS_DATA].sort((a,b) => a.name.localeCompare(b.name));
+          sortedMats.forEach(m => {
+            optionsHtml += `<option value="${m.id}" data-unit="${m.unit}">${m.name} (${m.unit})</option>`;
+          });
+        }
+        select.innerHTML = optionsHtml;
+        handleMaterialSelectChange(); // Reset UI state
+
+        if (pid === 'NEW') {
+          // Mode Tambah Produk: Ambil dari memory jika sebelumnya sudah diisi
+          renderRecipeBasket();
+          document.getElementById('modalAddProduct').classList.add('d-none');
+        } else {
+          // Mode Edit Individual: Idealnya hit API ke server, tapi untuk sekarang kita clear basket
+          // Nanti backend akan mengembalikan resep existing.
+          TEMP_RECIPE_BASKET = [];
+          renderRecipeBasket();
+          // Opsional: fetch existing recipe dari server disini
+        }
+        
+        document.getElementById('modalRecipeSettings').classList.remove('d-none');
+      }
+
+      function closeRecipeSettings() {
+        document.getElementById('modalRecipeSettings').classList.add('d-none');
+        if (CURRENT_EDITING_RECIPE_ID === 'NEW') {
+          document.getElementById('modalAddProduct').classList.remove('d-none');
+        }
+      }
+
+      function handleMaterialSelectChange() {
+        const select = document.getElementById('recipeMaterialSelect');
+        const newMatInput = document.getElementById('recipeNewMaterialName');
+        const unitSelect = document.getElementById('recipeUnit');
+
+        if (select.value === 'NEW_MATERIAL') {
+          newMatInput.classList.remove('d-none');
+          unitSelect.disabled = false; // Bebas pilih unit
+          newMatInput.focus();
+        } else {
+          newMatInput.classList.add('d-none');
+          // Jika memilih bahan yg ada, paksa unit menyesuaikan
+          const selectedOption = select.options[select.selectedIndex];
+          if(selectedOption && selectedOption.dataset.unit) {
+            unitSelect.value = selectedOption.dataset.unit;
+            unitSelect.disabled = true; // Kunci unit agar tidak tumpang tindih
+          }
+        }
+      }
+
+      function addMaterialToTempBasket() {
+        const select = document.getElementById('recipeMaterialSelect');
+        const qtyInput = document.getElementById('recipeQty').value;
+        const unitSelect = document.getElementById('recipeUnit').value;
+        
+        if (!qtyInput || qtyInput <= 0) return alert("Masukkan takaran yang valid!");
+
+        let matId, matName;
+
+        if (select.value === 'NEW_MATERIAL') {
+          matName = document.getElementById('recipeNewMaterialName').value.trim();
+          if (!matName) return alert("Masukkan nama bahan baku baru!");
+          // Bikin Pseudo ID sementara (Backend yang akan generate ID asli nanti)
+          matId = "NEW_" + Date.now(); 
+        } else {
+          matId = select.value;
+          const selectedOption = select.options[select.selectedIndex];
+          matName = selectedOption.text.split(' (')[0]; // Hapus teks unit di belakang nama
+        }
+
+        // Cek duplikasi di memory
+        const existingIndex = TEMP_RECIPE_BASKET.findIndex(item => item.id === matId || item.name === matName);
+        if (existingIndex !== -1) {
+          // Tambahkan value jika bahan sama persis dimasukkan lagi
+          TEMP_RECIPE_BASKET[existingIndex].qty += parseFloat(qtyInput);
+        } else {
+          TEMP_RECIPE_BASKET.push({
+            id: matId,
+            name: matName,
+            qty: parseFloat(qtyInput),
+            unit: unitSelect,
+            isNew: select.value === 'NEW_MATERIAL'
+          });
+        }
+
+        // Reset Input Box
+        document.getElementById('recipeQty').value = "";
+        if(select.value === 'NEW_MATERIAL') document.getElementById('recipeNewMaterialName').value = "";
+        
+        renderRecipeBasket();
+      }
+
+      function removeMaterialFromBasket(index) {
+        TEMP_RECIPE_BASKET.splice(index, 1);
+        renderRecipeBasket();
+      }
+
+      function renderRecipeBasket() {
+        const tbody = document.getElementById('recipeBasketBody');
+        if (TEMP_RECIPE_BASKET.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-muted">Belum ada komposisi bahan.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = TEMP_RECIPE_BASKET.map((m, index) => `
+          <tr>
+            <td class="ps-3 fw-bold">
+              ${m.name} 
+              ${m.isNew ? '<span class="badge bg-primary ms-1" style="font-size:0.5rem;">BARU</span>' : ''}
+            </td>
+            <td class="text-center fw-bold text-danger">${m.qty} <span class="small text-muted">${m.unit}</span></td>
+            <td class="text-center">
+              <button class="btn btn-light btn-sm rounded-circle text-danger shadow-sm border" onclick="removeMaterialFromBasket(${index})">
+                <i class="fas fa-times"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      function saveRecipeSession() {
+        // Hanya simpan state UI
+        closeRecipeSettings();
+        
+        if (CURRENT_EDITING_RECIPE_ID === 'NEW') {
+          const statusText = document.getElementById('newRecipeStatus');
+          if (TEMP_RECIPE_BASKET.length > 0) {
+            statusText.innerHTML = `<span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i> ${TEMP_RECIPE_BASKET.length} bahan tersimpan</span>`;
+          } else {
+            statusText.innerText = "Belum ada bahan diatur";
+          }
+        } else {
+          // Disini logika jika yang di save adalah menu yang SUDAH ADA
+          // Eksekusi trigger ke backend Code.gs -> saveProductRecipe()
+          alert("Konsep: Menyimpan langsung resep menu ke Google Sheet.");
+        }
+      }
+
+      // ==========================================
+      // LOGIKA EDIT MASSAL
+      // ==========================================
+      function openBulkRecipeModal() {
+        // Populate dropdown material untuk diedit massal
+        const select = document.getElementById('bulkMaterialSelect');
+        let optionsHtml = `<option value="" selected disabled>Pilih bahan baku target...</option>`;
+        if(MATERIALS_DATA) {
+          let sortedMats = [...MATERIALS_DATA].sort((a,b) => a.name.localeCompare(b.name));
+          sortedMats.forEach(m => {
+            optionsHtml += `<option value="${m.id}" data-unit="${m.unit}">${m.name}</option>`;
+          });
+        }
+        select.innerHTML = optionsHtml;
+        document.getElementById('modalBulkRecipe').classList.remove('d-none');
+      }
+
+      function closeBulkRecipeModal() {
+        document.getElementById('modalBulkRecipe').classList.add('d-none');
+      }
+
+      function toggleBulkActionUI() {
+        const action = document.getElementById('bulkActionSelect').value;
+        const valArea = document.getElementById('bulkValueArea');
+        if(action === 'DELETE') {
+          valArea.style.display = 'none';
+        } else {
+          valArea.style.display = 'block';
+        }
       }
 
       function confirmDeleteProduct(id, name) {
@@ -1540,7 +1835,6 @@
         }
       }
 
-      // [2026-01-18] Perbaikan Logika Sortir Natural untuk ID
       function renderProductTable(dataToRender = PRODUCTS) {
         const tbody = document.getElementById('productTableBody');
         let displayData = [...dataToRender];
@@ -1552,7 +1846,6 @@
           if (SORT_CRITERIA === 'price') {
             return SORT_ASC ? valA - valB : valB - valA;
           } else if (SORT_CRITERIA === 'id') {
-            // Sortir natural P1, P2, P10 (Bukan P1, P10, P2)
             return SORT_ASC ? 
               valA.localeCompare(valB, undefined, {numeric: true, sensitivity: 'base'}) : 
               valB.localeCompare(valA, undefined, {numeric: true, sensitivity: 'base'});
@@ -1567,18 +1860,29 @@
 
         tbody.innerHTML = displayData.map(p => `
           <tr>
-            <td class="ps-4 py-3"><div class="fw-bold">${p.name}</div><code class="small text-primary">${p.id}</code></td>
+            <td class="ps-4 py-3">
+              <div class="fw-bold text-dark text-truncate" style="max-width: 180px;" title="${p.name}">${p.name}</div>
+              <code class="small text-primary">${p.id}</code>
+            </td>
             <td class="fw-bold">Rp ${p.price.toLocaleString()}</td>
-            <td><span class="badge bg-light text-dark border">${p.category}</span></td>
-            <td>
-              <div class="position-relative" style="width:45px; height:45px; cursor:pointer;" onclick="showPreview('${p.id}')">
-                <img src="${p.img || 'https://via.placeholder.com/50'}" class="rounded-3 shadow-sm" style="width:100%; height:100%; object-fit:cover; border:1px solid #ddd;">
+            <td><span class="badge bg-light text-dark border shadow-sm">${p.category}</span></td>
+            
+            <td class="text-center">
+              <button class="btn btn-outline-warning btn-sm rounded-pill fw-bold border-2" onclick="openRecipeSettings('${p.id}', '${p.name}')">
+                <i class="fas fa-list me-1"></i> Resep
+              </button>
+            </td>
+
+            <td class="text-center">
+              <div class="position-relative mx-auto" style="width:40px; height:40px; cursor:pointer;" onclick="showPreview('${p.id}')">
+                <img src="${p.img || 'https://via.placeholder.com/50'}" class="rounded-3 shadow-sm" style="width:100%; height:100%; object-fit:cover; border:1px solid #eee;">
               </div>
             </td>
-            <td class="text-center">
-              <div class="btn-group shadow-sm rounded-pill overflow-hidden">
-                <button class="btn btn-white btn-sm border-end" onclick="triggerUpload('${p.id}')"><i class="fas fa-camera text-primary"></i></button>
-                <button class="btn btn-white btn-sm" onclick="confirmDeleteProduct('${p.id}', '${p.name}')"><i class="fas fa-trash text-danger"></i></button>
+            
+            <td class="text-center pe-4">
+              <div class="btn-group shadow-sm rounded-pill overflow-hidden border">
+                <button class="btn btn-light btn-sm border-end" onclick="triggerUpload('${p.id}')" title="Ganti Foto"><i class="fas fa-camera text-primary"></i></button>
+                <button class="btn btn-light btn-sm" onclick="confirmDeleteProduct('${p.id}', '${p.name}')" title="Hapus Produk"><i class="fas fa-trash text-danger"></i></button>
               </div>
             </td>
           </tr>
