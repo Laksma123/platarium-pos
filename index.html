@@ -542,8 +542,8 @@
         <i class="fas fa-image" style="color: white; font-size: 1.2rem;"></i>
       </button>
       
-      <img src="<?= typeof bgImageUrl !== 'undefined' && bgImageUrl ? bgImageUrl : 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=2071' ?>" id="loginBg" alt="background" onload="showUI()">
-      
+      <img src="https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=2071" id="loginBg" alt="background" onload="showUI()">
+
       <div class="login-box">
         <p class="text-white-50 small mb-4 fw-bold" style="letter-spacing: 3px; font-size: 0.6rem; opacity: 0.8;">SECURED SYSTEM</p>
         <div class="px-2">
@@ -555,11 +555,27 @@
     </div>
 
     <script>
-      // Fungsi untuk memunculkan UI hanya setelah gambar background siap
       function showUI() {
         const overlay = document.getElementById('loginOverlay');
         overlay.style.opacity = '1';
       }
+
+      // [BARU] Panggil data Logo & Wallpaper sesaat setelah web terbuka
+      google.script.run.withSuccessHandler(res => {
+        if(res && res.status === 'success') {
+          // Timpa wallpaper jika ada di GSheet
+          if (res.wallpaper && res.wallpaper.includes("http")) {
+            document.getElementById('loginBg').src = res.wallpaper;
+          }
+          // Timpa logo jika ada di GSheet
+          if (res.logo && res.logo.includes("http")) {
+            const logoImg = document.getElementById('uiLogo');
+            logoImg.src = res.logo;
+            logoImg.style.display = 'block';
+            document.getElementById('uiLogoPlaceholder').style.display = 'none';
+          }
+        }
+      }).getAppConfig();
 
       // Backup: Jika gambar gagal dimuat dalam 3 detik, paksa UI muncul
       setTimeout(() => {
@@ -573,8 +589,8 @@
         <div class="d-flex align-items-center gap-2">
           <div class="rounded-circle bg-white border d-flex align-items-center justify-content-center overflow-hidden shadow-sm" style="width: 45px; height: 45px; cursor: pointer; flex-shrink: 0;"
           onclick="openLogoManager()" title="Atur Logo">
-             <img id="uiLogo" src="<?= typeof logoUrl !== 'undefined' && logoUrl ? logoUrl : '' ?>" style="width: 100%; height: 100%; object-fit: cover; display: <?= typeof logoUrl !== 'undefined' && logoUrl ? 'block' : 'none' ?>;" onerror="this.style.display='none'; document.getElementById('uiLogoPlaceholder').style.display='block';">
-             <div id="uiLogoPlaceholder" style="width: 100%; height: 100%; background-color: #ffffff; display: <?= typeof logoUrl !== 'undefined' && logoUrl ? 'none' : 'block' ?>;"></div>
+             <img id="uiLogo" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;" onerror="this.style.display='none'; document.getElementById('uiLogoPlaceholder').style.display='block';">
+             <div id="uiLogoPlaceholder" style="width: 100%; height: 100%; background-color: #ffffff; display: block;"></div>
           </div>
           <div>
             <h6 class="fw-bold m-0 lh-1 text-dark" id="uiStoreName">Platarium</h6>
@@ -2171,11 +2187,14 @@
       }
 
       function openLogoManager() {
+        // [PERBAIKAN] Pindahkan modal secara dinamis ke root body agar tidak disembunyikan oleh parent element
+        document.body.appendChild(document.getElementById('modalConfigPreview'));
+        
         const imgEl = document.getElementById('uiLogo');
         const isSet = imgEl.style.display !== 'none' && imgEl.src !== window.location.href;
         
         document.getElementById('imgConfigPreview').src = isSet ? imgEl.src : 'https://via.placeholder.com/300x300?text=KOSONG';
-        document.getElementById('imgConfigPreview').style.borderRadius = '50%'; // Preview bulat
+        document.getElementById('imgConfigPreview').style.borderRadius = '50%';
         document.getElementById('txtConfigTitle').innerText = 'Manajemen Logo Toko';
         
         document.getElementById('btnDeleteConfig').onclick = () => deleteConfigData('LOGO');
@@ -2185,9 +2204,12 @@
       }
 
       function openWallpaperManager() {
+        // [PERBAIKAN] Pindahkan modal secara dinamis ke root body agar bisa tampil di depan layar login
+        document.body.appendChild(document.getElementById('modalConfigPreview'));
+        
         const currentSrc = document.getElementById('loginBg').src;
         document.getElementById('imgConfigPreview').src = currentSrc;
-        document.getElementById('imgConfigPreview').style.borderRadius = '8px'; // Preview kotak landscape
+        document.getElementById('imgConfigPreview').style.borderRadius = '8px'; 
         document.getElementById('txtConfigTitle').innerText = 'Wallpaper Login Screen';
         
         document.getElementById('btnDeleteConfig').onclick = () => deleteConfigData('WALLPAPER');
