@@ -448,11 +448,6 @@
       .col-photo { width: 130px; }
       .col-action { width: 60px; }
 
-      /* Perbaikan List Laporan */
-      .finance-table-container {
-        height: auto !important; max-height: calc(100vh - 307px) !important; overflow-y: auto; border-radius: 15px;
-      }
-
       /* Market Pulse & Charts */
       .market-modern-container {
         background: white; border-radius: 25px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); margin-top: 25px;
@@ -512,10 +507,22 @@
       /* FIX SCROLL TERPOTONG DI BAWAH NAV-BAR     */
       /* ========================================= */
       .table-responsive table,
-      .attendance-table-container table,
-      .finance-table-container table {
-          /* Memberi ruang kosong di bawah tabel sebesar tinggi Bottom Nav + 40px */
+      .attendance-table-container table {
+          /* Memberi ruang kosong di bawah tabel standar */
           margin-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 40px) !important;
+      }
+
+      /* Khusus untuk List Penjualan, hilangkan margin raksasa agar tidak terpotong jauh */
+      .finance-table-container table {
+          margin-bottom: 0 !important;
+      }
+
+      .finance-table-container {
+          height: auto !important;
+          max-height: calc(100vh - 250px) !important; /* Perlebar area pandang ke bawah */
+          overflow-y: auto;
+          border-radius: 15px;
+          padding-bottom: 80px; /* Gunakan padding dalam kontainer, bukan margin tabel */
       }
     </style>
   </head>
@@ -662,7 +669,7 @@
 
                 <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
                   <span class="input-group-text bg-transparent border-0 text-muted small"><i class="fas fa-filter"></i></span>
-                  <select class="form-select border-0 shadow-none fw-bold bg-transparent ps-2 pe-4" style="font-size: 0.85rem; cursor:pointer;" onchange="updateSort(this.value)">
+                  <select class="form-select border-0 shadow-none fw-bold bg-transparent ps-2" style="font-size: 0.85rem; cursor:pointer; padding-right: 2.5rem !important;" onchange="updateSort(this.value)">
                     <option value="id" selected>Nomor ID</option>
                     <option value="name">Alphabet</option>
                     <option value="category">Kategori</option>
