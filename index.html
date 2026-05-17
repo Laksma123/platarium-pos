@@ -1164,38 +1164,46 @@
         </div>
 
         <div id="modalBulkRecipe" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10500; opacity: 1 !important;">
-          <div class="bg-white p-4 rounded-5 shadow-lg" style="width: 95%; max-width: 500px; animation: slideUp 0.3s ease-out;">
+          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 500px; max-height: 90vh; animation: slideUp 0.3s ease-out;">
             <h5 class="fw-bold mb-1 text-center"><i class="fas fa-magic text-danger me-2"></i>Edit Massal Resep</h5>
             <p class="text-center text-muted small mb-4">Ubah atau hapus satu bahan secara serentak di banyak menu.</p>
             
-            <div class="mb-3">
-              <label class="small fw-bold text-muted">1. PILIH BAHAN TARGET</label>
-              <select id="bulkMaterialSelect" class="form-select fw-bold border-2"></select>
-            </div>
+            <div class="overflow-auto pe-2 flex-fill" style="scrollbar-width: thin;">
+              <div class="mb-3">
+                <label class="small fw-bold text-muted">1. PILIH BAHAN TARGET</label>
+                <select id="bulkMaterialSelect" class="form-select fw-bold border-2 mb-1" onchange="handleBulkMaterialChange()"></select>
+                <small class="text-muted d-block" style="font-size: 0.65rem; font-style: italic;">*Untuk bahan jenis baru, gunakan tombol Resep di sebelah produk.</small>
+              </div>
 
-            <div class="mb-3">
-              <label class="small fw-bold text-muted">2. AKSI</label>
-              <select id="bulkActionSelect" class="form-select fw-bold border-2" onchange="toggleBulkActionUI()">
-                <option value="EDIT">Ubah Nilai Takaran</option>
-                <option value="DELETE" class="text-danger">Hapus Total dari Menu</option>
-              </select>
-            </div>
+              <div class="mb-3">
+                <label class="small fw-bold text-muted">2. AKSI</label>
+                <select id="bulkActionSelect" class="form-select fw-bold border-2" onchange="toggleBulkActionUI()">
+                  <option value="EDIT">Ubah Nilai Takaran</option>
+                  <option value="DELETE" class="text-danger">Hapus Total dari Menu</option>
+                </select>
+              </div>
 
-            <div class="mb-3" id="bulkValueArea">
-              <label class="small fw-bold text-muted">3. NILAI BARU</label>
-              <div class="input-group">
-                <input type="number" id="bulkNewQty" class="form-control fw-bold border-2" placeholder="0">
-                <span class="input-group-text bg-light border-2" id="bulkUnitLabel">unit</span>
+              <div class="mb-3" id="bulkValueArea">
+                <label class="small fw-bold text-muted">3. NILAI BARU</label>
+                <div class="input-group">
+                  <input type="number" id="bulkNewQty" class="form-control fw-bold border-2" placeholder="0">
+                  <span class="input-group-text bg-light border-2 fw-bold" id="bulkUnitLabel">unit</span>
+                </div>
+              </div>
+
+              <div id="bulkAffectedArea" class="d-none mt-4">
+                <label class="small fw-bold text-muted mb-2"><i class="fas fa-list-check text-warning me-1"></i> MENU TERDAMPAK</label>
+                <div class="border rounded-4 overflow-hidden mb-3">
+                  <table class="table table-sm table-hover m-0" style="font-size: 0.8rem;">
+                    <tbody id="bulkAffectedList"></tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
-            <div class="p-3 bg-light rounded-4 mb-4 border text-center">
-              <span class="text-muted small italic">Sistem akan memindai menu yang terdampak setelah menekan tombol Lanjutkan.</span>
-            </div>
-
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 mt-3 pt-3 border-top">
               <button class="btn btn-light w-100 py-2 fw-bold rounded-pill" onclick="closeBulkRecipeModal()">BATAL</button>
-              <button class="btn btn-danger w-100 py-2 fw-bold rounded-pill shadow-sm">LANJUTKAN <i class="fas fa-arrow-right ms-1"></i></button>
+              <button class="btn btn-danger w-100 py-2 fw-bold rounded-pill shadow-sm" id="btnExecuteBulk" onclick="executeBulkAction()" disabled>LANJUTKAN <i class="fas fa-arrow-right ms-1"></i></button>
             </div>
           </div>
         </div>
@@ -1648,7 +1656,7 @@
       
       function openRecipeSettings(pid, productName) {
         CURRENT_EDITING_RECIPE_ID = pid;
-        document.getElementById('recipeTargetName').innerText = `Menu: ${productName}`;
+        const targetNameEl = document.getElementById('recipeTargetName');
         
         // Populate Dropdown Materials
         const select = document.getElementById('recipeMaterialSelect');
@@ -1656,28 +1664,33 @@
                            <option value="NEW_MATERIAL" class="text-primary fw-bold">[+] Buat Bahan Baku Baru...</option>`;
         
         if(MATERIALS_DATA && MATERIALS_DATA.length > 0) {
-          // Sort alfabetis agar mudah dicari
           let sortedMats = [...MATERIALS_DATA].sort((a,b) => a.name.localeCompare(b.name));
           sortedMats.forEach(m => {
             optionsHtml += `<option value="${m.id}" data-unit="${m.unit}">${m.name} (${m.unit})</option>`;
           });
         }
         select.innerHTML = optionsHtml;
-        handleMaterialSelectChange(); // Reset UI state
+        handleMaterialSelectChange();
 
         if (pid === 'NEW') {
-          // Mode Tambah Produk: Ambil dari memory jika sebelumnya sudah diisi
+          // Mode Tambah Produk
+          targetNameEl.innerText = `Menu: ${productName}`;
           renderRecipeBasket();
           document.getElementById('modalAddProduct').classList.add('d-none');
+          document.getElementById('modalRecipeSettings').classList.remove('d-none');
         } else {
-          // Mode Edit Individual: Idealnya hit API ke server, tapi untuk sekarang kita clear basket
-          // Nanti backend akan mengembalikan resep existing.
+          // Mode Edit Individual: Ambil data live dari server
           TEMP_RECIPE_BASKET = [];
-          renderRecipeBasket();
-          // Opsional: fetch existing recipe dari server disini
+          renderRecipeBasket(); 
+          targetNameEl.innerHTML = `Menu: ${productName} <i class="fas fa-spinner fa-spin ms-2 text-primary"></i>`;
+          document.getElementById('modalRecipeSettings').classList.remove('d-none');
+
+          google.script.run.withSuccessHandler(data => {
+             TEMP_RECIPE_BASKET = data;
+             targetNameEl.innerText = `Menu: ${productName}`;
+             renderRecipeBasket();
+          }).getProductRecipe(pid);
         }
-        
-        document.getElementById('modalRecipeSettings').classList.remove('d-none');
       }
 
       function closeRecipeSettings() {
@@ -1778,10 +1791,8 @@
       }
 
       function saveRecipeSession() {
-        // Hanya simpan state UI
-        closeRecipeSettings();
-        
         if (CURRENT_EDITING_RECIPE_ID === 'NEW') {
+          closeRecipeSettings();
           const statusText = document.getElementById('newRecipeStatus');
           if (TEMP_RECIPE_BASKET.length > 0) {
             statusText.innerHTML = `<span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i> ${TEMP_RECIPE_BASKET.length} bahan tersimpan</span>`;
@@ -1789,17 +1800,32 @@
             statusText.innerText = "Belum ada bahan diatur";
           }
         } else {
-          // Disini logika jika yang di save adalah menu yang SUDAH ADA
-          // Eksekusi trigger ke backend Code.gs -> saveProductRecipe()
-          alert("Konsep: Menyimpan langsung resep menu ke Google Sheet.");
+          // Simpan resep produk yang sudah ada ke backend
+          const btn = event.currentTarget;
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> MENYIMPAN...';
+          btn.disabled = true;
+
+          google.script.run.withSuccessHandler(res => {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+            if(res.status === 'success') {
+              closeRecipeSettings();
+              // Otomatis muat ulang stok material agar ada sinkronisasi bahan baru jika ada
+              loadStockData(); 
+            } else {
+              alert("Gagal menyimpan resep: " + res.message);
+            }
+          }).updateProductRecipe(CURRENT_EDITING_RECIPE_ID, TEMP_RECIPE_BASKET);
         }
       }
 
       // ==========================================
       // LOGIKA EDIT MASSAL
       // ==========================================
+      let BULK_AFFECTED_PRODUCTS = [];
+
       function openBulkRecipeModal() {
-        // Populate dropdown material untuk diedit massal
         const select = document.getElementById('bulkMaterialSelect');
         let optionsHtml = `<option value="" selected disabled>Pilih bahan baku target...</option>`;
         if(MATERIALS_DATA) {
@@ -1809,9 +1835,91 @@
           });
         }
         select.innerHTML = optionsHtml;
+        
+        // Reset Area
+        document.getElementById('bulkAffectedArea').classList.add('d-none');
+        BULK_AFFECTED_PRODUCTS = [];
+        document.getElementById('btnExecuteBulk').disabled = true;
+        document.getElementById('bulkNewQty').value = '';
+
         document.getElementById('modalBulkRecipe').classList.remove('d-none');
       }
+      
+      function handleBulkMaterialChange() {
+        const select = document.getElementById('bulkMaterialSelect');
+        const matId = select.value;
+        if(!matId) return;
 
+        // Auto-Match Unit
+        const selectedOption = select.options[select.selectedIndex];
+        document.getElementById('bulkUnitLabel').innerText = selectedOption.dataset.unit || "unit";
+
+        // Fetch Live Affected Menus
+        const listBody = document.getElementById('bulkAffectedList');
+        document.getElementById('bulkAffectedArea').classList.remove('d-none');
+        listBody.innerHTML = '<tr><td class="text-center p-4 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Memindai menu...</td></tr>';
+        document.getElementById('btnExecuteBulk').disabled = true;
+
+        google.script.run.withSuccessHandler(data => {
+            BULK_AFFECTED_PRODUCTS = data;
+            renderBulkAffectedList();
+        }).getProductsByMaterial(matId);
+      }
+
+      function renderBulkAffectedList() {
+        const listBody = document.getElementById('bulkAffectedList');
+        if(BULK_AFFECTED_PRODUCTS.length === 0) {
+            listBody.innerHTML = '<tr><td class="text-center p-3 text-muted">Bahan ini tidak digunakan pada menu manapun.</td></tr>';
+            document.getElementById('btnExecuteBulk').disabled = true;
+            return;
+        }
+
+        document.getElementById('btnExecuteBulk').disabled = false;
+        listBody.innerHTML = BULK_AFFECTED_PRODUCTS.map((p, index) => `
+            <tr class="align-middle">
+                <td class="ps-3 py-2 fw-bold text-dark">${p.name}</td>
+                <td class="text-center" style="width: 50px;">
+                    <button class="btn btn-sm btn-light text-danger rounded-circle shadow-sm" onclick="removeBulkAffected(${index})" title="Kecualikan Menu Ini">
+                      <i class="fas fa-times"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+      }
+
+      function removeBulkAffected(index) {
+        BULK_AFFECTED_PRODUCTS.splice(index, 1);
+        renderBulkAffectedList();
+      }
+      
+      function executeBulkAction() {
+        const matId = document.getElementById('bulkMaterialSelect').value;
+        const action = document.getElementById('bulkActionSelect').value;
+        const newValue = document.getElementById('bulkNewQty').value;
+
+        if(!matId) return alert("Pilih bahan target!");
+        if(action === 'EDIT' && (!newValue || newValue <= 0)) return alert("Masukkan nilai takaran yang valid!");
+        if(BULK_AFFECTED_PRODUCTS.length === 0) return alert("Tidak ada menu terdampak untuk diproses.");
+
+        const productIds = BULK_AFFECTED_PRODUCTS.map(p => p.id);
+
+        const btn = document.getElementById('btnExecuteBulk');
+        const ogText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>MEMPROSES...';
+        btn.disabled = true;
+
+        google.script.run.withSuccessHandler(res => {
+            btn.innerHTML = ogText;
+            btn.disabled = false;
+            if(res.status === 'success') {
+                alert("Pembaruan massal resep berhasil!");
+                closeBulkRecipeModal();
+            } else {
+                alert("Terjadi kesalahan: " + res.message);
+            }
+        }).executeBulkRecipeAction(matId, action, newValue, productIds);
+      }
+      
       function closeBulkRecipeModal() {
         document.getElementById('modalBulkRecipe').classList.add('d-none');
       }
