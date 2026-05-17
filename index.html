@@ -10,6 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 
     <style>
       /* ========================================= */
@@ -1333,6 +1334,11 @@
       let IS_REORDER_MODE = false;
       let CURRENT_GRID_COLS = 3;
       let TEMP_RECIPE_BASKET = [];
+      let IS_FACE_API_READY = false;
+      let FACE_MATCHER = null;
+      let FACE_DETECT_INTERVAL = null;
+      let ATTENDANCE_COOLDOWN = false;
+      let CURRENT_ABSENSI_NAME = "";
       let CURRENT_EDITING_RECIPE_ID = null; // Menyimpan ID 'NEW' atau ID 'P001'
 
       function startRealtimeClock() {
@@ -2125,6 +2131,12 @@
           });
           ATTENDANCE_STREAM = null;
         }
+
+        // Matikan interval AI agar tidak menguras memori CPU di background
+        if (FACE_DETECT_INTERVAL) {
+          clearInterval(FACE_DETECT_INTERVAL);
+          FACE_DETECT_INTERVAL = null;
+        }
         
         ['attendanceVideo', 'regVideo'].forEach(id => {
           const v = document.getElementById(id);
@@ -2139,53 +2151,63 @@
         const targetView = document.getElementById('view-' + viewId);
         if (!targetView) return;
 
-        // [UPDATE] Logika Tampil/Sembunyi Elemen Header Khusus POS (Search & Dropdown Kasir)
         const topSearchContainer = document.getElementById('topSearchBarContainer');
         const topCashierContainer = document.getElementById('topCashierContainer');
 
         if (viewId === 'pos') {
           if (topSearchContainer) { topSearchContainer.classList.remove('d-none'); topSearchContainer.classList.add('d-flex'); }
-          if (topCashierContainer) { topCashierContainer.classList.remove('d-none'); topCashierContainer.classList.add('input-group'); } // Menggunakan input-group agar styling Bootstrap tetap jalan
+          if (topCashierContainer) { topCashierContainer.classList.remove('d-none'); topCashierContainer.classList.add('input-group'); }
         } else {
           if (topSearchContainer) { topSearchContainer.classList.remove('d-flex'); topSearchContainer.classList.add('d-none'); }
           if (topCashierContainer) { topCashierContainer.classList.remove('input-group'); topCashierContainer.classList.add('d-none'); }
         }
 
-        // Logika Khusus Tab Absensi
         if (viewId === 'absensi') {
-          renderAttendanceStaff();
-          const adminDetail = document.getElementById('adminAttendanceDetail');
-          const scannerArea = document.getElementById('attendanceScannerArea');
-
-          if (USER_ROLE === 'ADMIN' && adminDetail) {
-            adminDetail.style.display = 'block';
-            if (scannerArea) scannerArea.className = 'col-12 col-lg-5';
-            renderAttendanceLogsUI();
-          } else if (scannerArea) {
-            if (adminDetail) adminDetail.style.display = 'none';
-            scannerArea.className = 'col-12';
-          }
-          setTimeout(() => startCamera('attendanceVideo'), 300);
-        } 
-        // Logika Khusus Tab Laporan
-        else if (viewId === 'finance' && USER_ROLE === 'ADMIN') {
+          initAttendanceTab();
+        } else if (viewId === 'finance' && USER_ROLE === 'ADMIN') {
           renderFinanceUI();
           setTimeout(() => { loadIndoMarketPulse(); }, 100);
-        }
-        // Logika Khusus Tab Stok
-        else if (viewId === 'stock' && USER_ROLE === 'ADMIN') {
+        } else if (viewId === 'stock' && USER_ROLE === 'ADMIN') {
           loadStockData();
         }
 
-        // Tampilkan view tujuan
         targetView.style.display = (viewId === 'pos' && window.innerWidth > 768) ? 'flex' : 'block';
 
-        // Update Indikator Navigasi Aktif
         document.querySelectorAll('.nav-item-custom, .nav-icon-mob').forEach(el => el.classList.remove('active'));
         const dEl = document.getElementById('desk-' + viewId);
         const mEl = document.getElementById('mob-' + viewId);
         if (dEl) dEl.classList.add('active');
         if (mEl) mEl.classList.add('active');
+      }
+
+      async function initAttendanceTab() {
+        const adminDetail = document.getElementById('adminAttendanceDetail');
+        const scannerArea = document.getElementById('attendanceScannerArea');
+        const staffListUI = document.getElementById('attendanceStaffList');
+        const targetNameUI = document.getElementById('targetStaffName');
+        
+        // Bersihkan UI dan beritahu user bahwa AI sedang dimuat
+        if (staffListUI) staffListUI.innerHTML = '<div class="text-center text-muted small"><i class="fas fa-spinner fa-spin me-2"></i>Mempersiapkan AI Biometrik...</div>';
+        if (targetNameUI) targetNameUI.innerText = "";
+
+        if (USER_ROLE === 'ADMIN') {
+          adminDetail.style.display = 'block';
+          scannerArea.className = 'col-12 col-lg-5';
+          loadAttendanceLogs();
+        } else {
+          adminDetail.style.display = 'none';
+          scannerArea.className = 'col-12';
+        }
+        
+        // Panggil AI secara Async
+        await initFaceAPI();
+        await buildFaceMatcher();
+
+        // Setelah AI siap, sembunyikan list nama karena sudah otomatis
+        if (staffListUI) staffListUI.classList.add('d-none');
+        if (targetNameUI) targetNameUI.innerText = "Arahkan wajah ke kamera";
+        
+        startCamera('attendanceVideo', true); // Parameter true untuk mengaktifkan AI Detection
       }
 
       function loadProducts() {
@@ -2754,21 +2776,22 @@
         startCamera('attendanceVideo');
       }
 
-      function startCamera(videoId) {
+      function startCamera(videoId, isAutoAbsensi = false) {
         const video = document.getElementById(videoId);
         if (!video) return; 
 
-        // Lebih universal: tidak memaksa 'facingMode: "user"', cukup minta akses video apa saja
         const constraints = { video: true };
-
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           navigator.mediaDevices.getUserMedia(constraints)
             .then(stream => {
               ATTENDANCE_STREAM = stream;
               video.srcObject = stream;
-              // Tambahkan event onloadedmetadata agar play() lebih stabil di berbagai browser
               video.onloadedmetadata = () => {
-                video.play(); 
+                video.play();
+                // Hanya aktifkan loop scan AI jika isAutoAbsensi true dan Model siap
+                if (isAutoAbsensi && IS_FACE_API_READY) {
+                  runAutoDetection(video);
+                }
               };
             })
             .catch(err => {
@@ -2776,6 +2799,63 @@
               alert("Gagal mengakses kamera. Pastikan kamera tidak sedang dipakai aplikasi lain (seperti OBS) dan izin browser diberikan.");
             });
         }
+      }
+
+      async function initFaceAPI() {
+        if (IS_FACE_API_READY) return;
+        try {
+          // Mengambil model ringan dari CDN untuk optimasi resource browser
+          const modelUrl = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
+          await Promise.all([
+            faceapi.nets.ssdMobilenetv1.loadFromUri(modelUrl),
+            faceapi.nets.faceLandmark68Net.loadFromUri(modelUrl),
+            faceapi.nets.faceRecognitionNet.loadFromUri(modelUrl)
+          ]);
+          IS_FACE_API_READY = true;
+          console.log("Model Face-API berhasil dimuat.");
+        } catch (e) {
+          console.error("Gagal memuat model Face API:", e);
+        }
+      }
+
+      async function buildFaceMatcher() {
+        google.script.run.withSuccessHandler(faceMap => {
+          const labeledDescriptors = [];
+          
+          for (const [name, data] of Object.entries(faceMap)) {
+            if (data.descriptor && data.descriptor !== "") {
+              try {
+                const arr = new Float32Array(JSON.parse(data.descriptor));
+                labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(name, [arr]));
+              } catch (e) {
+                console.error("Gagal parsing biometrik untuk", name);
+              }
+            }
+          }
+          
+          if (labeledDescriptors.length > 0) {
+            // Toleransi akurasi 0.5 (semakin kecil semakin ketat)
+            FACE_MATCHER = new faceapi.FaceMatcher(labeledDescriptors, 0.5);
+          }
+        }).getStaffMasterFaces();
+      }
+
+      async function runAutoDetection(video) {
+        if (FACE_DETECT_INTERVAL) clearInterval(FACE_DETECT_INTERVAL);
+
+        FACE_DETECT_INTERVAL = setInterval(async () => {
+          // Skip frame jika sedang milih IN/OUT, matcher belum siap, atau video mati
+          if (ATTENDANCE_COOLDOWN || !FACE_MATCHER || video.paused || video.ended) return;
+
+          const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+          
+          if (detection) {
+            const bestMatch = FACE_MATCHER.findBestMatch(detection.descriptor);
+            if (bestMatch.label !== 'unknown') {
+              processAutoAbsensi(bestMatch.label);
+            }
+          }
+        }, 1000); // 1 detik per frame agar tidak membuat device panas
       }
 
       function openModalRegisterFace() {
@@ -2789,11 +2869,49 @@
         checkMasterFace(select.value); // Langsung cek kasir pertama yang terpilih
       }
 
+      async function executeRegisterFace() {
+        const name = document.getElementById('regStaffSelect').value;
+        const btn = document.getElementById('btnCaptureMaster');
+        const video = document.getElementById('regVideo');
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menganalisa...';
+
+        // Deteksi biometrik sebelum menyimpan
+        const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+        
+        if (!detection) {
+          alert("Wajah tidak terdeteksi! Pastikan pencahayaan cukup dan wajah berada di tengah bingkai.");
+          btn.disabled = false;
+          btn.innerText = 'AMBIL FOTO';
+          return;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const imgData = canvas.toDataURL('image/jpeg', 0.8);
+
+        // Convert data biometrik (Float32Array) ke standar JSON array untuk dikirim ke backend
+        const descriptorArr = Array.from(detection.descriptor);
+        const descriptorJson = JSON.stringify(descriptorArr);
+
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
+
+        google.script.run.withSuccessHandler(res => {
+          btn.disabled = false; btn.innerText = 'AMBIL FOTO';
+          if(res.status === 'success') {
+            alert(`Wajah master ${name} berhasil didaftarkan ke sistem AI!`);
+            buildFaceMatcher(); // Refresh model AI memori
+            closeModalRegisterFace();
+          } else { alert(res.message); }
+        }).registerStaffFace(name, imgData, descriptorJson);
+      }
+
       function checkMasterFace(staffName) {
         const video = document.getElementById('regVideo');
-        const previewArea = video.parentElement; // .scanner-box
+        const previewArea = video.parentElement; 
         
-        // Bersihkan UI lama
         const oldImg = document.getElementById('masterPreviewImg');
         if (oldImg) oldImg.remove();
         const oldBtns = document.getElementById('masterBtnGroup');
@@ -2801,8 +2919,8 @@
         const oldLoader = document.getElementById('masterLoader');
         if (oldLoader) oldLoader.remove();
 
-        // Matikan video dan tampilkan visual loading
         video.style.display = 'none';
+
         const loader = document.createElement('div');
         loader.id = 'masterLoader';
         loader.className = 'd-flex flex-column justify-content-center align-items-center h-100 text-warning';
@@ -2813,7 +2931,9 @@
           const currentLoader = document.getElementById('masterLoader');
           if (currentLoader) currentLoader.remove();
 
-          const existingUrl = faceMap[staffName];
+          // Penyesuaian karena sekarang response adalah Object berisi { url, descriptor }
+          const staffData = faceMap[staffName];
+          const existingUrl = staffData ? staffData.url : "";
 
           if (existingUrl && existingUrl !== "") {
             video.style.display = 'none';
@@ -2823,7 +2943,6 @@
             img.style = "width:100%; height:100%; object-fit:cover; border-radius:40px;";
             previewArea.appendChild(img);
 
-            // Tambahkan tombol dengan passing parameter 'this' untuk loading efek
             const btnGroup = document.createElement('div');
             btnGroup.id = 'masterBtnGroup';
             btnGroup.className = 'position-absolute bottom-0 end-0 m-3 d-flex gap-2';
@@ -2841,6 +2960,25 @@
             reopenRegCamera();
           }
         }).getStaffMasterFaces();
+      }
+
+      function processAutoAbsensi(name) {
+        ATTENDANCE_COOLDOWN = true; 
+        CURRENT_ABSENSI_NAME = name;
+        
+        const scannerLine = document.querySelector('.scan-line');
+        if (scannerLine) scannerLine.style.animationDuration = '0.1s'; 
+        
+        document.getElementById('attendanceStaffList').classList.add('d-none');
+        document.getElementById('absensiChoice').classList.remove('d-none');
+        document.getElementById('targetStaffName').innerText = name;
+
+        // Auto cancel/lepas cooldown jika user tidak jadi klik IN/OUT dalam 6 detik
+        setTimeout(() => {
+          if (ATTENDANCE_COOLDOWN) {
+            cancelAbsensi();
+          }
+        }, 6000);
       }
 
       function reopenRegCamera() {
@@ -3029,8 +3167,6 @@
             .deleteAttendanceRecord(nama, tgl);
         }
       }
-      
-      let CURRENT_ABSENSI_NAME = "";
 
       function processAbsensi(name) {
         CURRENT_ABSENSI_NAME = name;
@@ -3040,42 +3176,40 @@
       }
 
       function cancelAbsensi() {
-        document.getElementById('attendanceStaffList').classList.remove('d-none');
         document.getElementById('absensiChoice').classList.add('d-none');
+        document.getElementById('targetStaffName').innerText = "Arahkan wajah ke kamera";
+        const scannerLine = document.querySelector('.scan-line');
+        if (scannerLine) scannerLine.style.animationDuration = '2s';
+        
+        // Lepas kunci AI
+        ATTENDANCE_COOLDOWN = false;
       }
 
       function executeAbsensi(type) {
-        const scannerLine = document.querySelector('.scan-line');
-        if (scannerLine) scannerLine.style.animationDuration = '0.5s';
-        
         const proofImg = captureFaceFrame();
         const actionArea = document.getElementById('absensiChoice');
         const originalHTML = actionArea.innerHTML;
-        
-        // Tampilkan visual teks asli Anda secara instan
+
         actionArea.innerHTML = `
           <div class="text-center p-3">
             <div class="spinner-border text-warning mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
-            <h5 class="fw-bold text-dark mb-1">Foto Berhasil Ditangkap!</h5>
-            <p class="text-muted small">Memproses Data...<br>Mohon tunggu sebentar, sedang menyinkronkan dengan server.</p>
+            <h5 class="fw-bold text-dark mb-1">Teridentifikasi AI!</h5>
+            <p class="text-muted small">Menyimpan data kehadiran...</p>
           </div>
         `;
 
-        // FIRE AND FORGET: Lepaskan antrean kasir dalam 3 detik
-        setTimeout(() => {
-          cancelAbsensi();
-          actionArea.innerHTML = originalHTML;
-        }, 3000);
-
-        // Pengiriman data TANPA withFailureHandler untuk menghindari bug Proxy dari hosting eksternal
         google.script.run
           .withSuccessHandler(res => {
-            if (scannerLine) scannerLine.style.animationDuration = '2s';
             if (res && res.status === 'success') {
               if (USER_ROLE === 'ADMIN') loadAttendanceLogs();
             } else {
               alert("Gagal mencatat absensi: " + (res ? res.message : "Respon kosong"));
             }
+            
+            setTimeout(() => {
+              actionArea.innerHTML = originalHTML;
+              cancelAbsensi();
+            }, 2500);
           })
           .recordAttendance(CURRENT_ABSENSI_NAME, type, proofImg);
       }
