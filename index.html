@@ -1186,7 +1186,7 @@
               <div class="mb-3" id="bulkValueArea">
                 <label class="small fw-bold text-muted">3. NILAI BARU</label>
                 <div class="input-group">
-                  <input type="number" id="bulkNewQty" class="form-control fw-bold border-2" placeholder="0">
+                  <input type="number" id="bulkNewQty" class="form-control fw-bold border-2" placeholder="0" step="0.1">
                   <span class="input-group-text bg-light border-2 fw-bold" id="bulkUnitLabel">unit</span>
                 </div>
               </div>
@@ -1666,20 +1666,19 @@
         if(MATERIALS_DATA && MATERIALS_DATA.length > 0) {
           let sortedMats = [...MATERIALS_DATA].sort((a,b) => a.name.localeCompare(b.name));
           sortedMats.forEach(m => {
-            optionsHtml += `<option value="${m.id}" data-unit="${m.unit}">${m.name} (${m.unit})</option>`;
+            // PERBAIKAN: Tambahkan data-name agar aman dari tanda kurung pada nama material
+            optionsHtml += `<option value="${m.id}" data-unit="${m.unit}" data-name="${m.name}">${m.name} (${m.unit})</option>`;
           });
         }
         select.innerHTML = optionsHtml;
         handleMaterialSelectChange();
 
         if (pid === 'NEW') {
-          // Mode Tambah Produk
           targetNameEl.innerText = `Menu: ${productName}`;
           renderRecipeBasket();
           document.getElementById('modalAddProduct').classList.add('d-none');
           document.getElementById('modalRecipeSettings').classList.remove('d-none');
         } else {
-          // Mode Edit Individual: Ambil data live dari server
           TEMP_RECIPE_BASKET = [];
           renderRecipeBasket(); 
           targetNameEl.innerHTML = `Menu: ${productName} <i class="fas fa-spinner fa-spin ms-2 text-primary"></i>`;
@@ -1707,15 +1706,26 @@
 
         if (select.value === 'NEW_MATERIAL') {
           newMatInput.classList.remove('d-none');
-          unitSelect.disabled = false; // Bebas pilih unit
+          unitSelect.disabled = false; 
           newMatInput.focus();
         } else {
           newMatInput.classList.add('d-none');
-          // Jika memilih bahan yg ada, paksa unit menyesuaikan
           const selectedOption = select.options[select.selectedIndex];
+          
           if(selectedOption && selectedOption.dataset.unit) {
-            unitSelect.value = selectedOption.dataset.unit;
-            unitSelect.disabled = true; // Kunci unit agar tidak tumpang tindih
+            const targetUnit = selectedOption.dataset.unit;
+            
+            // PERBAIKAN: Cek apakah unit target ada di dalam dropdown opsi standar F&B
+            let unitExists = Array.from(unitSelect.options).some(opt => opt.value === targetUnit);
+            
+            // Jika unit kustom ("pack", "l", dll) belum ada, tambahkan sementara ke dropdown
+            if (!unitExists) {
+              const newOption = new Option(targetUnit, targetUnit);
+              unitSelect.add(newOption);
+            }
+            
+            unitSelect.value = targetUnit;
+            unitSelect.disabled = true; 
           }
         }
       }
@@ -1726,24 +1736,21 @@
         const unitSelect = document.getElementById('recipeUnit').value;
         
         if (!qtyInput || qtyInput <= 0) return alert("Masukkan takaran yang valid!");
-
         let matId, matName;
 
         if (select.value === 'NEW_MATERIAL') {
           matName = document.getElementById('recipeNewMaterialName').value.trim();
           if (!matName) return alert("Masukkan nama bahan baku baru!");
-          // Bikin Pseudo ID sementara (Backend yang akan generate ID asli nanti)
-          matId = "NEW_" + Date.now(); 
+          matId = "NEW_" + Date.now();
         } else {
           matId = select.value;
           const selectedOption = select.options[select.selectedIndex];
-          matName = selectedOption.text.split(' (')[0]; // Hapus teks unit di belakang nama
+          // PERBAIKAN: Ambil nama utuh langsung dari atribut dataset, bukan hasil split teks
+          matName = selectedOption.dataset.name; 
         }
 
-        // Cek duplikasi di memory
         const existingIndex = TEMP_RECIPE_BASKET.findIndex(item => item.id === matId || item.name === matName);
         if (existingIndex !== -1) {
-          // Tambahkan value jika bahan sama persis dimasukkan lagi
           TEMP_RECIPE_BASKET[existingIndex].qty += parseFloat(qtyInput);
         } else {
           TEMP_RECIPE_BASKET.push({
@@ -1755,7 +1762,6 @@
           });
         }
 
-        // Reset Input Box
         document.getElementById('recipeQty').value = "";
         if(select.value === 'NEW_MATERIAL') document.getElementById('recipeNewMaterialName').value = "";
         
@@ -1919,7 +1925,7 @@
             }
         }).executeBulkRecipeAction(matId, action, newValue, productIds);
       }
-      
+
       function closeBulkRecipeModal() {
         document.getElementById('modalBulkRecipe').classList.add('d-none');
       }
