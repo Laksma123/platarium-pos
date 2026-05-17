@@ -3073,22 +3073,21 @@
         }).getAllTransactionData();
       }
 
-      /**
-       * [UPDATE 2026-01-21] Render Dashboard Laporan dengan Penyesuaian Font & Qty
-       */
       function renderFinanceUI() {
         const tbody = document.getElementById('financeTableBody');
         const revFilter = document.getElementById('revFilter');
         const revenueEl = document.getElementById('dashTotalRevenue');
-        
+
         if (!tbody || !revFilter || !revenueEl) return;
-        
+
         const filter = revFilter.value;
         const now = new Date();
         const todayStr = Utilities_formatDateIndo(now);
         const monthStr = (now.getMonth() + 1).toString().padStart(2, '0') + '/' + now.getFullYear();
 
         let totalRev = 0;
+        let totalKomplimen = 0; // [BARU] Menampung nilai transaksi komplimen
+        let validOrders = 0;    // [BARU] Hanya menghitung pesanan Normal
         let cashierCount = {};
         let productCount = {};
 
@@ -3106,41 +3105,57 @@
           tbody.innerHTML = '<tr><td colspan="5" class="text-center p-5 text-muted">Tidak ada transaksi pada periode ini.</td></tr>';
         } else {
           tbody.innerHTML = filteredData.map(t => {
-            totalRev += Number(t.total) || 0;
-            cashierCount[t.cashier] = (cashierCount[t.cashier] || 0) + 1;
-            t.items.forEach(i => { productCount[i.name] = (productCount[i.name] || 0) + i.qty; });
+            const isKomplimen = t.status === 'Komplimen';
+
+            // Kalkulasi dipisah berdasarkan status
+            if (isKomplimen) {
+              totalKomplimen += Number(t.total) || 0;
+            } else {
+              totalRev += Number(t.total) || 0;
+              validOrders++;
+              cashierCount[t.cashier] = (cashierCount[t.cashier] || 0) + 1;
+              t.items.forEach(i => { productCount[i.name] = (productCount[i.name] || 0) + i.qty; });
+            }
+
+            // Visual UI: Coret harga & gelapkan baris jika Komplimen
+            const rowStyle = isKomplimen ? 'opacity: 0.6; background-color: #fff5f5;' : '';
+            const totalStyle = isKomplimen ? 'text-decoration: line-through; color: #ff7675;' : 'text-success';
+            const statusBadge = isKomplimen ? `<span class="badge bg-danger ms-2" style="font-size:0.6rem;">KOMPLIMEN</span>` : '';
 
             return `
-              <tr class="border-bottom">
+              <tr class="border-bottom" style="${rowStyle}">
                 <td class="ps-4 py-3">
-                  <div class="fw-bold text-dark" style="font-size: 0.75rem;">${t.orderId}</div>
+                  <div class="fw-bold text-dark" style="font-size: 0.75rem;">${t.orderId} ${statusBadge}</div>
                   <div class="text-muted" style="font-size: 0.65rem;">${t.timestamp}</div>
                 </td>
                 <td>${t.items.map(i => `<div style="font-size:0.7rem;">• ${i.name} x${i.qty}</div>`).join('')}</td>
-                <td class="text-end fw-bold text-success">Rp ${t.total.toLocaleString()}</td>
+                <td class="text-end fw-bold ${totalStyle}">Rp ${t.total.toLocaleString()}</td>
                 <td class="text-center"><span class="badge bg-light text-dark border" style="font-size:0.6rem;">${t.cashier}</span></td>
                 <td class="text-center pe-4">
-                  <button class="btn btn-white btn-sm" onclick="confirmDeleteTransaction('${t.orderId}')">
-                    <i class="fas fa-trash text-danger" style="font-size:0.7rem;"></i>
-                  </button>
+                  <div class="btn-group shadow-sm rounded-pill border overflow-hidden">
+                    <button class="btn btn-light btn-sm border-end" onclick="toggleTransactionStatus('${t.orderId}', '${t.status}')" title="Ubah Status (Normal/Komplimen)">
+                      <i class="fas ${isKomplimen ? 'fa-undo text-success' : 'fa-exchange-alt text-warning'}" style="font-size:0.7rem;"></i>
+                    </button>
+                    <button class="btn btn-light btn-sm" onclick="confirmDeleteTransaction('${t.orderId}')" title="Hapus Permanen">
+                      <i class="fas fa-trash text-danger" style="font-size:0.7rem;"></i>
+                    </button>
+                  </div>
                 </td>
               </tr>`;
           }).join('');
         }
 
-        // 3. Update Kartu Utama (Revenue & Pesanan)
-        revenueEl.innerText = 'Rp ' + totalRev.toLocaleString();
-        document.getElementById('dashTotalOrders').innerText = filteredData.length;
+        // 3. Update Kartu Utama (Sertakan laporan Potensi Loss)
+        revenueEl.innerHTML = `Rp ${totalRev.toLocaleString()} <br><small class="text-danger d-block mt-1 opacity-75" style="font-size:0.55rem; letter-spacing: 0.5px;">POTENSI LOSS KOMPLIMEN: RP ${totalKomplimen.toLocaleString()}</small>`;
+        document.getElementById('dashTotalOrders').innerText = validOrders; // Hanya update pesanan valid
         
-        // 4. Logika Penentuan Pemenang & Penyesuaian Teks (Handing Ties)
+        // 4. Penentuan Pemenang (Tidak berubah)
         const getWinners = (dataObj, isProduct = false) => {
           const keys = Object.keys(dataObj);
           if (keys.length === 0) return { display: "-", count: 0 };
           
           const maxVal = Math.max(...Object.values(dataObj));
           const winners = keys.filter(key => dataObj[key] === maxVal);
-          
-          // Format tampilan: Jika Produk, sertakan jumlahnya. Contoh: "Espresso (12)"
           const displayText = winners.map(name => isProduct ? `${name} (${maxVal})` : name).join(', ');
           return { display: displayText, count: winners.length };
         };
@@ -3148,39 +3163,60 @@
         const topCashier = getWinners(cashierCount);
         const topProduct = getWinners(productCount, true);
 
-        // 5. Update UI dengan Font Dinamis
+        // 5. Update UI Font
         const cashierEl = document.getElementById('dashTopCashier');
         const productEl = document.getElementById('dashTopProduct');
-
-        // Ukuran font standar kartu (H4) adalah 1.5rem, dikecilkan jika item lebih dari 1 
-        const defaultFontSize = "1.5rem"; 
+        const defaultFontSize = "1.5rem";
         const smallFontSize = "0.75rem";
 
-        // Update Top Kasir
         cashierEl.innerText = topCashier.display;
         cashierEl.style.fontSize = topCashier.count > 1 ? smallFontSize : defaultFontSize;
-
-        // Update Produk Terlaris
         productEl.innerText = topProduct.display;
         productEl.style.fontSize = topProduct.count > 1 ? smallFontSize : defaultFontSize;
 
-        // 6. Update Grafik
-        updateSalesChart(filteredData);
+        // 6. Grafik hanya menampilkan data Normal
+        const chartDataNormal = filteredData.filter(t => t.status !== 'Komplimen');
+        updateSalesChart(chartDataNormal);
+      }
+
+      // [FUNGSI BARU] Pemicu ubah status transaksi
+      function toggleTransactionStatus(orderId, currentStatus) {
+        const newStatus = currentStatus === 'Komplimen' ? 'Normal' : 'Komplimen';
+        const msg = newStatus === 'Komplimen' ?
+          `Ubah transaksi ${orderId} menjadi KOMPLIMEN?\nTotal akan dikurangkan dari Revenue, tapi stok tetap terpotong.` :
+          `Kembalikan transaksi ${orderId} menjadi NORMAL?\nTotal akan dimasukkan kembali ke perhitungan Revenue.`;
+
+        if (confirm(msg)) {
+          google.script.run.withSuccessHandler(res => {
+            if (res.status === 'success') {
+              loadFinanceData(); // Segarkan ulang UI Laporan
+            } else {
+              alert("Gagal memperbarui status: " + res.message);
+            }
+          }).updateTransactionStatus(orderId, newStatus);
+        }
       }
 
       function loadIndoMarketPulse() {
         const tickerContent = document.getElementById('tickerContent');
         if (!tickerContent) return;
 
+        // Set padding awal sebelum request AI
+        tickerContent.style.paddingLeft = '100%';
         tickerContent.innerHTML = '<span class="text-white-50 small p-4"><i class="fas fa-sync fa-spin me-2"></i>Menghubungkan ke Gemini AI...</span>';
-        
+
         google.script.run
           .withSuccessHandler(res => {
             if (!res || res.error || (Array.isArray(res) && res.length === 0)) {
-              tickerContent.innerHTML = `<span class="text-danger small fw-bold p-4">DATA TIDAK TERSEDIA</span>`;
+              // FIX TICKER BLANK: Hapus padding agar elemen kembali ke kiri layar saat animasi dimatikan
+              tickerContent.style.paddingLeft = '20px';
+              tickerContent.innerHTML = `<span class="text-danger small fw-bold p-4">DATA PASAR TIDAK TERSEDIA (OFFLINE)</span>`;
               tickerContent.style.animation = "none";
               return;
             }
+
+            // Kembalikan padding jika data berhasil didapat
+            tickerContent.style.paddingLeft = '100%';
 
             const content = res.map(m => `
               <div class="ticker-item">
@@ -3193,12 +3229,10 @@
 
             tickerContent.innerHTML = content + content + content;
 
-            // FUNGSI PENGAMAN: Cek apakah view sedang terlihat atau tidak
             const updateAnimation = () => {
-              const pixelsPerSecond = 25; 
+              const pixelsPerSecond = 25;
               const totalWidth = tickerContent.scrollWidth / 3;
-              
-              // Jika lebar terdeteksi 0 (karena view hidden), gunakan fallback lebar 1500px
+              // Jika lebar terdeteksi 0 (karena view hidden), gunakan fallback lebar
               const safeWidth = totalWidth > 100 ? totalWidth : 1500;
               const dynamicDuration = safeWidth / pixelsPerSecond;
               
@@ -3206,10 +3240,7 @@
               tickerContent.style.animationPlayState = 'running';
             };
 
-            // Jalankan saat data diterima
             updateAnimation();
-
-            // Jalankan ulang saat tab laporan diklik (untuk memastikan akurasi lebar)
             window.addEventListener('resize', updateAnimation);
           })
           .getMaterialsData();
