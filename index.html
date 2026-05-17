@@ -302,7 +302,7 @@
       /* --- TABLE RESPONSIVE --- */
       .table-responsive { border-bottom: none !important; overflow-y: auto; scrollbar-width: thin; }
       #view-products .table-responsive { max-height: calc(100vh - 200px) !important; }
-      #view-finance .table-responsive { max-height: calc(100vh - 350px) !important; }
+      #view-finance .table-responsive { max-height: calc(100vh - 150px) !important; padding-bottom: 90px; }
       thead.bg-dark { position: sticky; top: 0; z-index: 10; }
 
       /* ========================================= */
@@ -3048,53 +3048,63 @@
         document.getElementById('absensiChoice').classList.add('d-none');
       }
 
-      // Ganti fungsi executeAbsensi pada file index_part_4.txt
       function executeAbsensi(type) {
         const scannerLine = document.querySelector('.scan-line');
         scannerLine.style.animationDuration = '0.5s';
         
         // Ambil foto bukti saat ini secara diam-diam
         const proofImg = captureFaceFrame();
-        
         const actionArea = document.getElementById('absensiChoice');
         const originalHTML = actionArea.innerHTML;
         
-        // Tampilkan visual loading instan tanpa memblokir antrean kasir
+        // Tampilkan visual loading instan tanpa memblokir antrean
         actionArea.innerHTML = `
           <div class="text-center p-3">
             <div class="spinner-border text-warning mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
-            <h5 class="fw-bold text-dark mb-1">Foto Berhasil Ditangkap!</h5>
-            <p class="text-muted small">Menyimpan data di latar belakang...<br>Anda sudah bisa meninggalkan layar ini.</p>
+            <h5 class="fw-bold text-dark mb-1">Memproses Data...</h5>
+            <p class="text-muted small">Mohon tunggu sebentar, sedang menyinkronkan dengan server.</p>
           </div>
         `;
-        
-        // Kembalikan UI ke daftar nama setelah 3 detik agar orang lain bisa langsung absen
-        setTimeout(() => {
-          cancelAbsensi();
-          actionArea.innerHTML = originalHTML;
-        }, 3000);
 
         // Proses GAS berjalan di background
-        google.script.run.withSuccessHandler(res => {
-          scannerLine.style.animationDuration = '2s';
-          if (res.status === 'success') {
-            if (USER_ROLE === 'ADMIN') loadAttendanceLogs();
-          } else {
-            // Notifikasi tetap muncul HANYA jika ada error dari server
-            alert("Gagal menyimpan absensi: " + res.message);
-          }
-        }).recordAttendance(CURRENT_ABSENSI_NAME, type, proofImg);
+        google.script.run
+          .withSuccessHandler(res => {
+            scannerLine.style.animationDuration = '2s';
+            if (res.status === 'success') {
+              alert(`Absensi ${CURRENT_ABSENSI_NAME} Berhasil! (${type})`);
+              cancelAbsensi(); // Kembali ke daftar nama
+              actionArea.innerHTML = originalHTML; // Kembalikan state tombol
+              
+              if (USER_ROLE === 'ADMIN') loadAttendanceLogs();
+            } else {
+              alert("Gagal menyimpan absensi: " + res.message);
+              cancelAbsensi();
+              actionArea.innerHTML = originalHTML;
+            }
+          })
+          .withFailureHandler(err => {
+            scannerLine.style.animationDuration = '2s';
+            alert("Terjadi Kesalahan Server/Jaringan: " + err.message);
+            cancelAbsensi();
+            actionArea.innerHTML = originalHTML;
+          })
+          .recordAttendance(CURRENT_ABSENSI_NAME, type, proofImg);
       }
-
+      
       // Fungsi untuk mengambil frame dari video stream absensi
       function captureFaceFrame() {
         const video = document.getElementById('attendanceVideo');
         const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        
+        // Kompresi ukuran agar payload base64 tidak mencapai ukuran MB yang berisiko ditolak server
+        const MAX_WIDTH = 400; 
+        const scale = MAX_WIDTH / video.videoWidth;
+        canvas.width = MAX_WIDTH;
+        canvas.height = video.videoHeight * scale;
+        
         const ctx = canvas.getContext('2d');
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        return canvas.toDataURL('image/jpeg', 0.8); // Kembalikan Base64
+        return canvas.toDataURL('image/jpeg', 0.6); // Kompresi kualitas 60%
       }
 
       function startFaceRegistration(name) {
