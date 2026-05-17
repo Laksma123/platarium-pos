@@ -3084,8 +3084,7 @@
         
         tbody.innerHTML = '<tr><td colspan="5" class="text-center p-5"><div class="spinner-border text-warning spinner-border-sm me-2"></div>Memuat riwayat...</td></tr>';
         
-        google.script.run
-          .withSuccessHandler(function(logs) {
+        google.script.run.withSuccessHandler(function(logs) {
             if (!logs || logs.length === 0) {
               tbody.innerHTML = '<tr><td colspan="5" class="text-center p-5 text-muted">Belum ada riwayat tercatat.</td></tr>';
               return;
@@ -3104,12 +3103,12 @@
                     <div class="fw-bold text-dark">${row.nama}</div>
                     <div class="text-muted small">${row.tgl}</div>
                   </td>
-                  <td class="text-success fw-bold">${formatTime(row.in)}</td>
-                  <td class="text-danger fw-bold">${formatTime(row.out)}</td>
+                  <td class="text-success fw-bold text-center">${formatTime(row.in)}</td>
+                  <td class="text-danger fw-bold text-center">${formatTime(row.out)}</td>
                   <td class="text-center">
                     <img src="${row.img || 'https://via.placeholder.com/100'}" 
                         class="rounded-3 border shadow-sm" 
-                        style="width:100px; height:70px; object-fit:cover; cursor:pointer;"
+                        style="width:80px; height:55px; object-fit:cover; cursor:pointer;"
                         onclick="window.open('${row.img}')">
                   </td>
                   <td class="text-center">
@@ -3122,13 +3121,9 @@
                 </tr>
               `;
             }).join('');
-          })
-          .withFailureHandler(function(err) {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center p-5 text-danger">Error: ${err.message}</td></tr>`;
-          })
-          .getAttendanceLogs();
+        }).getAttendanceLogs();
       }
-
+      
       function confirmDeleteAttendance(nama, tgl) {
         if (confirm(`Hapus permanen riwayat absensi ${nama} pada tanggal ${tgl}?`)) {
           const tbody = document.getElementById('attendanceLogBody');
