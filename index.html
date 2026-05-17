@@ -1347,7 +1347,7 @@
       // [PRE-LOAD] Panggil data segera setelah script dimuat di browser
       // Data akan disimpan di variabel global PRODUCTS
       loadProducts();
-      
+
       let USER_ROLE = '';
       let CART = [];
       let PRODUCTS = [];
@@ -2098,7 +2098,7 @@
           imageElement.src = e.target.result;
           
           const modal = document.getElementById('modalCrop');
-          document.body.appendChild(modal); // Pindahkan ke root body agar tidak tertimpa display:none dari main-container
+          document.body.appendChild(modal); 
           modal.classList.remove('d-none');
           modal.style.display = "flex";
 
@@ -2110,19 +2110,20 @@
           
           if(CURRENT_UPLOAD_ID === 'LOGO') {
             aspectR = 1/1;
-            cropContainer.classList.add('cropper-circle'); // Terapkan efek bulat
+            cropContainer.classList.add('cropper-circle'); 
           } else if (CURRENT_UPLOAD_ID === 'WALLPAPER') {
-            aspectR = 16/9; // Landscape
+            // [PERBAIKAN] Rasio mengikuti dimensi layar device secara dinamis (portrait/landscape otomatis)
+            aspectR = window.innerWidth / window.innerHeight; 
             cropContainer.classList.remove('cropper-circle');
           } else {
-            aspectR = 1/1; // Produk biasa
+            aspectR = 1/1; 
             cropContainer.classList.remove('cropper-circle');
           }
 
           setTimeout(() => {
             CROPPER = new Cropper(imageElement, {
               aspectRatio: aspectR,
-              viewMode: 1, // Kunci drag di dalam gambar
+              viewMode: 1, 
               dragMode: 'move',
               autoCropArea: 1,
               restore: false,
@@ -2154,9 +2155,14 @@
         const btn = document.getElementById('btnExecuteCrop');
         btn.disabled = true;
         
-        // Sesuaikan tinggi resolusi canvas wallpaper
-        const canvasHeight = CURRENT_UPLOAD_ID === 'WALLPAPER' ? 450 : 800;
-        const canvas = CROPPER.getCroppedCanvas({ width: 800, height: canvasHeight, fillColor: '#ffffff' });
+        // [PERBAIKAN] Gunakan opsi maxWidth & maxHeight agar rasio asli dari cropBox tidak terdistorsi
+        const canvasOptions = { 
+          fillColor: '#ffffff',
+          maxWidth: 1080,
+          maxHeight: 1920 
+        };
+        
+        const canvas = CROPPER.getCroppedCanvas(canvasOptions);
         const base64Data = canvas.toDataURL('image/jpeg', 0.90);
 
         if (CURRENT_UPLOAD_ID === 'NEW_PRODUCT') {
@@ -2192,7 +2198,7 @@
           }).uploadProductImage(CURRENT_UPLOAD_ID, base64Data, 'cropped_' + SELECTED_FILE_NAME);
         }
       }
-
+      
       function openLogoManager() {
         // [PERBAIKAN] Pindahkan modal secara dinamis ke root body agar tidak disembunyikan oleh parent element
         document.body.appendChild(document.getElementById('modalConfigPreview'));
