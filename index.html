@@ -560,23 +560,6 @@
         overlay.style.opacity = '1';
       }
 
-      // [BARU] Panggil data Logo & Wallpaper sesaat setelah web terbuka
-      google.script.run.withSuccessHandler(res => {
-        if(res && res.status === 'success') {
-          // Timpa wallpaper jika ada di GSheet
-          if (res.wallpaper && res.wallpaper.includes("http")) {
-            document.getElementById('loginBg').src = res.wallpaper;
-          }
-          // Timpa logo jika ada di GSheet
-          if (res.logo && res.logo.includes("http")) {
-            const logoImg = document.getElementById('uiLogo');
-            logoImg.src = res.logo;
-            logoImg.style.display = 'block';
-            document.getElementById('uiLogoPlaceholder').style.display = 'none';
-          }
-        }
-      }).getAppConfig();
-
       // Backup: Jika gambar gagal dimuat dalam 3 detik, paksa UI muncul
       setTimeout(() => {
         document.getElementById('loginOverlay').style.opacity = '1';
@@ -1343,6 +1326,28 @@
         });
       }
 
+      // [BARU] Panggil data Logo & Wallpaper sesaat setelah proxy API siap
+      google.script.run.withSuccessHandler(res => {
+        if(res && res.status === 'success') {
+          // Timpa wallpaper jika ada di GSheet
+          if (res.wallpaper && res.wallpaper.includes("http")) {
+            document.getElementById('loginBg').src = res.wallpaper;
+          }
+          
+          // Timpa logo jika ada di GSheet
+          if (res.logo && res.logo.includes("http")) {
+            const logoImg = document.getElementById('uiLogo');
+            logoImg.src = res.logo;
+            logoImg.style.display = 'block';
+            document.getElementById('uiLogoPlaceholder').style.display = 'none';
+          }
+        }
+      }).getAppConfig();
+
+      // [PRE-LOAD] Panggil data segera setelah script dimuat di browser
+      // Data akan disimpan di variabel global PRODUCTS
+      loadProducts();
+      
       let USER_ROLE = '';
       let CART = [];
       let PRODUCTS = [];
@@ -2091,7 +2096,9 @@
         reader.onload = function(e) {
           const imageElement = document.getElementById('imageToCrop');
           imageElement.src = e.target.result;
+          
           const modal = document.getElementById('modalCrop');
+          document.body.appendChild(modal); // Pindahkan ke root body agar tidak tertimpa display:none dari main-container
           modal.classList.remove('d-none');
           modal.style.display = "flex";
 
