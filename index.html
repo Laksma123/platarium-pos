@@ -2178,22 +2178,23 @@
         const adminDetail = document.getElementById('adminAttendanceDetail');
         const scannerArea = document.getElementById('attendanceScannerArea');
         const actionArea = document.getElementById('absensiChoice');
-        
+
         // Sembunyikan tombol sementara model AI dimuat
         if (actionArea) {
           actionArea.classList.remove('d-none');
           actionArea.innerHTML = '<div class="text-center text-muted small"><i class="fas fa-spinner fa-spin me-2"></i>Mempersiapkan AI Biometrik...</div>';
         }
 
+        // Cek Role: Admin vs Kasir
         if (USER_ROLE === 'ADMIN') {
           adminDetail.style.display = 'block';
-          scannerArea.className = 'col-12 col-lg-5';
+          scannerArea.className = 'col-12 col-lg-5'; // Mode split
           loadAttendanceLogs();
         } else {
           adminDetail.style.display = 'none';
-          scannerArea.className = 'col-12';
+          scannerArea.className = 'col-12'; // Mode full screen untuk kasir
         }
-        
+
         // Panggil AI secara Async
         await initFaceAPI();
         await buildFaceMatcher();
@@ -2212,7 +2213,7 @@
             </div>
           `;
         }
-        
+
         startCamera('attendanceVideo');
       }
 
@@ -2763,25 +2764,6 @@
         }
       });
 
-      function initAttendanceTab() {
-        renderAttendanceStaff();
-        
-        // Cek Role: Admin vs Kasir
-        const adminDetail = document.getElementById('adminAttendanceDetail');
-        const scannerArea = document.getElementById('attendanceScannerArea');
-
-        if (USER_ROLE === 'ADMIN') {
-          adminDetail.style.display = 'block';
-          scannerArea.className = 'col-12 col-lg-5'; // Mode split
-          loadAttendanceLogs();
-        } else {
-          adminDetail.style.display = 'none';
-          scannerArea.className = 'col-12'; // Mode full screen untuk kasir
-        }
-        
-        startCamera('attendanceVideo');
-      }
-
       function startCamera(videoId) {
         const video = document.getElementById(videoId);
         if (!video) return; 
@@ -3008,40 +2990,6 @@
           } else { alert(res.message); }
         }).registerStaffFace(name, imgData);
       }
-      
-      function renderAttendanceStaff() {
-        const container = document.getElementById('attendanceStaffList');
-        if (!CONFIG.Cashiers || !container) return;
-        
-        // Memastikan data dipetakan ke dalam array button lalu di-join menjadi string
-        container.innerHTML = CONFIG.Cashiers.map(name => {
-          return `<button class="btn btn-outline-dark rounded-pill fw-bold px-4 mb-2" onclick="processAbsensi('${name}')">
-                    ${name}
-                  </button>`;
-        }).join('');
-      }
-
-      function processAbsensi(name) {
-        // Efek "Scanning"
-        const scannerLine = document.querySelector('.scan-line');
-        scannerLine.style.animationDuration = '0.5s'; // Percepat animasi saat diklik
-        
-        // Anti-Fraud: Simulasi Verifikasi Wajah (Deteksi pergerakan/ada subjek)
-        // Untuk tablet murah, kita pastikan ada wajah di frame (logic sederhana)
-        setTimeout(() => {
-          const type = confirm(`Hai ${name}, pilih aksi: \nOK = Check-In\nCancel = Check-Out`) ? 'IN' : 'OUT';
-          
-          google.script.run.withSuccessHandler(res => {
-            scannerLine.style.animationDuration = '2s';
-            if (res.status === 'success') {
-              alert(`Berhasil! ${name} ${type === 'IN' ? 'Check-In' : 'Check-Out'} pada ${res.time}`);
-              if (USER_ROLE === 'ADMIN') loadAttendanceLogs();
-            } else {
-              alert(res.message);
-            }
-          }).recordAttendance(name, type);
-        }, 1500);
-      }
 
       function loadAttendanceLogs() {
         const tbody = document.getElementById('attendanceLogBody');
@@ -3126,13 +3074,6 @@
             })
             .deleteAttendanceRecord(nama, tgl);
         }
-      }
-
-      function processAbsensi(name) {
-        CURRENT_ABSENSI_NAME = name;
-        document.getElementById('targetStaffName').innerText = name;
-        document.getElementById('attendanceStaffList').classList.add('d-none');
-        document.getElementById('absensiChoice').classList.remove('d-none');
       }
 
       async function executeAbsensi(type) {
