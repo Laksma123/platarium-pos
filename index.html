@@ -2991,10 +2991,8 @@
           .getAttendanceLogs();
       }
 
-      // Ganti fungsi confirmDeleteAttendance pada file index_part_3.txt
       function confirmDeleteAttendance(nama, tgl) {
         if (confirm(`Hapus permanen riwayat absensi ${nama} pada tanggal ${tgl}?`)) {
-          // Cari tombol secara manual via DOM untuk memberi efek loading
           const tbody = document.getElementById('attendanceLogBody');
           let originalContent = '';
           let targetBtn = null;
@@ -3014,9 +3012,14 @@
           google.script.run
             .withSuccessHandler(function(res) {
               if (res && res.status === 'success') {
-                loadAttendanceLogs();
+                // Trik UI: Langsung hapus TR dari HTML agar terasa instan, sementara menunggu reload
+                if (targetBtn) {
+                  const tr = targetBtn.closest('tr');
+                  if (tr) tr.remove();
+                }
+                loadAttendanceLogs(); 
               } else {
-                alert("Gagal menghapus: " + (res ? res.message : "Respon kosong"));
+                alert("Gagal menghapus: " + (res ? res.message : "Data gagal dicocokkan."));
                 if (targetBtn) {
                   targetBtn.disabled = false;
                   targetBtn.innerHTML = originalContent;
@@ -3033,7 +3036,7 @@
             .deleteAttendanceRecord(nama, tgl);
         }
       }
-
+      
       let CURRENT_ABSENSI_NAME = "";
 
       function processAbsensi(name) {
@@ -3052,51 +3055,48 @@
         const scannerLine = document.querySelector('.scan-line');
         scannerLine.style.animationDuration = '0.5s';
         
-        // Ambil foto bukti saat ini secara diam-diam
         const proofImg = captureFaceFrame();
         const actionArea = document.getElementById('absensiChoice');
         const originalHTML = actionArea.innerHTML;
         
-        // Tampilkan visual loading instan tanpa memblokir antrean
+        // Tampilkan visual instan sesuai keinginanmu
         actionArea.innerHTML = `
           <div class="text-center p-3">
             <div class="spinner-border text-warning mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
-            <h5 class="fw-bold text-dark mb-1">Memproses Data...</h5>
-            <p class="text-muted small">Mohon tunggu sebentar, sedang menyinkronkan dengan server.</p>
+            <h5 class="fw-bold text-dark mb-1">Foto Berhasil Ditangkap!</h5>
+            <p class="text-muted small">Memproses Data...<br>Mohon tunggu sebentar, sedang menyinkronkan dengan server.</p>
           </div>
         `;
 
-        // Proses GAS berjalan di background
+        // FIRE AND FORGET: Kembalikan UI secara otomatis dalam 3 detik agar kasir bisa pergi
+        setTimeout(() => {
+          cancelAbsensi();
+          actionArea.innerHTML = originalHTML; // Pulihkan tombol IN/OUT
+        }, 3000);
+
+        // Proses GAS berjalan diam-diam di background (tanpa memunculkan alert)
         google.script.run
           .withSuccessHandler(res => {
             scannerLine.style.animationDuration = '2s';
             if (res.status === 'success') {
-              alert(`Absensi ${CURRENT_ABSENSI_NAME} Berhasil! (${type})`);
-              cancelAbsensi(); // Kembali ke daftar nama
-              actionArea.innerHTML = originalHTML; // Kembalikan state tombol
-              
+              // Jika sukses dan yang login admin, reload tabel diam-diam
               if (USER_ROLE === 'ADMIN') loadAttendanceLogs();
             } else {
-              alert("Gagal menyimpan absensi: " + res.message);
-              cancelAbsensi();
-              actionArea.innerHTML = originalHTML;
+              console.error("Gagal menyimpan absensi: " + res.message);
             }
           })
           .withFailureHandler(err => {
             scannerLine.style.animationDuration = '2s';
-            alert("Terjadi Kesalahan Server/Jaringan: " + err.message);
-            cancelAbsensi();
-            actionArea.innerHTML = originalHTML;
+            console.error("Network Error Absen: " + err.message);
           })
           .recordAttendance(CURRENT_ABSENSI_NAME, type, proofImg);
       }
-      
-      // Fungsi untuk mengambil frame dari video stream absensi
+
       function captureFaceFrame() {
         const video = document.getElementById('attendanceVideo');
         const canvas = document.createElement('canvas');
         
-        // Kompresi ukuran agar payload base64 tidak mencapai ukuran MB yang berisiko ditolak server
+        // Kompresi ketat: Batasi lebar max 400px agar base64 tidak berat
         const MAX_WIDTH = 400; 
         const scale = MAX_WIDTH / video.videoWidth;
         canvas.width = MAX_WIDTH;
@@ -3104,7 +3104,7 @@
         
         const ctx = canvas.getContext('2d');
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        return canvas.toDataURL('image/jpeg', 0.6); // Kompresi kualitas 60%
+        return canvas.toDataURL('image/jpeg', 0.5); // Kualitas diturunkan ke 50%
       }
 
       function startFaceRegistration(name) {
