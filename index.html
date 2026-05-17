@@ -3012,7 +3012,6 @@
           google.script.run
             .withSuccessHandler(function(res) {
               if (res && res.status === 'success') {
-                // Trik UI: Langsung hapus TR dari HTML agar terasa instan, sementara menunggu reload
                 if (targetBtn) {
                   const tr = targetBtn.closest('tr');
                   if (tr) tr.remove();
@@ -3027,7 +3026,7 @@
               }
             })
             .withFailureHandler(function(err) {
-              alert("Kesalahan Server: " + err.message);
+              alert("Kesalahan Komunikasi Server: " + err.message);
               if (targetBtn) {
                 targetBtn.disabled = false;
                 targetBtn.innerHTML = originalContent;
@@ -3053,13 +3052,13 @@
 
       function executeAbsensi(type) {
         const scannerLine = document.querySelector('.scan-line');
-        scannerLine.style.animationDuration = '0.5s';
+        if (scannerLine) scannerLine.style.animationDuration = '0.5s';
         
         const proofImg = captureFaceFrame();
         const actionArea = document.getElementById('absensiChoice');
         const originalHTML = actionArea.innerHTML;
         
-        // Tampilkan visual instan sesuai keinginanmu
+        // Tampilkan visual teks asli Anda secara instan
         actionArea.innerHTML = `
           <div class="text-center p-3">
             <div class="spinner-border text-warning mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
@@ -3068,26 +3067,26 @@
           </div>
         `;
 
-        // FIRE AND FORGET: Kembalikan UI secara otomatis dalam 3 detik agar kasir bisa pergi
+        // FIRE AND FORGET: Sesuai rancangan Anda, lepaskan kasir dalam 3 detik tanpa menahan layar
         setTimeout(() => {
           cancelAbsensi();
-          actionArea.innerHTML = originalHTML; // Pulihkan tombol IN/OUT
+          actionArea.innerHTML = originalHTML;
         }, 3000);
 
-        // Proses GAS berjalan diam-diam di background (tanpa memunculkan alert)
+        // Pengiriman data ke Google Apps Script di background
         google.script.run
           .withSuccessHandler(res => {
-            scannerLine.style.animationDuration = '2s';
-            if (res.status === 'success') {
-              // Jika sukses dan yang login admin, reload tabel diam-diam
+            if (scannerLine) scannerLine.style.animationDuration = '2s';
+            if (res && res.status === 'success') {
               if (USER_ROLE === 'ADMIN') loadAttendanceLogs();
             } else {
-              console.error("Gagal menyimpan absensi: " + res.message);
+              // Jika server mengembalikan status error, kita keluarkan alert agar tahu letak salahnya
+              alert("Gagal mencatat absensi: " + (res ? res.message : "Misteri / Respon kosong"));
             }
           })
           .withFailureHandler(err => {
-            scannerLine.style.animationDuration = '2s';
-            console.error("Network Error Absen: " + err.message);
+            if (scannerLine) scannerLine.style.animationDuration = '2s';
+            alert("Kesalahan Sistem Server: " + err.message);
           })
           .recordAttendance(CURRENT_ABSENSI_NAME, type, proofImg);
       }
