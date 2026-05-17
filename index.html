@@ -3205,13 +3205,20 @@
         tickerContent.style.paddingLeft = '100%';
         tickerContent.innerHTML = '<span class="text-white-50 small p-4"><i class="fas fa-sync fa-spin me-2"></i>Menghubungkan ke Gemini AI...</span>';
 
+        // PERBAIKAN: Posisi withFailureHandler HARUS diletakkan sebelum withSuccessHandler 
+        // agar tidak menghancurkan proxy GitHub Pages.
         google.script.run
+          .withFailureHandler(err => {
+            console.error("Gagal mengambil data pasar:", err);
+            tickerContent.style.paddingLeft = '20px'; 
+            tickerContent.innerHTML = `<span class="text-danger small fw-bold p-4"><i class="fas fa-wifi me-2"></i>KONEKSI SERVER GAGAL / TIMEOUT</span>`;
+            tickerContent.style.animation = "none";
+          })
           .withSuccessHandler(res => {
-            // Tangkap jika respon kosong atau backend mengembalikan objek error
             if (!res || res.error || (Array.isArray(res) && res.length === 0)) {
-              tickerContent.style.paddingLeft = '20px'; // Reset padding agar teks terlihat
-              const errorMsg = res && res.error ? res.error : "DATA PASAR TIDAK TERSEDIA";
-              tickerContent.innerHTML = `<span class="text-danger small fw-bold p-4"><i class="fas fa-exclamation-triangle me-2"></i>${errorMsg}</span>`;
+              tickerContent.style.paddingLeft = '20px';
+              const errorMessage = res && res.error ? res.error.toUpperCase() : "DATA PASAR TIDAK TERSEDIA (OFFLINE)";
+              tickerContent.innerHTML = `<span class="text-danger small fw-bold p-4"><i class="fas fa-exclamation-triangle me-2"></i>${errorMessage}</span>`;
               tickerContent.style.animation = "none";
               return;
             }
@@ -3228,7 +3235,6 @@
               </div>
             `).join('');
 
-            // Gandakan konten agar efek looping tidak terputus
             tickerContent.innerHTML = content + content + content;
 
             const updateAnimation = () => {
@@ -3243,13 +3249,6 @@
 
             updateAnimation();
             window.addEventListener('resize', updateAnimation);
-          })
-          // [BARU] Wajib ditambahkan untuk menangkap error dari sistem Proxy GitHub Pages
-          .withFailureHandler(err => {
-            console.error("Gagal mengambil data pasar:", err);
-            tickerContent.style.paddingLeft = '20px'; // Reset padding agar teks terlihat
-            tickerContent.innerHTML = `<span class="text-danger small fw-bold p-4"><i class="fas fa-wifi me-2"></i>KONEKSI KE SERVER GAGAL / TIMEOUT</span>`;
-            tickerContent.style.animation = "none";
           })
           .getMaterialsData();
       }
