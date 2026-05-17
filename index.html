@@ -723,20 +723,14 @@
                 </div>
                 
                 <div id="absensiActionArea">
-                  <p class="text-muted small mb-4">Pilih nama Anda untuk memulai pemindaian</p>
-                  <div id="attendanceStaffList" class="d-flex flex-wrap gap-2 justify-content-center"></div>
-                  
                   <div id="absensiChoice" class="mt-4 d-none">
-                    <h6 class="fw-bold mb-4">Halo <span id="targetStaffName"></span>, pilih aksi:</h6>
+                    <h6 class="fw-bold mb-4 text-center">Silakan hadap kamera dan pilih aksi:</h6>
                     <div class="d-flex gap-3 justify-content-center">
                       <button class="btn-absensi btn-in" onclick="executeAbsensi('IN')">
                         <i class="fas fa-sign-in-alt"></i><span>IN</span>
                       </button>
                       <button class="btn-absensi btn-out" onclick="executeAbsensi('OUT')">
                         <i class="fas fa-sign-out-alt"></i><span>OUT</span>
-                      </button>
-                      <button class="btn-absensi btn-cancel-abs" onclick="cancelAbsensi()">
-                        <i class="fas fa-times"></i><span>BATAL</span>
                       </button>
                     </div>
                   </div>
@@ -2183,12 +2177,13 @@
       async function initAttendanceTab() {
         const adminDetail = document.getElementById('adminAttendanceDetail');
         const scannerArea = document.getElementById('attendanceScannerArea');
-        const staffListUI = document.getElementById('attendanceStaffList');
-        const targetNameUI = document.getElementById('targetStaffName');
+        const actionArea = document.getElementById('absensiChoice');
         
-        // Bersihkan UI dan beritahu user bahwa AI sedang dimuat
-        if (staffListUI) staffListUI.innerHTML = '<div class="text-center text-muted small"><i class="fas fa-spinner fa-spin me-2"></i>Mempersiapkan AI Biometrik...</div>';
-        if (targetNameUI) targetNameUI.innerText = "";
+        // Sembunyikan tombol sementara model AI dimuat
+        if (actionArea) {
+          actionArea.classList.remove('d-none');
+          actionArea.innerHTML = '<div class="text-center text-muted small"><i class="fas fa-spinner fa-spin me-2"></i>Mempersiapkan AI Biometrik...</div>';
+        }
 
         if (USER_ROLE === 'ADMIN') {
           adminDetail.style.display = 'block';
@@ -2203,11 +2198,22 @@
         await initFaceAPI();
         await buildFaceMatcher();
 
-        // Setelah AI siap, sembunyikan list nama karena sudah otomatis
-        if (staffListUI) staffListUI.classList.add('d-none');
-        if (targetNameUI) targetNameUI.innerText = "Arahkan wajah ke kamera";
+        // Kembalikan UI tombol IN/OUT setelah AI siap
+        if (actionArea) {
+          actionArea.innerHTML = `
+            <h6 class="fw-bold mb-4 text-center">Silakan hadap kamera dan pilih aksi:</h6>
+            <div class="d-flex gap-3 justify-content-center">
+              <button class="btn-absensi btn-in" onclick="executeAbsensi('IN')">
+                <i class="fas fa-sign-in-alt"></i><span>IN</span>
+              </button>
+              <button class="btn-absensi btn-out" onclick="executeAbsensi('OUT')">
+                <i class="fas fa-sign-out-alt"></i><span>OUT</span>
+              </button>
+            </div>
+          `;
+        }
         
-        startCamera('attendanceVideo', true); // Parameter true untuk mengaktifkan AI Detection
+        startCamera('attendanceVideo');
       }
 
       function loadProducts() {
@@ -2776,7 +2782,7 @@
         startCamera('attendanceVideo');
       }
 
-      function startCamera(videoId, isAutoAbsensi = false) {
+      function startCamera(videoId) {
         const video = document.getElementById(videoId);
         if (!video) return; 
 
@@ -2788,15 +2794,11 @@
               video.srcObject = stream;
               video.onloadedmetadata = () => {
                 video.play();
-                // Hanya aktifkan loop scan AI jika isAutoAbsensi true dan Model siap
-                if (isAutoAbsensi && IS_FACE_API_READY) {
-                  runAutoDetection(video);
-                }
               };
             })
             .catch(err => {
               console.log("Kamera Error: " + err);
-              alert("Gagal mengakses kamera. Pastikan kamera tidak sedang dipakai aplikasi lain (seperti OBS) dan izin browser diberikan.");
+              alert("Gagal mengakses kamera. Pastikan izin browser diberikan.");
             });
         }
       }
@@ -2838,24 +2840,6 @@
             FACE_MATCHER = new faceapi.FaceMatcher(labeledDescriptors, 0.5);
           }
         }).getStaffMasterFaces();
-      }
-
-      async function runAutoDetection(video) {
-        if (FACE_DETECT_INTERVAL) clearInterval(FACE_DETECT_INTERVAL);
-
-        FACE_DETECT_INTERVAL = setInterval(async () => {
-          // Skip frame jika sedang milih IN/OUT, matcher belum siap, atau video mati
-          if (ATTENDANCE_COOLDOWN || !FACE_MATCHER || video.paused || video.ended) return;
-
-          const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
-          
-          if (detection) {
-            const bestMatch = FACE_MATCHER.findBestMatch(detection.descriptor);
-            if (bestMatch.label !== 'unknown') {
-              processAutoAbsensi(bestMatch.label);
-            }
-          }
-        }, 1000); // 1 detik per frame agar tidak membuat device panas
       }
 
       function openModalRegisterFace() {
@@ -2960,25 +2944,6 @@
             reopenRegCamera();
           }
         }).getStaffMasterFaces();
-      }
-
-      function processAutoAbsensi(name) {
-        ATTENDANCE_COOLDOWN = true; 
-        CURRENT_ABSENSI_NAME = name;
-        
-        const scannerLine = document.querySelector('.scan-line');
-        if (scannerLine) scannerLine.style.animationDuration = '0.1s'; 
-        
-        document.getElementById('attendanceStaffList').classList.add('d-none');
-        document.getElementById('absensiChoice').classList.remove('d-none');
-        document.getElementById('targetStaffName').innerText = name;
-
-        // Auto cancel/lepas cooldown jika user tidak jadi klik IN/OUT dalam 6 detik
-        setTimeout(() => {
-          if (ATTENDANCE_COOLDOWN) {
-            cancelAbsensi();
-          }
-        }, 6000);
       }
 
       function reopenRegCamera() {
@@ -3123,7 +3088,7 @@
             }).join('');
         }).getAttendanceLogs();
       }
-      
+
       function confirmDeleteAttendance(nama, tgl) {
         if (confirm(`Hapus permanen riwayat absensi ${nama} pada tanggal ${tgl}?`)) {
           const tbody = document.getElementById('attendanceLogBody');
@@ -3170,29 +3135,63 @@
         document.getElementById('absensiChoice').classList.remove('d-none');
       }
 
-      function cancelAbsensi() {
-        document.getElementById('absensiChoice').classList.add('d-none');
-        document.getElementById('targetStaffName').innerText = "Arahkan wajah ke kamera";
-        const scannerLine = document.querySelector('.scan-line');
-        if (scannerLine) scannerLine.style.animationDuration = '2s';
-        
-        // Lepas kunci AI
-        ATTENDANCE_COOLDOWN = false;
-      }
+      async function executeAbsensi(type) {
+        // Validasi Model dan Database Master
+        if (!IS_FACE_API_READY) {
+            alert("Sistem AI belum siap, mohon tunggu sebentar.");
+            return;
+        }
+        if (!FACE_MATCHER) {
+            alert("Database Wajah Master kosong! Silakan Daftarkan Kasir terlebih dahulu.");
+            return;
+        }
 
-      function executeAbsensi(type) {
-        const proofImg = captureFaceFrame();
+        const video = document.getElementById('attendanceVideo');
         const actionArea = document.getElementById('absensiChoice');
         const originalHTML = actionArea.innerHTML;
 
+        // UI Loading Pemindaian
         actionArea.innerHTML = `
           <div class="text-center p-3">
             <div class="spinner-border text-warning mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
-            <h5 class="fw-bold text-dark mb-1">Teridentifikasi AI!</h5>
-            <p class="text-muted small">Menyimpan data kehadiran...</p>
+            <h5 class="fw-bold text-dark mb-1">Memindai Wajah...</h5>
+            <p class="text-muted small">Tahan posisi Anda sebentar.</p>
           </div>
         `;
 
+        // 1. Ekstrak Wajah & Biometrik Saat Ini
+        const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+        
+        // Jika wajah tidak ada di frame
+        if (!detection) {
+            alert("Wajah tidak terdeteksi! Pastikan pencahayaan cukup dan wajah menghadap kamera.");
+            actionArea.innerHTML = originalHTML;
+            return;
+        }
+
+        // 2. Pencocokan dengan Database Wajah Master
+        const bestMatch = FACE_MATCHER.findBestMatch(detection.descriptor);
+        
+        // Jika wajah ada tapi tidak cocok dengan siapa pun di database
+        if (bestMatch.label === 'unknown') {
+            alert("Wajah tidak dikenali! Pastikan Anda sudah terdaftar di menu 'Daftarkan Kasir'.");
+            actionArea.innerHTML = originalHTML;
+            return;
+        }
+
+        const recognizedName = bestMatch.label;
+        const proofImg = captureFaceFrame();
+
+        // UI Berhasil Dikenali
+        actionArea.innerHTML = `
+          <div class="text-center p-3">
+            <div class="spinner-border text-success mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+            <h5 class="fw-bold text-success mb-1">Halo, ${recognizedName}!</h5>
+            <p class="text-muted small">Menyimpan data kehadiran ${type}...</p>
+          </div>
+        `;
+
+        // 3. Kirim ke GSheet jika Valid
         google.script.run
           .withSuccessHandler(res => {
             if (res && res.status === 'success') {
@@ -3201,14 +3200,14 @@
               alert("Gagal mencatat absensi: " + (res ? res.message : "Respon kosong"));
             }
             
+            // Kembalikan tombol setelah selesai
             setTimeout(() => {
               actionArea.innerHTML = originalHTML;
-              cancelAbsensi();
             }, 2500);
           })
-          .recordAttendance(CURRENT_ABSENSI_NAME, type, proofImg);
+          .recordAttendance(recognizedName, type, proofImg);
       }
-
+      
       function captureFaceFrame() {
         const video = document.getElementById('attendanceVideo');
         const canvas = document.createElement('canvas');
