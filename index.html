@@ -2854,23 +2854,27 @@
         }
 
         const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        canvas.width = video.videoWidth; 
+        canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0);
         const imgData = canvas.toDataURL('image/jpeg', 0.8);
-
+        
         // Convert data biometrik (Float32Array) ke standar JSON array untuk dikirim ke backend
         const descriptorArr = Array.from(detection.descriptor);
         const descriptorJson = JSON.stringify(descriptorArr);
 
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
-
+        
         google.script.run.withSuccessHandler(res => {
-          btn.disabled = false; btn.innerText = 'AMBIL FOTO';
+          btn.disabled = false; 
+          btn.innerText = 'AMBIL FOTO';
           if(res.status === 'success') {
             alert(`Wajah master ${name} berhasil didaftarkan ke sistem AI!`);
             buildFaceMatcher(); // Refresh model AI memori
             closeModalRegisterFace();
-          } else { alert(res.message); }
+          } else { 
+            alert(res.message); 
+          }
         }).registerStaffFace(name, imgData, descriptorJson);
       }
 
@@ -2966,29 +2970,6 @@
           ATTENDANCE_STREAM.getTracks().forEach(t => t.stop());
         }
         startCamera('attendanceVideo'); // Kembalikan ke scanner utama
-      }
-
-      function executeRegisterFace() {
-        const name = document.getElementById('regStaffSelect').value;
-        const btn = document.getElementById('btnCaptureMaster');
-        const video = document.getElementById('regVideo');
-        
-        // Capture frame
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
-        const imgData = canvas.toDataURL('image/jpeg', 0.8);
-
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Mendaftarkan...';
-
-        google.script.run.withSuccessHandler(res => {
-          btn.disabled = false; btn.innerText = 'AMBIL FOTO';
-          if(res.status === 'success') {
-            alert(`Wajah master ${name} berhasil didaftarkan!`);
-            closeModalRegisterFace();
-          } else { alert(res.message); }
-        }).registerStaffFace(name, imgData);
       }
 
       function loadAttendanceLogs() {
