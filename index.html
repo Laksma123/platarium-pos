@@ -210,9 +210,11 @@
         flex: 1; display: flex; flex-direction: column; justify-content: space-between;
       }
       .pos-title {
-        font-size: clamp(0.85rem, 1.2vw, 1rem); 
+        font-size: clamp(0.85rem, 1.2vw, 1rem);
         font-weight: 700; color: #2d3436; line-height: 1.3;
-        margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; 
+        margin-bottom: 6px; display: -webkit-box; 
+        -webkit-line-clamp: 2; 
+        line-clamp: 2; 
         -webkit-box-orient: vertical; overflow: hidden;
       }
       .pos-price { font-size: clamp(0.8rem, 1vw, 0.95rem); color: var(--primary-gold); font-weight: 800; }
@@ -535,7 +537,8 @@
   <body>
 
     <div id="loginOverlay" class="login-overlay">
-      <button class="btn btn-dark rounded-circle shadow" style="position: absolute; top: 20px; right: 20px; z-index: 10000; width: 45px; height: 45px; opacity: 0.8; border: 2px solid rgba(255,255,255,0.5);" onclick="openWallpaperManager()" title="Edit Wallpaper">
+      <button type="button" class="btn btn-dark rounded-circle shadow d-flex justify-content-center align-items-center" style="position: absolute; top: 20px; right: 20px; z-index: 10000; width: 45px; height: 45px; opacity: 0.8; border: 2px solid rgba(255,255,255,0.5);"
+      onclick="openWallpaperManager()" title="Edit Wallpaper">
         <i class="fas fa-image" style="color: white; font-size: 1.2rem;"></i>
       </button>
       
@@ -544,8 +547,8 @@
       <div class="login-box">
         <p class="text-white-50 small mb-4 fw-bold" style="letter-spacing: 3px; font-size: 0.6rem; opacity: 0.8;">SECURED SYSTEM</p>
         <div class="px-2">
-          <input type="password" id="passInput" class="form-control text-center mb-3" placeholder="••••" onkeydown="if(event.key === 'Enter') handleLogin()" autofocus>
-          <button onclick="handleLogin()" class="btn btn-luxury w-100 py-2 rounded-3 fw-bold mb-2" style="letter-spacing: 2px;">LOGIN</button>
+          <input type="password" id="passInput" class="form-control text-center mb-3" placeholder="••••" onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleLogin(); }" autofocus>
+          <button type="button" onclick="handleLogin()" class="btn btn-luxury w-100 py-2 rounded-3 fw-bold mb-2" style="letter-spacing: 2px;">LOGIN</button>
           <div id="loginStatus" class="small fw-bold mt-2" style="min-height: 20px; color: #ff7675;"></div>
         </div>
       </div>
@@ -568,9 +571,10 @@
       
       <div class="app-top-header shadow-sm">
         <div class="d-flex align-items-center gap-2">
-          <div class="rounded-circle bg-white border d-flex align-items-center justify-content-center overflow-hidden shadow-sm" style="width: 45px; height: 45px; cursor: pointer; flex-shrink: 0;" onclick="openLogoManager()" title="Atur Logo">
-             <img id="uiLogo" src="<?= typeof logoUrl !== 'undefined' && logoUrl ? logoUrl : '' ?>" style="width: 100%; height: 100%; object-fit: cover; display: <?= typeof logoUrl !== 'undefined' && logoUrl ? 'block' : 'none' ?>;">
-             <i class="fas fa-store text-muted opacity-50" id="uiLogoPlaceholder" style="font-size: 1.2rem; display: <?= typeof logoUrl !== 'undefined' && logoUrl ? 'none' : 'block' ?>;"></i>
+          <div class="rounded-circle bg-white border d-flex align-items-center justify-content-center overflow-hidden shadow-sm" style="width: 45px; height: 45px; cursor: pointer; flex-shrink: 0;"
+          onclick="openLogoManager()" title="Atur Logo">
+             <img id="uiLogo" src="<?= typeof logoUrl !== 'undefined' && logoUrl ? logoUrl : '' ?>" style="width: 100%; height: 100%; object-fit: cover; display: <?= typeof logoUrl !== 'undefined' && logoUrl ? 'block' : 'none' ?>;" onerror="this.style.display='none'; document.getElementById('uiLogoPlaceholder').style.display='block';">
+             <div id="uiLogoPlaceholder" style="width: 100%; height: 100%; background-color: #ffffff; display: <?= typeof logoUrl !== 'undefined' && logoUrl ? 'none' : 'block' ?>;"></div>
           </div>
           <div>
             <h6 class="fw-bold m-0 lh-1 text-dark" id="uiStoreName">Platarium</h6>
