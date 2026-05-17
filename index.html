@@ -2802,26 +2802,32 @@
         }
       }
 
-      async function buildFaceMatcher() {
-        google.script.run.withSuccessHandler(faceMap => {
-          const labeledDescriptors = [];
-          
-          for (const [name, data] of Object.entries(faceMap)) {
-            if (data.descriptor && data.descriptor !== "") {
-              try {
-                const arr = new Float32Array(JSON.parse(data.descriptor));
-                labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(name, [arr]));
-              } catch (e) {
-                console.error("Gagal parsing biometrik untuk", name);
+      function buildFaceMatcher() {
+        return new Promise((resolve) => {
+          google.script.run.withSuccessHandler(faceMap => {
+            const labeledDescriptors = [];
+            
+            for (const [name, data] of Object.entries(faceMap)) {
+              // Pastikan descriptor benar-benar ada dan bukan string kosong
+              if (data.descriptor && data.descriptor !== "") {
+                try {
+                  const arr = new Float32Array(JSON.parse(data.descriptor));
+                  labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(name, [arr]));
+                } catch (e) {
+                  console.error("Gagal parsing biometrik untuk", name);
+                }
               }
             }
-          }
-          
-          if (labeledDescriptors.length > 0) {
-            // Toleransi akurasi 0.5 (semakin kecil semakin ketat)
-            FACE_MATCHER = new faceapi.FaceMatcher(labeledDescriptors, 0.5);
-          }
-        }).getStaffMasterFaces();
+            
+            if (labeledDescriptors.length > 0) {
+              // Toleransi akurasi 0.5 (semakin kecil semakin ketat)
+              FACE_MATCHER = new faceapi.FaceMatcher(labeledDescriptors, 0.5);
+            } else {
+              FACE_MATCHER = null; // Reset jika tidak ada data valid
+            }
+            resolve(); // Selesaikan eksekusi async
+          }).getStaffMasterFaces();
+        });
       }
 
       function openModalRegisterFace() {
