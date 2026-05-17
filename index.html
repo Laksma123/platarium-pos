@@ -662,7 +662,7 @@
 
                 <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
                   <span class="input-group-text bg-transparent border-0 text-muted small"><i class="fas fa-filter"></i></span>
-                  <select class="form-select border-0 shadow-none fw-bold bg-transparent px-2" style="font-size: 0.85rem; cursor:pointer;" onchange="updateSort(this.value)">
+                  <select class="form-select border-0 shadow-none fw-bold bg-transparent ps-2 pe-4" style="font-size: 0.85rem; cursor:pointer;" onchange="updateSort(this.value)">
                     <option value="id" selected>Nomor ID</option>
                     <option value="name">Alphabet</option>
                     <option value="category">Kategori</option>
@@ -831,7 +831,7 @@
                       </div>
                     </div>
 
-                    <div class="product-section pt-3 border-top">
+                    <div class="product-section pt-3 border-top pb-5 mb-5">
                       <small class="fw-bold text-muted opacity-50 d-block mb-4" style="font-size: 0.65rem; letter-spacing: 1px;">
                         5 PRODUK TERLARIS (QTY)
                       </small>
@@ -2786,17 +2786,29 @@
         const video = document.getElementById('regVideo');
         const previewArea = video.parentElement; // .scanner-box
         
-        // Hapus UI lama jika ada
+        // Bersihkan UI lama
         const oldImg = document.getElementById('masterPreviewImg');
         if (oldImg) oldImg.remove();
         const oldBtns = document.getElementById('masterBtnGroup');
         if (oldBtns) oldBtns.remove();
+        const oldLoader = document.getElementById('masterLoader');
+        if (oldLoader) oldLoader.remove();
+
+        // Matikan video dan tampilkan visual loading
+        video.style.display = 'none';
+        const loader = document.createElement('div');
+        loader.id = 'masterLoader';
+        loader.className = 'd-flex flex-column justify-content-center align-items-center h-100 text-warning';
+        loader.innerHTML = '<i class="fas fa-circle-notch fa-spin fa-2x mb-2"></i><small class="fw-bold">Mengecek data...</small>';
+        previewArea.appendChild(loader);
 
         google.script.run.withSuccessHandler(faceMap => {
+          const currentLoader = document.getElementById('masterLoader');
+          if (currentLoader) currentLoader.remove();
+
           const existingUrl = faceMap[staffName];
 
           if (existingUrl && existingUrl !== "") {
-            // Jika ada Master: Sembunyikan video, tunjukkan gambar
             video.style.display = 'none';
             const img = document.createElement('img');
             img.id = 'masterPreviewImg';
@@ -2804,23 +2816,21 @@
             img.style = "width:100%; height:100%; object-fit:cover; border-radius:40px;";
             previewArea.appendChild(img);
 
-            // Tambahkan tombol Ganti & Hapus di pojok
+            // Tambahkan tombol dengan passing parameter 'this' untuk loading efek
             const btnGroup = document.createElement('div');
             btnGroup.id = 'masterBtnGroup';
             btnGroup.className = 'position-absolute bottom-0 end-0 m-3 d-flex gap-2';
             btnGroup.innerHTML = `
               <button class="btn btn-sm btn-light rounded-circle shadow" onclick="reopenRegCamera()"><i class="fas fa-camera text-primary"></i></button>
-              <button class="btn btn-sm btn-light rounded-circle shadow" onclick="deleteMasterPhoto('${staffName}')"><i class="fas fa-trash text-danger"></i></button>
+              <button class="btn btn-sm btn-light rounded-circle shadow" onclick="deleteMasterPhoto('${staffName}', this)"><i class="fas fa-trash text-danger"></i></button>
             `;
             previewArea.appendChild(btnGroup);
             
-            // Matikan stream jika tidak dipakai
             if (ATTENDANCE_STREAM) {
               ATTENDANCE_STREAM.getTracks().forEach(t => t.stop());
               ATTENDANCE_STREAM = null;
             }
           } else {
-            // Jika tidak ada: Pastikan kamera aktif
             reopenRegCamera();
           }
         }).getStaffMasterFaces();
@@ -2836,12 +2846,23 @@
         startCamera('regVideo');
       }
 
-      function deleteMasterPhoto(name) {
+      function deleteMasterPhoto(name, btnElement) {
         if (confirm(`Hapus foto master untuk ${name}?`)) {
+          // Ubah UI tombol menjadi loading
+          if (btnElement) {
+            btnElement.disabled = true;
+            btnElement.innerHTML = '<i class="fas fa-spinner fa-spin text-danger"></i>';
+          }
+          
           google.script.run.withSuccessHandler(res => {
             if (res.status === 'success') {
-              alert("Foto master dihapus.");
               checkMasterFace(name);
+            } else {
+              alert("Gagal menghapus: " + res.message);
+              if (btnElement) {
+                btnElement.disabled = false;
+                btnElement.innerHTML = '<i class="fas fa-trash text-danger"></i>';
+              }
             }
           }).deleteMasterFaceRecord(name);
         }
@@ -2963,16 +2984,25 @@
           .getAttendanceLogs();
       }
 
-      /**
-       * [FIX] Mengatasi Error "Undefined" dengan memastikan fungsi backend terpanggil benar
-       */
+      // Ganti fungsi confirmDeleteAttendance pada file index_part_3.txt
       function confirmDeleteAttendance(nama, tgl) {
         if (confirm(`Hapus permanen riwayat absensi ${nama} pada tanggal ${tgl}?`)) {
-          // Berikan indikasi loading ringan
-          const btn = event.currentTarget;
-          const originalContent = btn.innerHTML;
-          btn.disabled = true;
-          btn.innerHTML = '<i class="fas fa-spinner fa-spin text-warning"></i>';
+          // Cari tombol secara manual via DOM untuk memberi efek loading
+          const tbody = document.getElementById('attendanceLogBody');
+          let originalContent = '';
+          let targetBtn = null;
+          
+          if (tbody) {
+            const buttons = tbody.querySelectorAll('button');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(nama) && btn.getAttribute('onclick').includes(tgl)) {
+                  targetBtn = btn;
+                  originalContent = btn.innerHTML;
+                  btn.disabled = true;
+                  btn.innerHTML = '<i class="fas fa-spinner fa-spin text-warning" style="font-size: 0.8rem;"></i>';
+                }
+            });
+          }
 
           google.script.run
             .withSuccessHandler(function(res) {
@@ -2980,16 +3010,20 @@
                 loadAttendanceLogs();
               } else {
                 alert("Gagal menghapus: " + (res ? res.message : "Respon kosong"));
-                btn.disabled = false;
-                btn.innerHTML = originalContent;
+                if (targetBtn) {
+                  targetBtn.disabled = false;
+                  targetBtn.innerHTML = originalContent;
+                }
               }
             })
             .withFailureHandler(function(err) {
               alert("Kesalahan Server: " + err.message);
-              btn.disabled = false;
-              btn.innerHTML = originalContent;
+              if (targetBtn) {
+                targetBtn.disabled = false;
+                targetBtn.innerHTML = originalContent;
+              }
             })
-            .deleteAttendanceRecord(nama, tgl); // Pastikan nama fungsi ini sama dengan di Code.gs
+            .deleteAttendanceRecord(nama, tgl);
         }
       }
 
@@ -3007,21 +3041,40 @@
         document.getElementById('absensiChoice').classList.add('d-none');
       }
 
+      // Ganti fungsi executeAbsensi pada file index_part_4.txt
       function executeAbsensi(type) {
         const scannerLine = document.querySelector('.scan-line');
         scannerLine.style.animationDuration = '0.5s';
         
         // Ambil foto bukti saat ini secara diam-diam
         const proofImg = captureFaceFrame();
+        
+        const actionArea = document.getElementById('absensiChoice');
+        const originalHTML = actionArea.innerHTML;
+        
+        // Tampilkan visual loading instan tanpa memblokir antrean kasir
+        actionArea.innerHTML = `
+          <div class="text-center p-3">
+            <div class="spinner-border text-warning mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+            <h5 class="fw-bold text-dark mb-1">Foto Berhasil Ditangkap!</h5>
+            <p class="text-muted small">Menyimpan data di latar belakang...<br>Anda sudah bisa meninggalkan layar ini.</p>
+          </div>
+        `;
+        
+        // Kembalikan UI ke daftar nama setelah 3 detik agar orang lain bisa langsung absen
+        setTimeout(() => {
+          cancelAbsensi();
+          actionArea.innerHTML = originalHTML;
+        }, 3000);
 
+        // Proses GAS berjalan di background
         google.script.run.withSuccessHandler(res => {
           scannerLine.style.animationDuration = '2s';
           if (res.status === 'success') {
-            alert(`Berhasil! ${CURRENT_ABSENSI_NAME} ${type} jam ${res.time}`);
-            cancelAbsensi();
             if (USER_ROLE === 'ADMIN') loadAttendanceLogs();
           } else {
-            alert(res.message);
+            // Notifikasi tetap muncul HANYA jika ada error dari server
+            alert("Gagal menyimpan absensi: " + res.message);
           }
         }).recordAttendance(CURRENT_ABSENSI_NAME, type, proofImg);
       }
