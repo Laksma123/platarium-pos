@@ -825,13 +825,20 @@
             </div>
             <div class="mb-3">
               <label class="small fw-bold text-muted">ROLE / POSISI</label>
-              <select id="staffRoleInput" class="form-select fw-bold border-2">
+              <select id="staffRoleInput" class="form-select fw-bold border-2" onchange="togglePinInput()">
                 <option value="CASHIER">CASHIER</option>
                 <option value="BARISTA">BARISTA</option>
                 <option value="KITCHEN">KITCHEN</option>
                 <option value="ADMIN">ADMIN</option>
               </select>
             </div>
+
+            <div class="mb-3" id="staffPinContainer">
+              <label class="small fw-bold text-muted">PIN KASIR (4 DIGIT)</label>
+              <input type="password" id="staffPinInput" class="form-control fw-bold border-2 text-center" placeholder="••••" maxlength="4" pattern="\d{4}">
+              <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">*Isi untuk membuat/mereset PIN. Kosongkan jika tidak ingin mengubah PIN lama.</small>
+            </div>
+
             <div class="mb-4">
               <label class="small fw-bold text-muted">GAJI POKOK (Base Salary)</label>
               <div class="input-group">
@@ -1672,6 +1679,16 @@
         }).join('');
       }
 
+      function togglePinInput() {
+        const role = document.getElementById('staffRoleInput').value;
+        const pinContainer = document.getElementById('staffPinContainer');
+        if (role === 'CASHIER' || role === 'KASIR') {
+          pinContainer.style.display = 'block';
+        } else {
+          pinContainer.style.display = 'none';
+        }
+      }
+
       function openStaffModal(id = null) {
         if (id) {
           const staff = STAFF_DATA.find(s => s.id === id);
@@ -1685,6 +1702,9 @@
           document.getElementById('staffRoleInput').value = "CASHIER";
           document.getElementById('staffSalaryInput').value = "";
         }
+        
+        document.getElementById('staffPinInput').value = ""; // Reset form PIN
+        togglePinInput(); // Cek form saat modal terbuka
         document.getElementById('modalStaff').classList.remove('d-none');
       }
 
@@ -1697,7 +1717,15 @@
         const name = document.getElementById('staffNameInput').value;
         const role = document.getElementById('staffRoleInput').value;
         const salary = parseInt(document.getElementById('staffSalaryInput').value) || 0;
+        const pin = document.getElementById('staffPinInput').value;
+        
         if (!name) return alert("Nama tidak boleh kosong!");
+        if ((role === 'CASHIER' || role === 'KASIR') && !id && !pin) {
+            return alert("PIN 4 digit wajib diisi untuk kasir baru!");
+        }
+        if (pin && pin.length !== 4) {
+            return alert("PIN wajib menggunakan tepat 4 digit angka!");
+        }
 
         const btn = document.getElementById('btnSaveStaff');
         btn.disabled = true;
@@ -1723,7 +1751,7 @@
           } else {
             alert(res.message);
           }
-        }).saveStaff(id, name, role, salary);
+        }).saveStaff(id, name, role, salary, pin);
       }
 
       function deleteStaffUI(id, name) {
