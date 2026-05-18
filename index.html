@@ -3515,6 +3515,7 @@
         document.getElementById('modalAturShot').classList.add('d-none');
       }
 
+      // Timpa fungsi ini di index.html (Fungsi Render List Shot UI)
       function renderShotList() {
         const tbody = document.getElementById('shotListBody');
         const keys = Object.keys(SHOTS_MAP);
@@ -3526,12 +3527,20 @@
         tbody.innerHTML = keys.map(id => {
           const m = MATERIALS_DATA.find(x => x.id === id);
           const mName = m ? m.name : id;
+          let displayUnit = m ? m.unit : '';
+          
+          // Otomatisasi tampilan unit shot menjadi gr/ml (poin 1)
+          if (displayUnit.toLowerCase() === 'kg' || displayUnit.toLowerCase() === 'gr') displayUnit = 'gr';
+          else if (displayUnit.toLowerCase() === 'l' || displayUnit.toLowerCase() === 'ml') displayUnit = 'ml';
+
           return `
             <tr>
               <td class="ps-3 fw-bold">${mName}</td>
-              <td class="text-center fw-bold text-danger">1 Shot = ${SHOTS_MAP[id]} ${m ? m.unit : ''}</td>
+              <td class="text-center fw-bold text-danger">1 Shot = ${SHOTS_MAP[id]} ${displayUnit}</td>
               <td class="text-center">
-                <button class="btn btn-light btn-sm text-danger shadow-sm border rounded-circle" onclick="deleteShotConfigUI('${id}')"><i class="fas fa-times"></i></button>
+                <button id="btnDelShot_${id}" class="btn btn-light btn-sm text-danger shadow-sm border rounded-circle" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;" onclick="deleteShotConfigUI('${id}')">
+                  <i class="fas fa-times"></i>
+                </button>
               </td>
             </tr>
           `;
@@ -3556,18 +3565,31 @@
         }).saveShotConfig(matId, grams);
       }
 
+      // Timpa fungsi ini di index.html (Fungsi Hapus Shot dengan Loading)
       function deleteShotConfigUI(matId) {
+        const btn = document.getElementById('btnDelShot_' + matId);
+        if (btn) {
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // Spinner efek saat hapus (poin 3)
+        }
+
         google.script.run.withSuccessHandler(res => {
           if(res.status === 'success') {
             delete SHOTS_MAP[matId];
             renderShotList();
             fetchInitialData();
+          } else {
+            if (btn) {
+              btn.disabled = false;
+              btn.innerHTML = '<i class="fas fa-times"></i>';
+            }
+            alert(res.message);
           }
         }).deleteShotConfig(matId);
       }
 
 
-      // --- FUNGSI BARU: LOGIKA MODAL EDIT STOK PRESISI ---
+      // Timpa fungsi ini di index.html (Perbaikan Modal Edit Stok Unit Pair)
       function openEditStockModal(id, name, baseUnit, currentStock, currentPrice) {
         CURRENT_EDIT_MAT_ID = id;
         CURRENT_EDIT_BASE_UNIT = baseUnit;
@@ -3576,33 +3598,49 @@
         document.getElementById('editStockCurrent').innerText = currentStock.toLocaleString();
         document.getElementById('editStockBaseUnit').innerText = baseUnit;
 
-        // Cek Peringatan Shot
         const warn = document.getElementById('shotWarningArea');
-        // Cek apakah bahan ini berpotensi butuh config shot (Misal, Kopi, Sirup)
         if (!SHOTS_MAP[id] && (name.toLowerCase().includes('kopi') || name.toLowerCase().includes('espresso'))) {
           warn.classList.remove('d-none');
         } else {
           warn.classList.add('d-none');
         }
 
-        // Setup Unit Dropdowns
         const dStock = document.getElementById('stockUnitDropdown');
         const dPrice = document.getElementById('priceUnitToggle');
         const dbStockSub = document.getElementById('balStockSubUnit');
         const dbPriceSub = document.getElementById('balPriceSubUnit');
 
-        let htmlOptions = `<option value="${baseUnit}">${baseUnit}</option>`;
-        if (baseUnit === 'gr') htmlOptions += `<option value="Kg">Kg</option>`;
-        if (baseUnit === 'ml') htmlOptions += `<option value="L">L</option>`;
+        let htmlOptions = '';
+        const bUnitLower = baseUnit.toLowerCase();
+        
+        // Logic Pairing (poin 4)
+        if (bUnitLower === 'kg' || bUnitLower === 'gr') {
+          htmlOptions = `<option value="gr">gr</option><option value="Kg">Kg</option>`;
+        } else if (bUnitLower === 'l' || bUnitLower === 'ml') {
+          htmlOptions = `<option value="ml">ml</option><option value="L">L</option>`;
+        } else {
+          htmlOptions = `<option value="${baseUnit}">${baseUnit}</option>`;
+        }
+
+        htmlOptions += `<option value="Bal/Dus" class="d-none">Bal/Dus</option>`; // Tersembunyi default
 
         dStock.innerHTML = htmlOptions;
         dPrice.innerHTML = htmlOptions;
-        dbStockSub.innerHTML = htmlOptions;
-        dbPriceSub.innerHTML = htmlOptions;
+        
+        // Buang "Bal/Dus" untuk opsi Sub Unit agar tidak looping logic
+        let htmlSubOptions = htmlOptions.replace(`<option value="Bal/Dus" class="d-none">Bal/Dus</option>`, '');
+        dbStockSub.innerHTML = htmlSubOptions;
+        dbPriceSub.innerHTML = htmlSubOptions;
 
-        // Reset Inputs
+        // Set nilai normal
+        dStock.value = baseUnit;
+        dPrice.value = baseUnit;
+        dbStockSub.value = baseUnit;
+        dbPriceSub.value = baseUnit;
+
         document.getElementById('inputNewStock').value = '';
         document.getElementById('inputNewPrice').value = currentPrice || '';
+        
         document.getElementById('checkBalStock').checked = false;
         document.getElementById('checkBalPrice').checked = false;
         toggleBalUI('Stock');
@@ -3615,57 +3653,70 @@
         document.getElementById('modalEditStock').classList.add('d-none');
       }
 
+      // Timpa fungsi ini di index.html (Toggle Checkbox Bal)
       function toggleBalUI(type) {
         const isChecked = document.getElementById('checkBal' + type).checked;
         const area = document.getElementById('bal' + type + 'Area');
+        const dropdown = type === 'Stock' ? document.getElementById('stockUnitDropdown') : document.getElementById('priceUnitToggle');
+        
         if (isChecked) {
           area.classList.remove('d-none');
           area.classList.add('d-flex');
+          
+          // Otomatis pindahkan pilihan ke Bal/Dus (poin 5)
+          let exists = Array.from(dropdown.options).some(opt => opt.value === 'Bal/Dus');
+          if (!exists) {
+            dropdown.add(new Option('Bal/Dus', 'Bal/Dus'));
+          }
+          dropdown.value = 'Bal/Dus';
+          dropdown.disabled = true; // Nonaktifkan karena dikendalikan bal logic
         } else {
           area.classList.remove('d-flex');
           area.classList.add('d-none');
+          
+          dropdown.disabled = false;
+          dropdown.value = CURRENT_EDIT_BASE_UNIT; // Kembalikan ke base unit asli
         }
       }
 
+      // Timpa fungsi ini di index.html (Kalkulasi Value)
       function calculateAndGetBaseValue(inputValue, inputUnit, isBalChecked, balValue, balSubUnit) {
         let multiplier = 1;
         let finalUnit = inputUnit;
 
-        // Jika pakai Bal, yang kita hitung adalah berapa total [balSubUnit] yang ada
         if (isBalChecked) {
-          multiplier = balValue; // 1 Bal = N SubUnit
+          multiplier = balValue;
           finalUnit = balSubUnit;
         }
 
-        // Konversi Kg ke gr, L ke ml
         let unitMultiplier = 1;
-        if (finalUnit === 'Kg' && CURRENT_EDIT_BASE_UNIT === 'gr') unitMultiplier = 1000;
-        if (finalUnit === 'L' && CURRENT_EDIT_BASE_UNIT === 'ml') unitMultiplier = 1000;
+        const bUnitLower = CURRENT_EDIT_BASE_UNIT.toLowerCase();
+        const fUnitLower = finalUnit.toLowerCase();
+
+        if (fUnitLower === 'kg' && bUnitLower === 'gr') unitMultiplier = 1000;
+        if (fUnitLower === 'l' && bUnitLower === 'ml') unitMultiplier = 1000;
+        if (fUnitLower === 'gr' && bUnitLower === 'kg') unitMultiplier = 0.001;
+        if (fUnitLower === 'ml' && bUnitLower === 'l') unitMultiplier = 0.001;
 
         return inputValue * multiplier * unitMultiplier;
       }
 
+      // Timpa fungsi ini di index.html (Penyimpanan dan Visual Loading di Tabel Stok)
       function savePrecisionStock() {
         const rawStock = parseFloat(document.getElementById('inputNewStock').value) || 0;
         const rawPrice = parseFloat(document.getElementById('inputNewPrice').value) || 0;
 
-        // Parameter Kalkulasi Stok
         const isBalStock = document.getElementById('checkBalStock').checked;
         const balStockVal = parseFloat(document.getElementById('balStockValue').value) || 1;
         const unitStock = document.getElementById('stockUnitDropdown').value;
         const subUnitStock = document.getElementById('balStockSubUnit').value;
 
-        // Parameter Kalkulasi Harga
         const isBalPrice = document.getElementById('checkBalPrice').checked;
         const balPriceVal = parseFloat(document.getElementById('balPriceValue').value) || 1;
         const unitPrice = document.getElementById('priceUnitToggle').value;
         const subUnitPrice = document.getElementById('balPriceSubUnit').value;
 
-        // Hitung Final Stok Base Unit (Berapa Gram / Mili / Pcs)
         const finalBaseStock = calculateAndGetBaseValue(rawStock, unitStock, isBalStock, balStockVal, subUnitStock);
-
-        // Hitung Final Harga (HPP) per Base Unit (Per 1 Gram / Mili / Pcs)
-        // Harga Beli / Total Unit Base yang didapat dari Harga Beli tersebut
         const baseUnitsBoughtForRawPrice = calculateAndGetBaseValue(1, unitPrice, isBalPrice, balPriceVal, subUnitPrice);
         const finalBasePrice = rawPrice / baseUnitsBoughtForRawPrice;
 
@@ -3673,12 +3724,26 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> MENYIMPAN...';
         btn.disabled = true;
 
+        // VISUAL SPINNER DI TABEL STOK UTAMA (poin 6)
+        const tbody = document.getElementById('stockTableBody');
+        if (tbody) {
+          const rows = tbody.querySelectorAll('tr');
+          rows.forEach(row => {
+            if (row.innerHTML.includes(`'${CURRENT_EDIT_MAT_ID}'`)) {
+              const priceCell = row.querySelectorAll('td')[4]; 
+              if (priceCell) {
+                  priceCell.innerHTML = '<i class="fas fa-spinner fa-spin text-warning me-1"></i> <span class="small text-muted italic">Menyimpan...</span>';
+              }
+            }
+          });
+        }
+
         google.script.run.withSuccessHandler(res => {
           btn.innerHTML = '<i class="fas fa-save me-2"></i> SIMPAN PEMBARUAN';
           btn.disabled = false;
           if (res.status === 'success') {
             closeEditStockModal();
-            fetchInitialData(); // Segarkan semua table & map
+            fetchInitialData(); 
           } else {
             alert("Gagal menyimpan stok: " + res.message);
           }
