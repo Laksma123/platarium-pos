@@ -772,7 +772,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                   <h5 class="fw-bold m-0 text-dark">Riwayat Kehadiran</h5>
                   <button class="btn btn-luxury btn-sm rounded-pill px-3 shadow-sm" onclick="openModalRegisterFace()">
-                    <i class="fas fa-id-card-alt me-2"></i>Daftarkan Kasir
+                    <i class="fas fa-id-card-alt me-2"></i>Daftarkan Wajah Staff
                   </button>
                 </div>
                 <div class="attendance-table-container">
@@ -930,6 +930,8 @@
         <div id="modalAddSchedule" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 10600; opacity: 1 !important;">
           <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 90%; max-width: 350px; animation: slideUp 0.3s ease-out;">
             <h5 class="fw-bold mb-4 border-bottom pb-2"><i class="fas fa-calendar-plus text-success me-2"></i>Set Jadwal Shift</h5>
+  
+            <input type="hidden" id="schedIdInput" value="">
             
             <div class="mb-3">
               <label class="small fw-bold text-muted">TANGGAL KERJA</label>
@@ -1082,8 +1084,8 @@
 
         <div id="modalRegisterFace" class="payment-overlay" style="z-index: 11000;">
           <div class="bg-white p-4 rounded-5 shadow-lg text-center" style="width: 90%; max-width: 400px;">
-            <h5 class="fw-bold mb-2">Daftarkan Wajah Master</h5>
-            <p class="text-muted small mb-4">Pilih kasir untuk menyimpan foto referensi resmi.</p>
+            <h5 class="fw-bold mb-2">Daftarkan Wajah Staff</h5>
+            <p class="text-muted small mb-4">Pilih staff untuk menyimpan foto referensi resmi.</p>
             
             <select id="regStaffSelect" class="form-select mb-3 fw-bold rounded-pill border-2">
               </select>
@@ -1614,19 +1616,18 @@
       function initManningTab() {
         const container = document.getElementById('staffCardsContainer');
         container.innerHTML = '<div class="col-12 text-center p-5"><div class="spinner-border text-warning mb-3"></div><p class="text-muted fw-bold">Memuat data Staff & Jadwal...</p></div>';
-        
         google.script.run.withSuccessHandler(res => {
           if (res.status === 'success') {
             STAFF_DATA = res.staff || [];
             SCHEDULE_DATA = res.schedules || [];
-            renderManningUI();
+            renderManningUI(res.faces || {}); // Kirim data Face untuk Avatar
           } else {
             container.innerHTML = `<div class="col-12 text-center text-danger p-5">Gagal memuat data: ${res.message}</div>`;
           }
         }).getManningData();
       }
 
-      function renderManningUI() {
+      function renderManningUI(faces = {}) {
         const container = document.getElementById('staffCardsContainer');
         if (STAFF_DATA.length === 0) {
           container.innerHTML = '<div class="col-12 text-center p-5 text-muted">Belum ada data karyawan. Tambahkan melalui tombol Tambah Staff.</div>';
@@ -1634,9 +1635,8 @@
         }
 
         container.innerHTML = STAFF_DATA.map(staff => {
-          // Cari foto master dari object CONFIG (yang digunakan di absensi)
-          let photoUrl = 'https://via.placeholder.com/150';
-          // Kita bisa mengandalkan fitur getStaffMasterFaces (yang menyimpan URL di Sheet Config) jika ada
+          // Sinkronisasi Avatar (Permintaan 5)
+          let photoUrl = faces[staff.name] || 'https://via.placeholder.com/150';
           
           return `
             <div class="col-12 col-md-6 col-lg-4">
@@ -1696,7 +1696,6 @@
         const name = document.getElementById('staffNameInput').value;
         const role = document.getElementById('staffRoleInput').value;
         const salary = parseInt(document.getElementById('staffSalaryInput').value) || 0;
-
         if (!name) return alert("Nama tidak boleh kosong!");
 
         const btn = document.getElementById('btnSaveStaff');
@@ -1708,10 +1707,18 @@
           btn.innerText = 'SIMPAN DATA';
           if (res.status === 'success') {
             closeStaffModal();
-            initManningTab(); // Refresh data
-            // Karena config bisa berubah, ambil config ulang jika perlu
-            google.script.run.withSuccessHandler(c => { CONFIG.Cashiers = c.config.Cashiers; renderCashierButtons(); }).loginUser("ADMIN_PIN_TIDAK_DIPERLUKAN_TAPI_HARUSNYA_BACA_CONFIG_LANGSUNG"); 
-            // Abaikan refresh loginUser, kita cukup peringatkan
+            initManningTab(); 
+            
+            // Sinkronisasi dropdown instan tanpa reload
+            if (res.cashiers) {
+                CONFIG.Cashiers = res.cashiers;
+                renderCashierButtons(); // Update menu POS
+                
+                const regSelect = document.getElementById('regStaffSelect');
+                if (regSelect) {
+                    regSelect.innerHTML = CONFIG.Cashiers.map(c => `<option value="${c}">${c}</option>`).join('');
+                }
+            }
           } else {
             alert(res.message);
           }
@@ -1721,7 +1728,17 @@
       function deleteStaffUI(id, name) {
         if (confirm(`Hapus permanen staff ${name} beserta gajinya? (Jadwal lama tetap ada di database tapi terputus)`)) {
           google.script.run.withSuccessHandler(res => {
-            if (res.status === 'success') initManningTab();
+            if (res.status === 'success') {
+              initManningTab();
+              if (res.cashiers) {
+                  CONFIG.Cashiers = res.cashiers;
+                  renderCashierButtons();
+                  const regSelect = document.getElementById('regStaffSelect');
+                  if (regSelect) {
+                      regSelect.innerHTML = CONFIG.Cashiers.map(c => `<option value="${c}">${c}</option>`).join('');
+                  }
+              }
+            }
           }).deleteStaff(id);
         }
       }
@@ -1750,35 +1767,60 @@
       }
 
       function openAddScheduleModal() {
+        document.getElementById('schedIdInput').value = ""; // Mode Tambah Baru
         document.getElementById('schedDate').value = "";
         document.getElementById('schedStart').value = "08:00";
         document.getElementById('schedEnd').value = "16:00";
         document.getElementById('modalAddSchedule').classList.remove('d-none');
       }
+      
+      function editScheduleUI(id, dateStr, start, end) {
+        document.getElementById('schedIdInput').value = id; // Mode Edit
+        
+        // Konversi dd/MM/yyyy ke yyyy-MM-dd untuk form HTML
+        let isoDate = "";
+        if (dateStr.includes('/')) {
+          const parts = dateStr.split('/');
+          isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        } else {
+          isoDate = dateStr;
+        }
+        
+        document.getElementById('schedDate').value = isoDate;
+        document.getElementById('schedStart').value = start;
+        document.getElementById('schedEnd').value = end;
+        document.getElementById('modalAddSchedule').classList.remove('d-none');
+      }
 
       function executeSaveSchedule() {
+        const existingId = document.getElementById('schedIdInput').value;
         const date = document.getElementById('schedDate').value;
         const start = document.getElementById('schedStart').value;
         const end = document.getElementById('schedEnd').value;
 
         if(!date || !start || !end) return alert("Lengkapi tanggal dan jam shift!");
-
+        
         const btn = document.getElementById('btnSaveSched');
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        // Spinner Loading Daftar Jadwal (Permintaan 6)
+        const tbody = document.getElementById('scheduleTableBody');
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="6" class="text-center p-4"><i class="fas fa-spinner fa-spin text-warning me-2"></i>Menyimpan & Memuat Jadwal...</td></tr>`;
+        }
 
         google.script.run.withSuccessHandler(res => {
           btn.disabled = false;
           btn.innerText = 'Simpan Shift';
           if(res.status === 'success') {
             document.getElementById('modalAddSchedule').classList.add('d-none');
-            initManningTab(); // Memanggil ulang data global, dan setelah berhasil dia akan me-render ulang modal jika terbuka.
-            // Cepat render lokal:
+            initManningTab(); 
             setTimeout(() => { if(CURRENT_VIEW_STAFF) openStaffDetailModal(CURRENT_VIEW_STAFF); }, 1500);
           } else {
             alert(res.message);
           }
-        }).saveSchedule(CURRENT_VIEW_STAFF, date, start, end);
+        }).saveSchedule(CURRENT_VIEW_STAFF, date, start, end, existingId);
       }
 
       function deleteScheduleUI(id) {
@@ -1797,12 +1839,11 @@
         const tbody = document.getElementById('scheduleTableBody');
         const mySchedules = SCHEDULE_DATA.filter(s => s.staffName === staffName);
         
-        // Parse date for sorting (Format dari GAS: dd/MM/yyyy)
         mySchedules.sort((a, b) => {
           let aParts = a.date.split('/'); let bParts = b.date.split('/');
           let dA = new Date(aParts[2], aParts[1] - 1, aParts[0]);
           let dB = new Date(bParts[2], bParts[1] - 1, bParts[0]);
-          return dB - dA; // Descending (Terbaru di atas)
+          return dB - dA;
         });
 
         let warnings = [];
@@ -1811,24 +1852,21 @@
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
-
-        // Cari batas minggu ini (Senin s.d Minggu)
-        const dayOfWeek = now.getDay() || 7; // 1-7 (Senin-Minggu)
-        const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - dayOfWeek + 1); startOfWeek.setHours(0,0,0,0);
+        const dayOfWeek = now.getDay() || 7; 
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - dayOfWeek + 1); startOfWeek.setHours(0,0,0,0);
         const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(startOfWeek.getDate() + 6); endOfWeek.setHours(23,59,59,999);
 
         let workDaysInMonth = new Set();
-
-        tbody.innerHTML = mySchedules.length === 0 ? '<tr><td colspan="5" class="text-center text-muted p-3">Belum ada jadwal.</td></tr>' : mySchedules.map((s, index) => {
-          // Kalkulasi Durasi
+        
+        tbody.innerHTML = mySchedules.length === 0 ? '<tr><td colspan="6" class="text-center text-muted p-3">Belum ada jadwal.</td></tr>' : mySchedules.map((s, index) => {
           let sParts = s.start.split(':'); let eParts = s.end.split(':');
           let startMin = parseInt(sParts[0])*60 + parseInt(sParts[1]);
           let endMin = parseInt(eParts[0])*60 + parseInt(eParts[1]);
           
-          if (endMin < startMin) endMin += 24 * 60; // Shift malam melewati jam 00:00
+          if (endMin < startMin) endMin += 24 * 60; 
           let durationHours = (endMin - startMin) / 60;
 
-          // Deteksi statistik bulan/minggu
           let dParts = s.date.split('/');
           let shiftDate = new Date(dParts[2], dParts[1] - 1, dParts[0]);
 
@@ -1840,10 +1878,9 @@
             weekHours += durationHours;
           }
 
-          // Deteksi Konflik & Rest Hour (Mengecek dengan shift sebelumnya karena descending sort)
           let warningTag = "";
           if (index < mySchedules.length - 1) {
-            let nextShift = mySchedules[index + 1]; // Secara kronologis ini adalah shift hari sebelumnya
+            let nextShift = mySchedules[index + 1];
             let nDParts = nextShift.date.split('/');
             let nShiftDate = new Date(nDParts[2], nDParts[1] - 1, nDParts[0]);
             let nEParts = nextShift.end.split(':');
@@ -1851,7 +1888,6 @@
             if(nEndMin < (parseInt(nextShift.start.split(':')[0])*60)) nEndMin += 24*60;
 
             let gapHours = ((shiftDate.getTime() + startMin*60000) - (nShiftDate.getTime() + nEndMin*60000)) / 3600000;
-            
             if (gapHours < 0) {
               warningTag = `<span class="badge bg-danger ms-2" title="Waktu shift beririsan dengan shift lain!">BENTROK</span>`;
               if(!warnings.includes("Bentrok Shift")) warnings.push("Bentrok Shift");
@@ -1868,17 +1904,18 @@
               <td class="text-danger fw-bold">${s.end} ${warningTag}</td>
               <td>${durationHours.toFixed(1)} Jam</td>
               <td class="text-center">
-                <i class="fas fa-times text-danger" style="cursor:pointer;" onclick="deleteScheduleUI('${s.id}')"></i>
+                <div class="btn-group border rounded-pill shadow-sm overflow-hidden">
+                    <button class="btn btn-light btn-sm border-end" onclick="editScheduleUI('${s.id}', '${s.date}', '${s.start}', '${s.end}')" title="Edit"><i class="fas fa-pencil-alt text-primary" style="font-size:0.7rem;"></i></button>
+                    <button class="btn btn-light btn-sm" onclick="deleteScheduleUI('${s.id}')" title="Hapus"><i class="fas fa-trash text-danger" style="font-size:0.7rem;"></i></button>
+                </div>
               </td>
             </tr>
           `;
         }).join('');
 
-        // Update Dashboard Statistik
         document.getElementById('statWeekHours').innerText = weekHours.toFixed(1) + " Jam";
         document.getElementById('statMonthHours').innerText = monthHours.toFixed(1) + " Jam";
         
-        // Hari libur: Total hari di bulan ini - Hari kerja
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
         const daysOff = daysInMonth - workDaysInMonth.size;
         document.getElementById('statDaysOff').innerText = daysOff + " Hari";
@@ -1893,11 +1930,15 @@
 
       function renderStaffAttendance(staffName) {
         const tbody = document.getElementById('staffAbsenTableBody');
-        // ATTENDANCE_DATA sudah tersimpan di browser secara global
         const myAbsen = ATTENDANCE_DATA.filter(a => a.nama.toLowerCase() === staffName.toLowerCase());
         
+        // Empty State Notifikasi (Permintaan 4)
         if (myAbsen.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">Belum ada catatan kehadiran.</td></tr>';
+          tbody.innerHTML = `<tr><td colspan="4" class="text-center p-5">
+            <div class="text-muted"><i class="fas fa-camera-slash fa-3x mb-3 opacity-25"></i>
+            <p class="fw-bold">Belum Ada Data Absensi</p>
+            <small>Staff ini belum pernah melakukan absensi masuk atau keluar.</small></div>
+          </td></tr>`;
           return;
         }
 
@@ -1920,7 +1961,7 @@
           `;
         }).join('');
       }
-      
+
       function startRealtimeClock() {
         setInterval(() => {
           const now = new Date();
@@ -4982,8 +5023,8 @@
 
     <div id="modalRegisterFace" class="payment-overlay" style="z-index: 11000;">
       <div class="bg-white p-4 rounded-5 shadow-lg text-center" style="width: 90%; max-width: 400px;">
-        <h5 class="fw-bold mb-2">Daftarkan Wajah Master</h5>
-        <p class="text-muted small mb-4">Pilih kasir untuk menyimpan foto referensi resmi.</p>
+        <h5 class="fw-bold mb-2">Daftarkan Wajah Staff</h5>
+        <p class="text-muted small mb-4">Pilih staff untuk menyimpan foto referensi resmi.</p>
         
         <select id="regStaffSelect" class="form-select mb-3 fw-bold rounded-pill border-2">
           </select>
