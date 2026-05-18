@@ -1613,22 +1613,27 @@
       let PRODUCT_HPP_MAP = {}; 
       let CURRENT_EDIT_MAT_ID = null;
       let CURRENT_EDIT_BASE_UNIT = null;
-
-      // ==========================================
-      // LOGIKA FRONTEND MANNING & SCHEDULING
-      // ==========================================
       let STAFF_DATA = [];
       let SCHEDULE_DATA = [];
-      let CURRENT_VIEW_STAFF = null; // Menyimpan nama staff yang sedang dibuka modalnya
+      let STAFF_FACES = {}; // Cache Foto Profil (Avatar)
+      let CURRENT_VIEW_STAFF = null;
 
       function initManningTab() {
+        // Optimasi (Req 4): Jangan memuat ulang jika data sudah ada di cache
+        if (STAFF_DATA && STAFF_DATA.length > 0) {
+          renderManningUI(STAFF_FACES);
+          return;
+        }
+
         const container = document.getElementById('staffCardsContainer');
         container.innerHTML = '<div class="col-12 text-center p-5"><div class="spinner-border text-warning mb-3"></div><p class="text-muted fw-bold">Memuat data Staff & Jadwal...</p></div>';
+
         google.script.run.withSuccessHandler(res => {
           if (res.status === 'success') {
             STAFF_DATA = res.staff || [];
             SCHEDULE_DATA = res.schedules || [];
-            renderManningUI(res.faces || {}); // Kirim data Face untuk Avatar
+            STAFF_FACES = res.faces || {};
+            renderManningUI(STAFF_FACES); 
           } else {
             container.innerHTML = `<div class="col-12 text-center text-danger p-5">Gagal memuat data: ${res.message}</div>`;
           }
@@ -1643,12 +1648,14 @@
         }
 
         container.innerHTML = STAFF_DATA.map(staff => {
-          // Sinkronisasi Avatar (Permintaan 5)
           let photoUrl = faces[staff.name] || 'https://via.placeholder.com/150';
-          
+          const isActive = staff.status === 'Active';
+          // Visual border merah jika Inactive (Req 1)
+          const borderClass = isActive ? '' : 'border-danger border-2 border';
+
           return `
-            <div class="col-12 col-md-6 col-lg-4">
-              <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+            <div class="col-12 col-md-6 col-lg-4" id="staff-card-${staff.id}">
+              <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden ${borderClass}">
                 <div class="p-3 bg-light border-bottom d-flex align-items-center gap-3">
                   <div class="rounded-circle overflow-hidden shadow-sm border border-2 border-white" style="width: 60px; height: 60px;">
                     <img src="${photoUrl}" style="width:100%; height:100%; object-fit:cover;">
@@ -1659,13 +1666,18 @@
                   </div>
                 </div>
                 <div class="p-3 bg-white">
-                  <div class="d-flex justify-content-between mb-2 small">
+                  <div class="d-flex justify-content-between mb-2 small align-items-center">
                     <span class="text-muted fw-bold">Gaji Pokok:</span>
                     <span class="fw-bold text-success">Rp ${staff.salary.toLocaleString()}</span>
                   </div>
-                  <div class="d-flex justify-content-between mb-3 small">
+                  <div class="d-flex justify-content-between mb-3 small align-items-center">
                     <span class="text-muted fw-bold">Status:</span>
-                    <span class="fw-bold ${staff.status === 'Active' ? 'text-success' : 'text-danger'}">${staff.status}</span>
+                    <span class="badge ${isActive ? 'bg-success' : 'bg-danger'}" 
+                          style="cursor: pointer;" 
+                          id="status-badge-${staff.id}" 
+                          onclick="toggleStaffStatus('${staff.id}', '${staff.status}')">
+                      ${staff.status} <i class="fas fa-caret-down ms-1"></i>
+                    </span>
                   </div>
                   <div class="d-flex gap-2">
                     <button class="btn btn-light flex-fill rounded-pill fw-bold btn-sm border shadow-sm" onclick="openStaffModal('${staff.id}')"><i class="fas fa-pencil-alt text-muted"></i></button>
@@ -1679,13 +1691,44 @@
         }).join('');
       }
 
+      function toggleStaffStatus(id, currentStatus) {
+        const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+        const badge = document.getElementById('status-badge-' + id);
+        if (!badge) return;
+
+        // Visual loading spinner (Req 1)
+        badge.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        badge.className = 'badge bg-warning text-dark';
+
+        google.script.run.withSuccessHandler(res => {
+            if(res.status === 'success') {
+                // Update global array memory
+                const staffIndex = STAFF_DATA.findIndex(s => s.id === id);
+                if (staffIndex > -1) STAFF_DATA[staffIndex].status = res.newStatus;
+                
+                // Update dropdown kasir secara realtime
+                if (res.cashiers) {
+                    CONFIG.Cashiers = res.cashiers;
+                    renderCashierButtons();
+                }
+                renderManningUI(STAFF_FACES); 
+            } else {
+                alert('Gagal mengubah status: ' + res.message);
+                renderManningUI(STAFF_FACES); 
+            }
+        }).updateStaffStatus(id, newStatus);
+      }
+
       function togglePinInput() {
-        const role = document.getElementById('staffRoleInput').value;
+        const role = document.getElementById('staffRoleInput').value.toUpperCase();
         const pinContainer = document.getElementById('staffPinContainer');
+        // Validasi CSS agar tidak tertahan class d-none dari Bootstrap (Req 3)
         if (role === 'CASHIER' || role === 'KASIR') {
           pinContainer.style.display = 'block';
+          pinContainer.classList.remove('d-none'); 
         } else {
           pinContainer.style.display = 'none';
+          pinContainer.classList.add('d-none');
         }
       }
 
@@ -1699,12 +1742,12 @@
         } else {
           document.getElementById('staffIdInput').value = "";
           document.getElementById('staffNameInput').value = "";
-          document.getElementById('staffRoleInput').value = "CASHIER";
+          document.getElementById('staffRoleInput').value = "CASHIER"; // Default baru
           document.getElementById('staffSalaryInput').value = "";
         }
         
-        document.getElementById('staffPinInput').value = ""; // Reset form PIN
-        togglePinInput(); // Cek form saat modal terbuka
+        document.getElementById('staffPinInput').value = "";
+        togglePinInput(); // Paksa verifikasi visibilitas form PIN (Req 3)
         document.getElementById('modalStaff').classList.remove('d-none');
       }
 
@@ -1718,7 +1761,6 @@
         const role = document.getElementById('staffRoleInput').value;
         const salary = parseInt(document.getElementById('staffSalaryInput').value) || 0;
         const pin = document.getElementById('staffPinInput').value;
-        
         if (!name) return alert("Nama tidak boleh kosong!");
         if ((role === 'CASHIER' || role === 'KASIR') && !id && !pin) {
             return alert("PIN 4 digit wajib diisi untuk kasir baru!");
@@ -1736,17 +1778,13 @@
           btn.innerText = 'SIMPAN DATA';
           if (res.status === 'success') {
             closeStaffModal();
+            // Force pembaruan karena ada edit/tambah staff
+            STAFF_DATA = []; 
             initManningTab(); 
             
-            // Sinkronisasi dropdown instan tanpa reload
             if (res.cashiers) {
                 CONFIG.Cashiers = res.cashiers;
-                renderCashierButtons(); // Update menu POS
-                
-                const regSelect = document.getElementById('regStaffSelect');
-                if (regSelect) {
-                    regSelect.innerHTML = CONFIG.Cashiers.map(c => `<option value="${c}">${c}</option>`).join('');
-                }
+                renderCashierButtons();
             }
           } else {
             alert(res.message);
@@ -1756,17 +1794,27 @@
 
       function deleteStaffUI(id, name) {
         if (confirm(`Hapus permanen staff ${name} beserta gajinya? (Jadwal lama tetap ada di database tapi terputus)`)) {
+          // Hancurkan UI Card Secara Visual (Optimistic UI - Req 2)
+          const card = document.getElementById('staff-card-' + id);
+          if (card) {
+              card.style.opacity = '0.5';
+              card.style.pointerEvents = 'none';
+              card.innerHTML = '<div class="d-flex justify-content-center align-items-center h-100 p-5"><i class="fas fa-spinner fa-spin fa-2x text-danger"></i></div>';
+          }
+
           google.script.run.withSuccessHandler(res => {
             if (res.status === 'success') {
-              initManningTab();
+              // Hapus dari memory agar tidak ter-render ulang
+              STAFF_DATA = STAFF_DATA.filter(s => s.id !== id);
+              if (card) card.remove(); // Hapus element murni
+              
               if (res.cashiers) {
                   CONFIG.Cashiers = res.cashiers;
                   renderCashierButtons();
-                  const regSelect = document.getElementById('regStaffSelect');
-                  if (regSelect) {
-                      regSelect.innerHTML = CONFIG.Cashiers.map(c => `<option value="${c}">${c}</option>`).join('');
-                  }
               }
+            } else {
+              alert("Gagal menghapus: " + res.message);
+              renderManningUI(STAFF_FACES); // Rollback UI jika server error
             }
           }).deleteStaff(id);
         }
@@ -3698,19 +3746,19 @@
 
       function openModalRegisterFace() {
         const select = document.getElementById('regStaffSelect');
+        // Hanya memuat staff yang bersatus 'Active' (Req 1)
+        const activeStaff = STAFF_DATA.filter(s => s.status === 'Active');
         
-        // Memuat semua staff yang ada di database, tanpa memandang Role
-        if (STAFF_DATA && STAFF_DATA.length > 0) {
-            select.innerHTML = STAFF_DATA.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+        if (activeStaff && activeStaff.length > 0) {
+            select.innerHTML = activeStaff.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
         } else {
-            select.innerHTML = '<option disabled>Belum ada data staff terdaftar</option>';
+            select.innerHTML = '<option disabled>Belum ada data staff aktif terdaftar</option>';
         }
         
-        // Pasang event listener secara dinamis di sini agar lebih aman
         select.onchange = function() { checkMasterFace(this.value); };
         
         document.getElementById('modalRegisterFace').style.display = 'flex';
-        checkMasterFace(select.value); // Langsung cek kasir pertama yang terpilih
+        checkMasterFace(select.value); 
       }
 
       async function executeRegisterFace() {
