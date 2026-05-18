@@ -808,31 +808,41 @@
           </div>
 
           <div class="row g-3 mb-4">
-            <div class="col-6 col-md-3">
-              <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-danger">
-                <small class="text-muted fw-bold d-block mb-1">TOTAL REVENUE</small>
-                <h4 class="fw-bold m-0 text-danger" id="dashTotalRevenue">Rp 0</h4>
+            <div class="col-12 col-md-4">
+              <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-primary">
+                <small class="text-muted fw-bold d-block mb-1">TOTAL REVENUE (KOTOR)</small>
+                <h4 class="fw-bold m-0 text-primary" id="dashTotalRevenue">Rp 0</h4>
               </div>
             </div>
-            
-            <div class="col-6 col-md-3">
-              <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-primary">
-                <small class="text-muted fw-bold d-block mb-1">TOTAL PESANAN</small>
-                <h4 class="fw-bold m-0 text-dark" id="dashTotalOrders">0</h4>
+            <div class="col-6 col-md-4">
+              <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-danger">
+                <small class="text-muted fw-bold d-block mb-1">TOTAL HPP (MODAL)</small>
+                <h4 class="fw-bold m-0 text-danger" id="dashTotalHPP">Rp 0</h4>
+              </div>
+            </div>
+            <div class="col-6 col-md-4">
+              <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-success">
+                <small class="text-muted fw-bold d-block mb-1">PROFIT BERSIH</small>
+                <h4 class="fw-bold m-0 text-success" id="dashNetProfit">Rp 0</h4>
               </div>
             </div>
 
-            <div class="col-6 col-md-3">
+            <div class="col-4">
+              <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-secondary">
+                <small class="text-muted fw-bold d-block mb-1">TOTAL PESANAN</small>
+                <h5 class="fw-bold m-0 text-dark" id="dashTotalOrders">0</h5>
+              </div>
+            </div>
+            <div class="col-4">
               <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-warning">
                 <small class="text-muted fw-bold d-block mb-1">PRODUK TERLARIS</small>
-                <h5 class="fw-bold m-0 text-dark text-truncate" id="dashTopProduct">-</h5>
+                <h6 class="fw-bold m-0 text-dark text-truncate" id="dashTopProduct">-</h6>
               </div>
             </div>
-
-            <div class="col-6 col-md-3">
-              <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-success">
+            <div class="col-4">
+              <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-info">
                 <small class="text-muted fw-bold d-block mb-1">TOP KASIR</small>
-                <h5 class="fw-bold m-0 text-dark" id="dashTopCashier">-</h5>
+                <h6 class="fw-bold m-0 text-dark" id="dashTopCashier">-</h6>
               </div>
             </div>
           </div>
@@ -1129,6 +1139,10 @@
                 <input type="text" id="searchStock" class="form-control border-0 shadow-none bg-transparent fw-bold ps-0" placeholder="Cari Material..." oninput="filterStockTable()">
               </div>
 
+              <button class="btn btn-outline-danger shadow-sm rounded-pill px-3 fw-bold border-2 d-flex align-items-center" onclick="openShotModal()">
+                <i class="fas fa-coffee me-2"></i>Atur Shot
+              </button>
+
               <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
                 <span class="input-group-text bg-transparent border-0 text-muted small"><i class="fas fa-filter"></i></span>
                 <select id="sortStock" class="form-select border-0 shadow-none fw-bold bg-transparent px-2" style="font-size: 0.85rem; cursor:pointer;" onchange="updateStockSort(this.value)">
@@ -1153,6 +1167,7 @@
                     <th class="py-3">Material Name</th>
                     <th class="text-center py-3">Current Stock</th>
                     <th class="text-center py-3">Unit</th>
+                    <th class="text-center py-3">Harga Satuan (HPP)</th>
                     <th class="text-center pe-4 py-3">Manage</th>
                   </tr>
                 </thead>
@@ -1190,8 +1205,8 @@
                     <option value="gr">gr</option>
                     <option value="ml">ml</option>
                     <option value="pcs">pcs</option>
-                    <option value="kg">kg</option>
-                    <option value="L">L</option>
+                    <option value="shot">shot</option>
+                    <option value="sachet">sachet</option>
                   </select>
                 </div>
                 <button class="btn btn-dark px-3 rounded-3" onclick="addMaterialToTempBasket()"><i class="fas fa-plus"></i></button>
@@ -1424,6 +1439,10 @@
       let ATTENDANCE_COOLDOWN = false;
       let CURRENT_ABSENSI_NAME = "";
       let CURRENT_EDITING_RECIPE_ID = null; // Menyimpan ID 'NEW' atau ID 'P001'
+      let SHOTS_MAP = {}; 
+      let PRODUCT_HPP_MAP = {}; 
+      let CURRENT_EDIT_MAT_ID = null;
+      let CURRENT_EDIT_BASE_UNIT = null;
 
       function startRealtimeClock() {
         setInterval(() => {
@@ -1610,25 +1629,26 @@
       }
 
       function fetchInitialData(includeAI = false) {
-        // 1. Muat Transaksi
-        google.script.run.withSuccessHandler(data => {
-          TRANSACTIONS_DATA = data;
-          if (USER_ROLE === 'ADMIN') renderFinanceUI();
-        }).getAllTransactionData();
+        // 1. Ambil Shot Config & HPP Map (Sinkron bersamaan agar siap digunakan kalkulasi)
+        google.script.run.withSuccessHandler(res => {
+          SHOTS_MAP = res.shots;
+          PRODUCT_HPP_MAP = res.hppMap;
+          
+          // Lanjutkan memuat Transaksi & Absensi jika map sudah siap
+          google.script.run.withSuccessHandler(data => {
+            TRANSACTIONS_DATA = data;
+            if (USER_ROLE === 'ADMIN') renderFinanceUI();
+          }).getAllTransactionData();
 
-        // 2. Muat Absensi
-        google.script.run.withSuccessHandler(data => {
-          ATTENDANCE_DATA = data;
-          if (USER_ROLE === 'ADMIN') renderAttendanceLogsUI();
-        }).getAttendanceLogs();
+          google.script.run.withSuccessHandler(data => {
+            ATTENDANCE_DATA = data;
+            if (USER_ROLE === 'ADMIN') renderAttendanceLogsUI();
+          }).getAttendanceLogs();
 
-        // [UPDATE] 3. Otomatis Muat Stok (Tanpa Tunggu Klik Tab)
-        loadStockData();
+          loadStockData();
 
-        // 4. Harga Pasar (AI)
-        if (includeAI) {
-          loadIndoMarketPulse();
-        }
+          if (includeAI) loadIndoMarketPulse();
+        }).getSystemConfigsAndHPP();
       }
 
       /**
@@ -3389,22 +3409,20 @@
       function renderFinanceUI() {
         const tbody = document.getElementById('financeTableBody');
         const revFilter = document.getElementById('revFilter');
-        const revenueEl = document.getElementById('dashTotalRevenue');
-
-        if (!tbody || !revFilter || !revenueEl) return;
+        if (!tbody || !revFilter) return;
 
         const filter = revFilter.value;
         const now = new Date();
         const todayStr = Utilities_formatDateIndo(now);
         const monthStr = (now.getMonth() + 1).toString().padStart(2, '0') + '/' + now.getFullYear();
-
+        
         let totalRev = 0;
-        let totalKomplimen = 0; // [BARU] Menampung nilai transaksi komplimen
-        let validOrders = 0;    // [BARU] Hanya menghitung pesanan Normal
+        let totalKomplimen = 0; 
+        let totalHPP = 0; // Kalkulasi HPP
+        let validOrders = 0;
         let cashierCount = {};
         let productCount = {};
 
-        // 1. Filter Data berdasarkan periode aktif
         const filteredData = TRANSACTIONS_DATA.filter(t => {
           const tDate = t.timestamp.split(' ')[0];
           if (filter === 'today') return tDate === todayStr;
@@ -3413,24 +3431,27 @@
           return true; 
         });
 
-        // 2. Render List Tabel & Kalkulasi Data
         if (filteredData.length === 0) {
           tbody.innerHTML = '<tr><td colspan="5" class="text-center p-5 text-muted">Tidak ada transaksi pada periode ini.</td></tr>';
         } else {
           tbody.innerHTML = filteredData.map(t => {
             const isKomplimen = t.status === 'Komplimen';
-
-            // Kalkulasi dipisah berdasarkan status
+            
             if (isKomplimen) {
               totalKomplimen += Number(t.total) || 0;
             } else {
               totalRev += Number(t.total) || 0;
               validOrders++;
               cashierCount[t.cashier] = (cashierCount[t.cashier] || 0) + 1;
-              t.items.forEach(i => { productCount[i.name] = (productCount[i.name] || 0) + i.qty; });
+              
+              t.items.forEach(i => { 
+                productCount[i.name] = (productCount[i.name] || 0) + i.qty; 
+                // Hitung HPP
+                let itemHPP = PRODUCT_HPP_MAP[i.id] || 0;
+                totalHPP += (itemHPP * i.qty);
+              });
             }
 
-            // Visual UI: Coret harga & gelapkan baris jika Komplimen
             const rowStyle = isKomplimen ? 'opacity: 0.6; background-color: #fff5f5;' : '';
             const totalStyle = isKomplimen ? 'text-decoration: line-through; color: #ff7675;' : 'text-success';
             const statusBadge = isKomplimen ? `<span class="badge bg-danger ms-2" style="font-size:0.6rem;">KOMPLIMEN</span>` : '';
@@ -3446,10 +3467,10 @@
                 <td class="text-center"><span class="badge bg-light text-dark border" style="font-size:0.6rem;">${t.cashier}</span></td>
                 <td class="text-center pe-4">
                   <div class="btn-group shadow-sm rounded-pill border overflow-hidden">
-                    <button class="btn btn-light btn-sm border-end" onclick="toggleTransactionStatus('${t.orderId}', '${t.status}')" title="Ubah Status (Normal/Komplimen)">
+                    <button class="btn btn-light btn-sm border-end" onclick="toggleTransactionStatus('${t.orderId}', '${t.status}')" title="Ubah Status">
                       <i class="fas ${isKomplimen ? 'fa-undo text-success' : 'fa-exchange-alt text-warning'}" style="font-size:0.7rem;"></i>
                     </button>
-                    <button class="btn btn-light btn-sm" onclick="confirmDeleteTransaction('${t.orderId}')" title="Hapus Permanen">
+                    <button class="btn btn-light btn-sm" onclick="confirmDeleteTransaction('${orderId}')" title="Hapus">
                       <i class="fas fa-trash text-danger" style="font-size:0.7rem;"></i>
                     </button>
                   </div>
@@ -3458,38 +3479,210 @@
           }).join('');
         }
 
-        // 3. Update Kartu Utama (Sertakan laporan Potensi Loss)
-        revenueEl.innerHTML = `Rp ${totalRev.toLocaleString()} <br><small class="text-danger d-block mt-1 opacity-75" style="font-size:0.55rem; letter-spacing: 0.5px;">POTENSI LOSS KOMPLIMEN: RP ${totalKomplimen.toLocaleString()}</small>`;
-        document.getElementById('dashTotalOrders').innerText = validOrders; // Hanya update pesanan valid
+        // Update Kartu HPP & Profit (Profit Bersih/Kotor disamakan karena belum ada tabel Beban Operasional)
+        document.getElementById('dashTotalRevenue').innerText = `Rp ${totalRev.toLocaleString()}`;
+        document.getElementById('dashTotalHPP').innerText = `Rp ${totalHPP.toLocaleString()}`;
+        document.getElementById('dashNetProfit').innerText = `Rp ${(totalRev - totalHPP).toLocaleString()}`;
+        document.getElementById('dashTotalOrders').innerText = validOrders;
         
-        // 4. Penentuan Pemenang (Tidak berubah)
         const getWinners = (dataObj, isProduct = false) => {
           const keys = Object.keys(dataObj);
           if (keys.length === 0) return { display: "-", count: 0 };
-          
           const maxVal = Math.max(...Object.values(dataObj));
           const winners = keys.filter(key => dataObj[key] === maxVal);
           const displayText = winners.map(name => isProduct ? `${name} (${maxVal})` : name).join(', ');
           return { display: displayText, count: winners.length };
         };
 
-        const topCashier = getWinners(cashierCount);
-        const topProduct = getWinners(productCount, true);
+        document.getElementById('dashTopCashier').innerText = getWinners(cashierCount).display;
+        document.getElementById('dashTopProduct').innerText = getWinners(productCount, true).display;
 
-        // 5. Update UI Font
-        const cashierEl = document.getElementById('dashTopCashier');
-        const productEl = document.getElementById('dashTopProduct');
-        const defaultFontSize = "1.5rem";
-        const smallFontSize = "0.75rem";
-
-        cashierEl.innerText = topCashier.display;
-        cashierEl.style.fontSize = topCashier.count > 1 ? smallFontSize : defaultFontSize;
-        productEl.innerText = topProduct.display;
-        productEl.style.fontSize = topProduct.count > 1 ? smallFontSize : defaultFontSize;
-
-        // 6. Grafik hanya menampilkan data Normal
         const chartDataNormal = filteredData.filter(t => t.status !== 'Komplimen');
         updateSalesChart(chartDataNormal);
+      }
+
+      // --- FUNGSI BARU: LOGIKA MODAL SHOT ---
+      function openShotModal() {
+        const select = document.getElementById('shotMaterialSelect');
+        select.innerHTML = '<option value="" disabled selected>Pilih Material...</option>' + 
+          MATERIALS_DATA.map(m => `<option value="${m.id}">${m.name} (${m.unit})</option>`).join('');
+        document.getElementById('shotGrams').value = '';
+        renderShotList();
+        document.getElementById('modalAturShot').classList.remove('d-none');
+      }
+
+      function closeShotModal() {
+        document.getElementById('modalAturShot').classList.add('d-none');
+      }
+
+      function renderShotList() {
+        const tbody = document.getElementById('shotListBody');
+        const keys = Object.keys(SHOTS_MAP);
+        if (keys.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" class="text-center p-3 text-muted italic">Belum ada takaran shot diatur</td></tr>';
+          return;
+        }
+        
+        tbody.innerHTML = keys.map(id => {
+          const m = MATERIALS_DATA.find(x => x.id === id);
+          const mName = m ? m.name : id;
+          return `
+            <tr>
+              <td class="ps-3 fw-bold">${mName}</td>
+              <td class="text-center fw-bold text-danger">1 Shot = ${SHOTS_MAP[id]} ${m ? m.unit : ''}</td>
+              <td class="text-center">
+                <button class="btn btn-light btn-sm text-danger shadow-sm border rounded-circle" onclick="deleteShotConfigUI('${id}')"><i class="fas fa-times"></i></button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      function saveShotConfigUI() {
+        const matId = document.getElementById('shotMaterialSelect').value;
+        const grams = parseInt(document.getElementById('shotGrams').value);
+        if (!matId || isNaN(grams) || grams <= 0) return alert("Pilih bahan dan masukkan takaran valid!");
+        
+        const btn = event.currentTarget;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        google.script.run.withSuccessHandler(res => {
+          btn.innerHTML = '<i class="fas fa-plus"></i>';
+          if(res.status === 'success') {
+            SHOTS_MAP[matId] = grams;
+            document.getElementById('shotGrams').value = '';
+            renderShotList();
+            fetchInitialData(); // Segarkan HPP Map karena takaran shot berubah
+          } else alert(res.message);
+        }).saveShotConfig(matId, grams);
+      }
+
+      function deleteShotConfigUI(matId) {
+        google.script.run.withSuccessHandler(res => {
+          if(res.status === 'success') {
+            delete SHOTS_MAP[matId];
+            renderShotList();
+            fetchInitialData();
+          }
+        }).deleteShotConfig(matId);
+      }
+
+
+      // --- FUNGSI BARU: LOGIKA MODAL EDIT STOK PRESISI ---
+      function openEditStockModal(id, name, baseUnit, currentStock, currentPrice) {
+        CURRENT_EDIT_MAT_ID = id;
+        CURRENT_EDIT_BASE_UNIT = baseUnit;
+
+        document.getElementById('editStockMatName').innerText = name;
+        document.getElementById('editStockCurrent').innerText = currentStock.toLocaleString();
+        document.getElementById('editStockBaseUnit').innerText = baseUnit;
+
+        // Cek Peringatan Shot
+        const warn = document.getElementById('shotWarningArea');
+        // Cek apakah bahan ini berpotensi butuh config shot (Misal, Kopi, Sirup)
+        if (!SHOTS_MAP[id] && (name.toLowerCase().includes('kopi') || name.toLowerCase().includes('espresso'))) {
+          warn.classList.remove('d-none');
+        } else {
+          warn.classList.add('d-none');
+        }
+
+        // Setup Unit Dropdowns
+        const dStock = document.getElementById('stockUnitDropdown');
+        const dPrice = document.getElementById('priceUnitToggle');
+        const dbStockSub = document.getElementById('balStockSubUnit');
+        const dbPriceSub = document.getElementById('balPriceSubUnit');
+
+        let htmlOptions = `<option value="${baseUnit}">${baseUnit}</option>`;
+        if (baseUnit === 'gr') htmlOptions += `<option value="Kg">Kg</option>`;
+        if (baseUnit === 'ml') htmlOptions += `<option value="L">L</option>`;
+
+        dStock.innerHTML = htmlOptions;
+        dPrice.innerHTML = htmlOptions;
+        dbStockSub.innerHTML = htmlOptions;
+        dbPriceSub.innerHTML = htmlOptions;
+
+        // Reset Inputs
+        document.getElementById('inputNewStock').value = '';
+        document.getElementById('inputNewPrice').value = currentPrice || '';
+        document.getElementById('checkBalStock').checked = false;
+        document.getElementById('checkBalPrice').checked = false;
+        toggleBalUI('Stock');
+        toggleBalUI('Price');
+
+        document.getElementById('modalEditStock').classList.remove('d-none');
+      }
+
+      function closeEditStockModal() {
+        document.getElementById('modalEditStock').classList.add('d-none');
+      }
+
+      function toggleBalUI(type) {
+        const isChecked = document.getElementById('checkBal' + type).checked;
+        const area = document.getElementById('bal' + type + 'Area');
+        if (isChecked) {
+          area.classList.remove('d-none');
+          area.classList.add('d-flex');
+        } else {
+          area.classList.remove('d-flex');
+          area.classList.add('d-none');
+        }
+      }
+
+      function calculateAndGetBaseValue(inputValue, inputUnit, isBalChecked, balValue, balSubUnit) {
+        let multiplier = 1;
+        let finalUnit = inputUnit;
+
+        // Jika pakai Bal, yang kita hitung adalah berapa total [balSubUnit] yang ada
+        if (isBalChecked) {
+          multiplier = balValue; // 1 Bal = N SubUnit
+          finalUnit = balSubUnit;
+        }
+
+        // Konversi Kg ke gr, L ke ml
+        let unitMultiplier = 1;
+        if (finalUnit === 'Kg' && CURRENT_EDIT_BASE_UNIT === 'gr') unitMultiplier = 1000;
+        if (finalUnit === 'L' && CURRENT_EDIT_BASE_UNIT === 'ml') unitMultiplier = 1000;
+
+        return inputValue * multiplier * unitMultiplier;
+      }
+
+      function savePrecisionStock() {
+        const rawStock = parseFloat(document.getElementById('inputNewStock').value) || 0;
+        const rawPrice = parseFloat(document.getElementById('inputNewPrice').value) || 0;
+
+        // Parameter Kalkulasi Stok
+        const isBalStock = document.getElementById('checkBalStock').checked;
+        const balStockVal = parseFloat(document.getElementById('balStockValue').value) || 1;
+        const unitStock = document.getElementById('stockUnitDropdown').value;
+        const subUnitStock = document.getElementById('balStockSubUnit').value;
+
+        // Parameter Kalkulasi Harga
+        const isBalPrice = document.getElementById('checkBalPrice').checked;
+        const balPriceVal = parseFloat(document.getElementById('balPriceValue').value) || 1;
+        const unitPrice = document.getElementById('priceUnitToggle').value;
+        const subUnitPrice = document.getElementById('balPriceSubUnit').value;
+
+        // Hitung Final Stok Base Unit (Berapa Gram / Mili / Pcs)
+        const finalBaseStock = calculateAndGetBaseValue(rawStock, unitStock, isBalStock, balStockVal, subUnitStock);
+
+        // Hitung Final Harga (HPP) per Base Unit (Per 1 Gram / Mili / Pcs)
+        // Harga Beli / Total Unit Base yang didapat dari Harga Beli tersebut
+        const baseUnitsBoughtForRawPrice = calculateAndGetBaseValue(1, unitPrice, isBalPrice, balPriceVal, subUnitPrice);
+        const finalBasePrice = rawPrice / baseUnitsBoughtForRawPrice;
+
+        const btn = document.getElementById('btnSavePrecisionStock');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> MENYIMPAN...';
+        btn.disabled = true;
+
+        google.script.run.withSuccessHandler(res => {
+          btn.innerHTML = '<i class="fas fa-save me-2"></i> SIMPAN PEMBARUAN';
+          btn.disabled = false;
+          if (res.status === 'success') {
+            closeEditStockModal();
+            fetchInitialData(); // Segarkan semua table & map
+          } else {
+            alert("Gagal menyimpan stok: " + res.message);
+          }
+        }).updateMaterialStockAndPrice(CURRENT_EDIT_MAT_ID, finalBaseStock, finalBasePrice);
       }
 
       // [FUNGSI BARU] Pemicu ubah status transaksi
@@ -3989,7 +4182,7 @@
         if (!tbody) return;
 
         if (dataToRender.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="text-center p-5 text-muted">Data tidak ditemukan.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center p-5 text-muted">Data tidak ditemukan.</td></tr>';
           return;
         }
 
@@ -3997,17 +4190,17 @@
           const isLow = m.stock < 1000;
           const rowClass = isLow ? 'stock-low' : '';
           const stockDisplay = isLow ? `<span class="text-danger fw-800"><i class="fas fa-triangle-exclamation me-1"></i>${m.stock.toLocaleString()}</span>` : m.stock.toLocaleString();
+          const priceDisplay = m.price ? `Rp ${m.price.toLocaleString()}` : `<span class="text-muted small">Belum diset</span>`;
 
           return `
             <tr class="${rowClass} border-bottom">
-              <td class="ps-4 py-3">
-                <span class="badge bg-light text-primary border shadow-sm px-2 py-1" style="font-size: 0.65rem; font-family: monospace;">${m.id}</span>
-              </td>
+              <td class="ps-4 py-3"><span class="badge bg-light text-primary border shadow-sm px-2 py-1" style="font-size: 0.65rem; font-family: monospace;">${m.id}</span></td>
               <td class="fw-bold text-dark">${m.name}</td>
               <td class="text-center fw-bold fs-6">${stockDisplay}</td>
               <td class="text-center"><span class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary border-0 px-3">${m.unit}</span></td>
+              <td class="text-center fw-bold text-success">${priceDisplay} <span class="small text-muted fw-normal">/${m.unit}</span></td>
               <td class="text-center pe-4">
-                <button class="btn btn-white btn-sm shadow-sm rounded-circle border" onclick="editStockManual('${m.id}', '${m.name}', ${m.stock})">
+                <button class="btn btn-white btn-sm shadow-sm rounded-circle border" onclick="openEditStockModal('${m.id}', '${m.name}', '${m.unit}', ${m.stock}, ${m.price || 0})">
                   <i class="fas fa-pencil text-primary" style="font-size: 0.7rem;"></i>
                 </button>
               </td>
@@ -4168,6 +4361,91 @@
           <button class="btn btn-light w-100 rounded-pill fw-bold" onclick="closeModalRegisterFace()">BATAL</button>
           <button class="btn btn-luxury w-100 rounded-pill fw-bold" id="btnCaptureMaster" onclick="executeRegisterFace()">AMBIL FOTO</button>
         </div>
+      </div>
+    </div>
+
+    <div id="modalAturShot" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10600; opacity: 1 !important;">
+      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 400px; animation: slideUp 0.3s ease-out;">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+          <h5 class="fw-bold m-0"><i class="fas fa-coffee text-danger me-2"></i>Konfigurasi Shot</h5>
+          <button class="btn-close shadow-none" onclick="closeShotModal()"></button>
+        </div>
+        
+        <div class="mb-3">
+          <label class="small fw-bold text-muted mb-2">PILIH BAHAN (MATERIAL)</label>
+          <select id="shotMaterialSelect" class="form-select fw-bold border-2 mb-2"></select>
+          <div class="d-flex align-items-center gap-2">
+            <span class="fw-bold">1 Shot =</span>
+            <input type="number" id="shotGrams" class="form-control fw-bold border-2 text-center" placeholder="0" style="width: 80px;">
+            <span class="fw-bold text-muted">gr/ml</span>
+            <button class="btn btn-danger ms-auto px-3 rounded-3 shadow-sm fw-bold" onclick="saveShotConfigUI()"><i class="fas fa-plus"></i></button>
+          </div>
+        </div>
+
+        <div class="flex-fill overflow-auto border rounded-4 bg-light" style="max-height: 200px;">
+          <table class="table table-hover align-middle m-0 small">
+            <thead class="bg-white sticky-top"><tr><th class="ps-3">Material</th><th class="text-center">Takaran</th><th class="text-center">#</th></tr></thead>
+            <tbody id="shotListBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="modalEditStock" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10600; opacity: 1 !important;">
+      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 480px; animation: slideUp 0.3s ease-out;">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+          <h5 class="fw-bold m-0"><i class="fas fa-boxes-stacked text-primary me-2"></i>Update Stok & Harga</h5>
+          <button class="btn-close shadow-none" onclick="closeEditStockModal()"></button>
+        </div>
+        
+        <h6 class="fw-bold text-dark mb-1" id="editStockMatName">-</h6>
+        <p class="small text-muted mb-3">Stok Sistem: <b id="editStockCurrent" class="text-primary">0</b> <span id="editStockBaseUnit"></span></p>
+
+        <div id="shotWarningArea" class="alert alert-danger py-2 px-3 small fw-bold d-none mb-3">
+          <i class="fas fa-exclamation-triangle me-1"></i> Bahan ini belum diatur takaran Shot-nya!
+        </div>
+
+        <div class="bg-light p-3 rounded-4 mb-3 border">
+          <label class="small fw-bold text-muted mb-2">INPUT STOK BARU (REPLACE)</label>
+          <div class="input-group mb-2">
+            <input type="number" id="inputNewStock" class="form-control fw-bold border-2" placeholder="0">
+            <select id="stockUnitDropdown" class="form-select border-2 bg-white" style="max-width: 110px; font-weight: bold;"></select>
+          </div>
+          
+          <div class="form-check mt-2 border-top pt-2">
+            <input class="form-check-input" type="checkbox" id="checkBalStock" onchange="toggleBalUI('Stock')">
+            <label class="form-check-label small fw-bold text-dark" for="checkBalStock">Gunakan hitungan Bal / Dus</label>
+          </div>
+          <div id="balStockArea" class="mt-2 d-none d-flex align-items-center gap-2 bg-white p-2 rounded-3 border">
+            <span class="small fw-bold">1 Bal =</span>
+            <input type="number" id="balStockValue" class="form-control form-control-sm text-center fw-bold border-2" style="width: 60px;">
+            <select id="balStockSubUnit" class="form-select form-select-sm border-2 fw-bold" style="width: 80px;"></select>
+          </div>
+        </div>
+
+        <div class="bg-light p-3 rounded-4 mb-3 border">
+          <label class="small fw-bold text-muted mb-2">HARGA BELI (HPP)</label>
+          <div class="input-group mb-2">
+            <span class="input-group-text bg-white border-2">Rp</span>
+            <input type="number" id="inputNewPrice" class="form-control fw-bold border-2" placeholder="0">
+            <span class="input-group-text bg-dark text-white border-2" style="font-size: 0.8rem;">Per</span>
+            <select id="priceUnitToggle" class="form-select border-2 bg-white" style="max-width: 100px; font-weight: bold;"></select>
+          </div>
+
+          <div class="form-check mt-2 border-top pt-2">
+            <input class="form-check-input" type="checkbox" id="checkBalPrice" onchange="toggleBalUI('Price')">
+            <label class="form-check-label small fw-bold text-dark" for="checkBalPrice">Harga di atas adalah per Bal / Dus</label>
+          </div>
+          <div id="balPriceArea" class="mt-2 d-none d-flex align-items-center gap-2 bg-white p-2 rounded-3 border">
+            <span class="small fw-bold">1 Bal =</span>
+            <input type="number" id="balPriceValue" class="form-control form-control-sm text-center fw-bold border-2" style="width: 60px;">
+            <select id="balPriceSubUnit" class="form-select form-select-sm border-2 fw-bold" style="width: 80px;"></select>
+          </div>
+        </div>
+
+        <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm" id="btnSavePrecisionStock" onclick="savePrecisionStock()">
+          <i class="fas fa-save me-2"></i> SIMPAN PEMBARUAN
+        </button>
       </div>
     </div>
   </body>
