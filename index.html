@@ -596,7 +596,7 @@
              <div id="uiLogoPlaceholder" style="width: 100%; height: 100%; background-color: #ffffff; display: block;"></div>
           </div>
           <div>
-            <h6 class="fw-bold m-0 lh-1 text-dark" id="uiStoreName">GordCafe</h6>
+            <h6 class="fw-bold m-0 lh-1 text-dark" id="uiStoreName">Gord-Cafe</h6>
             <span class="badge bg-warning text-dark border-0 rounded-pill" id="roleLabel" style="font-size: 0.6rem; padding: 2px 8px;">Role</span>
           </div>
         </div>
@@ -718,18 +718,18 @@
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <div class="table-responsive">
               <table class="table table-hover align-middle m-0">
-                <thead class="bg-dark text-white sticky-top">
-                  <tr style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
-                    <th class="ps-4 py-3">Identity</th>
-                    <th class="py-3">Material Name</th>
-                    <th class="text-center py-3">Current Stock</th>
-                    <th class="text-center py-3">Base Unit</th>
-                    <th class="text-center py-3 text-warning">HPP / Unit</th>
-                    <th class="text-center pe-4 py-3">Manage</th>
+                <thead class="bg-dark text-white">
+                  <tr>
+                    <th class="ps-4 py-3" style="width: 25%;">ID & Nama</th>
+                    <th style="width: 15%;">Harga</th>
+                    <th style="width: 15%;">Kategori</th>
+                    <th class="text-center" style="width: 15%;">Resep</th>
+                    <th class="text-center" style="width: 15%;">Foto</th>
+                    <th class="text-center pe-4" style="width: 15%;">Aksi</th>
                   </tr>
                 </thead>
-                <tbody id="stockTableBody" class="small bg-white">
-                </tbody>
+                <tbody id="productTableBody">
+                  </tbody>
               </table>
             </div>
           </div>
@@ -1190,7 +1190,8 @@
                     <option value="gr">gr</option>
                     <option value="ml">ml</option>
                     <option value="pcs">pcs</option>
-                    <option value="sachet">sachet</option>
+                    <option value="kg">kg</option>
+                    <option value="L">L</option>
                   </select>
                 </div>
                 <button class="btn btn-dark px-3 rounded-3" onclick="addMaterialToTempBasket()"><i class="fas fa-plus"></i></button>
@@ -1255,86 +1256,6 @@
             <div class="d-flex gap-2 mt-3 pt-3 border-top">
               <button class="btn btn-light w-100 py-2 fw-bold rounded-pill" onclick="closeBulkRecipeModal()">BATAL</button>
               <button class="btn btn-danger w-100 py-2 fw-bold rounded-pill shadow-sm" id="btnExecuteBulk" onclick="executeBulkAction()" disabled>LANJUTKAN <i class="fas fa-arrow-right ms-1"></i></button>
-            </div>
-          </div>
-        </div>
-        
-        <div id="modalSmartStock" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 10600; opacity: 1 !important;">
-          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 550px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s ease-out;">
-            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-              <div>
-                <h5 class="fw-bold m-0"><i class="fas fa-boxes-packing text-primary me-2"></i>Edit Inventaris</h5>
-                <small class="text-muted fw-bold" id="smartStockTargetName">Material: ...</small>
-              </div>
-              <button class="btn-close shadow-none" onclick="closeSmartStockModal()"></button>
-            </div>
-
-            <div class="bg-light p-3 rounded-4 mb-3 border">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <label class="small fw-bold text-dark m-0">1. INPUT JUMLAH STOK</label>
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="checkBalStock" onchange="toggleBalUI('stock')">
-                  <label class="form-check-label small fw-bold text-primary" for="checkBalStock">Gunakan Mode 'Bal/Dus'</label>
-                </div>
-              </div>
-              
-              <div class="d-flex gap-2 mb-2">
-                <input type="number" id="inputSmartStock" class="form-control fw-bold border-2" placeholder="0" step="0.1">
-                <select id="selectStockUnit" class="form-select border-2 fw-bold" style="max-width: 120px;">
-                  </select>
-              </div>
-
-              <div id="balConfigStock" class="p-2 bg-white rounded-3 border border-primary border-opacity-25 d-none mt-2">
-                <small class="text-muted fw-bold mb-1 d-block"><i class="fas fa-info-circle me-1"></i>Definisi 1 Bal/Dus:</small>
-                <div class="input-group input-group-sm">
-                  <span class="input-group-text bg-light fw-bold">1 Bal =</span>
-                  <input type="number" id="balValueStock" class="form-control fw-bold" placeholder="Misal: 20">
-                  <select id="balUnitStock" class="form-select fw-bold" style="max-width: 80px;"></select>
-                </div>
-              </div>
-            </div>
-
-            <div class="bg-light p-3 rounded-4 mb-4 border">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <label class="small fw-bold text-dark m-0">2. ATUR HARGA BELI (HPP)</label>
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="checkBalPrice" onchange="toggleBalUI('price')">
-                  <label class="form-check-label small fw-bold text-danger" for="checkBalPrice">Harga per 'Bal/Dus'</label>
-                </div>
-              </div>
-
-              <div class="d-flex gap-2 align-items-center mb-2">
-                <div class="input-group">
-                  <span class="input-group-text bg-white border-end-0 border-2">Rp</span>
-                  <input type="number" id="inputSmartPrice" class="form-control border-start-0 border-2 fw-bold" placeholder="0">
-                </div>
-                
-                <span class="fw-bold text-muted small mx-1">PER</span>
-                
-                <div class="btn-group shadow-sm" role="group" id="priceToggleGroup" style="min-width: 120px;">
-                  </div>
-              </div>
-
-               <div id="balConfigPrice" class="p-2 bg-white rounded-3 border border-danger border-opacity-25 d-none mt-2">
-                <small class="text-muted fw-bold mb-1 d-block"><i class="fas fa-info-circle me-1"></i>Definisi 1 Bal/Dus Harga:</small>
-                <div class="input-group input-group-sm">
-                  <span class="input-group-text bg-light fw-bold">1 Bal =</span>
-                  <input type="number" id="balValuePrice" class="form-control fw-bold" placeholder="Misal: 20">
-                  <select id="balUnitPrice" class="form-select fw-bold" style="max-width: 80px;"></select>
-                </div>
-              </div>
-            </div>
-
-            <div class="text-center p-3 rounded-4 mb-3" style="background: rgba(197, 160, 89, 0.1);">
-              <small class="text-muted d-block mb-1">Sistem akan mengkonversi ke satuan baku:</small>
-              <h6 class="fw-bold text-dark m-0" id="previewConversion">Stok: 0 <span id="lblBaseUnit1"></span> | HPP: Rp 0 / <span id="lblBaseUnit2"></span></h6>
-            </div>
-
-            <div class="d-flex gap-2">
-              <button class="btn btn-light w-100 py-3 rounded-pill fw-bold" onclick="closeSmartStockModal()">BATAL</button>
-              <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm" id="btnSaveSmartStock" onclick="executeSmartStockSave()">
-                <i class="fas fa-save me-2"></i>SIMPAN
-              </button>
             </div>
           </div>
         </div>
@@ -4068,7 +3989,7 @@
         if (!tbody) return;
 
         if (dataToRender.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="text-center p-5 text-muted">Data tidak ditemukan.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center p-5 text-muted">Data tidak ditemukan.</td></tr>';
           return;
         }
 
@@ -4076,7 +3997,6 @@
           const isLow = m.stock < 1000;
           const rowClass = isLow ? 'stock-low' : '';
           const stockDisplay = isLow ? `<span class="text-danger fw-800"><i class="fas fa-triangle-exclamation me-1"></i>${m.stock.toLocaleString()}</span>` : m.stock.toLocaleString();
-          const hppDisplay = m.price > 0 ? `<span class="fw-bold text-success">Rp ${m.price.toLocaleString()}</span>` : `<span class="text-muted small fst-italic">Belum diatur</span>`;
 
           return `
             <tr class="${rowClass} border-bottom">
@@ -4086,9 +4006,8 @@
               <td class="fw-bold text-dark">${m.name}</td>
               <td class="text-center fw-bold fs-6">${stockDisplay}</td>
               <td class="text-center"><span class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary border-0 px-3">${m.unit}</span></td>
-              <td class="text-center">${hppDisplay}</td>
               <td class="text-center pe-4">
-                <button class="btn btn-white btn-sm shadow-sm rounded-circle border" onclick="openSmartStockModal('${m.id}', '${m.name}', ${m.stock}, '${m.unit}', ${m.price})">
+                <button class="btn btn-white btn-sm shadow-sm rounded-circle border" onclick="editStockManual('${m.id}', '${m.name}', ${m.stock})">
                   <i class="fas fa-pencil text-primary" style="font-size: 0.7rem;"></i>
                 </button>
               </td>
@@ -4113,180 +4032,6 @@
           }).updateMaterialStockManual(id, Number(newStock));
         }
       }
-
-      // ==========================================
-      // SMART STOCK & HPP CONVERSION LOGIC
-      // ==========================================
-      let SMART_EDIT_DATA = { id: null, baseUnit: null };
-
-      function openSmartStockModal(id, name, currentStock, baseUnit, currentPrice) {
-        SMART_EDIT_DATA = { id: id, baseUnit: baseUnit.toLowerCase() };
-        
-        document.getElementById('smartStockTargetName').innerText = `Material: ${name}`;
-        document.getElementById('lblBaseUnit1').innerText = baseUnit;
-        document.getElementById('lblBaseUnit2').innerText = baseUnit;
-        
-        // Reset Inputs
-        document.getElementById('inputSmartStock').value = currentStock || '';
-        document.getElementById('inputSmartPrice').value = currentPrice || '';
-        document.getElementById('checkBalStock').checked = false;
-        document.getElementById('checkBalPrice').checked = false;
-        toggleBalUI('stock');
-        toggleBalUI('price');
-        
-        // Atur Dropdown & Toggle sesuai Base Unit
-        setupUnitSelectors(baseUnit);
-        
-        // Listener untuk Auto-Preview
-        ['inputSmartStock', 'selectStockUnit', 'balValueStock', 'balUnitStock', 
-         'inputSmartPrice', 'balValuePrice', 'balUnitPrice', 'checkBalStock', 'checkBalPrice'].forEach(id => {
-            document.getElementById(id).addEventListener('input', updateConversionPreview);
-            document.getElementById(id).addEventListener('change', updateConversionPreview);
-        });
-
-        document.getElementById('modalSmartStock').classList.remove('d-none');
-        updateConversionPreview();
-      }
-
-      function closeSmartStockModal() {
-        document.getElementById('modalSmartStock').classList.add('d-none');
-      }
-
-      function setupUnitSelectors(baseUnit) {
-        const selectStock = document.getElementById('selectStockUnit');
-        const balUStock = document.getElementById('balUnitStock');
-        const balUPrice = document.getElementById('balUnitPrice');
-        const toggleGroup = document.getElementById('priceToggleGroup');
-        
-        let stockOpts = `<option value="Bal">Bal / Dus</option>`;
-        let toggleHtml = '';
-        let balOpts = '';
-
-        if (baseUnit === 'gr') {
-            stockOpts += `<option value="kg">Kg</option><option value="gr" selected>gr</option>`;
-            balOpts = `<option value="kg">Kg</option><option value="gr" selected>gr</option>`;
-            toggleHtml = `
-              <input type="radio" class="btn-check" name="priceUnitToggle" id="pToggle_gr" value="gr" checked onchange="updateConversionPreview()">
-              <label class="btn btn-outline-primary btn-sm fw-bold" for="pToggle_gr">gr</label>
-              <input type="radio" class="btn-check" name="priceUnitToggle" id="pToggle_kg" value="kg" onchange="updateConversionPreview()">
-              <label class="btn btn-outline-primary btn-sm fw-bold" for="pToggle_kg">Kg</label>`;
-        } else if (baseUnit === 'ml') {
-            stockOpts += `<option value="L">L</option><option value="ml" selected>ml</option><option value="shot">Shot</option>`;
-            balOpts = `<option value="L">L</option><option value="ml" selected>ml</option><option value="shot">Shot</option>`;
-            toggleHtml = `
-              <input type="radio" class="btn-check" name="priceUnitToggle" id="pToggle_ml" value="ml" checked onchange="updateConversionPreview()">
-              <label class="btn btn-outline-primary btn-sm fw-bold" for="pToggle_ml">ml</label>
-              <input type="radio" class="btn-check" name="priceUnitToggle" id="pToggle_l" value="L" onchange="updateConversionPreview()">
-              <label class="btn btn-outline-primary btn-sm fw-bold" for="pToggle_l">L</label>`;
-        } else {
-            // Untuk pcs dan sachet
-            stockOpts += `<option value="${baseUnit}" selected>${baseUnit}</option>`;
-            balOpts = `<option value="${baseUnit}" selected>${baseUnit}</option>`;
-            toggleHtml = `
-              <input type="radio" class="btn-check" name="priceUnitToggle" id="pToggle_base" value="${baseUnit}" checked>
-              <label class="btn btn-outline-primary btn-sm fw-bold" for="pToggle_base">${baseUnit}</label>`;
-        }
-
-        selectStock.innerHTML = stockOpts;
-        balUStock.innerHTML = balOpts;
-        balUPrice.innerHTML = balOpts;
-        toggleGroup.innerHTML = toggleHtml;
-      }
-
-      function toggleBalUI(type) {
-        if (type === 'stock') {
-            const isChecked = document.getElementById('checkBalStock').checked;
-            document.getElementById('balConfigStock').classList.toggle('d-none', !isChecked);
-            if(isChecked) document.getElementById('selectStockUnit').value = 'Bal';
-        } else {
-            const isChecked = document.getElementById('checkBalPrice').checked;
-            document.getElementById('balConfigPrice').classList.toggle('d-none', !isChecked);
-            // Hide normal toggle if Bal is active
-            document.getElementById('priceToggleGroup').style.opacity = isChecked ? '0.3' : '1';
-            document.getElementById('priceToggleGroup').style.pointerEvents = isChecked ? 'none' : 'auto';
-        }
-        updateConversionPreview();
-      }
-
-      // ENGINE KONVERSI MATEMATIKA
-      function convertToBaseMultiplier(unit) {
-        unit = unit.toLowerCase();
-        if (unit === 'kg' || unit === 'l') return 1000;
-        if (unit === 'shot') return 30; // Asumsi 1 shot = 30ml
-        return 1; // gr, ml, pcs, sachet
-      }
-
-      function getCalculatedData() {
-        const baseU = SMART_EDIT_DATA.baseUnit;
-        
-        // --- 1. KALKULASI STOK ---
-        const rawStock = parseFloat(document.getElementById('inputSmartStock').value) || 0;
-        const isStockBal = document.getElementById('checkBalStock').checked;
-        const stockUnit = document.getElementById('selectStockUnit').value;
-        
-        let finalStockBase = 0;
-        if (isStockBal || stockUnit.toLowerCase() === 'bal') {
-            const balVal = parseFloat(document.getElementById('balValueStock').value) || 0;
-            const balUnit = document.getElementById('balUnitStock').value;
-            // Total = Qty Bal * (Isi 1 Bal dalam unit konfig) * Multiplier ke Base Unit
-            finalStockBase = rawStock * balVal * convertToBaseMultiplier(balUnit);
-        } else {
-            finalStockBase = rawStock * convertToBaseMultiplier(stockUnit);
-        }
-
-        // --- 2. KALKULASI HARGA HPP ---
-        const rawPrice = parseFloat(document.getElementById('inputSmartPrice').value) || 0;
-        const isPriceBal = document.getElementById('checkBalPrice').checked;
-        
-        let finalPricePerBase = 0;
-        if (rawPrice > 0) {
-            if (isPriceBal) {
-                const balValPrice = parseFloat(document.getElementById('balValuePrice').value) || 0;
-                const balUnitPrice = document.getElementById('balUnitPrice').value;
-                // Jika beli 1 Bal (isi 20kg) = 500rb. Maka Harga per gr = 500rb / (20 * 1000)
-                const totalBaseUnitsInOneBal = balValPrice * convertToBaseMultiplier(balUnitPrice);
-                finalPricePerBase = totalBaseUnitsInOneBal > 0 ? (rawPrice / totalBaseUnitsInOneBal) : 0;
-            } else {
-                const checkedRadio = document.querySelector('input[name="priceUnitToggle"]:checked');
-                const priceUnit = checkedRadio ? checkedRadio.value : baseU;
-                // Jika input Rp 150rb per Kg. Harga per gr = 150rb / 1000
-                finalPricePerBase = rawPrice / convertToBaseMultiplier(priceUnit);
-            }
-        }
-
-        return {
-            stock: parseFloat(finalStockBase.toFixed(2)),
-            price: parseFloat(finalPricePerBase.toFixed(2)) // 2 decimal place for safety
-        };
-      }
-
-      function updateConversionPreview() {
-        const calc = getCalculatedData();
-        document.getElementById('previewConversion').innerHTML = 
-            `Stok: <span class="text-primary">${calc.stock.toLocaleString()}</span> <span class="small">${SMART_EDIT_DATA.baseUnit}</span> | 
-             HPP: <span class="text-danger">Rp ${calc.price.toLocaleString()}</span> / <span class="small">${SMART_EDIT_DATA.baseUnit}</span>`;
-      }
-
-      function executeSmartStockSave() {
-        const calc = getCalculatedData();
-        
-        const btn = document.getElementById('btnSaveSmartStock');
-        const ogText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>MENYIMPAN...';
-        btn.disabled = true;
-
-        google.script.run.withSuccessHandler(res => {
-            btn.innerHTML = ogText;
-            btn.disabled = false;
-            if (res.status === 'success') {
-              closeSmartStockModal();
-              loadStockData(); // Refresh UI Tab Stok
-            } else {
-              alert("Gagal update: " + res.message);
-            }
-        }).updateMaterialStockManual(SMART_EDIT_DATA.id, calc.stock, calc.price);
-      }
-      
     </script>
 
     <div id="modalGridConfig" class="payment-overlay" style="z-index: 12000;">
