@@ -11,6 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <style>
       /* ========================================= */
@@ -1804,10 +1805,10 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-        // Spinner Loading Daftar Jadwal (Permintaan 6)
+        // Spinner Loading Daftar Jadwal
         const tbody = document.getElementById('scheduleTableBody');
         if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="6" class="text-center p-4"><i class="fas fa-spinner fa-spin text-warning me-2"></i>Menyimpan & Memuat Jadwal...</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="5" class="text-center p-4"><i class="fas fa-spinner fa-spin text-warning me-2"></i>Menyimpan & Memuat Jadwal...</td></tr>`;
         }
 
         google.script.run.withSuccessHandler(res => {
@@ -1815,20 +1816,44 @@
           btn.innerText = 'Simpan Shift';
           if(res.status === 'success') {
             document.getElementById('modalAddSchedule').classList.add('d-none');
-            initManningTab(); 
-            setTimeout(() => { if(CURRENT_VIEW_STAFF) openStaffDetailModal(CURRENT_VIEW_STAFF); }, 1500);
+            
+            // Ambil ulang data dari server tanpa menutup modal detail staff
+            google.script.run.withSuccessHandler(manningRes => {
+              if (manningRes.status === 'success') {
+                  SCHEDULE_DATA = manningRes.schedules || [];
+                  if (CURRENT_VIEW_STAFF) renderStaffSchedule(CURRENT_VIEW_STAFF);
+              }
+            }).getManningData();
+            
           } else {
             alert(res.message);
+            // Kembalikan render ke awal jika gagal
+            if (CURRENT_VIEW_STAFF) renderStaffSchedule(CURRENT_VIEW_STAFF);
           }
         }).saveSchedule(CURRENT_VIEW_STAFF, date, start, end, existingId);
       }
 
       function deleteScheduleUI(id) {
         if (confirm("Hapus shift ini?")) {
+          // Tampilkan spinner di tabel langsung saat proses hapus
+          const tbody = document.getElementById('scheduleTableBody');
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center p-4"><i class="fas fa-spinner fa-spin text-danger me-2"></i>Menghapus Jadwal...</td></tr>`;
+          }
+
           google.script.run.withSuccessHandler(res => {
             if(res.status === 'success') {
-              initManningTab();
-              setTimeout(() => { if(CURRENT_VIEW_STAFF) openStaffDetailModal(CURRENT_VIEW_STAFF); }, 1500);
+              // Ambil ulang data dari server tanpa menutup modal detail staff
+              google.script.run.withSuccessHandler(manningRes => {
+                if (manningRes.status === 'success') {
+                    SCHEDULE_DATA = manningRes.schedules || [];
+                    if (CURRENT_VIEW_STAFF) renderStaffSchedule(CURRENT_VIEW_STAFF);
+                }
+              }).getManningData();
+            } else {
+               alert(res.message);
+               // Kembalikan render ke awal jika gagal
+               if (CURRENT_VIEW_STAFF) renderStaffSchedule(CURRENT_VIEW_STAFF);
             }
           }).deleteSchedule(id);
         }
@@ -3645,7 +3670,13 @@
 
       function openModalRegisterFace() {
         const select = document.getElementById('regStaffSelect');
-        select.innerHTML = CONFIG.Cashiers.map(c => `<option value="${c}">${c}</option>`).join('');
+        
+        // Memuat semua staff yang ada di database, tanpa memandang Role
+        if (STAFF_DATA && STAFF_DATA.length > 0) {
+            select.innerHTML = STAFF_DATA.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+        } else {
+            select.innerHTML = '<option disabled>Belum ada data staff terdaftar</option>';
+        }
         
         // Pasang event listener secara dinamis di sini agar lebih aman
         select.onchange = function() { checkMasterFace(this.value); };
