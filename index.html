@@ -794,7 +794,165 @@
             </div>
           </div>
         </div>
+        
+        <div id="view-manning" class="app-view p-4" style="display:none; background: #f8f9fa;">
+          <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pt-3 gap-3">
+            <div>
+              <h3 class="fw-bold m-0 text-dark"><i class="fas fa-users-cog me-2 text-warning"></i>Staff & Schedule</h3>
+              <p class="text-muted small m-0">Kelola karyawan, gaji, dan atur jadwal shift kerja.</p>
+            </div>
+            <button class="btn btn-primary px-4 rounded-pill shadow-sm fw-bold d-flex align-items-center" onclick="openStaffModal()">
+              <i class="fas fa-user-plus me-2"></i>Tambah Staff
+            </button>
+          </div>
 
+          <div class="row g-4" id="staffCardsContainer">
+            </div>
+        </div>
+
+        <div id="modalStaff" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10500; opacity: 1 !important;">
+          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 90%; max-width: 400px; animation: slideUp 0.3s ease-out;">
+            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+              <h5 class="fw-bold m-0"><i class="fas fa-id-badge text-primary me-2"></i>Data Staff</h5>
+              <button class="btn-close shadow-none" onclick="closeStaffModal()"></button>
+            </div>
+            
+            <input type="hidden" id="staffIdInput">
+            <div class="mb-3">
+              <label class="small fw-bold text-muted">NAMA LENGKAP</label>
+              <input type="text" id="staffNameInput" class="form-control fw-bold border-2" placeholder="Nama karyawan">
+            </div>
+            <div class="mb-3">
+              <label class="small fw-bold text-muted">ROLE / POSISI</label>
+              <select id="staffRoleInput" class="form-select fw-bold border-2">
+                <option value="CASHIER">CASHIER</option>
+                <option value="BARISTA">BARISTA</option>
+                <option value="KITCHEN">KITCHEN</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </div>
+            <div class="mb-4">
+              <label class="small fw-bold text-muted">GAJI POKOK (Base Salary)</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-2 border-end-0 text-muted">Rp</span>
+                <input type="number" id="staffSalaryInput" class="form-control fw-bold border-2 border-start-0 ps-0" placeholder="0">
+              </div>
+            </div>
+            <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-sm" id="btnSaveStaff" onclick="executeSaveStaff()">
+              SIMPAN DATA
+            </button>
+          </div>
+        </div>
+
+        <div id="modalStaffDetail" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10400; opacity: 1 !important;">
+          <div class="bg-white p-0 rounded-5 shadow-lg d-flex flex-column overflow-hidden" style="width: 95%; max-width: 800px; max-height: 90vh; animation: slideUp 0.3s ease-out;">
+            
+            <div class="bg-dark text-white p-4 d-flex justify-content-between align-items-center">
+              <div>
+                <h4 class="fw-bold m-0" id="detailStaffName">Nama Staff</h4>
+                <span class="badge bg-warning text-dark mt-1" id="detailStaffRole">Role</span>
+              </div>
+              <button class="btn-close btn-close-white shadow-none" onclick="closeStaffDetailModal()"></button>
+            </div>
+
+            <div class="p-4 overflow-auto flex-fill" style="background: #f8f9fa;">
+              <ul class="nav nav-pills mb-4 gap-2" id="staffPills" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="btn btn-outline-primary active rounded-pill fw-bold px-4" id="tab-schedule" data-bs-toggle="pill" data-bs-target="#content-schedule" type="button" role="tab">📅 Jadwal & Shift</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="btn btn-outline-success rounded-pill fw-bold px-4" id="tab-absen" data-bs-toggle="pill" data-bs-target="#content-absen" type="button" role="tab">📸 Bukti Absensi</button>
+                </li>
+              </ul>
+
+              <div class="tab-content" id="staffPillsContent">
+                <div class="tab-pane fade show active" id="content-schedule" role="tabpanel">
+                  <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                      <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-4 border-primary">
+                        <small class="text-muted fw-bold d-block mb-1" style="font-size:0.65rem;">JAM KERJA (MINGGU INI)</small>
+                        <h5 class="fw-bold m-0 text-primary" id="statWeekHours">0 Jam</h5>
+                      </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-4 border-success">
+                        <small class="text-muted fw-bold d-block mb-1" style="font-size:0.65rem;">JAM KERJA (BULAN INI)</small>
+                        <h5 class="fw-bold m-0 text-success" id="statMonthHours">0 Jam</h5>
+                      </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-4 border-secondary">
+                        <small class="text-muted fw-bold d-block mb-1" style="font-size:0.65rem;">HARI LIBUR (BULAN INI)</small>
+                        <h5 class="fw-bold m-0 text-dark" id="statDaysOff">0 Hari</h5>
+                      </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-4 border-danger bg-danger bg-opacity-10">
+                        <small class="text-danger fw-bold d-block mb-1" style="font-size:0.65rem;">PERINGATAN (WARNING)</small>
+                        <h6 class="fw-bold m-0 text-danger" id="statWarnings" style="font-size:0.8rem;">Aman</h6>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-3">
+                    <div class="bg-white p-3 border-bottom d-flex justify-content-between align-items-center">
+                      <h6 class="fw-bold m-0">Daftar Shift & Jadwal</h6>
+                      <button class="btn btn-sm btn-luxury rounded-pill px-3 fw-bold" onclick="openAddScheduleModal()">+ Tambah Shift</button>
+                    </div>
+                    <div class="table-responsive" style="max-height: 250px;">
+                      <table class="table table-hover align-middle m-0 small">
+                        <thead class="bg-light sticky-top">
+                          <tr><th>Tanggal</th><th>Jam Mulai</th><th>Jam Selesai</th><th>Durasi</th><th class="text-center">Aksi</th></tr>
+                        </thead>
+                        <tbody id="scheduleTableBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="tab-pane fade" id="content-absen" role="tabpanel">
+                  <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div class="table-responsive" style="max-height: 400px;">
+                      <table class="table table-hover align-middle m-0 small">
+                        <thead class="bg-light sticky-top">
+                          <tr><th>Tanggal</th><th class="text-center">IN</th><th class="text-center">OUT</th><th class="text-center">Bukti Foto</th></tr>
+                        </thead>
+                        <tbody id="staffAbsenTableBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="modalAddSchedule" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 10600; opacity: 1 !important;">
+          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 90%; max-width: 350px; animation: slideUp 0.3s ease-out;">
+            <h5 class="fw-bold mb-4 border-bottom pb-2"><i class="fas fa-calendar-plus text-success me-2"></i>Set Jadwal Shift</h5>
+            
+            <div class="mb-3">
+              <label class="small fw-bold text-muted">TANGGAL KERJA</label>
+              <input type="date" id="schedDate" class="form-control fw-bold border-2">
+            </div>
+            <div class="row g-2 mb-4">
+              <div class="col-6">
+                <label class="small fw-bold text-muted">START (Mulai)</label>
+                <input type="time" id="schedStart" class="form-control fw-bold border-2">
+              </div>
+              <div class="col-6">
+                <label class="small fw-bold text-muted">END (Selesai)</label>
+                <input type="time" id="schedEnd" class="form-control fw-bold border-2">
+              </div>
+            </div>
+            
+            <div class="d-flex gap-2">
+              <button class="btn btn-light w-100 rounded-pill fw-bold" onclick="document.getElementById('modalAddSchedule').classList.add('d-none')">Batal</button>
+              <button class="btn btn-success w-100 rounded-pill fw-bold shadow-sm" id="btnSaveSched" onclick="executeSaveSchedule()">Simpan Shift</button>
+            </div>
+          </div>
+        </div>
+        
         <div id="view-finance" class="app-view p-4" style="display:none; background: #f8f9fa;">
           <div class="d-flex align-items-center justify-content-between mb-4 pt-2">
             <h3 class="fw-bold m-0 text-dark" style="white-space: nowrap; flex-shrink: 0;">
@@ -1446,6 +1604,323 @@
       let CURRENT_EDIT_MAT_ID = null;
       let CURRENT_EDIT_BASE_UNIT = null;
 
+      // ==========================================
+      // LOGIKA FRONTEND MANNING & SCHEDULING
+      // ==========================================
+      let STAFF_DATA = [];
+      let SCHEDULE_DATA = [];
+      let CURRENT_VIEW_STAFF = null; // Menyimpan nama staff yang sedang dibuka modalnya
+
+      function initManningTab() {
+        const container = document.getElementById('staffCardsContainer');
+        container.innerHTML = '<div class="col-12 text-center p-5"><div class="spinner-border text-warning mb-3"></div><p class="text-muted fw-bold">Memuat data Staff & Jadwal...</p></div>';
+        
+        google.script.run.withSuccessHandler(res => {
+          if (res.status === 'success') {
+            STAFF_DATA = res.staff || [];
+            SCHEDULE_DATA = res.schedules || [];
+            renderManningUI();
+          } else {
+            container.innerHTML = `<div class="col-12 text-center text-danger p-5">Gagal memuat data: ${res.message}</div>`;
+          }
+        }).getManningData();
+      }
+
+      function renderManningUI() {
+        const container = document.getElementById('staffCardsContainer');
+        if (STAFF_DATA.length === 0) {
+          container.innerHTML = '<div class="col-12 text-center p-5 text-muted">Belum ada data karyawan. Tambahkan melalui tombol Tambah Staff.</div>';
+          return;
+        }
+
+        container.innerHTML = STAFF_DATA.map(staff => {
+          // Cari foto master dari object CONFIG (yang digunakan di absensi)
+          let photoUrl = 'https://via.placeholder.com/150';
+          // Kita bisa mengandalkan fitur getStaffMasterFaces (yang menyimpan URL di Sheet Config) jika ada
+          
+          return `
+            <div class="col-12 col-md-6 col-lg-4">
+              <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+                <div class="p-3 bg-light border-bottom d-flex align-items-center gap-3">
+                  <div class="rounded-circle overflow-hidden shadow-sm border border-2 border-white" style="width: 60px; height: 60px;">
+                    <img src="${photoUrl}" style="width:100%; height:100%; object-fit:cover;">
+                  </div>
+                  <div>
+                    <h6 class="fw-bold m-0 text-dark">${staff.name}</h6>
+                    <span class="badge bg-primary mt-1" style="font-size:0.65rem;">${staff.role}</span>
+                  </div>
+                </div>
+                <div class="p-3 bg-white">
+                  <div class="d-flex justify-content-between mb-2 small">
+                    <span class="text-muted fw-bold">Gaji Pokok:</span>
+                    <span class="fw-bold text-success">Rp ${staff.salary.toLocaleString()}</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-3 small">
+                    <span class="text-muted fw-bold">Status:</span>
+                    <span class="fw-bold ${staff.status === 'Active' ? 'text-success' : 'text-danger'}">${staff.status}</span>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-light flex-fill rounded-pill fw-bold btn-sm border shadow-sm" onclick="openStaffModal('${staff.id}')"><i class="fas fa-pencil-alt text-muted"></i></button>
+                    <button class="btn btn-luxury flex-fill rounded-pill fw-bold btn-sm shadow-sm" onclick="openStaffDetailModal('${staff.name}')">Lihat Detail & Jadwal</button>
+                    <button class="btn btn-light text-danger flex-fill rounded-pill fw-bold btn-sm border shadow-sm" onclick="deleteStaffUI('${staff.id}', '${staff.name}')"><i class="fas fa-trash"></i></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function openStaffModal(id = null) {
+        if (id) {
+          const staff = STAFF_DATA.find(s => s.id === id);
+          document.getElementById('staffIdInput').value = staff.id;
+          document.getElementById('staffNameInput').value = staff.name;
+          document.getElementById('staffRoleInput').value = staff.role;
+          document.getElementById('staffSalaryInput').value = staff.salary;
+        } else {
+          document.getElementById('staffIdInput').value = "";
+          document.getElementById('staffNameInput').value = "";
+          document.getElementById('staffRoleInput').value = "CASHIER";
+          document.getElementById('staffSalaryInput').value = "";
+        }
+        document.getElementById('modalStaff').classList.remove('d-none');
+      }
+
+      function closeStaffModal() {
+        document.getElementById('modalStaff').classList.add('d-none');
+      }
+
+      function executeSaveStaff() {
+        const id = document.getElementById('staffIdInput').value;
+        const name = document.getElementById('staffNameInput').value;
+        const role = document.getElementById('staffRoleInput').value;
+        const salary = parseInt(document.getElementById('staffSalaryInput').value) || 0;
+
+        if (!name) return alert("Nama tidak boleh kosong!");
+
+        const btn = document.getElementById('btnSaveStaff');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
+
+        google.script.run.withSuccessHandler(res => {
+          btn.disabled = false;
+          btn.innerText = 'SIMPAN DATA';
+          if (res.status === 'success') {
+            closeStaffModal();
+            initManningTab(); // Refresh data
+            // Karena config bisa berubah, ambil config ulang jika perlu
+            google.script.run.withSuccessHandler(c => { CONFIG.Cashiers = c.config.Cashiers; renderCashierButtons(); }).loginUser("ADMIN_PIN_TIDAK_DIPERLUKAN_TAPI_HARUSNYA_BACA_CONFIG_LANGSUNG"); 
+            // Abaikan refresh loginUser, kita cukup peringatkan
+          } else {
+            alert(res.message);
+          }
+        }).saveStaff(id, name, role, salary);
+      }
+
+      function deleteStaffUI(id, name) {
+        if (confirm(`Hapus permanen staff ${name} beserta gajinya? (Jadwal lama tetap ada di database tapi terputus)`)) {
+          google.script.run.withSuccessHandler(res => {
+            if (res.status === 'success') initManningTab();
+          }).deleteStaff(id);
+        }
+      }
+
+      // --- LOGIKA DETAIL & JADWAL ---
+      function openStaffDetailModal(staffName) {
+        CURRENT_VIEW_STAFF = staffName;
+        const staff = STAFF_DATA.find(s => s.name === staffName);
+        if (!staff) return;
+
+        document.getElementById('detailStaffName').innerText = staff.name;
+        document.getElementById('detailStaffRole').innerText = staff.role;
+        
+        // Render Schedule Tab
+        renderStaffSchedule(staff.name);
+        
+        // Render Absensi Tab (Membaca dari ATTENDANCE_DATA yang di-load di fetchInitialData)
+        renderStaffAttendance(staff.name);
+
+        document.getElementById('modalStaffDetail').classList.remove('d-none');
+      }
+
+      function closeStaffDetailModal() {
+        document.getElementById('modalStaffDetail').classList.add('d-none');
+        CURRENT_VIEW_STAFF = null;
+      }
+
+      function openAddScheduleModal() {
+        document.getElementById('schedDate').value = "";
+        document.getElementById('schedStart').value = "08:00";
+        document.getElementById('schedEnd').value = "16:00";
+        document.getElementById('modalAddSchedule').classList.remove('d-none');
+      }
+
+      function executeSaveSchedule() {
+        const date = document.getElementById('schedDate').value;
+        const start = document.getElementById('schedStart').value;
+        const end = document.getElementById('schedEnd').value;
+
+        if(!date || !start || !end) return alert("Lengkapi tanggal dan jam shift!");
+
+        const btn = document.getElementById('btnSaveSched');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        google.script.run.withSuccessHandler(res => {
+          btn.disabled = false;
+          btn.innerText = 'Simpan Shift';
+          if(res.status === 'success') {
+            document.getElementById('modalAddSchedule').classList.add('d-none');
+            initManningTab(); // Memanggil ulang data global, dan setelah berhasil dia akan me-render ulang modal jika terbuka.
+            // Cepat render lokal:
+            setTimeout(() => { if(CURRENT_VIEW_STAFF) openStaffDetailModal(CURRENT_VIEW_STAFF); }, 1500);
+          } else {
+            alert(res.message);
+          }
+        }).saveSchedule(CURRENT_VIEW_STAFF, date, start, end);
+      }
+
+      function deleteScheduleUI(id) {
+        if (confirm("Hapus shift ini?")) {
+          google.script.run.withSuccessHandler(res => {
+            if(res.status === 'success') {
+              initManningTab();
+              setTimeout(() => { if(CURRENT_VIEW_STAFF) openStaffDetailModal(CURRENT_VIEW_STAFF); }, 1500);
+            }
+          }).deleteSchedule(id);
+        }
+      }
+
+      // Mesin Kalkulasi Waktu & Render
+      function renderStaffSchedule(staffName) {
+        const tbody = document.getElementById('scheduleTableBody');
+        const mySchedules = SCHEDULE_DATA.filter(s => s.staffName === staffName);
+        
+        // Parse date for sorting (Format dari GAS: dd/MM/yyyy)
+        mySchedules.sort((a, b) => {
+          let aParts = a.date.split('/'); let bParts = b.date.split('/');
+          let dA = new Date(aParts[2], aParts[1] - 1, aParts[0]);
+          let dB = new Date(bParts[2], bParts[1] - 1, bParts[0]);
+          return dB - dA; // Descending (Terbaru di atas)
+        });
+
+        let warnings = [];
+        let monthHours = 0;
+        let weekHours = 0;
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        // Cari batas minggu ini (Senin s.d Minggu)
+        const dayOfWeek = now.getDay() || 7; // 1-7 (Senin-Minggu)
+        const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - dayOfWeek + 1); startOfWeek.setHours(0,0,0,0);
+        const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(startOfWeek.getDate() + 6); endOfWeek.setHours(23,59,59,999);
+
+        let workDaysInMonth = new Set();
+
+        tbody.innerHTML = mySchedules.length === 0 ? '<tr><td colspan="5" class="text-center text-muted p-3">Belum ada jadwal.</td></tr>' : mySchedules.map((s, index) => {
+          // Kalkulasi Durasi
+          let sParts = s.start.split(':'); let eParts = s.end.split(':');
+          let startMin = parseInt(sParts[0])*60 + parseInt(sParts[1]);
+          let endMin = parseInt(eParts[0])*60 + parseInt(eParts[1]);
+          
+          if (endMin < startMin) endMin += 24 * 60; // Shift malam melewati jam 00:00
+          let durationHours = (endMin - startMin) / 60;
+
+          // Deteksi statistik bulan/minggu
+          let dParts = s.date.split('/');
+          let shiftDate = new Date(dParts[2], dParts[1] - 1, dParts[0]);
+
+          if (shiftDate.getMonth() === currentMonth && shiftDate.getFullYear() === currentYear) {
+            monthHours += durationHours;
+            workDaysInMonth.add(s.date);
+          }
+          if (shiftDate >= startOfWeek && shiftDate <= endOfWeek) {
+            weekHours += durationHours;
+          }
+
+          // Deteksi Konflik & Rest Hour (Mengecek dengan shift sebelumnya karena descending sort)
+          let warningTag = "";
+          if (index < mySchedules.length - 1) {
+            let nextShift = mySchedules[index + 1]; // Secara kronologis ini adalah shift hari sebelumnya
+            let nDParts = nextShift.date.split('/');
+            let nShiftDate = new Date(nDParts[2], nDParts[1] - 1, nDParts[0]);
+            let nEParts = nextShift.end.split(':');
+            let nEndMin = parseInt(nEParts[0])*60 + parseInt(nEParts[1]);
+            if(nEndMin < (parseInt(nextShift.start.split(':')[0])*60)) nEndMin += 24*60;
+
+            let gapHours = ((shiftDate.getTime() + startMin*60000) - (nShiftDate.getTime() + nEndMin*60000)) / 3600000;
+            
+            if (gapHours < 0) {
+              warningTag = `<span class="badge bg-danger ms-2" title="Waktu shift beririsan dengan shift lain!">BENTROK</span>`;
+              if(!warnings.includes("Bentrok Shift")) warnings.push("Bentrok Shift");
+            } else if (gapHours < 8 && gapHours > 0) {
+              warningTag = `<span class="badge bg-warning text-dark ms-2" title="Waktu istirahat kurang dari 8 jam (${gapHours.toFixed(1)} jam)">REST < 8H</span>`;
+              if(!warnings.includes("Rest Hour Kurang")) warnings.push("Rest Hour Kurang");
+            }
+          }
+
+          return `
+            <tr>
+              <td class="fw-bold">${s.date}</td>
+              <td class="text-success fw-bold">${s.start}</td>
+              <td class="text-danger fw-bold">${s.end} ${warningTag}</td>
+              <td>${durationHours.toFixed(1)} Jam</td>
+              <td class="text-center">
+                <i class="fas fa-times text-danger" style="cursor:pointer;" onclick="deleteScheduleUI('${s.id}')"></i>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        // Update Dashboard Statistik
+        document.getElementById('statWeekHours').innerText = weekHours.toFixed(1) + " Jam";
+        document.getElementById('statMonthHours').innerText = monthHours.toFixed(1) + " Jam";
+        
+        // Hari libur: Total hari di bulan ini - Hari kerja
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const daysOff = daysInMonth - workDaysInMonth.size;
+        document.getElementById('statDaysOff').innerText = daysOff + " Hari";
+
+        const warnEl = document.getElementById('statWarnings');
+        if (warnings.length > 0) {
+          warnEl.innerHTML = warnings.join(', ');
+        } else {
+          warnEl.innerHTML = '<span class="text-success"><i class="fas fa-check-circle"></i> Aman</span>';
+        }
+      }
+
+      function renderStaffAttendance(staffName) {
+        const tbody = document.getElementById('staffAbsenTableBody');
+        // ATTENDANCE_DATA sudah tersimpan di browser secara global
+        const myAbsen = ATTENDANCE_DATA.filter(a => a.nama.toLowerCase() === staffName.toLowerCase());
+        
+        if (myAbsen.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">Belum ada catatan kehadiran.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = myAbsen.map(a => {
+          const formatTime = (t) => {
+            if (!t || t === "-" || t === "undefined") return "-";
+            const match = t.match(/\d{2}:\d{2}:\d{2}/);
+            return match ? match[0] : t;
+          };
+
+          return `
+            <tr>
+              <td class="fw-bold">${a.tgl}</td>
+              <td class="text-center text-success fw-bold">${formatTime(a.in)}</td>
+              <td class="text-center text-danger fw-bold">${formatTime(a.out)}</td>
+              <td class="text-center">
+                <img src="${a.img || 'https://via.placeholder.com/100'}" class="rounded-3 border shadow-sm" style="width:60px; height:40px; object-fit:cover; cursor:pointer;" onclick="window.open('${a.img}')">
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+      
       function startRealtimeClock() {
         setInterval(() => {
           const now = new Date();
@@ -1670,23 +2145,19 @@
           {id: 'stock', label: 'Stok', icon: 'fa-warehouse', roles: ['ADMIN']},
           {id: 'products', label: 'Produk', icon: 'fa-utensils', roles: ['ADMIN']},
           {id: 'finance', label: 'Laporan', icon: 'fa-chart-pie', roles: ['ADMIN']},
-          {id: 'absensi', label: 'Absen', icon: 'fa-user-clock', roles: ['ADMIN', 'CASHIER']}
+          {id: 'absensi', label: 'Absen', icon: 'fa-user-clock', roles: ['ADMIN', 'CASHIER']},
+          {id: 'manning', label: 'Staff', icon: 'fa-users-cog', roles: ['ADMIN']} // <--- MENU BARU
         ];
 
-        // Container Bottom Nav
         const mob = document.getElementById('mobileMenu');
         if (!mob) return;
-        
         mob.innerHTML = '';
 
         menuItems.forEach(m => {
           if(m.roles.includes(USER_ROLE)) {
-            // Render Bottom Item (Navigasi Bawah)
             const mDiv = document.createElement('div');
             mDiv.className = 'nav-icon-mob';
-            mDiv.id = `mob-${m.id}`; // ID tetap konsisten agar switchView berjalan normal
-            
-            // Struktur icon dan text yang rapi untuk bottom bar
+            mDiv.id = `mob-${m.id}`; 
             mDiv.innerHTML = `<i class="fas ${m.icon} mb-1"></i><span>${m.label}</span>`;
             mDiv.onclick = () => switchView(m.id);
             mob.appendChild(mDiv);
@@ -2462,6 +2933,8 @@
           setTimeout(() => { loadIndoMarketPulse(); }, 100);
         } else if (viewId === 'stock' && USER_ROLE === 'ADMIN') {
           loadStockData();
+        } else if (viewId === 'manning' && USER_ROLE === 'ADMIN') {
+          initManningTab(); // <--- TAMBAHAN BARU
         }
 
         targetView.style.display = (viewId === 'pos' && window.innerWidth > 768) ? 'flex' : 'block';
