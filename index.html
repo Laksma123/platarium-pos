@@ -1893,6 +1893,7 @@
 
       function renderRecipeBasket() {
         const tbody = document.getElementById('recipeBasketBody');
+
         if (TEMP_RECIPE_BASKET.length === 0) {
           tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-muted">Belum ada komposisi bahan.</td></tr>';
           return;
@@ -1906,7 +1907,7 @@
             </td>
             <td class="text-center fw-bold text-danger">${m.qty} <span class="small text-muted">${m.unit}</span></td>
             <td class="text-center">
-              <button class="btn btn-light btn-sm rounded-circle text-danger shadow-sm border" onclick="removeMaterialFromBasket(${index})">
+              <button class="btn btn-light btn-sm rounded-circle text-danger shadow-sm border" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;" onclick="removeMaterialFromBasket(${index})">
                 <i class="fas fa-times"></i>
               </button>
             </td>
@@ -1992,6 +1993,7 @@
 
       function renderBulkAffectedList() {
         const listBody = document.getElementById('bulkAffectedList');
+
         if(BULK_AFFECTED_PRODUCTS.length === 0) {
             listBody.innerHTML = '<tr><td class="text-center p-3 text-muted">Bahan ini tidak digunakan pada menu manapun.</td></tr>';
             document.getElementById('btnExecuteBulk').disabled = true;
@@ -1999,11 +2001,12 @@
         }
 
         document.getElementById('btnExecuteBulk').disabled = false;
+
         listBody.innerHTML = BULK_AFFECTED_PRODUCTS.map((p, index) => `
             <tr class="align-middle">
                 <td class="ps-3 py-2 fw-bold text-dark">${p.name}</td>
                 <td class="text-center" style="width: 50px;">
-                    <button class="btn btn-sm btn-light text-danger rounded-circle shadow-sm" onclick="removeBulkAffected(${index})" title="Kecualikan Menu Ini">
+                    <button class="btn btn-sm btn-light text-danger rounded-circle shadow-sm" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;" onclick="removeBulkAffected(${index})" title="Kecualikan Menu Ini">
                       <i class="fas fa-times"></i>
                     </button>
                 </td>
@@ -3470,7 +3473,7 @@
                     <button class="btn btn-light btn-sm border-end" onclick="toggleTransactionStatus('${t.orderId}', '${t.status}')" title="Ubah Status">
                       <i class="fas ${isKomplimen ? 'fa-undo text-success' : 'fa-exchange-alt text-warning'}" style="font-size:0.7rem;"></i>
                     </button>
-                    <button class="btn btn-light btn-sm" onclick="confirmDeleteTransaction('${orderId}')" title="Hapus">
+                    <button class="btn btn-light btn-sm" onclick="confirmDeleteTransaction('${t.orderId}')" title="Hapus">
                       <i class="fas fa-trash text-danger" style="font-size:0.7rem;"></i>
                     </button>
                   </div>
