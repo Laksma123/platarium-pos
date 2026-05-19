@@ -2239,7 +2239,6 @@
             
             // Simpan res ke memori window agar bisa diteruskan saat klik OK
             window.TEMP_LOGIN_RES = res;
-            
           } else if (USER_ROLE === 'CASHIER') {
             document.getElementById('btnLock').classList.remove('d-none');
             let savedShift = localStorage.getItem('pos_shift_data');
@@ -2266,7 +2265,30 @@
               IS_SUBSTITUTE = false;
               document.getElementById('loginOverlay').classList.add('d-none');
               document.getElementById('shiftWelcomeName').innerText = `Halo, ${ACTIVE_CASHIER}`;
-              document.getElementById('inputStartCash').value = '';
+              
+              // Req 1: Note Admin meninggalkan laci
+              let inputStart = document.getElementById('inputStartCash');
+              let adminCash = parseInt(localStorage.getItem('pos_admin_cash_left')) || 0;
+              let adminName = localStorage.getItem('pos_admin_cash_name') || 'Admin';
+              
+              let noteEl = document.getElementById('adminCashNoteInfo');
+              if (!noteEl) {
+                noteEl = document.createElement('div');
+                noteEl.id = 'adminCashNoteInfo';
+                noteEl.className = 'alert alert-info py-2 px-3 small fw-bold mb-3 text-start';
+                inputStart.parentElement.parentElement.insertBefore(noteEl, inputStart.parentElement);
+              }
+              
+              if (adminCash > 0) {
+                let roleText = adminName === 'Owner' ? 'Owner' : `Admin ${adminName}`;
+                noteEl.innerHTML = `<i class="fas fa-info-circle me-2"></i>${roleText} meninggalkan Rp ${adminCash.toLocaleString()} di laci.`;
+                noteEl.classList.remove('d-none');
+                inputStart.value = adminCash;
+              } else {
+                noteEl.classList.add('d-none');
+                inputStart.value = '';
+              }
+              
               document.getElementById('modalSetupShift').classList.remove('d-none');
             }
           }
@@ -2284,7 +2306,7 @@
             proceedToMainUI(window.TEMP_LOGIN_RES);
         }
       }
-      
+
       // [BARU] Fungsi menutup modal notifikasi pengganti
       function closeSubstituteAlert() {
         document.getElementById('modalSubstituteAlert').classList.add('d-none');
@@ -2299,6 +2321,11 @@
           locked: false
         };
         localStorage.setItem('pos_shift_data', JSON.stringify(SHIFT_DATA));
+        
+        // Hapus memori laci admin setelah shift terbuka
+        localStorage.removeItem('pos_admin_cash_left');
+        localStorage.removeItem('pos_admin_cash_name');
+        
         document.getElementById('modalSetupShift').classList.add('d-none');
         proceedToMainUI({role: USER_ROLE, config: CONFIG});
       }
@@ -2345,7 +2372,7 @@
           return;
         }
 
-        // [PERBAIKAN] Ubah tombol menjadi loading agar kasir tahu sistem sedang rekap
+        // Ubah tombol menjadi loading agar kasir tahu sistem sedang rekap
         const btn = event.currentTarget;
         let originalContent = '';
         if (btn) {
@@ -2354,44 +2381,68 @@
           btn.disabled = true;
         }
 
-        // [PERBAIKAN] Tarik ulang data transaksi langsung dari server sebelum menghitung total laci
-        // agar transaksi pengganti dan transaksi kasir asli paling baru tidak terlewat
+        // Tarik ulang data transaksi dari server untuk memastikan tidak ada data lock yang tertinggal
         google.script.run.withSuccessHandler(data => {
           if (btn) {
             btn.innerHTML = originalContent;
             btn.disabled = false;
           }
-          
-          TRANSACTIONS_DATA = data; // Perbarui array memori lokal
+ 
+          TRANSACTIONS_DATA = data;
           
           let cashSales = 0;
+          let adminSalesInShift = 0;
+          let adminNameInShift = 'Admin';
           const shiftStartMs = SHIFT_DATA ? SHIFT_DATA.startTime : 0;
 
           TRANSACTIONS_DATA.forEach(t => {
              if (t.method === 'CASH' && t.status !== 'Komplimen') {
-               // Konversi t.timestamp (dd/MM/yyyy HH:mm) ke format MS untuk perbandingan
                let parts = String(t.timestamp).split(' ');
                if(parts.length >= 2) {
                  let dParts = parts[0].split('/');
                  let tParts = parts[1].split(':');
                  if(dParts.length === 3 && tParts.length >= 2) {
-                   // Format: new Date(year, monthIndex, day, hours, minutes)
                    let transTimeMs = new Date(dParts[2], dParts[1]-1, dParts[0], tParts[0], tParts[1]).getTime();
-                   
-                   // Jika transaksi terjadi SETELAH shift ini dibuka
-                   // (Diberi toleransi 120.000 ms / 2 menit mundur untuk mencegah delay sync)
                    if (transTimeMs >= (shiftStartMs - 120000)) {
-                      cashSales += Number(t.total);
+                      // Req 2: Pisahkan transaksi kasir dengan transaksi Admin/Owner saat shift dilock
+                      if (t.cashier === 'Owner' || String(t.cashier).includes('(Admin)')) {
+                          adminSalesInShift += Number(t.total);
+                          adminNameInShift = String(t.cashier).replace(' (Admin)', '');
+                      } else {
+                          cashSales += Number(t.total);
+                      }
                    }
                  }
                }
              }
           });
-
+          
           const modalAwal = SHIFT_DATA ? SHIFT_DATA.startCash : 0;
           document.getElementById('csModalAwal').innerText = "Rp " + modalAwal.toLocaleString();
           document.getElementById('csCashSales').innerText = "Rp " + cashSales.toLocaleString();
-          document.getElementById('csExpectedTotal').innerText = "Rp " + (modalAwal + cashSales).toLocaleString();
+          
+          // Inject Row khusus transaksi Admin saat layar dilock (Req 2)
+          let extraRow = document.getElementById('csAdminExtraRow');
+          if (!extraRow) {
+            extraRow = document.createElement('div');
+            extraRow.id = 'csAdminExtraRow';
+            extraRow.className = 'd-flex justify-content-between mb-2 small fw-bold text-danger mt-2';
+            let hrEl = document.querySelector('#modalCloseShift hr');
+            hrEl.parentNode.insertBefore(extraRow, hrEl.nextSibling);
+          }
+          
+          if (adminSalesInShift > 0) {
+            let roleText = adminNameInShift === 'Owner' ? 'Owner' : `Admin (${adminNameInShift})`;
+            let shiftOwner = SHIFT_DATA ? SHIFT_DATA.cashier : 'Kasir';
+            extraRow.innerHTML = `<span>Tambahan total transaksi ${roleText} saat ${shiftOwner} lock:</span> <span>Rp ${adminSalesInShift.toLocaleString()}</span>`;
+            extraRow.classList.remove('d-none');
+            extraRow.classList.add('d-flex');
+          } else {
+            extraRow.classList.add('d-none');
+            extraRow.classList.remove('d-flex');
+          }
+
+          document.getElementById('csExpectedTotal').innerText = "Rp " + (modalAwal + cashSales + adminSalesInShift).toLocaleString();
           
           document.getElementById('modalCloseShift').classList.remove('d-none');
         }).getAllTransactionData();
@@ -3696,8 +3747,25 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Memproses...';
 
-        // Identifikasi nama kasir yang tembus ke Laporan
-        const finalCashierName = IS_SUBSTITUTE ? (ACTIVE_CASHIER + " (Pengganti)") : ACTIVE_CASHIER;
+        // Identifikasi nama kasir yang tembus ke Laporan (Req 3)
+        let finalCashierName = ACTIVE_CASHIER;
+        if (USER_ROLE === 'ADMIN') {
+          if (ACTIVE_CASHIER !== 'Owner') {
+            finalCashierName = ACTIVE_CASHIER + " (Admin)";
+          }
+          
+          // Req 1: Rekam uang fisik jika Admin transaksi tanpa shift kasir yang aktif
+          if (method === 'CASH') {
+            let savedShift = localStorage.getItem('pos_shift_data');
+            if (!savedShift) {
+              let adminCash = parseInt(localStorage.getItem('pos_admin_cash_left')) || 0;
+              localStorage.setItem('pos_admin_cash_left', adminCash + CURRENT_TOTAL);
+              localStorage.setItem('pos_admin_cash_name', ACTIVE_CASHIER);
+            }
+          }
+        } else {
+          if (IS_SUBSTITUTE) finalCashierName = ACTIVE_CASHIER + " (Pengganti)";
+        }
 
         const transactionData = {
           total: CURRENT_TOTAL,
@@ -3707,7 +3775,6 @@
           items: CART,
           cashier: finalCashierName
         };
-
         google.script.run.withSuccessHandler(res => {
           btn.disabled = false;
           btn.innerText = 'BAYAR SEKARANG';
@@ -4302,7 +4369,7 @@
         let validOrders = 0;
         let cashierCount = {};
         let productCount = {};
-
+        
         const filteredData = TRANSACTIONS_DATA.filter(t => {
           const tDate = t.timestamp.split(' ')[0];
           if (filter === 'today') return tDate === todayStr;
@@ -4310,7 +4377,7 @@
           if (filter === 'year') return tDate.includes(now.getFullYear().toString());
           return true; 
         });
-
+        
         if (filteredData.length === 0) {
           tbody.innerHTML = '<tr><td colspan="6" class="text-center p-5 text-muted">Tidak ada transaksi pada periode ini.</td></tr>';
         } else {
@@ -4324,7 +4391,12 @@
             } else {
               totalRev += Number(t.total) || 0;
               validOrders++;
-              cashierCount[t.cashier] = (cashierCount[t.cashier] || 0) + 1;
+              
+              // Filter Admin/Owner dari perhitungan Top Kasir
+              const isOwnerOrAdmin = t.cashier === 'Owner' || String(t.cashier).includes('(Admin)');
+              if (!isOwnerOrAdmin) {
+                cashierCount[t.cashier] = (cashierCount[t.cashier] || 0) + 1;
+              }
             }
 
             // Loop kalkulasi Item Per Transaksi
@@ -4348,10 +4420,15 @@
             const totalStyle = isKomplimen ? 'text-decoration: line-through; color: #ff7675;' : 'text-success';
             const statusBadge = isKomplimen ? `<span class="badge bg-danger ms-2" style="font-size:0.6rem;">KOMPLIMEN</span>` : '';
 
-            // Visualisasi label Kasir Pengganti
-            const cashierDisplayName = t.cashier.includes('(Pengganti)') ? 
-                 `<span class="text-danger fw-bold">${t.cashier}</span>` : 
-                 t.cashier;
+            // Req 3: Visualisasi label Kasir Pengganti & Admin
+            let cashierDisplayName = t.cashier;
+            if (t.cashier.includes('(Pengganti)')) {
+              cashierDisplayName = `<span class="text-danger fw-bold">${t.cashier}</span>`;
+            } else if (t.cashier.includes('(Admin)')) {
+              cashierDisplayName = `<span class="text-success fw-bold">${t.cashier}</span>`;
+            } else if (t.cashier === 'Owner') {
+              cashierDisplayName = `<span class="text-success fw-bold">${t.cashier}</span>`;
+            }
 
             return `
               <tr class="border-bottom" style="${rowStyle}">
@@ -4370,7 +4447,7 @@
                 <td class="text-center"><span class="badge bg-light text-dark border" style="font-size:0.6rem;">${cashierDisplayName}</span></td>
                 <td class="text-center pe-4">
                   <div class="btn-group shadow-sm rounded-pill border overflow-hidden">
-                    <button class="btn btn-light btn-sm border-end" onclick="toggleTransactionStatus('${t.orderId}', '${t.status}')" title="Ubah Status">
+                     <button class="btn btn-light btn-sm border-end" onclick="toggleTransactionStatus('${t.orderId}', '${t.status}')" title="Ubah Status">
                       <i class="fas ${isKomplimen ? 'fa-undo text-success' : 'fa-exchange-alt text-warning'}" style="font-size:0.7rem;"></i>
                     </button>
                     <button class="btn btn-light btn-sm" onclick="confirmDeleteTransaction('${t.orderId}')" title="Hapus">
@@ -4399,7 +4476,6 @@
 
         document.getElementById('dashTopCashier').innerText = getWinners(cashierCount).display;
         document.getElementById('dashTopProduct').innerText = getWinners(productCount, true).display;
-
         const chartDataNormal = filteredData.filter(t => t.status !== 'Komplimen');
         updateSalesChart(chartDataNormal);
       }
