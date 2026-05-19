@@ -2217,9 +2217,10 @@
                   IS_SUBSTITUTE = false;
                   proceedToMainUI(res);
                 } else {
-                  // Kasir darurat / pengganti login
+                  // [PERBAIKAN 1] Kasir darurat / pengganti login (Tampilkan Custom UI Modal)
                   IS_SUBSTITUTE = true;
-                  alert(`Kasir pengganti terdeteksi.\nSemua transaksi Anda akan tercatat dengan label (Pengganti) di bawah shift milik ${SHIFT_DATA.cashier}.`);
+                  document.getElementById('substituteOwnerName').innerText = SHIFT_DATA.cashier;
+                  document.getElementById('modalSubstituteAlert').classList.remove('d-none');
                   proceedToMainUI(res);
                 }
               } else {
@@ -2245,6 +2246,11 @@
           statusField.innerText = 'PIN Salah atau tidak terdaftar!';
           document.getElementById('passInput').value = '';
         }
+      }
+
+      // [BARU] Fungsi menutup modal notifikasi pengganti
+      function closeSubstituteAlert() {
+        document.getElementById('modalSubstituteAlert').classList.add('d-none');
       }
 
       function submitSetupShift() {
@@ -2302,13 +2308,27 @@
           return;
         }
 
-        // Kalkulasi Rekap Shift untuk Kasir Asli
+        // [PERBAIKAN 2] Kalkulasi Rekap Shift Berdasarkan Waktu (Timestamp)
         let cashSales = 0;
+        const shiftStartMs = SHIFT_DATA ? SHIFT_DATA.startTime : 0;
+
         TRANSACTIONS_DATA.forEach(t => {
            if (t.method === 'CASH' && t.status !== 'Komplimen') {
-             // Pastikan ini transaksi kasir ini (atau kasir penggantinya)
-             if (t.cashier === ACTIVE_CASHIER || t.cashier === (ACTIVE_CASHIER + " (Pengganti)")) {
-                cashSales += Number(t.total);
+             // Konversi t.timestamp (dd/MM/yyyy HH:mm) ke format MS untuk perbandingan
+             let parts = String(t.timestamp).split(' ');
+             if(parts.length >= 2) {
+               let dParts = parts[0].split('/');
+               let tParts = parts[1].split(':');
+               if(dParts.length === 3 && tParts.length >= 2) {
+                 // Format: new Date(year, monthIndex, day, hours, minutes)
+                 let transTimeMs = new Date(dParts[2], dParts[1]-1, dParts[0], tParts[0], tParts[1]).getTime();
+                 
+                 // Jika transaksi terjadi SETELAH shift ini dibuka
+                 // (Diberi toleransi 120.000 ms / 2 menit mundur untuk jaga-jaga jeda sinkronisasi)
+                 if (transTimeMs >= (shiftStartMs - 120000)) {
+                    cashSales += Number(t.total);
+                 }
+               }
              }
            }
         });
@@ -5425,6 +5445,22 @@
           <button class="btn btn-light w-100 py-3 rounded-pill fw-bold" onclick="document.getElementById('modalCloseShift').classList.add('d-none')">BATAL</button>
           <button class="btn btn-danger w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="confirmCloseShift()">TUTUP SHIFT</button>
         </div>
+      </div>
+    </div>
+
+    <div id="modalSubstituteAlert" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 10700; opacity: 1 !important;">
+      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column text-center" style="width: 90%; max-width: 400px; animation: zoomIn 0.3s ease-out;">
+        <div class="mb-3">
+          <i class="fas fa-user-shield fa-4x text-warning"></i>
+        </div>
+        <h4 class="fw-bold m-0 text-dark">Kasir Pengganti Aktif!</h4>
+        <p class="text-muted mt-2 mb-4" style="font-size: 0.9rem;">
+          Anda login darurat di atas shift milik <b id="substituteOwnerName" class="text-dark">...</b> yang sedang dikunci.<br><br>
+          Semua transaksi Anda akan diberi label <b>(Pengganti)</b> agar mudah diaudit oleh admin.
+        </p>
+        <button class="btn btn-warning w-100 py-3 rounded-pill fw-bold shadow-sm text-dark" onclick="closeSubstituteAlert()">
+          SAYA MENGERTI
+        </button>
       </div>
     </div>
   </body>
