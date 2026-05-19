@@ -2228,16 +2228,13 @@
           document.getElementById('activeCashierName').innerText = ACTIVE_CASHIER;
 
           if (USER_ROLE === 'ADMIN') {
-            // Admin & Owner akan dialihkan ke layar Welcome Eksekutif
             IS_SUBSTITUTE = false;
             document.getElementById('btnLock').classList.add('d-none');
             document.getElementById('loginOverlay').classList.add('d-none');
             
-            // Setel teks welcome dan tampilkan modal
             document.getElementById('welcomeNameText').innerText = ACTIVE_CASHIER;
             document.getElementById('modalWelcome').classList.remove('d-none');
             
-            // Simpan res ke memori window agar bisa diteruskan saat klik OK
             window.TEMP_LOGIN_RES = res;
           } else if (USER_ROLE === 'CASHIER') {
             document.getElementById('btnLock').classList.remove('d-none');
@@ -2262,29 +2259,40 @@
                 proceedToMainUI(res);
               }
             } else {
+              // LOGIN AWAL KASIR (Belum ada Shift Terbuka)
               IS_SUBSTITUTE = false;
               document.getElementById('loginOverlay').classList.add('d-none');
               document.getElementById('shiftWelcomeName').innerText = `Halo, ${ACTIVE_CASHIER}`;
               
-              // Req 1: Note Admin meninggalkan laci dengan Multipe Name
               let inputStart = document.getElementById('inputStartCash');
-              let adminCash = parseInt(localStorage.getItem('pos_admin_cash_left')) || 0;
-              let currentNames = localStorage.getItem('pos_admin_cash_names');
-              let namesArr = currentNames ? JSON.parse(currentNames) : ['Admin'];
+              let adminCash = parseInt(localStorage.getItem('pos_preshift_admin_cash')) || 0;
+              let currentNames = localStorage.getItem('pos_preshift_admin_names');
+              
+              let namesArr = [];
+              try {
+                namesArr = currentNames ? JSON.parse(currentNames) : [];
+              } catch(e) {
+                namesArr = [];
+              }
               
               let noteEl = document.getElementById('adminCashNoteInfo');
               if (!noteEl) {
                 noteEl = document.createElement('div');
                 noteEl.id = 'adminCashNoteInfo';
-                noteEl.className = 'alert alert-info py-2 px-3 small fw-bold mb-3 text-start';
-                inputStart.parentElement.parentElement.insertBefore(noteEl, inputStart.parentElement);
+                noteEl.className = 'alert alert-info py-2 px-3 fw-bold mb-3 text-start';
+                noteEl.style.fontSize = '0.75rem';
+                noteEl.style.lineHeight = '1.3';
+                if (inputStart && inputStart.parentElement && inputStart.parentElement.parentElement) {
+                  inputStart.parentElement.parentElement.insertBefore(noteEl, inputStart.parentElement);
+                }
               }
               
+              // CASE A: Muncul hanya jika ada transaksi pra-shift oleh Owner/Admin
               if (adminCash > 0) {
-                let roleText = namesArr.join(' dan '); // Menggabungkan: Owner dan Budi (Admin)
-                noteEl.innerHTML = `<i class="fas fa-info-circle me-2"></i>${roleText} meninggalkan Rp ${adminCash.toLocaleString()} di laci.`;
+                let roleText = namesArr.length > 0 ? namesArr.join(' dan ') : 'Admin';
+                noteEl.innerHTML = `<i class="fas fa-info-circle me-1"></i>${roleText} meninggalkan Rp ${adminCash.toLocaleString()} di laci.`;
                 noteEl.classList.remove('d-none');
-                inputStart.value = adminCash;
+                inputStart.value = adminCash; // Mengisi awalan input otomatis agar bisa dimodifikasi kasir
               } else {
                 noteEl.classList.add('d-none');
                 inputStart.value = '';
@@ -2323,9 +2331,9 @@
         };
         localStorage.setItem('pos_shift_data', JSON.stringify(SHIFT_DATA));
         
-        // Hapus memori laci admin setelah shift terbuka
-        localStorage.removeItem('pos_admin_cash_left');
-        localStorage.removeItem('pos_admin_cash_names'); // Fix Clear Multiname
+        // Kunci Sukses: Clear cache Case A agar tidak terbawa sampai logout rekapitulasi akhir
+        localStorage.removeItem('pos_preshift_admin_cash');
+        localStorage.removeItem('pos_preshift_admin_names');
         
         document.getElementById('modalSetupShift').classList.add('d-none');
         proceedToMainUI({role: USER_ROLE, config: CONFIG});
@@ -2396,8 +2404,7 @@
 
           TRANSACTIONS_DATA.forEach(t => {
              if (t.method === 'CASH' && t.status !== 'Komplimen') {
-               // Req 2 & 3: Filter ketat khusus transaksi SETELAH shift dimulai
-               // Menggunakan rawTime untuk presisi hitungan tanpa toleransi yang menyebabkan tombok
+               // CASE B: Filter absolut hanya transaksi darurat saat kasir sedang lock posisi aktif
                if (t.rawTime && t.rawTime >= shiftStartMs) {
                    if (t.cashier === 'Owner' || String(t.cashier).includes('(Admin)')) {
                        adminSalesInShift += Number(t.total);
@@ -2413,24 +2420,26 @@
           document.getElementById('csModalAwal').innerText = "Rp " + modalAwal.toLocaleString();
           document.getElementById('csCashSales').innerText = "Rp " + cashSales.toLocaleString();
 
-          // Inject Row khusus transaksi Admin saat layar dilock
           let extraRow = document.getElementById('csAdminExtraRow');
           if (!extraRow) {
             extraRow = document.createElement('div');
             extraRow.id = 'csAdminExtraRow';
             extraRow.className = 'd-flex justify-content-between mb-2 small fw-bold text-danger mt-2';
+            extraRow.style.fontSize = '0.75rem';
+            extraRow.style.lineHeight = '1.3';
             let hrEl = document.querySelector('#modalCloseShift hr');
-            hrEl.parentNode.insertBefore(extraRow, hrEl.nextSibling);
+            if (hrEl && hrEl.parentNode) {
+              hrEl.parentNode.insertBefore(extraRow, hrEl.nextSibling);
+            }
           }
           
           if (adminSalesInShift > 0) {
             let rolesText = Array.from(adminNamesDuringShift).join(', ');
             let shiftOwner = SHIFT_DATA ? SHIFT_DATA.cashier : 'Kasir';
-            extraRow.innerHTML = `<span>Tambahan transaksi ${rolesText} saat ${shiftOwner} lock:</span> <span>Rp ${adminSalesInShift.toLocaleString()}</span>`;
+            extraRow.innerHTML = `<span class="text-start">Tambahan transaksi ${rolesText} saat ${shiftOwner} lock:</span> <span class="text-end">Rp ${adminSalesInShift.toLocaleString()}</span>`;
             extraRow.classList.remove('d-none');
             extraRow.classList.add('d-flex');
           } else {
-            // Cegah pengulangan jika tidak ada transaksi saat shift locked
             extraRow.classList.add('d-none');
             extraRow.classList.remove('d-flex');
           }
@@ -2439,7 +2448,7 @@
           document.getElementById('modalCloseShift').classList.remove('d-none');
         }).getAllTransactionData();
       }
-      
+
       // Perbaikan fungsi Logout untuk GitHub Pages
       function doLogout() {
         const btn = event.currentTarget;
@@ -3742,22 +3751,19 @@
 
         let finalCashierName = getFinalCashierName();
 
-        if (USER_ROLE === 'ADMIN') {
-          // Req 1: Rekam uang fisik jika Admin transaksi tanpa shift kasir yang aktif
-          if (method === 'CASH') {
-            let savedShift = localStorage.getItem('pos_shift_data');
-            if (!savedShift) {
-              let adminCash = parseInt(localStorage.getItem('pos_admin_cash_left')) || 0;
-              localStorage.setItem('pos_admin_cash_left', adminCash + CURRENT_TOTAL);
-              
-              // Simpan Multi Nama Admin
-              let currentNames = localStorage.getItem('pos_admin_cash_names');
-              let namesArr = currentNames ? JSON.parse(currentNames) : [];
-              if (!namesArr.includes(finalCashierName)) {
-                  namesArr.push(finalCashierName);
-              }
-              localStorage.setItem('pos_admin_cash_names', JSON.stringify(namesArr));
+        // Perekaman Pintar Multi-Admin Sebelum Shift Dimulai
+        if (USER_ROLE === 'ADMIN' && method === 'CASH') {
+          let savedShift = localStorage.getItem('pos_shift_data');
+          if (!savedShift) {
+            let preShiftCash = parseInt(localStorage.getItem('pos_preshift_admin_cash')) || 0;
+            localStorage.setItem('pos_preshift_admin_cash', preShiftCash + CURRENT_TOTAL);
+            
+            let preShiftNames = localStorage.getItem('pos_preshift_admin_names');
+            let namesArr = preShiftNames ? JSON.parse(preShiftNames) : [];
+            if (!namesArr.includes(finalCashierName)) {
+              namesArr.push(finalCashierName);
             }
+            localStorage.setItem('pos_preshift_admin_names', JSON.stringify(namesArr));
           }
         }
 
@@ -5543,7 +5549,7 @@
     </div>
 
     <div id="modalSetupShift" class="login-overlay d-none" style="background: rgba(0,0,0,0.9); z-index: 10600; opacity: 1 !important;">
-      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column text-center" style="width: 90%; max-width: 400px; animation: slideUp 0.3s ease-out;">
+      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column text-center" style="width: 95%; max-width: 500px; animation: slideUp 0.3s ease-out;">
         <i class="fas fa-door-open fa-3x text-primary mb-3"></i>
         <h4 class="fw-bold m-0" id="shiftWelcomeName">Halo, Kasir</h4>
         <p class="text-muted small mb-4">Silakan hitung dan masukkan uang fisik di laci saat ini sebelum memulai shift.</p>
@@ -5563,7 +5569,7 @@
     </div>
 
     <div id="modalCloseShift" class="login-overlay d-none" style="background: rgba(0,0,0,0.9); z-index: 10600; opacity: 1 !important;">
-      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 90%; max-width: 420px; animation: slideUp 0.3s ease-out;">
+      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 500px; animation: slideUp 0.3s ease-out;">
         <div class="text-center mb-4 border-bottom pb-3">
           <i class="fas fa-clipboard-check fa-3x text-danger mb-3"></i>
           <h5 class="fw-bold m-0">Rekapitulasi Shift</h5>
