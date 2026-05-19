@@ -2205,6 +2205,7 @@
 
           if (USER_ROLE === 'CASHIER') {
             document.getElementById('btnLock').classList.remove('d-none');
+            
             let savedShift = localStorage.getItem('pos_shift_data');
             
             if (savedShift) {
@@ -2217,14 +2218,16 @@
                   IS_SUBSTITUTE = false;
                   proceedToMainUI(res);
                 } else {
-                  // [PERBAIKAN 1] Kasir darurat / pengganti login (Tampilkan Custom UI Modal)
+                  // Kasir darurat / pengganti login
                   IS_SUBSTITUTE = true;
+                  // [PERBAIKAN] Sembunyikan tombol lock untuk kasir pengganti
+                  document.getElementById('btnLock').classList.add('d-none');
                   document.getElementById('substituteOwnerName').innerText = SHIFT_DATA.cashier;
                   document.getElementById('modalSubstituteAlert').classList.remove('d-none');
                   proceedToMainUI(res);
                 }
               } else {
-                proceedToMainUI(res); // Fallback
+                proceedToMainUI(res);
               }
             } else {
               // Belum ada shift aktif, paksa buka shift
@@ -2304,42 +2307,62 @@
 
       function promptLogout() {
         if (USER_ROLE === 'ADMIN' || IS_SUBSTITUTE) {
-          doLogout(); // Bebas keluar langsung
+          doLogout();
           return;
         }
 
-        // [PERBAIKAN 2] Kalkulasi Rekap Shift Berdasarkan Waktu (Timestamp)
-        let cashSales = 0;
-        const shiftStartMs = SHIFT_DATA ? SHIFT_DATA.startTime : 0;
+        // [PERBAIKAN] Ubah tombol menjadi loading agar kasir tahu sistem sedang rekap
+        const btn = event.currentTarget;
+        let originalContent = '';
+        if (btn) {
+          originalContent = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin text-white"></i>';
+          btn.disabled = true;
+        }
 
-        TRANSACTIONS_DATA.forEach(t => {
-           if (t.method === 'CASH' && t.status !== 'Komplimen') {
-             // Konversi t.timestamp (dd/MM/yyyy HH:mm) ke format MS untuk perbandingan
-             let parts = String(t.timestamp).split(' ');
-             if(parts.length >= 2) {
-               let dParts = parts[0].split('/');
-               let tParts = parts[1].split(':');
-               if(dParts.length === 3 && tParts.length >= 2) {
-                 // Format: new Date(year, monthIndex, day, hours, minutes)
-                 let transTimeMs = new Date(dParts[2], dParts[1]-1, dParts[0], tParts[0], tParts[1]).getTime();
-                 
-                 // Jika transaksi terjadi SETELAH shift ini dibuka
-                 // (Diberi toleransi 120.000 ms / 2 menit mundur untuk jaga-jaga jeda sinkronisasi)
-                 if (transTimeMs >= (shiftStartMs - 120000)) {
-                    cashSales += Number(t.total);
+        // [PERBAIKAN] Tarik ulang data transaksi langsung dari server sebelum menghitung total laci
+        // agar transaksi pengganti dan transaksi kasir asli paling baru tidak terlewat
+        google.script.run.withSuccessHandler(data => {
+          if (btn) {
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+          }
+          
+          TRANSACTIONS_DATA = data; // Perbarui array memori lokal
+          
+          let cashSales = 0;
+          const shiftStartMs = SHIFT_DATA ? SHIFT_DATA.startTime : 0;
+
+          TRANSACTIONS_DATA.forEach(t => {
+             if (t.method === 'CASH' && t.status !== 'Komplimen') {
+               // Konversi t.timestamp (dd/MM/yyyy HH:mm) ke format MS untuk perbandingan
+               let parts = String(t.timestamp).split(' ');
+               if(parts.length >= 2) {
+                 let dParts = parts[0].split('/');
+                 let tParts = parts[1].split(':');
+                 if(dParts.length === 3 && tParts.length >= 2) {
+                   // Format: new Date(year, monthIndex, day, hours, minutes)
+                   let transTimeMs = new Date(dParts[2], dParts[1]-1, dParts[0], tParts[0], tParts[1]).getTime();
+                   
+                   // Jika transaksi terjadi SETELAH shift ini dibuka
+                   // (Diberi toleransi 120.000 ms / 2 menit mundur untuk mencegah delay sync)
+                   if (transTimeMs >= (shiftStartMs - 120000)) {
+                      cashSales += Number(t.total);
+                   }
                  }
                }
              }
-           }
-        });
+          });
 
-        const modalAwal = SHIFT_DATA ? SHIFT_DATA.startCash : 0;
-        document.getElementById('csModalAwal').innerText = "Rp " + modalAwal.toLocaleString();
-        document.getElementById('csCashSales').innerText = "Rp " + cashSales.toLocaleString();
-        document.getElementById('csExpectedTotal').innerText = "Rp " + (modalAwal + cashSales).toLocaleString();
-        document.getElementById('modalCloseShift').classList.remove('d-none');
+          const modalAwal = SHIFT_DATA ? SHIFT_DATA.startCash : 0;
+          document.getElementById('csModalAwal').innerText = "Rp " + modalAwal.toLocaleString();
+          document.getElementById('csCashSales').innerText = "Rp " + cashSales.toLocaleString();
+          document.getElementById('csExpectedTotal').innerText = "Rp " + (modalAwal + cashSales).toLocaleString();
+          
+          document.getElementById('modalCloseShift').classList.remove('d-none');
+        }).getAllTransactionData();
       }
-
+      
       // Perbaikan fungsi Logout untuk GitHub Pages
       function doLogout() {
         const btn = event.currentTarget;
