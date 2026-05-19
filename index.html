@@ -1727,13 +1727,31 @@
       function togglePinInput() {
         const role = document.getElementById('staffRoleInput').value.toUpperCase();
         const pinContainer = document.getElementById('staffPinContainer');
-        // Validasi CSS agar tidak tertahan class d-none dari Bootstrap (Req 3)
+        const pinLabel = pinContainer.querySelector('label');
+        const pinInput = document.getElementById('staffPinInput');
+        const pinHelp = pinContainer.querySelector('small');
+
         if (role === 'CASHIER' || role === 'KASIR') {
+          pinContainer.classList.remove('d-none');
           pinContainer.style.display = 'block';
-          pinContainer.classList.remove('d-none'); 
+          pinLabel.innerText = "PIN KASIR (4 DIGIT ANGKA)";
+          pinInput.setAttribute('maxlength', '4');
+          pinInput.setAttribute('pattern', '\\d{4}');
+          pinInput.type = "password";
+          pinInput.placeholder = "••••";
+          pinHelp.innerText = "*Isi untuk membuat/mereset PIN kasir (Hanya angka).";
+        } else if (role === 'ADMIN') {
+          pinContainer.classList.remove('d-none');
+          pinContainer.style.display = 'block';
+          pinLabel.innerText = "PASSWORD ADMIN";
+          pinInput.removeAttribute('maxlength');
+          pinInput.removeAttribute('pattern');
+          pinInput.type = "text"; // Biarkan terlihat sedikit saat diketik, atau ganti "password"
+          pinInput.placeholder = "Ketik password...";
+          pinHelp.innerText = "*Min. 4 karakter & wajib mengandung 1 angka.";
         } else {
-          pinContainer.style.display = 'none';
           pinContainer.classList.add('d-none');
+          pinContainer.style.display = 'none';
         }
       }
 
@@ -1763,15 +1781,22 @@
       function executeSaveStaff() {
         const id = document.getElementById('staffIdInput').value;
         const name = document.getElementById('staffNameInput').value;
-        const role = document.getElementById('staffRoleInput').value;
+        const role = document.getElementById('staffRoleInput').value.toUpperCase();
         const salary = parseInt(document.getElementById('staffSalaryInput').value) || 0;
         const pin = document.getElementById('staffPinInput').value;
+        
         if (!name) return alert("Nama tidak boleh kosong!");
-        if ((role === 'CASHIER' || role === 'KASIR') && !id && !pin) {
-            return alert("PIN 4 digit wajib diisi untuk kasir baru!");
-        }
-        if (pin && pin.length !== 4) {
-            return alert("PIN wajib menggunakan tepat 4 digit angka!");
+        
+        // Validasi PIN Kasir vs Password Admin
+        if (role === 'CASHIER' || role === 'KASIR') {
+            if (!id && !pin) return alert("PIN 4 digit wajib diisi untuk kasir baru!");
+            if (pin && !/^\d{4}$/.test(pin)) return alert("PIN wajib menggunakan tepat 4 digit angka!");
+        } else if (role === 'ADMIN') {
+            if (!id && !pin) return alert("Password wajib diisi untuk admin baru!");
+            if (pin) {
+                if (pin.length < 4) return alert("Password Admin minimal 4 karakter!");
+                if (!/\d/.test(pin)) return alert("Password Admin harus mengandung minimal 1 angka!");
+            }
         }
 
         const btn = document.getElementById('btnSaveStaff');
@@ -1783,7 +1808,6 @@
           btn.innerText = 'SIMPAN DATA';
           if (res.status === 'success') {
             closeStaffModal();
-            // Force pembaruan karena ada edit/tambah staff
             STAFF_DATA = []; 
             initManningTab(); 
             
@@ -2203,24 +2227,33 @@
           
           document.getElementById('activeCashierName').innerText = ACTIVE_CASHIER;
 
-          if (USER_ROLE === 'CASHIER') {
-            document.getElementById('btnLock').classList.remove('d-none');
+          if (USER_ROLE === 'ADMIN') {
+            // Admin & Owner akan dialihkan ke layar Welcome Eksekutif
+            IS_SUBSTITUTE = false;
+            document.getElementById('btnLock').classList.add('d-none');
+            document.getElementById('loginOverlay').classList.add('d-none');
             
+            // Setel teks welcome dan tampilkan modal
+            document.getElementById('welcomeNameText').innerText = ACTIVE_CASHIER;
+            document.getElementById('modalWelcome').classList.remove('d-none');
+            
+            // Simpan res ke memori window agar bisa diteruskan saat klik OK
+            window.TEMP_LOGIN_RES = res;
+            
+          } else if (USER_ROLE === 'CASHIER') {
+            document.getElementById('btnLock').classList.remove('d-none');
             let savedShift = localStorage.getItem('pos_shift_data');
             
             if (savedShift) {
               SHIFT_DATA = JSON.parse(savedShift);
               if (SHIFT_DATA.locked) {
                 if (SHIFT_DATA.cashier === ACTIVE_CASHIER) {
-                  // Kasir asli kembali
                   SHIFT_DATA.locked = false;
                   localStorage.setItem('pos_shift_data', JSON.stringify(SHIFT_DATA));
                   IS_SUBSTITUTE = false;
                   proceedToMainUI(res);
                 } else {
-                  // Kasir darurat / pengganti login
                   IS_SUBSTITUTE = true;
-                  // [PERBAIKAN] Sembunyikan tombol lock untuk kasir pengganti
                   document.getElementById('btnLock').classList.add('d-none');
                   document.getElementById('substituteOwnerName').innerText = SHIFT_DATA.cashier;
                   document.getElementById('modalSubstituteAlert').classList.remove('d-none');
@@ -2230,27 +2263,28 @@
                 proceedToMainUI(res);
               }
             } else {
-              // Belum ada shift aktif, paksa buka shift
               IS_SUBSTITUTE = false;
               document.getElementById('loginOverlay').classList.add('d-none');
               document.getElementById('shiftWelcomeName').innerText = `Halo, ${ACTIVE_CASHIER}`;
               document.getElementById('inputStartCash').value = '';
               document.getElementById('modalSetupShift').classList.remove('d-none');
             }
-          } else {
-            // Admin bebas masuk
-            document.getElementById('btnLock').classList.add('d-none');
-            IS_SUBSTITUTE = false;
-            proceedToMainUI(res);
           }
         } else {
           const statusField = document.getElementById('loginStatus');
           statusField.style.color = '#ff7675';
-          statusField.innerText = 'PIN Salah atau tidak terdaftar!';
+          statusField.innerText = 'PIN/Password Salah atau tidak terdaftar!';
           document.getElementById('passInput').value = '';
         }
       }
 
+      function closeWelcomeModal() {
+        document.getElementById('modalWelcome').classList.add('d-none');
+        if (window.TEMP_LOGIN_RES) {
+            proceedToMainUI(window.TEMP_LOGIN_RES);
+        }
+      }
+      
       // [BARU] Fungsi menutup modal notifikasi pengganti
       function closeSubstituteAlert() {
         document.getElementById('modalSubstituteAlert').classList.add('d-none');
@@ -5483,6 +5517,22 @@
         </p>
         <button class="btn btn-warning w-100 py-3 rounded-pill fw-bold shadow-sm text-dark" onclick="closeSubstituteAlert()">
           SAYA MENGERTI
+        </button>
+      </div>
+    </div>
+
+    <div id="modalWelcome" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 99999; opacity: 1 !important;">
+      <div class="bg-white p-5 rounded-5 shadow-lg d-flex flex-column text-center" style="width: 90%; max-width: 450px; animation: zoomIn 0.4s ease-out;">
+        <div class="mb-4">
+          <div class="rounded-circle bg-warning bg-opacity-10 d-inline-flex justify-content-center align-items-center mb-3 border border-warning border-opacity-25" style="width: 80px; height: 80px;">
+            <i class="fas fa-user-tie fa-3x text-warning"></i>
+          </div>
+        </div>
+        <h4 class="fw-bold m-0 text-muted mb-1">Selamat Datang,</h4>
+        <h2 class="fw-bold text-dark mb-3" id="welcomeNameText">Admin</h2>
+        <p class="text-muted small mb-5">Sistem telah terhubung. Seluruh akses kontrol, laporan, dan fitur keamanan telah dibuka sesuai dengan otorisasi Anda.</p>
+        <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="closeWelcomeModal()">
+          MASUK KE SISTEM <i class="fas fa-arrow-right ms-2"></i>
         </button>
       </div>
     </div>
