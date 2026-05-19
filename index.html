@@ -2354,6 +2354,8 @@
         switchView('pos');
         startRealtimeClock();
         initCategoryScroller();
+
+        triggerAuditLog("LOGIN", "User berhasil masuk ke dalam sistem webapp.");
       }
 
       function lockShift() {
@@ -2593,6 +2595,7 @@
             btnSubmit.innerText = "SIMPAN";
             if(res.status === 'success') {
               // Reset Form & Memory Resep
+              triggerAuditLog("ADD PRODUCT", `Menambahkan produk baru: ${name} seharga Rp ${price.toLocaleString()}`);
               document.getElementById('newPId').value = '';
               document.getElementById('newPName').value = '';
               document.getElementById('newPPrice').value = '';
@@ -3780,6 +3783,9 @@
           btn.disabled = false;
           btn.innerText = 'BAYAR SEKARANG';
           if(res.status === 'success') {
+            const itemDetails = CART.map(i => `${i.name} (x${i.qty})`).join(', ');
+            triggerAuditLog("TRANSAKSI", `Menyimpan transaksi POS Utama senilai Rp ${CURRENT_TOTAL.toLocaleString()} dengan item: [ ${itemDetails} ]`);
+            
             showSummary(transactionData);
           } else {
             alert("Gagal: " + res.message);
@@ -4290,6 +4296,7 @@
         google.script.run
           .withSuccessHandler(res => {
             if (res && res.status === 'success') {
+              triggerAuditLog(type === 'IN' ? "ABSEN IN" : "ABSEN OUT", `Staff ${recognizedName} telah melakukan absensi ${type}.`);
               if (USER_ROLE === 'ADMIN') loadAttendanceLogs();
             } else {
               alert("Gagal mencatat absensi: " + (res ? res.message : "Respon kosong"));
@@ -4537,6 +4544,8 @@
         google.script.run.withSuccessHandler(res => {
           btn.innerHTML = '<i class="fas fa-plus"></i>';
           if(res.status === 'success') {
+            const matName = document.getElementById('shotMaterialSelect').options[document.getElementById('shotMaterialSelect').selectedIndex].text;
+            triggerAuditLog("CHANGE VALUE SHOT", `Mengubah/Menambah setting shot untuk ${matName} menjadi ${grams} gram/ml.`);
             SHOTS_MAP[matId] = grams;
             document.getElementById('shotGrams').value = '';
             renderShotList();
@@ -4722,6 +4731,9 @@
           btn.innerHTML = '<i class="fas fa-save me-2"></i> SIMPAN PEMBARUAN';
           btn.disabled = false;
           if (res.status === 'success') {
+            const matName = document.getElementById('editStockMatName').innerText;
+            triggerAuditLog("CHANGE PRICE BAHAN", `Mengubah stok menjadi ${finalBaseStock} dan harga (HPP) menjadi Rp ${finalBasePrice.toLocaleString()} untuk bahan ${matName}.`);
+        
             closeEditStockModal();
             fetchInitialData(); 
           } else {
@@ -4740,6 +4752,8 @@
         if (confirm(msg)) {
           google.script.run.withSuccessHandler(res => {
             if (res.status === 'success') {
+              triggerAuditLog("EDIT TRANSAKSI", `Mengubah status transaksi ${orderId} menjadi ${newStatus}.`);
+
               loadFinanceData(); // Segarkan ulang UI Laporan
             } else {
               alert("Gagal memperbarui status: " + res.message);
@@ -4878,6 +4892,8 @@
         if (confirm(`Hapus permanen transaksi ${orderId}? Saldo di sheet akan berkurang.`)) {
           google.script.run.withSuccessHandler(res => {
             if (res.status === 'success') {
+              triggerAuditLog("EDIT TRANSAKSI", `Menghapus transaksi ${orderId} secara permanen.`);
+
               loadFinanceData();
             } else {
               alert("Gagal: " + res.message);
@@ -5038,6 +5054,10 @@
           btn.innerText = "SIMPAN TRANSAKSI";
           if (res.status === 'success') {
             alert("Transaksi Manual Berhasil Disimpan!");
+
+            const itemDetails = MANUAL_BASKET.map(i => `${i.name} (x${i.qty})`).join(', ');
+            triggerAuditLog("TRANSAKSI", `Menyimpan transaksi manual senilai Rp ${total.toLocaleString()} dengan item: [ ${itemDetails} ]`);
+
             closeManualTransactionModal();
             loadFinanceData(); // Refresh list laporan
           } else {
@@ -5284,6 +5304,90 @@
           finalName = ACTIVE_CASHIER.includes('(Pengganti)') ? ACTIVE_CASHIER : ACTIVE_CASHIER + " (Pengganti)";
         }
         return finalName;
+      }
+
+      /**
+       * Mendeteksi nama spesifik perangkat (Device) secara akurat menggunakan
+       * High Entropy UA Data API (modern) dengan Fallback Regex UserAgent (tradisional).
+       */
+      async function getDeviceDetails() {
+        let device = "Unknown Device";
+        const ua = navigator.userAgent;
+        
+        // 1. Mencoba Menggunakan Modern UserAgent Data API (Untuk Chrome/Edge/Opera modern)
+        if (navigator.userAgentData && typeof navigator.userAgentData.getHighEntropyValues === "function") {
+          try {
+            const hints = await navigator.userAgentData.getHighEntropyValues(['model', 'platform']);
+            if (hints.model) {
+              return hints.model; // Mengembalikan model riil seperti "SM-G991B" (S21), "Macintosh", dll.
+            }
+            if (hints.platform) {
+              if (hints.platform === "Windows") return "Windows (PC)";
+              if (hints.platform === "macOS") return "Mac (PC/Laptop)";
+              return hints.platform;
+            }
+          } catch (e) {
+            console.log("UA Data API bermasalah, menggunakan fallback UA String.");
+          }
+        }
+        
+        // 2. Fallback Tradisional Menggunakan Analisis String User Agent
+        if (/iPhone/i.test(ua)) {
+          device = "iPhone";
+        } else if (/iPad/i.test(ua)) {
+          device = "iPad";
+        } else if (/Android/i.test(ua)) {
+          const match = ua.match(/Android\s+[^;]+;\s+([^;)]+)/);
+          if (match && match[1] && !/Linux|Mobile/i.test(match[1])) {
+            device = match[1].trim(); // Berusaha mengambil potongan model teks Android
+          } else {
+            device = "Android Device";
+          }
+        } else if (/Macintosh/i.test(ua)) {
+          device = "Macair / Macbook (PC)";
+        } else if (/Windows/i.test(ua)) {
+          device = "Windows (PC)";
+        } else if (/Linux/i.test(ua)) {
+          device = "Linux (PC)";
+        }
+        
+        return device;
+      }
+
+      /**
+       * Fungsi pembantu universal untuk mengirim log ke Google Sheet secara asinkron.
+       * @param {string} activity - Judul aktivitas utama (Contoh: LOGIN, TRANSAKSI, ABSEN IN)
+       * @param {string} detail - Deskripsi tindakan terperinci
+       */
+      async function triggerAuditLog(activity, detail) {
+        try {
+          const deviceName = await getDeviceDetails();
+          
+          // Penentuan nama label user secara dinamis berdasarkan sesi aktif aplikasi Anda
+          let userLabel = "Owner"; 
+          if (typeof getFinalCashierName === "function") {
+            const cashier = getFinalCashierName();
+            if (cashier && cashier.toLowerCase() !== 'owner' && cashier.toLowerCase() !== 'admin') {
+              // Cek struktur role untuk menambahkan format (Admin) jika diperlukan
+              const welcomeText = document.getElementById('welcomeNameText') ? document.getElementById('welcomeNameText').innerText : "";
+              if (/admin/i.test(welcomeText)) {
+                userLabel = cashier + " (Admin)";
+              } else {
+                userLabel = cashier;
+              }
+            } else if (cashier && cashier.toLowerCase() === 'admin') {
+              userLabel = "Admin";
+            }
+          }
+
+          google.script.run.withSuccessHandler(res => {
+            if (res && res.status !== 'success') {
+              console.error("Gagal mencatat AuditLog:", res.message);
+            }
+          }).addAuditLog(userLabel, activity, detail, deviceName);
+        } catch (err) {
+          console.error("Kesalahan sistem AuditLog:", err);
+        }
       }
     </script>
 
