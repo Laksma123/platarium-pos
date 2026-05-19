@@ -612,17 +612,19 @@
              </div>
           </div>
 
-          <div id="topCashierContainer" class="input-group shadow-sm mx-1 rounded-pill overflow-hidden bg-white flex-shrink-0" style="width: 180px; height: 38px; border: 1px solid #eee;">
-            <span class="input-group-text bg-transparent border-0 pe-1"><i class="fas fa-user-circle text-muted"></i></span>
-            <select id="topCashierSelect" class="form-select border-0 shadow-none bg-transparent fw-bold text-dark px-1 pe-3" style="cursor:pointer; font-size: 0.85rem;" onchange="handleTopCashierChange(this.value)">
-              <option value="" disabled selected>Pilih Kasir...</option>
-            </select>
+          <div id="activeCashierBadge" class="d-flex align-items-center bg-white shadow-sm rounded-pill px-3 py-1 border flex-shrink-0" style="height: 38px;">
+             <i class="fas fa-user-circle text-primary me-2"></i>
+             <span id="activeCashierName" class="fw-bold text-dark" style="font-size: 0.85rem;">-</span>
           </div>
 
-          <button id="btnRefresh" onclick="refreshAllData()" class="btn btn-light rounded-circle shadow-sm border flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; padding: 0;" title="Refresh Data">
+          <button id="btnLock" onclick="lockShift()" class="btn btn-warning rounded-circle shadow-sm border-0 flex-shrink-0 d-flex align-items-center justify-content-center ms-1 d-none" style="width: 38px; height: 38px; padding: 0;" title="Lock Screen (Temporary Break)">
+            <i class="fas fa-lock text-dark"></i>
+          </button>
+
+          <button id="btnRefresh" onclick="refreshAllData()" class="btn btn-light rounded-circle shadow-sm border flex-shrink-0 d-flex align-items-center justify-content-center ms-1" style="width: 38px; height: 38px; padding: 0;" title="Refresh Data">
             <i class="fas fa-sync-alt text-secondary"></i>
           </button>
-          <button onclick="doLogout()" class="btn btn-danger rounded-circle shadow-sm border-0 flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; padding: 0;" title="Logout">
+          <button onclick="promptLogout()" class="btn btn-danger rounded-circle shadow-sm border-0 flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; padding: 0;" title="Tutup Shift & Logout">
             <i class="fas fa-sign-out-alt text-white"></i>
           </button>
         </div>
@@ -1617,6 +1619,9 @@
       let SCHEDULE_DATA = [];
       let STAFF_FACES = {}; // Cache Foto Profil (Avatar)
       let CURRENT_VIEW_STAFF = null;
+      let ACTIVE_CASHIER = null;
+      let IS_SUBSTITUTE = false;
+      let SHIFT_DATA = null;
 
       function initManningTab() {
         // Optimasi (Req 4): Jangan memuat ulang jika data sudah ada di cache
@@ -2194,28 +2199,125 @@
         if(res.status === 'success') {
           USER_ROLE = res.role;
           CONFIG = res.config;
-          document.getElementById('loginOverlay').classList.add('d-none');
-          document.getElementById('main-container').classList.remove('d-none');
-          document.getElementById('uiStoreName').innerText = CONFIG.StoreName;
-          document.getElementById('roleLabel').innerText = USER_ROLE;
+          ACTIVE_CASHIER = res.name;
           
-          buildNavigation();
-          renderCashierButtons();
-          renderProductGrid();
-          renderProductTable();
-          loadGridConfig(); // <--- BARU: Panggil config grid yang tersimpan
-          fetchInitialData(true);
-          startLiveSync();
-          switchView('pos');
+          document.getElementById('activeCashierName').innerText = ACTIVE_CASHIER;
 
-          // [BARU] Panggil fungsi inisialisasi di sini
-          startRealtimeClock();
-          initCategoryScroller();
-
+          if (USER_ROLE === 'CASHIER') {
+            document.getElementById('btnLock').classList.remove('d-none');
+            let savedShift = localStorage.getItem('pos_shift_data');
+            
+            if (savedShift) {
+              SHIFT_DATA = JSON.parse(savedShift);
+              if (SHIFT_DATA.locked) {
+                if (SHIFT_DATA.cashier === ACTIVE_CASHIER) {
+                  // Kasir asli kembali
+                  SHIFT_DATA.locked = false;
+                  localStorage.setItem('pos_shift_data', JSON.stringify(SHIFT_DATA));
+                  IS_SUBSTITUTE = false;
+                  proceedToMainUI(res);
+                } else {
+                  // Kasir darurat / pengganti login
+                  IS_SUBSTITUTE = true;
+                  alert(`Kasir pengganti terdeteksi.\nSemua transaksi Anda akan tercatat dengan label (Pengganti) di bawah shift milik ${SHIFT_DATA.cashier}.`);
+                  proceedToMainUI(res);
+                }
+              } else {
+                proceedToMainUI(res); // Fallback
+              }
+            } else {
+              // Belum ada shift aktif, paksa buka shift
+              IS_SUBSTITUTE = false;
+              document.getElementById('loginOverlay').classList.add('d-none');
+              document.getElementById('shiftWelcomeName').innerText = `Halo, ${ACTIVE_CASHIER}`;
+              document.getElementById('inputStartCash').value = '';
+              document.getElementById('modalSetupShift').classList.remove('d-none');
+            }
+          } else {
+            // Admin bebas masuk
+            document.getElementById('btnLock').classList.add('d-none');
+            IS_SUBSTITUTE = false;
+            proceedToMainUI(res);
+          }
         } else {
-          document.getElementById('loginStatus').innerText = 'PIN Salah!';
+          const statusField = document.getElementById('loginStatus');
+          statusField.style.color = '#ff7675';
+          statusField.innerText = 'PIN Salah atau tidak terdaftar!';
           document.getElementById('passInput').value = '';
         }
+      }
+
+      function submitSetupShift() {
+        const cashInput = parseInt(document.getElementById('inputStartCash').value) || 0;
+        SHIFT_DATA = {
+          cashier: ACTIVE_CASHIER,
+          startCash: cashInput,
+          startTime: Date.now(),
+          locked: false
+        };
+        localStorage.setItem('pos_shift_data', JSON.stringify(SHIFT_DATA));
+        document.getElementById('modalSetupShift').classList.add('d-none');
+        proceedToMainUI({role: USER_ROLE, config: CONFIG});
+      }
+
+      function proceedToMainUI(res) {
+        document.getElementById('loginOverlay').classList.add('d-none');
+        document.getElementById('main-container').classList.remove('d-none');
+        document.getElementById('uiStoreName').innerText = res.config.StoreName;
+        document.getElementById('roleLabel').innerText = res.role;
+        
+        buildNavigation();
+        renderProductGrid();
+        renderProductTable();
+        loadGridConfig();
+        fetchInitialData(true);
+        startLiveSync();
+        switchView('pos');
+        startRealtimeClock();
+        initCategoryScroller();
+      }
+
+      function lockShift() {
+        if (IS_SUBSTITUTE) {
+          // Jika ini kasir pengganti, lock berarti mereka keluar dan membiarkan layar kembali terkunci
+          IS_SUBSTITUTE = false;
+        } else {
+          // Jika kasir asli, kunci sesi
+          if(SHIFT_DATA) {
+            SHIFT_DATA.locked = true;
+            localStorage.setItem('pos_shift_data', JSON.stringify(SHIFT_DATA));
+          }
+        }
+        
+        // Sembunyikan UI, kembalikan ke layar PIN tanpa menghancurkan memory (Cart tetap ada)
+        document.getElementById('main-container').classList.add('d-none');
+        document.getElementById('passInput').value = '';
+        document.getElementById('loginStatus').innerText = '';
+        document.getElementById('loginOverlay').classList.remove('d-none');
+      }
+
+      function promptLogout() {
+        if (USER_ROLE === 'ADMIN' || IS_SUBSTITUTE) {
+          doLogout(); // Bebas keluar langsung
+          return;
+        }
+
+        // Kalkulasi Rekap Shift untuk Kasir Asli
+        let cashSales = 0;
+        TRANSACTIONS_DATA.forEach(t => {
+           if (t.method === 'CASH' && t.status !== 'Komplimen') {
+             // Pastikan ini transaksi kasir ini (atau kasir penggantinya)
+             if (t.cashier === ACTIVE_CASHIER || t.cashier === (ACTIVE_CASHIER + " (Pengganti)")) {
+                cashSales += Number(t.total);
+             }
+           }
+        });
+
+        const modalAwal = SHIFT_DATA ? SHIFT_DATA.startCash : 0;
+        document.getElementById('csModalAwal').innerText = "Rp " + modalAwal.toLocaleString();
+        document.getElementById('csCashSales').innerText = "Rp " + cashSales.toLocaleString();
+        document.getElementById('csExpectedTotal').innerText = "Rp " + (modalAwal + cashSales).toLocaleString();
+        document.getElementById('modalCloseShift').classList.remove('d-none');
       }
 
       // Perbaikan fungsi Logout untuk GitHub Pages
@@ -3454,23 +3556,26 @@
           }
         });
       }
-      // [UPDATE] Pastikan processCheckout mengecek SELECTED_CASHIER
+      
+      function confirmCloseShift() {
+        localStorage.removeItem('pos_shift_data');
+        doLogout();
+      }
+
+      // [UPDATE] Penyesuaian Checkout Kasir (Hapus Cek Dropdown)
       function processCheckout() {
-        if (!SELECTED_CASHIER) {
-          alert("Pilih identitas Kasir dan masukkan PIN dulu!");
+        if (!ACTIVE_CASHIER) {
+          alert("Sesi kasir tidak valid, silakan login ulang!");
           return;
         }
         if (CART.length === 0) return;
-        
-        // Hitung total dulu
         CURRENT_TOTAL = CART.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        
         document.getElementById('payTotalText').innerText = 'Rp ' + CURRENT_TOTAL.toLocaleString();
         document.getElementById('inputCashAmount').value = '';
         document.getElementById('payChangeText').innerText = 'Rp 0';
         document.getElementById('payCash').checked = true;
         togglePayInput();
-        
+
         document.getElementById('modalPayment').style.display = 'flex';
         setTimeout(() => document.getElementById('inputCashAmount').focus(), 300);
       }
@@ -3504,7 +3609,6 @@
         const method = document.querySelector('input[name="payMethod"]:checked').value;
         const cashInput = document.getElementById('inputCashAmount');
         const cash = parseInt(cashInput.value) || 0;
-
         if (method === 'CASH' && cash < CURRENT_TOTAL) {
           alert("UANG PEMBAYARAN KURANG!");
           cashInput.focus();
@@ -3515,13 +3619,16 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Memproses...';
 
+        // Identifikasi nama kasir yang tembus ke Laporan
+        const finalCashierName = IS_SUBSTITUTE ? (ACTIVE_CASHIER + " (Pengganti)") : ACTIVE_CASHIER;
+
         const transactionData = {
           total: CURRENT_TOTAL,
           method: method,
           cash: method === 'CASH' ? cash : CURRENT_TOTAL,
           change: method === 'CASH' ? (cash - CURRENT_TOTAL) : 0,
           items: CART,
-          cashier: SELECTED_CASHIER 
+          cashier: finalCashierName
         };
 
         google.script.run.withSuccessHandler(res => {
@@ -3529,11 +3636,6 @@
           btn.innerText = 'BAYAR SEKARANG';
           if(res.status === 'success') {
             showSummary(transactionData);
-            SELECTED_CASHIER = null;
-            
-            // Reset dropdown kasir ke default "Pilih Kasir"
-            const topSelect = document.getElementById('topCashierSelect');
-            if(topSelect) topSelect.value = "";
           } else {
             alert("Gagal: " + res.message);
           }
@@ -4169,6 +4271,11 @@
             const totalStyle = isKomplimen ? 'text-decoration: line-through; color: #ff7675;' : 'text-success';
             const statusBadge = isKomplimen ? `<span class="badge bg-danger ms-2" style="font-size:0.6rem;">KOMPLIMEN</span>` : '';
 
+            // Visualisasi label Kasir Pengganti
+            const cashierDisplayName = t.cashier.includes('(Pengganti)') ? 
+                 `<span class="text-danger fw-bold">${t.cashier}</span>` : 
+                 t.cashier;
+
             return `
               <tr class="border-bottom" style="${rowStyle}">
                 <td class="ps-4 py-3">
@@ -4183,7 +4290,7 @@
                   <div class="${profitClass} opacity-75" style="font-size: 0.65rem;">${tMargin}% Margin</div>
                 </td>
 
-                <td class="text-center"><span class="badge bg-light text-dark border" style="font-size:0.6rem;">${t.cashier}</span></td>
+                <td class="text-center"><span class="badge bg-light text-dark border" style="font-size:0.6rem;">${cashierDisplayName}</span></td>
                 <td class="text-center pe-4">
                   <div class="btn-group shadow-sm rounded-pill border overflow-hidden">
                     <button class="btn btn-light btn-sm border-end" onclick="toggleTransactionStatus('${t.orderId}', '${t.status}')" title="Ubah Status">
@@ -5268,6 +5375,55 @@
                   </div>
                 </div>
             </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="modalSetupShift" class="login-overlay d-none" style="background: rgba(0,0,0,0.9); z-index: 10600; opacity: 1 !important;">
+      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column text-center" style="width: 90%; max-width: 400px; animation: slideUp 0.3s ease-out;">
+        <i class="fas fa-door-open fa-3x text-primary mb-3"></i>
+        <h4 class="fw-bold m-0" id="shiftWelcomeName">Halo, Kasir</h4>
+        <p class="text-muted small mb-4">Silakan hitung dan masukkan uang fisik di laci saat ini sebelum memulai shift.</p>
+        
+        <div class="mb-4 text-start">
+          <label class="small fw-bold text-muted mb-2">MODAL AWAL / UANG LACI (Rp)</label>
+          <div class="input-group input-group-lg">
+            <span class="input-group-text bg-light border-2 border-end-0">Rp</span>
+            <input type="number" id="inputStartCash" class="form-control fw-bold border-2 border-start-0 ps-0" placeholder="0">
+          </div>
+        </div>
+        
+        <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="submitSetupShift()">
+          BUKA SHIFT SEKARANG
+        </button>
+      </div>
+    </div>
+
+    <div id="modalCloseShift" class="login-overlay d-none" style="background: rgba(0,0,0,0.9); z-index: 10600; opacity: 1 !important;">
+      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 90%; max-width: 420px; animation: slideUp 0.3s ease-out;">
+        <div class="text-center mb-4 border-bottom pb-3">
+          <i class="fas fa-clipboard-check fa-3x text-danger mb-3"></i>
+          <h5 class="fw-bold m-0">Rekapitulasi Shift</h5>
+          <small class="text-muted">Periksa kembali uang di laci kasir.</small>
+        </div>
+        
+        <div class="bg-light p-3 rounded-4 mb-4 border">
+          <div class="d-flex justify-content-between mb-2 small fw-bold text-muted">
+            <span>Modal Awal (Buka Shift):</span> <span id="csModalAwal">Rp 0</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2 small fw-bold text-muted">
+            <span>Total Penjualan Tunai:</span> <span id="csCashSales">Rp 0</span>
+          </div>
+          <hr class="my-2 border-secondary border-opacity-25">
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <span class="fw-bold text-dark">Ekspektasi Uang Fisik:</span>
+            <span class="fw-bold text-danger fs-5" id="csExpectedTotal">Rp 0</span>
+          </div>
+        </div>
+        
+        <div class="d-flex gap-2">
+          <button class="btn btn-light w-100 py-3 rounded-pill fw-bold" onclick="document.getElementById('modalCloseShift').classList.add('d-none')">BATAL</button>
+          <button class="btn btn-danger w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="confirmCloseShift()">TUTUP SHIFT</button>
         </div>
       </div>
     </div>
