@@ -1393,6 +1393,7 @@
                     <label class="small fw-bold text-muted mb-1">CHAT ID (GRUP LOG TRANSAKSI)</label>
                     <input type="text" id="tgChatTrans" class="form-control border-2 fw-bold" placeholder="Contoh: -100987654321">
                     <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Hanya mencatat modal awal kasir masuk & total akhir saat kasir logout.</small>
+                    <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Mencatat semua aksi transaksi, termasuk input manual, edit/hapus, serta buka/tutup shift kasir.</small>
                   </div>
                 </div>
 
@@ -2616,13 +2617,26 @@
           console.error("Gagal mengambil nama kasir:", e);
         }
 
+        let adminNote = "";
+        const extraRow = document.getElementById('csAdminExtraRow');
+        if (extraRow && !extraRow.classList.contains('d-none')) {
+            const spans = extraRow.querySelectorAll('span');
+            if (spans.length >= 2) {
+                adminNote = `\n\n📌 <b>Note Celah Waktu:</b> ${spans[0].innerText} ${spans[1].innerText}`;
+            }
+        }
+
         const tgMsgClose = `🔴 <b>SHIFT DITUTUP</b>\n` +
                            `<b>Kasir:</b> ${cashierName}\n` +
                            `<b>Waktu Keluar:</b> ${new Date().toLocaleString('id-ID')}\n` +
                            `<b>Modal Awal:</b> ${txtModalAwal}\n` +
                            `<b>Cash Masuk:</b> ${txtCashSales}\n` +
                            `<b>TOTAL DI LACI:</b> ${txtExpected}`;
+                           `<b>TOTAL DI LACI:</b> ${txtExpected}` + adminNote;
                            
+        // Hapus session shift agar sesi login benar-benar ter-reset
+        localStorage.removeItem('pos_shift_data');
+
         // Kirim data secara asinkron ke server GAS
         if (typeof google !== 'undefined' && google.script && google.script.run) {
           google.script.run
