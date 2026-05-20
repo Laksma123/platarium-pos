@@ -534,7 +534,7 @@
         border-radius: 50% !important;
       }
 
-      /* ========================================= */
+            /* ========================================= */
       /* ORDER MONITOR UI (KITCHEN & BAR)          */
       /* ========================================= */
       .monitor-rope-container {
@@ -1214,7 +1214,7 @@
           </div>
         </div>
 
-        <div id="view-monitor" class="app-view p-4" style="display:none; background: #2c3e50; min-height: 100%; position: relative;">
+                <div id="view-monitor" class="app-view p-4" style="display:none; background: #2c3e50; min-height: 100%; position: relative;">
           <div class="d-flex justify-content-between align-items-center mb-3">
               <h3 class="fw-bold text-white m-0"><i class="fas fa-fire-burner me-2 text-warning"></i>Kitchen Monitor</h3>
               <button class="btn btn-warning rounded-pill fw-bold shadow-sm" onclick="showDoneOrders()"><i class="fas fa-check-circle me-2"></i>Selesai Hari Ini</button>
@@ -1756,6 +1756,7 @@
       let TREND_INTERVAL = null; // Variabel untuk menyimpan interval agar bisa dihapus
       let MATERIALS_DATA = []; // Global storage untuk data stok
       let POS_SORTABLE = null;
+      let IS_SORTABLE_INIT = false;
       let IS_REORDER_MODE = false;
       let CURRENT_GRID_COLS = 3;
       let TEMP_RECIPE_BASKET = [];
@@ -2619,6 +2620,9 @@
         
         // Logika penyesuaian jika Role adalah Monitor/Kitchen/Barista
         if (['MONITOR', 'KITCHEN', 'BARISTA'].includes(USER_ROLE)) {
+            // Panggil render UI Monitor saat pertama kali login
+            renderMonitorUI();
+            // Lalu switch view
             switchView('monitor');
             document.getElementById('activeCashierName').innerText = "Order Monitor";
             document.getElementById('btnLock').classList.add('d-none'); // Monitor tidak perlu lock shift
@@ -2832,11 +2836,6 @@
         }).getSystemConfigsAndHPP();
       }
 
-      // ==========================================
-      // FUNGSI ORDER MONITOR ENGINE
-      // ==========================================
-      let IS_SORTABLE_INIT = false;
-
       function renderMonitorUI() {
         const kArea = document.getElementById('kitchenTicketsArea');
         const bArea = document.getElementById('barTicketsArea');
@@ -2971,7 +2970,7 @@
         const menuItems = [
           {id: 'pos', label: 'Kasir', icon: 'fa-cash-register', roles: ['ADMIN', 'CASHIER']},
           {id: 'monitor', label: 'Order', icon: 'fa-receipt', roles: ['MONITOR', 'KITCHEN', 'BARISTA']},
-          {id: 'stock', label: 'Stok', icon: 'fa-warehouse', roles: ['ADMIN']},
+          {id: 'stock', label: 'Stok', icon: 'fa-boxes-stacked', roles: ['ADMIN']},
           {id: 'products', label: 'Produk', icon: 'fa-utensils', roles: ['ADMIN']},
           {id: 'finance', label: 'Laporan', icon: 'fa-chart-pie', roles: ['ADMIN']},
           {id: 'absensi', label: 'Absen', icon: 'fa-user-clock', roles: ['ADMIN', 'CASHIER', 'MONITOR', 'KITCHEN', 'BARISTA']},
@@ -3767,6 +3766,8 @@
           initManningTab();
         } else if (viewId === 'setting' && USER_ROLE === 'ADMIN') {
           loadSettingConfig(); // <--- TRIGGER DATA SETTING
+        } else if (viewId === 'monitor') {
+          renderMonitorUI();
         }
 
         targetView.style.display = (viewId === 'pos' && window.innerWidth > 768) ? 'flex' : 'block';
