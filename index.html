@@ -1262,11 +1262,9 @@
           <div class="bg-white p-4 rounded-5 shadow-lg" style="width: 95%; max-width: 500px; animation: slideUp 0.3s ease-out;">
             <h5 class="fw-bold mb-3 text-center"><i class="fas fa-file-invoice-dollar me-2 text-danger"></i>Input Transaksi Manual</h5>
             
-            <div class="bg-light p-3 rounded-4 mb-3 d-flex justify-content-between small">
             <div class="bg-light p-3 rounded-4 mb-3 d-flex justify-content-between small align-items-center">
               <div><span class="text-muted">ID:</span> <b id="manOrderId">...</b></div>
               <div><span class="text-muted">Kasir:</span> <b>Manual</b></div>
-              <div><span class="text-muted">Metode:</span> <b>CASH</b></div>
               <div class="d-flex align-items-center gap-1">
                 <span class="text-muted">Metode:</span>
                 <select id="manMethodSelect" class="form-select form-select-sm fw-bold border-2 py-0 px-2" style="width: 75px; height: 24px; font-size: 0.75rem;" onchange="updateManualIdPrefix()">
@@ -5271,7 +5269,6 @@
         const data = {
           manualId: NEXT_MANUAL_ID,
           total: total,
-          method: "CASH",
           method: selectedMethod,
           cash: total,
           change: 0,
