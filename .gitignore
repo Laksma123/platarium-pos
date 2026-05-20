@@ -1,0 +1,7 @@
+# Abaikan SEMUANYA di folder ini
+*
+
+# Kecuali file-file ini yang diizinkan masuk ke GitHub
+!index.html
+!README.md
+!.gitignore
