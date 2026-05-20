@@ -1395,10 +1395,6 @@
                     <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Hanya mencatat modal awal kasir masuk & total akhir saat kasir logout.</small>
                     <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Mencatat semua aksi transaksi, termasuk input manual, edit/hapus, serta buka/tutup shift kasir.</small>
                   </div>
-                  <button class="btn btn-outline-primary w-100 py-2 mb-4 rounded-pill fw-bold shadow-sm" onclick="openTelegramSettingsModal()">
-                  <button class="btn btn-outline-primary w-100 py-2 rounded-pill fw-bold shadow-sm" onclick="openTelegramSettingsModal()">
-                    <i class="fas fa-cogs me-2"></i>Advance Setting for Telegram
-                  </button>
                 </div>
 
                 <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-sm" id="btnSaveSetting" onclick="saveSettingConfig()">
@@ -1502,41 +1498,6 @@
             <div class="d-flex gap-2 mt-3 pt-3 border-top">
               <button class="btn btn-light w-100 py-2 fw-bold rounded-pill" onclick="closeBulkRecipeModal()">BATAL</button>
               <button class="btn btn-danger w-100 py-2 fw-bold rounded-pill shadow-sm" id="btnExecuteBulk" onclick="executeBulkAction()" disabled>LANJUTKAN <i class="fas fa-arrow-right ms-1"></i></button>
-            </div>
-          </div>
-        </div>
-
-        <div id="modalTelegramSettings" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10500; opacity: 1 !important;">
-          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 500px; max-height: 90vh; animation: slideUp 0.3s ease-out;">
-            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
-              <h5 class="fw-bold m-0"><i class="fas fa-cogs text-primary me-2"></i>Advance Setting Telegram</h5>
-              <button class="btn-close shadow-none" onclick="closeTelegramSettingsModal()"></button>
-            </div>
-            
-            <div class="overflow-auto pe-2 flex-fill" style="scrollbar-width: thin;">
-              <div class="mb-3">
-                <label class="small fw-bold text-muted mb-1">BOT TOKEN API</label>
-                <input type="text" id="tgBotToken" class="form-control border-2 fw-bold" placeholder="Contoh: 123456789:ABCdefGhI...">
-              </div>
-              <div class="mb-3">
-                <label class="small fw-bold text-muted mb-1">CHAT ID (GRUP LOG AUDIT)</label>
-                <input type="text" id="tgChatAudit" class="form-control border-2 fw-bold" placeholder="Contoh: -100123456789">
-                <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Semua riwayat aksi AuditLog akan dikirim ke sini secara realtime.</small>
-              </div>
-              <div class="mb-4">
-                <label class="small fw-bold text-muted mb-1">CHAT ID (GRUP LOG TRANSAKSI)</label>
-                <input type="text" id="tgChatTrans" class="form-control border-2 fw-bold" placeholder="Contoh: -100987654321">
-                <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Hanya mencatat modal awal kasir masuk & total akhir saat kasir logout.</small>
-                <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Mencatat semua aksi transaksi, termasuk input manual, edit/hapus, serta buka/tutup shift kasir.</small>
-              </div>
-            </div>
-
-            <div class="d-flex gap-2 mt-3 pt-3 border-top">
-              <button class="btn btn-primary w-100 py-2 fw-bold rounded-pill shadow-sm" onclick="closeTelegramSettingsModal()">TUTUP</button>
-              <button class="btn btn-light w-100 py-2 fw-bold rounded-pill shadow-sm" onclick="closeTelegramSettingsModal()">BATAL</button>
-              <button class="btn btn-luxury w-100 py-2 rounded-pill fw-bold shadow-sm" id="btnSaveSetting" onclick="saveSettingConfig()">
-                <i class="fas fa-save me-2"></i>SIMPAN PENGATURAN
-              </button>
             </div>
           </div>
         </div>
@@ -2506,14 +2467,6 @@
         }
       }
 
-      function openTelegramSettingsModal() {
-        document.getElementById('modalTelegramSettings').classList.remove('d-none');
-      }
-
-      function closeTelegramSettingsModal() {
-        document.getElementById('modalTelegramSettings').classList.add('d-none');
-      }
-
       function saveSettingConfig() {
         const btn = document.getElementById('btnSaveSetting');
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>MENYIMPAN...';
@@ -2531,7 +2484,6 @@
           btn.disabled = false;
           if(res.status === 'success') {
             alert("Pengaturan Telegram berhasil disimpan & aktif!");
-            closeTelegramSettingsModal();
           } else {
             alert("Gagal menyimpan: " + res.message);
           }
