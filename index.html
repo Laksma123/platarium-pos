@@ -1261,23 +1261,11 @@
         <div id="modalManualTransaction" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10000; opacity: 1 !important;">
           <div class="bg-white p-4 rounded-5 shadow-lg" style="width: 95%; max-width: 500px; animation: slideUp 0.3s ease-out;">
             <h5 class="fw-bold mb-3 text-center"><i class="fas fa-file-invoice-dollar me-2 text-danger"></i>Input Transaksi Manual</h5>
-
-            <div class="row g-2 mb-3">
-              <div class="col-4">
-                <label class="small fw-bold text-muted">ID ORDER</label>
-                <input type="text" id="manOrderId" class="form-control fw-bold" value="..." readonly>
-              </div>
-              <div class="col-4">
-                <label class="small fw-bold text-muted">KASIR</label>
-                <input type="text" class="form-control fw-bold" value="Manual" readonly>
-              </div>
-              <div class="col-4">
-                <label class="small fw-bold text-muted">METODE</label>
-                <select id="manMethodSelect" class="form-select fw-bold border-2">
-                  <option value="CASH">CASH</option>
-                  <option value="QRIS">QRIS</option>
-                </select>
-              </div>
+            
+            <div class="bg-light p-3 rounded-4 mb-3 d-flex justify-content-between small">
+              <div><span class="text-muted">ID:</span> <b id="manOrderId">...</b></div>
+              <div><span class="text-muted">Kasir:</span> <b>Manual</b></div>
+              <div><span class="text-muted">Metode:</span> <b>CASH</b></div>
             </div>
 
             <div class="mb-3">
@@ -1313,61 +1301,6 @@
         </div>
 
         <div id="view-stock" class="app-view p-4" style="display:none; background: #f8f9fa;">
-          <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pt-3 gap-3">
-            <div>
-              <h3 class="fw-bold m-0 text-dark" style="letter-spacing: -1px;">
-                <i class="fas fa-boxes-stacked me-2 text-warning"></i>Stock Control
-              </h3>
-              <p class="text-muted small m-0">Manajemen bahan baku & inventaris gudang real-time.</p>
-            </div>
-            
-            <div class="d-flex flex-wrap gap-2 align-items-center">
-              
-              <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: 250px; height: 38px;">
-                <span class="input-group-text bg-transparent border-0"><i class="fas fa-search text-muted"></i></span>
-                <input type="text" id="searchStock" class="form-control border-0 shadow-none bg-transparent fw-bold ps-0" placeholder="Cari Material..." oninput="filterStockTable()">
-              </div>
-
-              <button class="btn btn-outline-danger shadow-sm rounded-pill px-3 fw-bold border-2 d-flex align-items-center" onclick="openShotModal()">
-                <i class="fas fa-coffee me-2"></i>Atur Shot
-              </button>
-
-              <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
-                <span class="input-group-text bg-transparent border-0 text-muted small"><i class="fas fa-filter"></i></span>
-                <select id="sortStock" class="form-select border-0 shadow-none fw-bold bg-transparent px-2" style="font-size: 0.85rem; cursor:pointer;" onchange="updateStockSort(this.value)">
-                  <option value="id" selected>Nomor ID</option>
-                  <option value="name">Alphabet</option>
-                  <option value="stock">Stok Terendah</option>
-                </select>
-              </div>
-
-              <div class="bg-dark text-white rounded-pill px-3 d-flex align-items-center shadow-lg" style="height: 38px; font-size: 0.65rem;">
-                <span class="pulse-green me-2"></span> RECIPE ENGINE ACTIVE
-              </div>
-            </div>
-          </div>
-
-          <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-            <div class="table-responsive" style="max-height: calc(100vh - 143px) !important; scrollbar-width: thin;">
-              <table class="table table-hover align-middle m-0">
-                <thead class="bg-dark text-white sticky-top">
-                  <tr style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
-                    <th class="ps-4 py-3">Identity</th>
-                    <th class="py-3">Material Name</th>
-                    <th class="text-center py-3">Current Stock</th>
-                    <th class="text-center py-3">Unit</th>
-                    <th class="text-center py-3">Harga Satuan (HPP)</th>
-                    <th class="text-center pe-4 py-3">Manage</th>
-                  </tr>
-                </thead>
-                <tbody id="stockTableBody" class="small bg-white">
-                  </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div id="view-setting" class="app-view p-4" style="display:none; background: #f8f9fa;">
           <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pt-3 gap-3">
             <div>
               <h3 class="fw-bold m-0 text-dark" style="letter-spacing: -1px;">
@@ -5312,7 +5245,6 @@
         }
         
         const btn = document.getElementById('btnSubmitManual');
-        const method = document.getElementById('manMethodSelect').value;
         const total = MANUAL_BASKET.reduce((sum, item) => sum + (item.price * item.qty), 0);
         
         const finalCashierName = getFinalCashierName(); // Fix nama admin
@@ -5320,7 +5252,7 @@
         const data = {
           manualId: NEXT_MANUAL_ID,
           total: total,
-          method: method,
+          method: "CASH",
           cash: total,
           change: 0,
           items: MANUAL_BASKET,
