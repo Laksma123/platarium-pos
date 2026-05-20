@@ -1379,29 +1379,8 @@
                   </div>
                 </div>
 
-                <div id="tgInputArea" style="opacity: 0.5; pointer-events: none; transition: 0.3s;">
-                  <div class="mb-3">
-                    <label class="small fw-bold text-muted mb-1">BOT TOKEN API</label>
-                    <input type="text" id="tgBotToken" class="form-control border-2 fw-bold" placeholder="Contoh: 123456789:ABCdefGhI...">
-                  </div>
-                  <div class="mb-3">
-                    <label class="small fw-bold text-muted mb-1">CHAT ID (GRUP LOG AUDIT)</label>
-                    <input type="text" id="tgChatAudit" class="form-control border-2 fw-bold" placeholder="Contoh: -100123456789">
-                    <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Semua riwayat aksi AuditLog akan dikirim ke sini secara realtime.</small>
-                  </div>
-                  <div class="mb-4">
-                    <label class="small fw-bold text-muted mb-1">CHAT ID (GRUP LOG TRANSAKSI)</label>
-                    <input type="text" id="tgChatTrans" class="form-control border-2 fw-bold" placeholder="Contoh: -100987654321">
-                    <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Hanya mencatat modal awal kasir masuk & total akhir saat kasir logout.</small>
-                    <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Mencatat semua aksi transaksi, termasuk input manual, edit/hapus, serta buka/tutup shift kasir.</small>
-                  </div>
-                </div>
-                <button class="btn btn-outline-info w-100 py-2 mb-4 rounded-pill fw-bold shadow-sm" id="btnAdvanceTelegram" onclick="openTelegramModal()" style="opacity: 0.5; pointer-events: none; transition: 0.3s;">
+                <button class="btn btn-dark border-warning w-100 py-3 mb-0 rounded-pill fw-bold shadow-sm" id="btnAdvanceTelegram" onclick="openTelegramModal()" style="opacity: 0.5; pointer-events: none; transition: 0.3s; color: var(--primary-gold);">
                   <i class="fas fa-sliders-h me-2"></i>Advance Setting for Telegram
-                </button>
-
-                <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-sm" id="btnSaveSetting" onclick="saveSettingConfig()">
-                  <i class="fas fa-save me-2"></i>SIMPAN PENGATURAN
                 </button>
               </div>
             </div>
@@ -2441,8 +2420,10 @@
 
       function loadSettingConfig() {
         const btn = document.getElementById('btnSaveSetting');
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat...';
-        btn.disabled = true;
+        if (btn) {
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat...';
+          btn.disabled = true;
+        }
 
         google.script.run.withSuccessHandler(res => {
           TELEGRAM_CONFIG = res;
@@ -2453,26 +2434,32 @@
           
           toggleTelegramInputs();
           
-          btn.innerHTML = '<i class="fas fa-save me-2"></i>SIMPAN PENGATURAN';
-          btn.disabled = false;
+          if (btn) {
+            btn.innerHTML = '<i class="fas fa-save me-2"></i>SIMPAN & TUTUP';
+            btn.disabled = false;
+          }
         }).getSettingConfig();
       }
 
       function toggleTelegramInputs() {
         const isActive = document.getElementById('tgToggle').checked;
-        const area = document.getElementById('tgInputArea');
         const btn = document.getElementById('btnAdvanceTelegram');
-        if (isActive) {
-          area.style.opacity = '1';
-          area.style.pointerEvents = 'auto';
-          btn.style.opacity = '1';
-          btn.style.pointerEvents = 'auto';
-        } else {
-          area.style.opacity = '0.5';
-          area.style.pointerEvents = 'none';
-          btn.style.opacity = '0.5';
-          btn.style.pointerEvents = 'none';
+        if (btn) {
+          if (isActive) {
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+          } else {
+            btn.style.opacity = '0.5';
+            btn.style.pointerEvents = 'none';
+          }
         }
+        
+        // Auto-save toggle dari luar modal secara cerdas (Background Process)
+        TELEGRAM_CONFIG.active = isActive;
+        if (document.getElementById('tgBotToken')) TELEGRAM_CONFIG.token = document.getElementById('tgBotToken').value.trim();
+        if (document.getElementById('tgChatAudit')) TELEGRAM_CONFIG.chatAudit = document.getElementById('tgChatAudit').value.trim();
+        if (document.getElementById('tgChatTrans')) TELEGRAM_CONFIG.chatTrans = document.getElementById('tgChatTrans').value.trim();
+        google.script.run.saveSettingConfig(TELEGRAM_CONFIG);
       }
 
       function openTelegramModal() {
@@ -2485,8 +2472,10 @@
 
       function saveSettingConfig() {
         const btn = document.getElementById('btnSaveSetting');
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>MENYIMPAN...';
-        btn.disabled = true;
+        if (btn) {
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>MENYIMPAN...';
+          btn.disabled = true;
+        }
 
         TELEGRAM_CONFIG = {
           active: document.getElementById('tgToggle').checked,
@@ -2496,10 +2485,13 @@
         };
 
         google.script.run.withSuccessHandler(res => {
-          btn.innerHTML = '<i class="fas fa-save me-2"></i>SIMPAN PENGATURAN';
-          btn.disabled = false;
+          if (btn) {
+            btn.innerHTML = '<i class="fas fa-save me-2"></i>SIMPAN & TUTUP';
+            btn.disabled = false;
+          }
           if(res.status === 'success') {
-            alert("Pengaturan Telegram berhasil disimpan & aktif!");
+            alert("Pengaturan Telegram berhasil disimpan!");
+            closeTelegramModal();
           } else {
             alert("Gagal menyimpan: " + res.message);
           }
@@ -6023,8 +6015,8 @@
           </div>
         </div>
 
-        <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="closeTelegramModal()">
-          <i class="fas fa-check me-2"></i>TERAPKAN & TUTUP
+        <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-sm" id="btnSaveSetting" onclick="saveSettingConfig()">
+          <i class="fas fa-save me-2"></i>SIMPAN & TUTUP
         </button>
       </div>
     </div>
