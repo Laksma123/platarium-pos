@@ -2946,6 +2946,8 @@
             btn.innerHTML = originalHTML;
             btn.disabled = false;
             if(res.status === 'success') {
+              const menuName = document.getElementById('recipeTargetName').innerText.replace('Menu: ', '').trim();
+              triggerAuditLog("UPDATE RESEP", `Memperbarui komposisi resep untuk menu: ${menuName}.`);
               closeRecipeSettings();
               // Otomatis muat ulang stok material agar ada sinkronisasi bahan baru jika ada
               loadStockData(); 
@@ -3050,6 +3052,11 @@
             btn.innerHTML = ogText;
             btn.disabled = false;
             if(res.status === 'success') {
+                const selectMat = document.getElementById('bulkMaterialSelect');
+                const matName = selectMat.options[selectMat.selectedIndex].text.split('(')[0].trim();
+                const actionText = action === 'DELETE' ? 'Menghapus' : `Mengubah takaran menjadi ${newValue}`;
+                triggerAuditLog("BULK EDIT RESEP", `${actionText} untuk bahan ${matName} pada ${BULK_AFFECTED_PRODUCTS.length} menu sekaligus.`);
+
                 alert("Pembaruan massal resep berhasil!");
                 closeBulkRecipeModal();
             } else {
@@ -3075,6 +3082,7 @@
       function confirmDeleteProduct(id, name) {
         if(confirm(`Hapus permanen menu "${name}"? Ini juga akan menghapus fotonya di Drive.`)) {
           google.script.run.withSuccessHandler(() => {
+            triggerAuditLog("DELETE PRODUCT", `Menghapus menu produk: ${name} (ID: ${id}).`);
             loadProductsTable();
             loadProducts();
           }).deleteProduct(id);
@@ -5453,6 +5461,7 @@
         if (newStock !== null && !isNaN(newStock)) {
           google.script.run.withSuccessHandler(res => {
             if (res.status === 'success') {
+              triggerAuditLog("UPDATE STOK", `Mengubah stok manual via prompt untuk bahan ${name} dari ${currentStock} menjadi ${newStock}.`);
               loadStockData(); // Refresh list
             } else {
               alert("Gagal update: " + res.message);
