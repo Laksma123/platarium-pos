@@ -15,7 +15,7 @@
 
     <style>
       /* ========================================= */
-      /* KONFIGURASI UTAMA DAN WARNA                 */
+      /* KONFIGURASI UTAMA & WARNA                 */
       /* ========================================= */
       :root {
         --primary-gold: #c5a059;
@@ -2308,6 +2308,7 @@
               document.getElementById('shiftWelcomeName').innerText = `Halo, ${ACTIVE_CASHIER}`;
               
               let inputStart = document.getElementById('inputStartCash');
+              let adminTotal = parseInt(localStorage.getItem('pos_preshift_admin_total')) || 0;
               let adminCash = parseInt(localStorage.getItem('pos_preshift_admin_cash')) || 0;
               let currentNames = localStorage.getItem('pos_preshift_admin_names');
               
@@ -2331,9 +2332,13 @@
               }
               
               // CASE A: Muncul hanya jika ada transaksi pra-shift oleh Owner/Admin
-              if (adminCash > 0) {
+              if (adminTotal > 0) {
                 let roleText = namesArr.length > 0 ? namesArr.join(' dan ') : 'Admin';
-                noteEl.innerHTML = `<i class="fas fa-info-circle me-1"></i>${roleText} meninggalkan Rp ${adminCash.toLocaleString()} di laci.`;
+                if (adminCash > 0) {
+                  noteEl.innerHTML = `<i class="fas fa-info-circle me-1"></i>${roleText} melakukan transaksi darurat senilai Rp ${adminTotal.toLocaleString()}. Sejumlah Rp ${adminCash.toLocaleString()} ditinggalkan di laci.`;
+                } else {
+                  noteEl.innerHTML = `<i class="fas fa-info-circle me-1"></i>${roleText} melakukan transaksi darurat (non-tunai) senilai Rp ${adminTotal.toLocaleString()} sebelum shift Anda dimulai.`;
+                }
                 noteEl.classList.remove('d-none');
                 inputStart.value = adminCash; // Mengisi awalan input otomatis agar bisa dimodifikasi kasir
               } else {
@@ -2395,6 +2400,7 @@
         google.script.run.sendTelegramMessageBackend('TRANSACTION', tgMsg);
 
         // Kunci Sukses: Clear cache
+        localStorage.removeItem('pos_preshift_admin_total');
         localStorage.removeItem('pos_preshift_admin_cash');
         localStorage.removeItem('pos_preshift_admin_names');
         
@@ -2522,21 +2528,28 @@
           TRANSACTIONS_DATA = data;
           
           let cashSales = 0;
-          let adminSalesInShift = 0;
+          let adminCashSalesInShift = 0;
+          let adminTotalSalesInShift = 0;
           let adminNamesDuringShift = new Set();
           const shiftStartMs = SHIFT_DATA ? SHIFT_DATA.startTime : 0;
 
           TRANSACTIONS_DATA.forEach(t => {
-             if (t.method === 'CASH' && t.status !== 'Komplimen') {
-               // CASE B: Filter absolut hanya transaksi darurat saat kasir sedang lock posisi aktif
-               if (t.rawTime && t.rawTime >= shiftStartMs) {
-                   if (t.cashier === 'Owner' || String(t.cashier).includes('(Admin)')) {
-                       adminSalesInShift += Number(t.total);
-                       adminNamesDuringShift.add(String(t.cashier));
-                   } else {
-                       cashSales += Number(t.total);
-                   }
-               }
+             if (t.status === 'Komplimen') return; // Abaikan transaksi komplimen
+
+             // CASE B: Filter absolut hanya transaksi darurat saat kasir sedang lock posisi aktif
+             if (t.rawTime && t.rawTime >= shiftStartMs) {
+                 const isOwnerOrAdmin = t.cashier === 'Owner' || String(t.cashier).includes('(Admin)');
+                 if (isOwnerOrAdmin) {
+                     adminTotalSalesInShift += Number(t.total);
+                     adminNamesDuringShift.add(String(t.cashier));
+                     if (t.method === 'CASH') {
+                         adminCashSalesInShift += Number(t.total);
+                     }
+                 } else { // Ini adalah transaksi oleh kasir utama
+                     if (t.method === 'CASH') {
+                         cashSales += Number(t.total);
+                     }
+                 }
              }
           });
 
@@ -2557,10 +2570,10 @@
             }
           }
           
-          if (adminSalesInShift > 0) {
+          if (adminTotalSalesInShift > 0) {
             let rolesText = Array.from(adminNamesDuringShift).join(', ');
             let shiftOwner = SHIFT_DATA ? SHIFT_DATA.cashier : 'Kasir';
-            extraRow.innerHTML = `<span class="text-start">Tambahan transaksi ${rolesText} saat ${shiftOwner} lock:</span> <span class="text-end">Rp ${adminSalesInShift.toLocaleString()}</span>`;
+            extraRow.innerHTML = `<span class="text-start">Tambahan transaksi ${rolesText} saat ${shiftOwner} lock:</span> <span class="text-end">Rp ${adminTotalSalesInShift.toLocaleString()}</span>`;
             extraRow.classList.remove('d-none');
             extraRow.classList.add('d-flex');
           } else {
@@ -2568,7 +2581,7 @@
             extraRow.classList.remove('d-flex');
           }
 
-          document.getElementById('csExpectedTotal').innerText = "Rp " + (modalAwal + cashSales + adminSalesInShift).toLocaleString();
+          document.getElementById('csExpectedTotal').innerText = "Rp " + (modalAwal + cashSales + adminCashSalesInShift).toLocaleString();
           document.getElementById('modalCloseShift').classList.remove('d-none');
         }).getAllTransactionData();
       }
@@ -3919,20 +3932,28 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Memproses...';
 
         let finalCashierName = getFinalCashierName();
-
-        // Perekaman Pintar Multi-Admin Sebelum Shift Dimulai
-        if (USER_ROLE === 'ADMIN' && method === 'CASH') {
+        
+        // Perekaman Pintar Multi-Admin (Owner) Sebelum Shift Kasir Dimulai
+        if (USER_ROLE === 'ADMIN') {
           let savedShift = localStorage.getItem('pos_shift_data');
           if (!savedShift) {
-            let preShiftCash = parseInt(localStorage.getItem('pos_preshift_admin_cash')) || 0;
-            localStorage.setItem('pos_preshift_admin_cash', preShiftCash + CURRENT_TOTAL);
-            
+            // Catat total penjualan (semua metode) untuk notifikasi
+            let preShiftTotal = parseInt(localStorage.getItem('pos_preshift_admin_total')) || 0;
+            localStorage.setItem('pos_preshift_admin_total', preShiftTotal + CURRENT_TOTAL);
+
+            // Catat nama admin yang melakukan transaksi
             let preShiftNames = localStorage.getItem('pos_preshift_admin_names');
             let namesArr = preShiftNames ? JSON.parse(preShiftNames) : [];
             if (!namesArr.includes(finalCashierName)) {
               namesArr.push(finalCashierName);
             }
             localStorage.setItem('pos_preshift_admin_names', JSON.stringify(namesArr));
+
+            // Hanya tambahkan ke total laci jika metodenya CASH
+            if (method === 'CASH') {
+              let preShiftCash = parseInt(localStorage.getItem('pos_preshift_admin_cash')) || 0;
+              localStorage.setItem('pos_preshift_admin_cash', preShiftCash + CURRENT_TOTAL);
+            }
           }
         }
 
