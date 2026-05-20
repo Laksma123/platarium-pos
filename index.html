@@ -1263,9 +1263,17 @@
             <h5 class="fw-bold mb-3 text-center"><i class="fas fa-file-invoice-dollar me-2 text-danger"></i>Input Transaksi Manual</h5>
             
             <div class="bg-light p-3 rounded-4 mb-3 d-flex justify-content-between small">
+            <div class="bg-light p-3 rounded-4 mb-3 d-flex justify-content-between small align-items-center">
               <div><span class="text-muted">ID:</span> <b id="manOrderId">...</b></div>
               <div><span class="text-muted">Kasir:</span> <b>Manual</b></div>
               <div><span class="text-muted">Metode:</span> <b>CASH</b></div>
+              <div class="d-flex align-items-center gap-1">
+                <span class="text-muted">Metode:</span>
+                <select id="manMethodSelect" class="form-select form-select-sm fw-bold border-2 py-0 px-2" style="width: 75px; height: 24px; font-size: 0.75rem;" onchange="updateManualIdPrefix()">
+                  <option value="CASH">CASH</option>
+                  <option value="QRIS">QRIS</option>
+                </select>
+              </div>
             </div>
 
             <div class="mb-3">
@@ -5168,6 +5176,7 @@
         document.getElementById('manOrderId').innerText = "Memuat ID...";
         document.getElementById('manBasketBody').innerHTML = '<tr><td colspan="4" class="text-center p-3 text-muted italic">Pilih produk di atas untuk menambah...</td></tr>';
         document.getElementById('manTotalText').innerText = "Rp 0";
+        document.getElementById('manMethodSelect').value = "CASH";
         
         // 3. Populate dropdown produk segera dari data lokal yang sudah ada
         const select = document.getElementById('manProductSelect');
@@ -5181,7 +5190,16 @@
         google.script.run.withSuccessHandler(id => {
           NEXT_MANUAL_ID = id;
           document.getElementById('manOrderId').innerText = id;
+          updateManualIdPrefix();
         }).getNextOrderId();
+      }
+
+      function updateManualIdPrefix() {
+        if (!NEXT_MANUAL_ID) return;
+        const method = document.getElementById('manMethodSelect').value;
+        const prefix = method === 'QRIS' ? 'QRIS-' : 'ORD-';
+        NEXT_MANUAL_ID = NEXT_MANUAL_ID.replace(/^(ORD|QRIS)-/, prefix);
+        document.getElementById('manOrderId').innerText = NEXT_MANUAL_ID;
       }
 
       function closeManualTransactionModal() {
@@ -5248,11 +5266,13 @@
         const total = MANUAL_BASKET.reduce((sum, item) => sum + (item.price * item.qty), 0);
         
         const finalCashierName = getFinalCashierName(); // Fix nama admin
+        const selectedMethod = document.getElementById('manMethodSelect').value;
         
         const data = {
           manualId: NEXT_MANUAL_ID,
           total: total,
           method: "CASH",
+          method: selectedMethod,
           cash: total,
           change: 0,
           items: MANUAL_BASKET,
