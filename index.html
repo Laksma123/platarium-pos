@@ -1396,6 +1396,7 @@
                     <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Mencatat semua aksi transaksi, termasuk input manual, edit/hapus, serta buka/tutup shift kasir.</small>
                   </div>
                   <button class="btn btn-outline-primary w-100 py-2 mb-4 rounded-pill fw-bold shadow-sm" onclick="openTelegramSettingsModal()">
+                  <button class="btn btn-outline-primary w-100 py-2 rounded-pill fw-bold shadow-sm" onclick="openTelegramSettingsModal()">
                     <i class="fas fa-cogs me-2"></i>Advance Setting for Telegram
                   </button>
                 </div>
@@ -1532,6 +1533,10 @@
 
             <div class="d-flex gap-2 mt-3 pt-3 border-top">
               <button class="btn btn-primary w-100 py-2 fw-bold rounded-pill shadow-sm" onclick="closeTelegramSettingsModal()">TUTUP</button>
+              <button class="btn btn-light w-100 py-2 fw-bold rounded-pill shadow-sm" onclick="closeTelegramSettingsModal()">BATAL</button>
+              <button class="btn btn-luxury w-100 py-2 rounded-pill fw-bold shadow-sm" id="btnSaveSetting" onclick="saveSettingConfig()">
+                <i class="fas fa-save me-2"></i>SIMPAN PENGATURAN
+              </button>
             </div>
           </div>
         </div>
@@ -2526,6 +2531,7 @@
           btn.disabled = false;
           if(res.status === 'success') {
             alert("Pengaturan Telegram berhasil disimpan & aktif!");
+            closeTelegramSettingsModal();
           } else {
             alert("Gagal menyimpan: " + res.message);
           }
