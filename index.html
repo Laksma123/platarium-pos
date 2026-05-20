@@ -1246,90 +1246,95 @@
         </div>
 
         <div id="modalAddProduct" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10000; opacity: 1 !important;">
-          <div class="bg-white p-4 rounded-5 shadow-lg" style="width: 90%; max-width: 450px; animation: slideUp 0.3s ease-out;">
-            <h5 class="fw-bold mb-4 text-center"><i class="fas fa-plus-circle me-2 text-warning"></i>Tambah Menu Baru</h5>
+          <div class="bg-white p-4 rounded-5 shadow-lg" style="width: 95%; max-width: 800px; animation: slideUp 0.3s ease-out;">
+            <h5 class="fw-bold mb-4 text-center border-bottom pb-3"><i class="fas fa-plus-circle me-2 text-warning"></i>Tambah Menu Baru</h5>
             
-            <div class="mb-3">
-              <label class="small fw-bold text-muted">ID PRODUK</label>
-              <div class="input-group">
-                <input type="text" id="newPId" class="form-control" placeholder="Contoh: P001">
-                <span class="input-group-text bg-light small" style="font-size: 0.6rem;">*Kosongkan untuk otomatis</span>
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label class="small fw-bold text-muted">NAMA MENU & TYPE</label>
-              <input type="text" id="newPName" class="form-control mb-2" placeholder="Nama Menu (Contoh: Espresso)">
-              
-              <div class="d-flex align-items-center gap-3 px-1">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="checkIce">
-                  <label class="form-check-label small fw-bold text-primary" for="checkIce">Ice</label>
+            <div class="row g-4 text-start mb-3">
+              <div class="col-12 col-md-6">
+                <div class="mb-3">
+                  <label class="small fw-bold text-muted">ID PRODUK</label>
+                  <div class="input-group">
+                    <input type="text" id="newPId" class="form-control" placeholder="Contoh: P001">
+                    <span class="input-group-text bg-light small" style="font-size: 0.6rem;">*Kosong = Auto</span>
+                  </div>
                 </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="checkHot">
-                  <label class="form-check-label small fw-bold text-danger" for="checkHot">Hot</label>
+
+                <div class="mb-3">
+                  <label class="small fw-bold text-muted">NAMA MENU & TYPE</label>
+                  <input type="text" id="newPName" class="form-control mb-2" placeholder="Nama Menu (Contoh: Espresso)">
+                  
+                  <div class="d-flex align-items-center gap-3 px-1 mt-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="checkIce">
+                      <label class="form-check-label small fw-bold text-primary" for="checkIce">Ice</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="checkHot">
+                      <label class="form-check-label small fw-bold text-danger" for="checkHot">Hot</label>
+                    </div>
+                    <span class="text-muted" style="font-size: 0.65rem; font-style: italic;">*Boleh tidak dipilih</span>
+                  </div>
                 </div>
-                <span class="text-muted" style="font-size: 0.65rem; font-style: italic;">*Boleh tidak dipilih keduanya</span>
-              </div>
-            </div>
 
-            <div class="mb-3">
-              <label class="small fw-bold text-muted">HARGA</label>
-              <div class="input-group">
-                <span class="input-group-text bg-white border-end-0">Rp</span>
-                <input type="number" id="newPPrice" class="form-control border-start-0" placeholder="0">
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label class="small fw-bold text-muted">KATEGORI</label>
-              <select id="newPCategory" class="form-select fw-bold">
-                <option value="Kopi">Kopi</option>
-                <option value="Wedangan">Wedangan</option>
-                <option value="Teh">Teh</option>
-                <option value="Emilan">Emilan</option>
-                <option value="Best Seller">Best Seller</option>
-              </select>
-            </div>
-            
-            <div class="mb-3">
-              <label class="small fw-bold text-muted">POS KERJA / DIKERJAKAN OLEH <span class="text-danger">*</span></label>
-              <div class="d-flex gap-2 mt-1">
-                <input type="radio" class="btn-check" name="newPPos" id="posKitchen" value="KITCHEN">
-                <label class="btn btn-outline-warning w-100 fw-bold py-2 rounded-3" for="posKitchen"><i class="fas fa-fire me-2"></i>KITCHEN</label>
-                
-                <input type="radio" class="btn-check" name="newPPos" id="posBar" value="BAR">
-                <label class="btn btn-outline-info w-100 fw-bold py-2 rounded-3" for="posBar"><i class="fas fa-glass-water me-2"></i>BARISTA</label>
-              </div>
-            </div>
-
-            <div class="mb-4 bg-light p-3 rounded-4 border border-warning border-opacity-25 d-flex justify-content-between align-items-center">
-              <div>
-                <label class="small fw-bold text-dark d-block m-0">RESEP BAHAN</label>
-                <small class="text-muted" style="font-size: 0.65rem;" id="newRecipeStatus">Belum ada bahan diatur</small>
-              </div>
-              <button class="btn btn-warning rounded-pill btn-sm px-3 fw-bold shadow-sm text-dark" onclick="openRecipeSettings('NEW', 'Menu Baru')">
-                <i class="fas fa-mortar-pestle me-1"></i> Atur Resep
-              </button>
-            </div>
-
-            <div class="mb-4">
-              <label class="small fw-bold text-muted d-block">FOTO PRODUK</label>
-              <div class="d-flex align-items-center gap-3">
-                <div id="tempImgPreview" class="rounded-3 bg-light d-flex align-items-center justify-content-center border" style="width: 60px; height: 60px; overflow: hidden;">
-                  <i class="fas fa-image text-muted opacity-50"></i>
+                <div class="mb-3">
+                  <label class="small fw-bold text-muted">HARGA</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">Rp</span>
+                    <input type="number" id="newPPrice" class="form-control border-start-0" placeholder="0">
+                  </div>
                 </div>
-                <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="triggerUpload('NEW_PRODUCT')">
-                  <i class="fas fa-camera me-2"></i>Pilih Foto
-                </button>
+
+                <div class="mb-3">
+                  <label class="small fw-bold text-muted">KATEGORI</label>
+                  <select id="newPCategory" class="form-select fw-bold">
+                    <option value="Kopi">Kopi</option>
+                    <option value="Wedangan">Wedangan</option>
+                    <option value="Teh">Teh</option>
+                    <option value="Emilan">Emilan</option>
+                    <option value="Best Seller">Best Seller</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12 col-md-6">
+                <div class="mb-3">
+                  <label class="small fw-bold text-muted">POS KERJA / DIKERJAKAN OLEH <span class="text-danger">*</span></label>
+                  <div class="d-flex gap-2 mt-1">
+                    <input type="radio" class="btn-check" name="newPPos" id="posKitchen" value="KITCHEN">
+                    <label class="btn btn-outline-warning w-100 fw-bold py-2 rounded-3" for="posKitchen"><i class="fas fa-fire me-2"></i>KITCHEN</label>
+                    
+                    <input type="radio" class="btn-check" name="newPPos" id="posBar" value="BAR">
+                    <label class="btn btn-outline-info w-100 fw-bold py-2 rounded-3" for="posBar"><i class="fas fa-glass-water me-2"></i>BARISTA</label>
+                  </div>
+                </div>
+
+                <div class="mb-4 bg-light p-3 rounded-4 border border-warning border-opacity-25 d-flex justify-content-between align-items-center">
+                  <div>
+                    <label class="small fw-bold text-dark d-block m-0">RESEP BAHAN</label>
+                    <small class="text-muted" style="font-size: 0.65rem;" id="newRecipeStatus">Belum ada bahan diatur</small>
+                  </div>
+                  <button class="btn btn-warning rounded-pill btn-sm px-3 fw-bold shadow-sm text-dark" onclick="openRecipeSettings('NEW', 'Menu Baru')">
+                    <i class="fas fa-mortar-pestle me-1"></i> Atur Resep
+                  </button>
+                </div>
+
+                <div class="mb-4">
+                  <label class="small fw-bold text-muted d-block">FOTO PRODUK</label>
+                  <div class="d-flex align-items-center gap-3">
+                    <div id="tempImgPreview" class="rounded-3 bg-light d-flex align-items-center justify-content-center border" style="width: 60px; height: 60px; overflow: hidden;">
+                      <i class="fas fa-image text-muted opacity-50"></i>
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="triggerUpload('NEW_PRODUCT')">
+                      <i class="fas fa-camera me-2"></i>Pilih Foto
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
-
-            <div class="d-flex gap-2 pt-2 border-top">
-              <button class="btn btn-light w-100 py-2 fw-bold rounded-pill" onclick="closeAddProductModal()">BATAL</button>
-              <button class="btn btn-luxury w-100 py-2 fw-bold rounded-pill" id="btnSubmitProduct" onclick="submitNewProduct()">SIMPAN</button>
+            <div class="d-flex gap-2 pt-3 border-top">
+              <button class="btn btn-light w-100 py-3 fw-bold rounded-pill" onclick="closeAddProductModal()">BATAL</button>
+              <button class="btn btn-luxury w-100 py-3 fw-bold rounded-pill shadow-sm" id="btnSubmitProduct" onclick="submitNewProduct()">SIMPAN PRODUK</button>
             </div>
           </div>
         </div>
@@ -2874,8 +2879,7 @@
             
             t.items.forEach(item => {
                 const product = PRODUCTS.find(p => p.id === item.id);
-                const cat = product ? product.category.toLowerCase() : '';
-                const isBar = cat.includes('minum') || cat.includes('kopi') || cat.includes('coffee') || cat.includes('tea') || cat.includes('jus') || cat.includes('ice');
+                const isBar = product && product.posKerja === 'BAR';
                 
                 if (isBar) bItems.push(item);
                 else kItems.push(item);
