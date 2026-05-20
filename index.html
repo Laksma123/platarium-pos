@@ -1459,7 +1459,7 @@
           .stock-low { background: #fff5f5 !important; border-left: 4px solid #ff7675 !important; }
         </style>
       </div>
-
+      
       <nav class="mobile-bottom-nav" id="mobileMenu"></nav>
 
       <div id="mobileCartTrigger" class="mobile-cart-summ" onclick="toggleMobileCart(true)" style="display:none;">
@@ -2331,12 +2331,91 @@
         };
         localStorage.setItem('pos_shift_data', JSON.stringify(SHIFT_DATA));
         
-        // Kunci Sukses: Clear cache Case A agar tidak terbawa sampai logout rekapitulasi akhir
+        let adminCash = parseInt(localStorage.getItem('pos_preshift_admin_cash')) || 0;
+        let currentNames = localStorage.getItem('pos_preshift_admin_names');
+        let namesArr = [];
+        try { namesArr = currentNames ? JSON.parse(currentNames) : []; } catch(e) {}
+        
+        // Cek jika ada note copas Admin
+        let noteStr = "";
+        if (adminCash > 0) {
+          let roleText = namesArr.length > 0 ? namesArr.join(' dan ') : 'Admin';
+          noteStr = `\n\n📌 <b>Note Celah Waktu:</b> ${roleText} meninggalkan Rp ${adminCash.toLocaleString()} di laci sebelum shift ini.`;
+        }
+
+        // KIRIM KE TELEGRAM BACKGROUND (TANPA MENGGANGGU ALUR KASIR)
+        const tgMsg = `🟢 <b>SHIFT DIBUKA</b>\n` +
+                      `<b>Kasir:</b> ${ACTIVE_CASHIER}\n` +
+                      `<b>Waktu:</b> ${new Date().toLocaleString('id-ID')}\n` +
+                      `<b>Input Laci:</b> Rp ${cashInput.toLocaleString()}` + noteStr;
+        
+        google.script.run.sendTelegramMessageBackend('TRANSACTION', tgMsg);
+
+        // Kunci Sukses: Clear cache
         localStorage.removeItem('pos_preshift_admin_cash');
         localStorage.removeItem('pos_preshift_admin_names');
         
         document.getElementById('modalSetupShift').classList.add('d-none');
         proceedToMainUI({role: USER_ROLE, config: CONFIG});
+      }
+
+      // ==========================================
+      // FUNGSI TAB SETTING (TELEGRAM)
+      // ==========================================
+      let TELEGRAM_CONFIG = { active: false, token: '', chatAudit: '', chatTrans: '' };
+
+      function loadSettingConfig() {
+        const btn = document.getElementById('btnSaveSetting');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat...';
+        btn.disabled = true;
+
+        google.script.run.withSuccessHandler(res => {
+          TELEGRAM_CONFIG = res;
+          document.getElementById('tgToggle').checked = res.active;
+          document.getElementById('tgBotToken').value = res.token || '';
+          document.getElementById('tgChatAudit').value = res.chatAudit || '';
+          document.getElementById('tgChatTrans').value = res.chatTrans || '';
+          
+          toggleTelegramInputs();
+          
+          btn.innerHTML = '<i class="fas fa-save me-2"></i>SIMPAN PENGATURAN';
+          btn.disabled = false;
+        }).getSettingConfig();
+      }
+
+      function toggleTelegramInputs() {
+        const isActive = document.getElementById('tgToggle').checked;
+        const area = document.getElementById('tgInputArea');
+        if (isActive) {
+          area.style.opacity = '1';
+          area.style.pointerEvents = 'auto';
+        } else {
+          area.style.opacity = '0.5';
+          area.style.pointerEvents = 'none';
+        }
+      }
+
+      function saveSettingConfig() {
+        const btn = document.getElementById('btnSaveSetting');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>MENYIMPAN...';
+        btn.disabled = true;
+
+        TELEGRAM_CONFIG = {
+          active: document.getElementById('tgToggle').checked,
+          token: document.getElementById('tgBotToken').value.trim(),
+          chatAudit: document.getElementById('tgChatAudit').value.trim(),
+          chatTrans: document.getElementById('tgChatTrans').value.trim()
+        };
+
+        google.script.run.withSuccessHandler(res => {
+          btn.innerHTML = '<i class="fas fa-save me-2"></i>SIMPAN PENGATURAN';
+          btn.disabled = false;
+          if(res.status === 'success') {
+            alert("Pengaturan Telegram berhasil disimpan & aktif!");
+          } else {
+            alert("Gagal menyimpan: " + res.message);
+          }
+        }).saveSettingConfig(TELEGRAM_CONFIG);
       }
 
       function proceedToMainUI(res) {
@@ -2451,13 +2530,52 @@
         }).getAllTransactionData();
       }
 
-      // Perbaikan fungsi Logout untuk GitHub Pages
-      function doLogout() {
-        const btn = event.currentTarget;
-        // Hilangkan teks, ganti seluruh innerHTML dengan icon spinner saja
-        if(btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin text-white"></i>';
+      function confirmCloseShift() {
+        if (!confirm("Apakah Anda yakin ingin menutup shift ini? Seluruh data penjualan akan dikunci.")) return;
         
-        // Cukup segarkan halaman ke root untuk mereset memori dan kembali ke halaman login
+        // Membaca nilai dari elemen teks UI modal Rekapitulasi secara langsung agar aman dari eror variabel
+        const txtModalAwal = document.getElementById('csModalAwal') ? document.getElementById('csModalAwal').innerText : "Rp 0";
+        const txtCashSales = document.getElementById('csCashSales') ? document.getElementById('csCashSales').innerText : "Rp 0";
+        const txtExpected = document.getElementById('csExpectedTotal') ? document.getElementById('csExpectedTotal').innerText : "Rp 0";
+        
+        let cashierName = "Unknown";
+        try {
+          if (typeof SHIFT_DATA !== 'undefined' && SHIFT_DATA && SHIFT_DATA.cashier) {
+            cashierName = SHIFT_DATA.cashier;
+          } else if (typeof getFinalCashierName === 'function') {
+            cashierName = getFinalCashierName();
+          }
+        } catch(e) {
+          console.error("Gagal mengambil nama kasir:", e);
+        }
+
+        const tgMsgClose = `🔴 <b>SHIFT DITUTUP</b>\n` +
+                           `<b>Kasir:</b> ${cashierName}\n` +
+                           `<b>Waktu Keluar:</b> ${new Date().toLocaleString('id-ID')}\n` +
+                           `<b>Modal Awal:</b> ${txtModalAwal}\n` +
+                           `<b>Cash Masuk:</b> ${txtCashSales}\n` +
+                           `<b>TOTAL DI LACI:</b> ${txtExpected}`;
+                           
+        // Kirim data secara asinkron ke server GAS
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+          google.script.run
+            .withSuccessHandler(() => { doLogout(); })
+            .withFailureHandler(() => { doLogout(); }) // Tetap logout jika telegram gagal agar sistem tidak macet
+            .sendTelegramMessageBackend('TRANSACTION', tgMsgClose);
+        } else {
+          doLogout();
+        }
+      }
+
+      function doLogout() {
+        // Deteksi tombol dari event klik aktif atau arahkan ke tombol merah di modal tutup shift
+        const btn = (typeof event !== 'undefined' && event && event.currentTarget) ? event.currentTarget : document.querySelector('#modalCloseShift .btn-danger');
+        
+        if (btn) {
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin text-white"></i>';
+        }
+        
+        // Segarkan halaman untuk mereset memori lokal dan kembali ke form login utama
         setTimeout(() => {
           window.location.reload();
         }, 800);
@@ -2521,9 +2639,10 @@
           {id: 'products', label: 'Produk', icon: 'fa-utensils', roles: ['ADMIN']},
           {id: 'finance', label: 'Laporan', icon: 'fa-chart-pie', roles: ['ADMIN']},
           {id: 'absensi', label: 'Absen', icon: 'fa-user-clock', roles: ['ADMIN', 'CASHIER']},
-          {id: 'manning', label: 'Staff', icon: 'fa-users-cog', roles: ['ADMIN']} // <--- MENU BARU
+          {id: 'manning', label: 'Staff', icon: 'fa-users-cog', roles: ['ADMIN']},
+          {id: 'setting', label: 'Setting', icon: 'fa-cog', roles: ['ADMIN']} // <--- MENU BARU
         ];
-
+        
         const mob = document.getElementById('mobileMenu');
         if (!mob) return;
         mob.innerHTML = '';
@@ -2533,8 +2652,8 @@
             const mDiv = document.createElement('div');
             mDiv.className = 'nav-icon-mob';
             mDiv.id = `mob-${m.id}`; 
-            mDiv.innerHTML = `<i class="fas ${m.icon} mb-1"></i><span>${m.label}</span>`;
             mDiv.onclick = () => switchView(m.id);
+            mDiv.innerHTML = `<i class="fas ${m.icon}"></i><span>${m.label}</span>`;
             mob.appendChild(mDiv);
           }
         });
@@ -3264,15 +3383,11 @@
       }
 
       function switchView(viewId) {
-        // Matikan kamera total secara menyeluruh
         if (ATTENDANCE_STREAM) {
-          ATTENDANCE_STREAM.getTracks().forEach(track => {
-            track.stop();
-          });
+          ATTENDANCE_STREAM.getTracks().forEach(track => { track.stop(); });
           ATTENDANCE_STREAM = null;
         }
 
-        // Matikan interval AI agar tidak menguras memori CPU di background
         if (FACE_DETECT_INTERVAL) {
           clearInterval(FACE_DETECT_INTERVAL);
           FACE_DETECT_INTERVAL = null;
@@ -3280,14 +3395,11 @@
         
         ['attendanceVideo', 'regVideo'].forEach(id => {
           const v = document.getElementById(id);
-          if (v) {
-            v.srcObject = null;
-            v.pause();
-          }
+          if (v) { v.srcObject = null; v.pause(); }
         });
 
-        // Sembunyikan semua view utama
         document.querySelectorAll('.app-view').forEach(v => v.style.display = 'none');
+
         const targetView = document.getElementById('view-' + viewId);
         if (!targetView) return;
 
@@ -3310,7 +3422,9 @@
         } else if (viewId === 'stock' && USER_ROLE === 'ADMIN') {
           loadStockData();
         } else if (viewId === 'manning' && USER_ROLE === 'ADMIN') {
-          initManningTab(); // <--- TAMBAHAN BARU
+          initManningTab();
+        } else if (viewId === 'setting' && USER_ROLE === 'ADMIN') {
+          loadSettingConfig(); // <--- TRIGGER DATA SETTING
         }
 
         targetView.style.display = (viewId === 'pos' && window.innerWidth > 768) ? 'flex' : 'block';
@@ -3318,6 +3432,7 @@
         document.querySelectorAll('.nav-item-custom, .nav-icon-mob').forEach(el => el.classList.remove('active'));
         const dEl = document.getElementById('desk-' + viewId);
         const mEl = document.getElementById('mob-' + viewId);
+
         if (dEl) dEl.classList.add('active');
         if (mEl) mEl.classList.add('active');
       }
@@ -3785,7 +3900,7 @@
           if(res.status === 'success') {
             const itemDetails = CART.map(i => `${i.name} (x${i.qty})`).join(', ');
             triggerAuditLog("TRANSAKSI", `Menyimpan transaksi POS Utama senilai Rp ${CURRENT_TOTAL.toLocaleString()} dengan item: [ ${itemDetails} ]`);
-            
+
             showSummary(transactionData);
           } else {
             alert("Gagal: " + res.message);
@@ -4353,7 +4468,8 @@
 
       function loadFinanceData() {
         const tbody = document.getElementById('financeTableBody');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center p-5"><div class="spinner-border text-warning spinner-border-sm"></div> Memproses Dashboard...</td></tr>';
+        // Ubah colspan menjadi 6 agar benar-benar di tengah layar tabel
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center p-5"><div class="spinner-border text-warning spinner-border-sm"></div> Memproses Dashboard...</td></tr>';
         
         google.script.run.withSuccessHandler(data => {
           TRANSACTIONS_DATA = data; // <--- SANGAT PENTING: Update memori lokal
@@ -4377,7 +4493,7 @@
         let validOrders = 0;
         let cashierCount = {};
         let productCount = {};
-        
+
         const filteredData = TRANSACTIONS_DATA.filter(t => {
           const tDate = t.timestamp.split(' ')[0];
           if (filter === 'today') return tDate === todayStr;
@@ -4385,8 +4501,9 @@
           if (filter === 'year') return tDate.includes(now.getFullYear().toString());
           return true; 
         });
-        
+
         if (filteredData.length === 0) {
+          // Ubah colspan menjadi 6
           tbody.innerHTML = '<tr><td colspan="6" class="text-center p-5 text-muted">Tidak ada transaksi pada periode ini.</td></tr>';
         } else {
           tbody.innerHTML = filteredData.map(t => {
@@ -4422,13 +4539,13 @@
             let tTotal = Number(t.total) || 0;
             let tProfit = tTotal - transHpp;
             let tMargin = tTotal > 0 ? ((tProfit / tTotal) * 100).toFixed(1) : 0;
+            
             let profitClass = tProfit >= 0 ? 'text-success' : 'text-danger';
-
             const rowStyle = isKomplimen ? 'opacity: 0.6; background-color: #fff5f5;' : '';
             const totalStyle = isKomplimen ? 'text-decoration: line-through; color: #ff7675;' : 'text-success';
             const statusBadge = isKomplimen ? `<span class="badge bg-danger ms-2" style="font-size:0.6rem;">KOMPLIMEN</span>` : '';
 
-            // Req 3: Visualisasi label Kasir Pengganti & Admin
+            // Visualisasi label Kasir Pengganti & Admin
             let cashierDisplayName = t.cashier;
             if (t.cashier.includes('(Pengganti)')) {
               cashierDisplayName = `<span class="text-danger fw-bold">${t.cashier}</span>`;
@@ -4458,7 +4575,7 @@
                      <button class="btn btn-light btn-sm border-end" onclick="toggleTransactionStatus('${t.orderId}', '${t.status}')" title="Ubah Status">
                       <i class="fas ${isKomplimen ? 'fa-undo text-success' : 'fa-exchange-alt text-warning'}" style="font-size:0.7rem;"></i>
                     </button>
-                    <button class="btn btn-light btn-sm" onclick="confirmDeleteTransaction('${t.orderId}')" title="Hapus">
+                    <button class="btn btn-light btn-sm" onclick="confirmDeleteTransaction('${t.orderId}', this)" title="Hapus">
                       <i class="fas fa-trash text-danger" style="font-size:0.7rem;"></i>
                     </button>
                   </div>
@@ -4484,10 +4601,11 @@
 
         document.getElementById('dashTopCashier').innerText = getWinners(cashierCount).display;
         document.getElementById('dashTopProduct').innerText = getWinners(productCount, true).display;
+
         const chartDataNormal = filteredData.filter(t => t.status !== 'Komplimen');
         updateSalesChart(chartDataNormal);
       }
-
+      
       // --- FUNGSI BARU: LOGIKA MODAL SHOT ---
       function openShotModal() {
         const select = document.getElementById('shotMaterialSelect');
@@ -4885,20 +5003,27 @@
         // Tapi data diambil dari parameter 'logs', bukan google.script.run
       }
 
-      /**
-       * Menghapus transaksi dengan konfirmasi
-       */
-      function confirmDeleteTransaction(orderId) {
-        if (confirm(`Hapus permanen transaksi ${orderId}? Saldo di sheet akan berkurang.`)) {
+      // Fungsi Baru (menggantikan yang lama) dengan Spinner Handler
+      function confirmDeleteTransaction(orderId, btnElement) {
+        if (confirm(`Peringatan: Data akan dihapus dari Laporan Harian dan Profit. Lanjutkan menghapus ${orderId}?`)) {
+          let originalHtml = '';
+          if (btnElement) {
+            originalHtml = btnElement.innerHTML;
+            btnElement.innerHTML = '<i class="fas fa-spinner fa-spin text-danger" style="font-size:0.7rem;"></i>';
+            btnElement.disabled = true;
+          }
+          
           google.script.run.withSuccessHandler(res => {
-            if (res.status === 'success') {
-              triggerAuditLog("EDIT TRANSAKSI", `Menghapus transaksi ${orderId} secara permanen.`);
-
+            if (res && res.status === 'success') {
               loadFinanceData();
             } else {
-              alert("Gagal: " + res.message);
+              alert("Gagal menghapus: " + (res ? res.message : "Sistem terputus"));
+              if (btnElement) {
+                btnElement.innerHTML = originalHtml;
+                btnElement.disabled = false;
+              }
             }
-          }).deleteTransactionRecord(orderId);
+          }).deleteTransaction(orderId);
         }
       }
 
@@ -5390,6 +5515,49 @@
         }
       }
     </script>
+
+    <div id="view-setting" class="app-view p-4" style="display:none; background: #f8f9fa;">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pt-3 gap-3">
+        <div>
+          <h3 class="fw-bold m-0 text-dark"><i class="fas fa-cog me-2 text-warning"></i>Pengaturan Sistem</h3>
+          <p class="text-muted small m-0">Konfigurasi notifikasi Telegram dan sistem laporan otomatis.</p>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-12 col-md-6 col-lg-5">
+          <div class="card border-0 shadow-sm rounded-4 p-4 h-100 border-start border-4 border-info">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h6 class="fw-bold m-0 text-dark"><i class="fab fa-telegram text-primary me-2"></i>Notifikasi Telegram</h6>
+              <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" role="switch" id="tgToggle" onchange="toggleTelegramInputs()" style="width: 40px; height: 20px; cursor:pointer;">
+              </div>
+            </div>
+
+            <div id="tgInputArea" style="opacity: 0.5; pointer-events: none; transition: 0.3s;">
+              <div class="mb-3">
+                <label class="small fw-bold text-muted mb-1">BOT TOKEN API</label>
+                <input type="text" id="tgBotToken" class="form-control border-2 fw-bold" placeholder="Contoh: 123456789:ABCdefGhI...">
+              </div>
+              <div class="mb-3">
+                <label class="small fw-bold text-muted mb-1">CHAT ID (GRUP LOG AUDIT)</label>
+                <input type="text" id="tgChatAudit" class="form-control border-2 fw-bold" placeholder="Contoh: -100123456789">
+                <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Semua riwayat aksi AuditLog akan dikirim ke sini secara realtime.</small>
+              </div>
+              <div class="mb-4">
+                <label class="small fw-bold text-muted mb-1">CHAT ID (GRUP LOG TRANSAKSI)</label>
+                <input type="text" id="tgChatTrans" class="form-control border-2 fw-bold" placeholder="Contoh: -100987654321">
+                <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Hanya mencatat modal awal kasir masuk & total akhir saat kasir logout.</small>
+              </div>
+            </div>
+
+            <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-sm" id="btnSaveSetting" onclick="saveSettingConfig()">
+              <i class="fas fa-save me-2"></i>SIMPAN PENGATURAN
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div id="modalGridConfig" class="payment-overlay" style="z-index: 12000;">
       <div class="bg-white p-4 rounded-5 shadow-lg text-center" style="width: 90%; max-width: 350px;">
