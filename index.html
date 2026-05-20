@@ -1060,6 +1060,11 @@
                 <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white">
                   <h6 class="fw-bold m-0 text-muted">List Penjualan</h6>
                   <div class="d-flex gap-2">
+                    <select id="methodFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill" style="cursor:pointer;" onchange="renderFinanceUI()">
+                      <option value="all" selected>Semua</option>
+                      <option value="CASH">CASH</option>
+                      <option value="QRIS">QRIS</option>
+                    </select>
                     <select id="revFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill" style="cursor:pointer;" onchange="renderFinanceUI()">
                       <option value="today">Hari Ini</option>
                       <option value="month" selected>Bulan Ini</option>
@@ -4552,9 +4557,11 @@
       function renderFinanceUI() {
         const tbody = document.getElementById('financeTableBody');
         const revFilter = document.getElementById('revFilter');
+        const methodFilter = document.getElementById('methodFilter');
         if (!tbody || !revFilter) return;
 
         const filter = revFilter.value;
+        const mFilter = methodFilter ? methodFilter.value : 'all';
         const now = new Date();
         const todayStr = Utilities_formatDateIndo(now);
         const monthStr = (now.getMonth() + 1).toString().padStart(2, '0') + '/' + now.getFullYear();
@@ -4568,10 +4575,17 @@
 
         const filteredData = TRANSACTIONS_DATA.filter(t => {
           const tDate = t.timestamp.split(' ')[0];
-          if (filter === 'today') return tDate === todayStr;
-          if (filter === 'month') return tDate.includes(monthStr);
-          if (filter === 'year') return tDate.includes(now.getFullYear().toString());
-          return true; 
+          let timeMatch = true;
+          if (filter === 'today') timeMatch = (tDate === todayStr);
+          else if (filter === 'month') timeMatch = tDate.includes(monthStr);
+          else if (filter === 'year') timeMatch = tDate.includes(now.getFullYear().toString());
+          
+          let methodMatch = true;
+          if (mFilter !== 'all') {
+            methodMatch = (t.method === mFilter);
+          }
+          
+          return timeMatch && methodMatch;
         });
 
         if (filteredData.length === 0) {
