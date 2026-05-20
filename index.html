@@ -2631,7 +2631,6 @@
                            `<b>Waktu Keluar:</b> ${new Date().toLocaleString('id-ID')}\n` +
                            `<b>Modal Awal:</b> ${txtModalAwal}\n` +
                            `<b>Cash Masuk:</b> ${txtCashSales}\n` +
-                           `<b>TOTAL DI LACI:</b> ${txtExpected}`;
                            `<b>TOTAL DI LACI:</b> ${txtExpected}` + adminNote;
                            
         // Hapus session shift agar sesi login benar-benar ter-reset
@@ -3893,11 +3892,6 @@
         });
       }
       
-      function confirmCloseShift() {
-        localStorage.removeItem('pos_shift_data');
-        doLogout();
-      }
-
       // [UPDATE] Penyesuaian Checkout Kasir (Hapus Cek Dropdown)
       function processCheckout() {
         if (!ACTIVE_CASHIER) {
