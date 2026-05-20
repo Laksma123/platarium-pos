@@ -2391,6 +2391,10 @@
             document.getElementById('modalWelcome').classList.remove('d-none');
             
             window.TEMP_LOGIN_RES = res;
+          } else if (['MONITOR', 'KITCHEN', 'BARISTA'].includes(USER_ROLE)) {
+            IS_SUBSTITUTE = false;
+            document.getElementById('btnLock').classList.add('d-none');
+            proceedToMainUI(res);
           } else if (USER_ROLE === 'CASHIER') {
             document.getElementById('btnLock').classList.remove('d-none');
             let savedShift = localStorage.getItem('pos_shift_data');
@@ -2625,6 +2629,7 @@
             // Lalu switch view
             switchView('monitor');
             document.getElementById('activeCashierName').innerText = "Order Monitor";
+            document.getElementById('activeCashierName').innerText = ACTIVE_CASHIER;
             document.getElementById('btnLock').classList.add('d-none'); // Monitor tidak perlu lock shift
         } else {
             switchView('pos');
@@ -2655,7 +2660,7 @@
       }
 
       function promptLogout() {
-        if (USER_ROLE === 'ADMIN' || IS_SUBSTITUTE) {
+        if (USER_ROLE === 'ADMIN' || IS_SUBSTITUTE || ['MONITOR', 'KITCHEN', 'BARISTA'].includes(USER_ROLE)) {
           doLogout();
           return;
         }
