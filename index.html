@@ -1546,6 +1546,7 @@
                       return createProxy(onSuccess, onFailure);
                     }
                   };
+                  return createProxy(function(res){}, onFailure);
                 };
               } else {
                 // Jika dipanggil langsung tanpa success handler
@@ -1565,6 +1566,16 @@
       function createProxy(onSuccess, onFailure) {
         return new Proxy({}, {
           get: function(target, prop) {
+            if (prop === 'withSuccessHandler') {
+              return function(newOnSuccess) {
+                return createProxy(newOnSuccess, onFailure);
+              };
+            }
+            if (prop === 'withFailureHandler') {
+              return function(newOnFailure) {
+                return createProxy(onSuccess, newOnFailure);
+              };
+            }
             return function(...args) {
               fetch(GAS_WEB_APP_URL, {
                 method: 'POST',
