@@ -4285,6 +4285,7 @@
         trigger.style.display = (count > 0) ? 'flex' : 'none';
         document.getElementById('mobItemCount').innerText = count;
         document.getElementById('mobTotal').innerText = formattedTotal;
+        posSyncChannel.postMessage({ type: 'UPDATE_CART', cart: CART, total: total });
       }
 
       function toggleMobileCart(show) {
@@ -4463,6 +4464,7 @@
         updateCartUI();
         document.getElementById('modalSummary').style.display = 'none';
         toggleMobileCart(false);
+        posSyncChannel.postMessage({ type: 'CLEAR_CART' });
       }
 
       function renderCashierButtons() {
@@ -6462,6 +6464,124 @@
           console.warn("Proses cetak terhenti.");
         }
       }
+
+      // ==========================================
+      // DUAL POS MONITOR (CUSTOMER DISPLAY) ENGINE
+      // ==========================================
+
+      // Membuat jalur komunikasi real-time antar window
+      const posSyncChannel = new BroadcastChannel('platarium_pos_sync');
+
+      function toggleDualPosBtn() {
+        const isChecked = document.getElementById('dualPosToggle').checked;
+        const btn = document.getElementById('btnLaunchDualPos');
+        if (isChecked) {
+          btn.classList.remove('d-none');
+        } else {
+          btn.classList.add('d-none');
+        }
+      }
+
+      function launchCustomerDisplay() {
+        // Buka window baru kosong
+        const customerWindow = window.open('', 'CustomerDisplay', 'width=1024,height=768');
+        
+        if (!customerWindow) {
+          alert("Popup diblokir oleh browser! Mohon izinkan popup untuk web ini.");
+          return;
+        }
+
+        // Tulis struktur HTML untuk layar pelanggan
+        customerWindow.document.write(`
+          <!DOCTYPE html>
+          <html lang="id">
+          <head>
+            <meta charset="UTF-8">
+            <title>Platarium Customer Display</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+            <style>
+              body { margin: 0; overflow: hidden; background: #000; font-family: 'Poppins', sans-serif; display: flex; height: 100vh; }
+              .video-container { flex: 7; position: relative; background: #000; }
+              .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; pointer-events: none; }
+              .cart-container { flex: 3; background: #fff; display: flex; flex-direction: column; box-shadow: -10px 0 30px rgba(0,0,0,0.2); z-index: 10; }
+              .cart-header { background: #1a1a1a; color: #fff; padding: 25px; text-align: center; }
+              .cart-items { flex: 1; overflow-y: auto; padding: 20px; }
+              .item-row { display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #eee; font-size: 1.2rem; }
+              .item-name { font-weight: bold; color: #2d3436; }
+              .item-qty { color: #c5a059; font-weight: bold; margin-left: 10px; }
+              .item-price { font-weight: bold; color: #2d3436; }
+              .cart-footer { background: #f8f9fa; padding: 30px; border-top: 2px solid #eee; }
+              .total-row { display: flex; justify-content: space-between; font-size: 2rem; font-weight: 800; color: #2d3436; }
+              .total-price { color: #d35400; }
+              .empty-state { text-align: center; color: #aaa; margin-top: 50px; font-size: 1.2rem; }
+            </style>
+          </head>
+          <body>
+            <div class="video-container">
+              <iframe src="https://www.youtube.com/embed/zpOULjyy-n8?autoplay=1&mute=1&controls=0&loop=1&playlist=zpOULjyy-n8" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            </div>
+            <div class="cart-container">
+              <div class="cart-header">
+                <h2 class="m-0 fw-bold" style="color: #c5a059;">PESANAN ANDA</h2>
+              </div>
+              <div class="cart-items" id="cdItems">
+                <div class="empty-state">Belum ada pesanan</div>
+              </div>
+              <div class="cart-footer">
+                <div class="total-row">
+                  <span>TOTAL</span>
+                  <span class="total-price" id="cdTotal">Rp 0</span>
+                </div>
+              </div>
+            </div>
+
+            <script>
+              const syncChannel = new BroadcastChannel('platarium_pos_sync');
+              
+              syncChannel.onmessage = (event) => {
+                const data = event.data;
+                if (data.type === 'UPDATE_CART') {
+                  renderCart(data.cart, data.total);
+                } else if (data.type === 'CLEAR_CART') {
+                  renderCart([], 0);
+                }
+              };
+
+              function renderCart(cart, total) {
+                const container = document.getElementById('cdItems');
+                const totalEl = document.getElementById('cdTotal');
+                
+                if (!cart || cart.length === 0) {
+                  container.innerHTML = '<div class="empty-state">Belum ada pesanan</div>';
+                  totalEl.innerText = 'Rp 0';
+                  return;
+                }
+
+                // [FIX] Menggunakan string concatenation biasa agar VSC tidak error
+                let htmlString = '';
+                cart.forEach(item => {
+                  let subtotal = (item.price * item.qty).toLocaleString('id-ID');
+                  htmlString += '<div class="item-row">';
+                  htmlString += '<div><span class="item-name">' + item.name + '</span><span class="item-qty">x' + item.qty + '</span></div>';
+                  htmlString += '<span class="item-price">Rp ' + subtotal + '</span>';
+                  htmlString += '</div>';
+                });
+                
+                container.innerHTML = htmlString;
+                totalEl.innerText = 'Rp ' + total.toLocaleString('id-ID');
+                
+                // Auto scroll ke bawah agar item terbaru terlihat
+                container.scrollTop = container.scrollHeight;
+              }
+            <\/script>
+          </body>
+          </html>
+        `);
+        customerWindow.document.close();
+
+        // Kirim data awal (jika saat kasir menekan buka, sudah ada item di keranjang)
+        posSyncChannel.postMessage({ type: 'UPDATE_CART', cart: CART, total: CURRENT_TOTAL });
+      }
     </script>
 
     <div id="modalGridConfig" class="payment-overlay" style="z-index: 12000;">
@@ -6855,15 +6975,15 @@
           <div class="p-3 bg-light rounded-4 mb-2 border">
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <div class="fw-bold text-dark">Thermal Printer</div>
-                <div class="small text-muted" style="line-height: 1.2;">Print nota otomatis via Thermal Printer.</div>
+                <div class="fw-bold text-dark">Dual POS Monitor</div>
+                <div class="small text-muted" style="line-height: 1.2;">Layar kedua hadap pelanggan (Customer View).</div>
               </div>
               <div class="form-check form-switch m-0">
-                <input class="form-check-input" type="checkbox" id="thermalToggle" role="switch" onchange="toggleThermalSettingBtn()" style="width: 35px; height: 18px; cursor:pointer;">
+                <input class="form-check-input" type="checkbox" id="dualPosToggle" role="switch" onchange="toggleDualPosBtn()" style="width: 35px; height: 18px; cursor:pointer;">
               </div>
             </div>
-            <button class="btn btn-sm btn-outline-dark w-100 fw-bold mt-3 d-none" id="btnThermalSetting" onclick="openThermalSettingModal()">
-              <i class="fas fa-print me-1"></i> Setting Printer
+            <button class="btn btn-sm btn-outline-primary w-100 fw-bold mt-3 d-none" id="btnLaunchDualPos" onclick="launchCustomerDisplay()">
+              <i class="fas fa-desktop me-1"></i> Buka Layar Pelanggan
             </button>
           </div>
 
