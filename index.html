@@ -6194,30 +6194,49 @@
         btnElement.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>MENYIMPAN...';
         btnElement.disabled = true;
 
-        // 2. Beri delay visual 600ms agar user merasa proses penyimpanan sedang berjalan
+        // 2. Beri delay visual
         setTimeout(() => {
-          const headerText = document.getElementById('notaHeaderText').value;
-          const footerText = document.getElementById('notaFooterText').value;
-          const logoSrc = document.getElementById('notaLogoImg').src;
-          const logoWidthValue = document.getElementById('logoSizeSlider').value;
+          try {
+            const headerText = document.getElementById('notaHeaderText').value;
+            const footerText = document.getElementById('notaFooterText').value;
+            const logoSrc = document.getElementById('notaLogoImg').src;
+            const logoWidthValue = document.getElementById('logoSizeSlider').value;
 
-          // Eksekusi penyimpanan final ke dalam localStorage perangkat
-          localStorage.setItem('pos_nota_header', headerText);
-          localStorage.setItem('pos_nota_footer', footerText);
-          localStorage.setItem('pos_nota_logo', logoSrc);
-          localStorage.setItem('pos_nota_logo_width', logoWidthValue);
+            // Eksekusi penyimpanan final ke dalam localStorage perangkat
+            localStorage.setItem('pos_nota_header', headerText);
+            localStorage.setItem('pos_nota_footer', footerText);
+            
+            // LOGO: Ini yang sering menyebabkan memori penuh jika gambar terlalu besar
+            localStorage.setItem('pos_nota_logo', logoSrc); 
+            localStorage.setItem('pos_nota_logo_width', logoWidthValue);
 
-          // Tutup seluruh tumpukan jendela arsitektur design struk
-          document.getElementById('modalKertasFisikPreview').classList.add('d-none');
-          document.getElementById('modalKertasFisikPreview').style.display = 'none';
-          document.getElementById('modalDesignNota').classList.add('d-none');
-          
-          // Kembalikan pengguna ke window setting utama printer thermal
-          document.getElementById('modalThermalSetting').classList.remove('d-none');
+            // JIKA BERHASIL: Tutup seluruh tumpukan jendela arsitektur design struk
+            document.getElementById('modalKertasFisikPreview').classList.add('d-none');
+            document.getElementById('modalKertasFisikPreview').style.display = 'none';
+            document.getElementById('modalDesignNota').classList.add('d-none');
+            
+            // Kembalikan pengguna ke window setting utama printer thermal
+            document.getElementById('modalThermalSetting').classList.remove('d-none');
 
-          // Kembalikan status tombol (berjaga-jaga jika modal dibuka lagi)
-          btnElement.innerHTML = originalHTML;
-          btnElement.disabled = false;
+            // Kembalikan status tombol 
+            btnElement.innerHTML = originalHTML;
+            btnElement.disabled = false;
+
+          } catch (error) {
+            // JIKA GAGAL (Memori Penuh): Tangkap error dan hentikan loading
+            console.error("Gagal menyimpan ke localStorage:", error);
+            
+            // Cek apakah errornya karena Quota (memori habis)
+            if (error.name === 'QuotaExceededError' || error.message.includes('quota')) {
+              alert("GAGAL MENYIMPAN: Ukuran file gambar Logo terlalu besar! Browser membatasi memori (maks 5MB).\n\nSolusi: Gunakan gambar logo yang sudah dikompres (sangat disarankan di bawah 300kb).");
+            } else {
+              alert("Terjadi kesalahan saat menyimpan: " + error.message);
+            }
+
+            // Matikan spinner agar tombol tidak macet / infinite loading
+            btnElement.innerHTML = originalHTML;
+            btnElement.disabled = false;
+          }
         }, 600); 
       }
 
