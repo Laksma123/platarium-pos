@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.2/qz-tray.min.js"></script>
 
     <style>
       /* ========================================= */
@@ -4443,6 +4444,10 @@
         document.getElementById('sumPay').innerText = 'Rp ' + data.cash.toLocaleString();
         document.getElementById('sumChange').innerText = 'Rp ' + data.change.toLocaleString();
         
+        // [BARU] Panggil fungsi cetak otomatis
+        window.LATEST_TRANSACTION_DATA = data; // Simpan ke global untuk reprint
+        autoPrintReceipt(data);
+        
         document.getElementById('modalSummary').style.display = 'flex';
       }
 
@@ -6148,27 +6153,314 @@
       }
 
       function saveDesignNota(btnEl) {
-        const header = document.getElementById('notaHeaderText').value;
-        const footer = document.getElementById('notaFooterText').value;
-        const logo = document.getElementById('notaLogoImg').src;
-        const logoWidth = document.getElementById('logoSizeSlider').value; // Ambil nilai lebar terbaru
-        
-        // Simpan semua konfigurasi termasuk width
-        localStorage.setItem('pos_nota_header', header);
-        localStorage.setItem('pos_nota_footer', footer);
-        localStorage.setItem('pos_nota_logo', logo);
-        localStorage.setItem('pos_nota_logo_width', logoWidth);
+        const headerText = document.getElementById('notaHeaderText').value;
+        const footerText = document.getElementById('notaFooterText').value;
+        const logoSrc = document.getElementById('notaLogoImg').src;
+        const logoWidthValue = document.getElementById('logoSizeSlider').value;
 
-        // Animasi Sukses
-        const originalText = btnEl.innerHTML;
-        btnEl.innerHTML = '<i class="fas fa-check"></i> TERSIMPAN';
-        btnEl.classList.replace('btn-primary', 'btn-success');
+        // Transfer data modifikasi ke dalam wadah cetak murni (Tanpa Slider)
+        document.getElementById('fpHeader').innerText = headerText;
+        document.getElementById('fpFooter').innerText = footerText;
+        
+        const fpLogo = document.getElementById('fpLogoImg');
+        if (logoSrc && logoSrc.startsWith('data:image')) {
+          fpLogo.src = logoSrc;
+          fpLogo.style.width = logoWidthValue + 'px';
+          fpLogo.style.display = 'block';
+        } else {
+          fpLogo.style.display = 'none';
+        }
+
+        // Tampilkan jendela preview struk fisik asli
+        const previewModal = document.getElementById('modalKertasFisikPreview');
+        previewModal.classList.remove('d-none');
+        previewModal.style.display = 'flex';
+      }
+
+      function confirmFinalSaveNota() {
+        const headerText = document.getElementById('notaHeaderText').value;
+        const footerText = document.getElementById('notaFooterText').value;
+        const logoSrc = document.getElementById('notaLogoImg').src;
+        const logoWidthValue = document.getElementById('logoSizeSlider').value;
+
+        // Eksekusi penyimpanan final ke dalam localStorage perangkat
+        localStorage.setItem('pos_nota_header', headerText);
+        localStorage.setItem('pos_nota_footer', footerText);
+        localStorage.setItem('pos_nota_logo', logoSrc);
+        localStorage.setItem('pos_nota_logo_width', logoWidthValue);
+
+        // Tutup seluruh tumpukan jendela arsitektur design struk
+        document.getElementById('modalKertasFisikPreview').classList.add('d-none');
+        document.getElementById('modalKertasFisikPreview').style.display = 'none';
+        document.getElementById('modalDesignNota').classList.add('d-none');
+        
+        // Kembalikan pengguna ke window setting utama printer thermal
+        document.getElementById('modalThermalSetting').classList.remove('d-none');
+      }
+
+      function cancelPreviewNota() {
+        const previewModal = document.getElementById('modalKertasFisikPreview');
+        previewModal.classList.add('d-none');
+        previewModal.style.display = 'none';
+        // Pengguna tetap berada di halaman design nota untuk menyempurnakan layout
+      }
+
+      // ==========================================
+      // THERMAL PRINTER ENGINE (ESC/POS, BT, QZ)
+      // ==========================================
+
+      let BLUETOOTH_DEVICE = null;
+      let BLUETOOTH_CHARACTERISTIC = null;
+
+      // 1. Fungsi Menyimpan Konfigurasi Perangkat
+      function saveThermalConfig(btn) {
+        const type = document.getElementById('printerConnectionType').value;
+        const size = document.getElementById('printerPaperSize').value;
+        const isActive = document.getElementById('thermalToggle').checked;
+
+        localStorage.setItem('pos_printer_type', type);
+        localStorage.setItem('pos_printer_size', size);
+        localStorage.setItem('pos_printer_active', isActive ? 'true' : 'false');
+        
+        btn.innerHTML = '<i class="fas fa-check"></i> TERSIMPAN';
+        btn.classList.replace('btn-dark', 'btn-success');
         
         setTimeout(() => {
-          btnEl.innerHTML = originalText;
-          btnEl.classList.replace('btn-success', 'btn-primary');
-          closeDesignNotaModal();
+          btn.innerHTML = 'SIMPAN PENGATURAN';
+          btn.classList.replace('btn-success', 'btn-dark');
+          closeThermalSettingModal();
         }, 1000);
+      }
+
+      // Saat halaman dimuat, panggil konfigurasi yang tersimpan
+      window.addEventListener('DOMContentLoaded', () => {
+        if (localStorage.getItem('pos_printer_active') === 'true') {
+          document.getElementById('thermalToggle').checked = true;
+          document.getElementById('btnThermalSetting').classList.remove('d-none');
+        }
+        if (localStorage.getItem('pos_printer_type')) {
+          document.getElementById('printerConnectionType').value = localStorage.getItem('pos_printer_type');
+        }
+        if (localStorage.getItem('pos_printer_size')) {
+          document.getElementById('printerPaperSize').value = localStorage.getItem('pos_printer_size');
+        }
+      });
+
+      // 2. Format Teks ke ESC/POS (Rata Kiri Kanan / Justify)
+      function padText(leftText, rightText, maxChars) {
+        const spaces = maxChars - leftText.length - rightText.length;
+        if (spaces > 0) return leftText + ' '.repeat(spaces) + rightText;
+        return leftText + ' ' + rightText; // Fallback jika kepanjangan
+      }
+
+      // 3. Konverter Gambar ke ESC/POS (Raster Bit Image GS v 0)
+      async function getEscPosImageBytes(imgBase64, targetWidth) {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            // Pastikan width kelipatan 8
+            const width = Math.round(targetWidth / 8) * 8;
+            const scale = width / img.width;
+            const height = Math.round((img.height * scale) / 8) * 8;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            
+            // Isi background putih
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const imageData = ctx.getImageData(0, 0, width, height).data;
+            const bytes = [];
+            
+            // Header ESC/POS Raster Image: GS v 0 0 xL xH yL yH
+            const xL = (width / 8) % 256;
+            const xH = Math.floor((width / 8) / 256);
+            const yL = height % 256;
+            const yH = Math.floor(height / 256);
+            
+            bytes.push(0x1D, 0x76, 0x30, 0x00, xL, xH, yL, yH);
+
+            // Algoritma Monochrome Dithering/Thresholding
+            for (let y = 0; y < height; y++) {
+              for (let x = 0; x < width; x += 8) {
+                let byte = 0;
+                for (let bit = 0; bit < 8; bit++) {
+                  const idx = ((y * width) + (x + bit)) * 4;
+                  // RGB ke Grayscale
+                  const grayscale = (imageData[idx] * 0.299) + (imageData[idx+1] * 0.587) + (imageData[idx+2] * 0.114);
+                  // Threshold (Jika lebih gelap dari 128, jadikan titik/1)
+                  if (grayscale < 128) byte |= (1 << (7 - bit));
+                }
+                bytes.push(byte);
+              }
+            }
+            resolve(bytes);
+          };
+          img.src = imgBase64;
+        });
+      }
+
+      // 4. Kompilasi Data Transaksi Menjadi Array Bytes ESC/POS
+      async function buildEscPosBytes(transactionData) {
+        let bytes = [];
+        const encoder = new TextEncoder();
+        const pushTxt = (str) => bytes.push(...encoder.encode(str + '\n'));
+        
+        const cmd = {
+          init: [0x1B, 0x40],
+          alignCenter: [0x1B, 0x61, 1],
+          alignLeft: [0x1B, 0x61, 0],
+          boldOn: [0x1B, 0x45, 1],
+          boldOff: [0x1B, 0x45, 0],
+          cut: [0x1D, 0x56, 0x41, 0x00],
+          openDrawer: [0x1B, 0x70, 0x00, 0x19, 0xFA]
+        };
+
+        const paperSize = parseInt(localStorage.getItem('pos_printer_size')) || 58;
+        const maxChars = paperSize === 80 ? 48 : 32;
+
+        bytes.push(...cmd.init);
+        bytes.push(...cmd.alignCenter);
+
+        // A. Logo (Opsional)
+        const logoStr = localStorage.getItem('pos_nota_logo');
+        if (logoStr && logoStr.startsWith('data:image')) {
+          const logoWidth = parseInt(localStorage.getItem('pos_nota_logo_width')) || 60;
+          // Skala ulang untuk thermal (kertas 58mm = max 384px. Lebar 60px di layar ~ 150px di printer)
+          const printWidth = (paperSize === 80) ? (logoWidth * 3) : (logoWidth * 2.5);
+          const imgBytes = await getEscPosImageBytes(logoStr, printWidth);
+          bytes.push(...imgBytes);
+        }
+
+        // B. Header
+        bytes.push(...cmd.boldOn);
+        const header = localStorage.getItem('pos_nota_header') || 'PLATARIUM POS\nJl. Kopi Nikmat No.1';
+        header.split('\n').forEach(line => pushTxt(line));
+        bytes.push(...cmd.boldOff);
+        pushTxt('-'.repeat(maxChars));
+
+        // C. Info Transaksi
+        bytes.push(...cmd.alignLeft);
+        pushTxt(`ID   : ${transactionData.orderId || 'ORD-NEW'}`);
+        pushTxt(`Kasir: ${transactionData.cashier || 'Admin'}`);
+        pushTxt(`Waktu: ${new Date().toLocaleString('id-ID')}`);
+        pushTxt('-'.repeat(maxChars));
+
+        // D. Item
+        transactionData.items.forEach(i => {
+          let itemName = i.name.substring(0, maxChars - 12); 
+          pushTxt(itemName);
+          const qtyPrice = `x${i.qty} @${(i.price).toLocaleString('id-ID')}`;
+          const subtotal = (i.qty * i.price).toLocaleString('id-ID');
+          pushTxt(padText(qtyPrice, subtotal, maxChars));
+        });
+
+        pushTxt('-'.repeat(maxChars));
+        bytes.push(...cmd.boldOn);
+        pushTxt(padText('TOTAL:', transactionData.total.toLocaleString('id-ID'), maxChars));
+        pushTxt(padText('BAYAR:', transactionData.cash.toLocaleString('id-ID'), maxChars));
+        pushTxt(padText('KEMBALI:', transactionData.change.toLocaleString('id-ID'), maxChars));
+        bytes.push(...cmd.boldOff);
+        pushTxt('-'.repeat(maxChars));
+
+        // E. Footer
+        bytes.push(...cmd.alignCenter);
+        const footer = localStorage.getItem('pos_nota_footer') || 'Terima Kasih';
+        footer.split('\n').forEach(line => pushTxt(line));
+        
+        // F. Feed & Cut & Buka Laci Kasir
+        pushTxt('\n\n\n'); 
+        bytes.push(...cmd.cut);
+        bytes.push(...cmd.openDrawer); 
+
+        return bytes;
+      }
+
+      // 5. Eksekutor Cetak Web Bluetooth API (Mobile/Tablet)
+      async function executeBluetoothPrint(bytes) {
+        try {
+          if (!BLUETOOTH_DEVICE || !BLUETOOTH_DEVICE.gatt.connected) {
+            BLUETOOTH_DEVICE = await navigator.bluetooth.requestDevice({
+              acceptAllDevices: true,
+              optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2']
+            });
+          }
+
+          const server = await BLUETOOTH_DEVICE.gatt.connect();
+          // Mencari service printer standard
+          const services = await server.getPrimaryServices();
+          if (services.length === 0) throw new Error("Service tidak ditemukan di perangkat Bluetooth.");
+          const service = services[0];
+          
+          const characteristics = await service.getCharacteristics();
+          if (characteristics.length === 0) throw new Error("Karakteristik Bluetooth tidak valid.");
+          
+          // Cari endpoint untuk "write"
+          const characteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse) || characteristics[0];
+
+          // Karena Bluetooth LE punya limit ukuran per-paket, kita pecah bytes menjadi chunk (potongan)
+          const chunkSize = 256; 
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            const chunk = new Uint8Array(bytes.slice(i, i + chunkSize));
+            await characteristic.writeValue(chunk);
+          }
+          
+        } catch (error) {
+          console.error("Bluetooth Error:", error);
+          alert("Gagal mencetak via Bluetooth: " + error.message + "\n(Pastikan Bluetooth nyala & Printer sudah dipairing)");
+          throw error;
+        }
+      }
+
+      // 6. Eksekutor Cetak QZ Tray (Desktop PC/Mac)
+      async function executeQZPrint(bytes) {
+        try {
+          if (!qz.websocket.isActive()) {
+            await qz.websocket.connect();
+          }
+          // Mengambil printer default di OS Windows/Mac
+          const defaultPrinter = await qz.printers.getDefault();
+          const config = qz.configs.create(defaultPrinter);
+          
+          // QZ Tray menerima Hex Array
+          const hexData = bytes.map(b => b.toString(16).padStart(2, '0')).join('');
+          
+          const dataObj = [{
+            type: 'raw',
+            format: 'command',
+            flavor: 'hex',
+            data: hexData
+          }];
+
+          await qz.print(config, dataObj);
+          
+        } catch (error) {
+          console.error("QZ Tray Error:", error);
+          alert("Gagal mencetak via USB QZ Tray. Pastikan aplikasi QZ Tray sedang berjalan di background komputer Anda.");
+          throw error;
+        }
+      }
+
+      // 7. Master Controller
+      async function autoPrintReceipt(transactionData) {
+        if (localStorage.getItem('pos_printer_active') !== 'true') return;
+        
+        const connType = localStorage.getItem('pos_printer_type') || 'bluetooth';
+        
+        try {
+          const bytes = await buildEscPosBytes(transactionData);
+          if (connType === 'bluetooth') {
+            await executeBluetoothPrint(bytes);
+          } else {
+            await executeQZPrint(bytes);
+          }
+        } catch (e) {
+          console.warn("Proses cetak terhenti.");
+        }
       }
     </script>
 
@@ -6257,6 +6549,12 @@
           <div class="d-flex justify-content-between small mb-1"><span>Total</span><span id="sumTotal">Rp 0</span></div>
           <div class="d-flex justify-content-between small mb-1"><span>Bayar</span><span id="sumPay">Rp 0</span></div>
           <div class="d-flex justify-content-between fw-bold border-top mt-2 pt-2"><span>Kembali</span><span id="sumChange">Rp 0</span></div>
+        </div>
+
+        <div class="d-flex gap-2 mb-2">
+          <button class="btn btn-outline-dark w-100 py-3 rounded-pill fw-bold" onclick="autoPrintReceipt(window.LATEST_TRANSACTION_DATA)">
+            <i class="fas fa-print me-2"></i>CETAK ULANG
+          </button>
         </div>
 
         <button class="btn btn-dark w-100 py-3 rounded-pill fw-bold" onclick="resetAfterPayment()">SELESAI (ENTER)</button>
@@ -6625,7 +6923,7 @@
           <i class="fas fa-paint-roller me-2"></i>DESIGN NOTA
         </button>
 
-        <button class="btn btn-dark w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="closeThermalSettingModal()">
+        <button class="btn btn-dark w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="saveThermalConfig(this)">
           SIMPAN PENGATURAN
         </button>
       </div>
@@ -6685,6 +6983,52 @@
         <div class="flex-shrink-0 pt-3 border-top mt-3 d-flex gap-2">
           <button class="btn btn-light w-100 py-3 rounded-pill fw-bold" onclick="closeDesignNotaModal()">KEMBALI</button>
           <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="saveDesignNota(this)">SIMPAN DESIGN</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modalKertasFisikPreview" class="login-overlay d-none" style="background: rgba(0,0,0,0.95); z-index: 12500; opacity: 1 !important; display: none; align-items: center; justify-content: center;">
+      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 400px; height: 85vh; animation: zoomIn 0.3s ease-out;">
+        
+        <div class="text-center mb-3 border-bottom pb-2 flex-shrink-0">
+          <h5 class="fw-bold m-0 text-success"><i class="fas fa-eye me-2"></i>Hasil Akhir Cetak (Preview)</h5>
+          <p class="text-muted small m-0" style="font-size: 0.65rem;">Seluruh slider dan tombol kontrol disembunyikan. Jarak di bawah ini adalah representasi akurat 1:1 di kertas printer.</p>
+        </div>
+        
+        <div class="flex-fill overflow-auto d-flex justify-content-center align-items-start py-3" style="background: #f0f2f5; border-radius: 20px;">
+          <div class="receipt-preview shadow-sm" style="background: white; width: 260px; padding: 20px 15px; font-family: 'Courier New', Courier, monospace; font-size: 0.75rem; color: #000; border: 1px dashed #ccc;">
+            
+            <div class="text-center mb-2">
+              <img id="fpLogoImg" src="" style="width: 60px; display: none; margin: 0 auto;">
+            </div>
+
+            <div class="text-center mb-3">
+              <pre id="fpHeader" style="font-family: 'Courier New'; font-size: 0.85rem; font-weight: bold; white-space: pre-wrap; margin: 0; text-align: center; color: #000;"></pre>
+            </div>
+
+            <div style="border-bottom: 1px dashed #000; margin-bottom: 10px;"></div>
+            <div class="text-muted" style="font-size: 0.65rem; user-select: none;">
+              <div>ORD-12345678</div>
+              <div>21/05/2026 14:30</div>
+              <div>Kasir: Kasir Utama</div>
+            </div>
+            <div style="border-bottom: 1px dashed #000; margin-bottom: 10px;"></div>
+            <div class="d-flex justify-content-between text-muted" style="font-size: 0.65rem; user-select: none;"><span>Espresso (x1)</span><span>15.000</span></div>
+            <div class="d-flex justify-content-between text-muted" style="font-size: 0.65rem; user-select: none;"><span>Latte (x1)</span><span>20.000</span></div>
+            <div style="border-bottom: 1px dashed #000; margin-top: 10px; margin-bottom: 10px;"></div>
+            <div class="d-flex justify-content-between fw-bold text-muted" style="font-size: 0.7rem; user-select: none;"><span>TOTAL</span><span>35.000</span></div>
+            <div style="border-bottom: 1px dashed #000; margin-top: 10px; margin-bottom: 10px;"></div>
+
+            <div class="text-center mt-3">
+              <pre id="fpFooter" style="font-family: 'Courier New'; font-size: 0.75rem; white-space: pre-wrap; margin: 0; text-align: center; color: #000;"></pre>
+            </div>
+            
+          </div>
+        </div>
+
+        <div class="flex-shrink-0 pt-3 border-top mt-3 d-flex gap-2">
+          <button class="btn btn-light w-100 py-3 rounded-pill fw-bold" onclick="cancelPreviewNota()">BATAL (EDIT LAGI)</button>
+          <button class="btn btn-success w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="confirmFinalSaveNota()">OK (SIMPAN)</button>
         </div>
       </div>
     </div>
