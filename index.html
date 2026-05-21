@@ -690,12 +690,13 @@
         document.getElementById('loginOverlay').style.opacity = '1';
       }
 
-      // Backup: Timeout diperpanjang ke 5 detik untuk mengantisipasi koneksi lambat saat memuat gambar berat
+      // Backup: Timeout diperpanjang ke 12 detik untuk mengantisipasi koneksi lambat
+      // terutama saat mengunduh custom background beresolusi tinggi
       setTimeout(() => {
         isConfigChecked = true;
         isCustomBgLoading = false;
         removeLoaderAndShowUI();
-      }, 5000);
+      }, 12000);
     </script>
 
     <div id="main-container" class="d-none">
@@ -1563,6 +1564,21 @@
 
                 <button class="btn btn-dark border-warning w-100 py-3 mb-0 rounded-pill fw-bold shadow-sm" id="btnAdvanceTelegram" onclick="openTelegramModal()" style="opacity: 0.5; pointer-events: none; transition: 0.3s; color: var(--primary-gold);">
                   <i class="fas fa-sliders-h me-2"></i>Advance Setting for Telegram
+                </button>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-5">
+              <div class="card border-0 shadow-sm rounded-4 p-4 h-100 border-start border-4 border-success">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                  <h6 class="fw-bold m-0 text-dark"><i class="fas fa-file-invoice-dollar text-success me-2"></i>Invoice Upgrade</h6>
+                  <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" role="switch" id="invoiceToggle" onchange="toggleInvoiceInputs()" style="width: 40px; height: 20px; cursor:pointer;">
+                  </div>
+                </div>
+
+                <button class="btn btn-dark border-success w-100 py-3 mb-0 rounded-pill fw-bold shadow-sm" id="btnAdvanceInvoice" onclick="openInvoiceModal()" style="opacity: 0.5; pointer-events: none; transition: 0.3s; color: #2ecc71;">
+                  <i class="fas fa-sliders-h me-2"></i>Advance Setting for Invoice
                 </button>
               </div>
             </div>
@@ -2480,20 +2496,26 @@
             
             if (savedShift) {
               SHIFT_DATA = JSON.parse(savedShift);
-              if (SHIFT_DATA.locked) {
-                if (SHIFT_DATA.cashier === ACTIVE_CASHIER) {
-                  SHIFT_DATA.locked = false;
-                  localStorage.setItem('pos_shift_data', JSON.stringify(SHIFT_DATA));
-                  IS_SUBSTITUTE = false;
-                  proceedToMainUI(res);
-                } else {
-                  IS_SUBSTITUTE = true;
-                  document.getElementById('btnLock').classList.add('d-none');
-                  document.getElementById('substituteOwnerName').innerText = SHIFT_DATA.cashier;
-                  document.getElementById('modalSubstituteAlert').classList.remove('d-none');
-                  proceedToMainUI(res);
-                }
+              
+              // [BUG FIX]: Cek identitas Kasir tanpa mempedulikan status 'locked'
+              // Ini menangani kasus reload browser mendadak.
+              if (SHIFT_DATA.cashier === ACTIVE_CASHIER) {
+                // Kasir asli kembali (entah dari locked screen atau reload mendadak)
+                SHIFT_DATA.locked = false;
+                localStorage.setItem('pos_shift_data', JSON.stringify(SHIFT_DATA));
+                IS_SUBSTITUTE = false;
+                proceedToMainUI(res);
               } else {
+                // Kasir B login di atas shift Kasir A
+                IS_SUBSTITUTE = true;
+                
+                // Paksa kunci shift Kasir A di sistem agar aman
+                SHIFT_DATA.locked = true;
+                localStorage.setItem('pos_shift_data', JSON.stringify(SHIFT_DATA));
+
+                document.getElementById('btnLock').classList.add('d-none');
+                document.getElementById('substituteOwnerName').innerText = SHIFT_DATA.cashier;
+                document.getElementById('modalSubstituteAlert').classList.remove('d-none');
                 proceedToMainUI(res);
               }
             } else {
@@ -2526,7 +2548,6 @@
                 }
               }
               
-              // CASE A: Muncul hanya jika ada transaksi pra-shift oleh Owner/Admin
               if (adminTotal > 0) {
                 let roleText = namesArr.length > 0 ? namesArr.join(' dan ') : 'Admin';
                 if (adminCash > 0) {
@@ -2535,7 +2556,7 @@
                   noteEl.innerHTML = `<i class="fas fa-info-circle me-1"></i>${roleText} melakukan transaksi darurat (non-tunai) senilai Rp ${adminTotal.toLocaleString()} sebelum shift Anda dimulai.`;
                 }
                 noteEl.classList.remove('d-none');
-                inputStart.value = adminCash; // Mengisi awalan input otomatis agar bisa dimodifikasi kasir
+                inputStart.value = adminCash;
               } else {
                 noteEl.classList.add('d-none');
                 inputStart.value = '';
@@ -2660,6 +2681,29 @@
         document.getElementById('modalTelegramSetting').classList.add('d-none');
       }
 
+      // --- KONTROL UI INVOICE UPGRADE ---
+      function toggleInvoiceInputs() {
+        const isActive = document.getElementById('invoiceToggle').checked;
+        const btn = document.getElementById('btnAdvanceInvoice');
+        if (btn) {
+          if (isActive) {
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+          } else {
+            btn.style.opacity = '0.5';
+            btn.style.pointerEvents = 'none';
+          }
+        }
+      }
+
+      function openInvoiceModal() {
+        document.getElementById('modalInvoiceSetting').classList.remove('d-none');
+      }
+
+      function closeInvoiceModal() {
+        document.getElementById('modalInvoiceSetting').classList.add('d-none');
+      }
+      
       function saveSettingConfig() {
         const btn = document.getElementById('btnSaveSetting');
         if (btn) {
@@ -6379,6 +6423,53 @@
         </div>
 
         <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-sm" id="btnSaveSetting" onclick="saveSettingConfig()">
+          <i class="fas fa-save me-2"></i>SIMPAN & TUTUP
+        </button>
+      </div>
+    </div>
+
+    <div id="modalInvoiceSetting" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 10600; opacity: 1 !important;">
+      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 500px; animation: slideUp 0.3s ease-out;">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+          <h5 class="fw-bold m-0"><i class="fas fa-file-invoice text-success me-2"></i>Advance Invoice Setting</h5>
+          <button class="btn-close shadow-none" onclick="closeInvoiceModal()"></button>
+        </div>
+        
+        <div class="mb-4 text-start">
+          
+          <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-4 mb-2 border">
+            <div>
+              <div class="fw-bold text-dark">Digital Invoice (WhatsApp)</div>
+              <div class="small text-muted" style="line-height: 1.2;">Kirim nota digital otomatis ke pelanggan.</div>
+            </div>
+            <div class="form-check form-switch m-0">
+              <input class="form-check-input" type="checkbox" role="switch" style="width: 35px; height: 18px; cursor:pointer;">
+            </div>
+          </div>
+          
+          <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-4 mb-2 border">
+            <div>
+              <div class="fw-bold text-dark">Automatic Cash Drawer</div>
+              <div class="small text-muted" style="line-height: 1.2;">Buka laci otomatis saat print struk/sukses.</div>
+            </div>
+            <div class="form-check form-switch m-0">
+              <input class="form-check-input" type="checkbox" role="switch" style="width: 35px; height: 18px; cursor:pointer;">
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-4 mb-2 border">
+            <div>
+              <div class="fw-bold text-dark">Dual POS Monitor</div>
+              <div class="small text-muted" style="line-height: 1.2;">Layar kedua hadap pelanggan (Customer View).</div>
+            </div>
+            <div class="form-check form-switch m-0">
+              <input class="form-check-input" type="checkbox" role="switch" style="width: 35px; height: 18px; cursor:pointer;">
+            </div>
+          </div>
+
+        </div>
+
+        <button class="btn btn-success w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="closeInvoiceModal()">
           <i class="fas fa-save me-2"></i>SIMPAN & TUTUP
         </button>
       </div>
