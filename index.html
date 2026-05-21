@@ -673,7 +673,7 @@
       <img src="https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=2071" id="loginBg" alt="background" onload="showUI()">
 
       <div class="login-box">
-        <p class="text-white-50 small mb-4 fw-bold" style="letter-spacing: 3px; font-size: 0.6rem; opacity: 0.8;">SECURED SYSTEM</p>
+        <p class="text-dark small mb-4 fw-bold" style="letter-spacing: 3px; font-size: 0.6rem; opacity: 0.8;">SECURED SYSTEM</p>
         <div class="px-2">
           <input type="password" id="passInput" class="form-control text-center mb-3" placeholder="••••" onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleLogin(); }" autofocus>
           <button type="button" onclick="handleLogin()" class="btn btn-luxury w-100 py-2 rounded-3 fw-bold mb-2" style="letter-spacing: 2px;">LOGIN</button>
@@ -2463,15 +2463,18 @@
           if(res.status === 'success') {
             onLoginSuccess(res);
           } else {
-            statusField.style.color = '#ff7675';
+            // MERAH GELAP + BAYANGAN PUTIH
+            statusField.style.color = '#c0392b'; 
+            statusField.style.textShadow = '0px 0px 4px rgba(255, 255, 255, 0.9)'; 
             statusField.innerText = res.message || 'PIN Salah atau tidak terdaftar!';
             passField.value = '';
             passField.focus();
           }
         })
         .withFailureHandler(err => {
-          // --- INI AKAN MENANGKAP PESAN EXPIRED DARI KILL SWITCH ---
-          statusField.style.color = '#ff7675';
+          // MERAH GELAP + BAYANGAN PUTIH
+          statusField.style.color = '#c0392b';
+          statusField.style.textShadow = '0px 0px 4px rgba(255, 255, 255, 0.9)';
           statusField.innerText = err.message || 'Terjadi kesalahan koneksi sistem.';
           passField.value = '';
           passField.focus();
