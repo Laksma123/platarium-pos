@@ -6236,8 +6236,6 @@
 
       // Saat halaman dimuat, panggil konfigurasi yang tersimpan
       window.addEventListener('DOMContentLoaded', () => {
-        
-        // --- KONFIGURASI THERMAL PRINTER ---
         if (localStorage.getItem('pos_printer_active') === 'true') {
           document.getElementById('thermalToggle').checked = true;
           document.getElementById('btnThermalSetting').classList.remove('d-none');
@@ -6249,12 +6247,14 @@
           document.getElementById('printerPaperSize').value = localStorage.getItem('pos_printer_size');
         }
 
-        // --- KONFIGURASI DUAL POS MONITOR (TAMBAHKAN BLOK INI) ---
+        // --- LOGIKA PEMUAT CACHE DUAL POS MONITOR ---
         if (localStorage.getItem('pos_dual_monitor_active') === 'true') {
           document.getElementById('dualPosToggle').checked = true;
-          document.getElementById('btnLaunchDualPos').classList.remove('d-none');
+          document.getElementById('dualPosControls').classList.remove('d-none');
         }
-        
+        if (localStorage.getItem('pos_dual_monitor_video_url')) {
+          document.getElementById('dualPosVideoUrl').value = localStorage.getItem('pos_dual_monitor_video_url');
+        }
       });
 
       // 2. Format Teks ke ESC/POS (Rata Kiri Kanan / Justify)
@@ -6478,21 +6478,31 @@
       // DUAL POS MONITOR (CUSTOMER DISPLAY) ENGINE
       // ==========================================
 
-      // Membuat jalur komunikasi real-time antar window
       const posSyncChannel = new BroadcastChannel('platarium_pos_sync');
+
+      // Fungsi pembantu mengekstrak ID unik dari link YouTube apa saja
+      function extractYouTubeId(url) {
+        if (!url) return "zpOULjyy-n8"; // ID default jika kosong
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : "zpOULjyy-n8";
+      }
 
       function toggleDualPosBtn() {
         const isChecked = document.getElementById('dualPosToggle').checked;
-        const btn = document.getElementById('btnLaunchDualPos');
+        const controls = document.getElementById('dualPosControls');
         
         if (isChecked) {
-          btn.classList.remove('d-none');
+          controls.classList.remove('d-none');
         } else {
-          btn.classList.add('d-none');
+          controls.classList.add('d-none');
         }
-
-        // [TAMBAHAN] Simpan pilihan ini ke memori browser PC ini
         localStorage.setItem('pos_dual_monitor_active', isChecked ? 'true' : 'false');
+      }
+
+      function saveDualPosVideo() {
+        const urlValue = document.getElementById('dualPosVideoUrl').value.trim();
+        localStorage.setItem('pos_dual_monitor_video_url', urlValue);
       }
 
       function launchCustomerDisplay() {
@@ -6502,6 +6512,10 @@
           alert("Popup diblokir oleh browser! Mohon izinkan popup untuk web ini.");
           return;
         }
+
+        // Ambil link ter-save lalu ekstrak menjadi ID
+        const savedUrl = localStorage.getItem('pos_dual_monitor_video_url') || "";
+        const youtubeId = extractYouTubeId(savedUrl);
 
         customerWindow.document.write(`
           <!DOCTYPE html>
@@ -6515,19 +6529,13 @@
               .video-container { flex: 7; position: relative; background: #000; }
               .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; pointer-events: none; }
               .cart-container { flex: 3; background: #fff; display: flex; flex-direction: column; box-shadow: -10px 0 25px rgba(0,0,0,0.15); z-index: 10; }
-              
-              /* Font header diperkecil */
               .cart-header { background: #1a1a1a; color: #fff; padding: 15px; text-align: center; border-bottom: 3px solid #c5a059; }
               .cart-header h4 { font-size: 1rem; letter-spacing: 1px; font-weight: 600; margin: 0; }
-              
-              /* Area daftar belanja lebih rapat */
               .cart-items { flex: 1; overflow-y: auto; padding: 15px; background: #fafafa; }
               .item-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #ddd; font-size: 0.85rem; line-height: 1.3; }
               .item-name { font-weight: 600; color: #2d3436; display: block; }
               .item-qty { color: #c5a059; font-weight: 700; margin-left: 5px; font-size: 0.8rem; }
               .item-price { font-weight: 600; color: #2d3436; white-space: nowrap; }
-              
-              /* Footer & Total Harga disesuaikan proporsinya */
               .cart-footer { background: #fff; padding: 20px; border-top: 2px solid #eee; }
               .total-row { display: flex; justify-content: space-between; align-items: center; font-size: 1.3rem; font-weight: 700; color: #2d3436; }
               .total-price { color: #d35400; font-weight: 800; }
@@ -6536,7 +6544,7 @@
           </head>
           <body>
             <div class="video-container">
-              <iframe src="https://www.youtube.com/embed/zpOULjyy-n8?autoplay=1&mute=1&controls=0&loop=1&playlist=zpOULjyy-n8" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+              <iframe src="https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${youtubeId}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
             </div>
             <div class="cart-container">
               <div class="cart-header">
@@ -6555,35 +6563,25 @@
 
             <script>
               const syncChannel = new BroadcastChannel('platarium_pos_sync');
-              
               syncChannel.onmessage = (event) => {
                 const data = event.data;
-                if (data.type === 'UPDATE_CART') {
-                  renderCart(data.cart, data.total);
-                } else if (data.type === 'CLEAR_CART') {
-                  renderCart([], 0);
-                }
+                if (data.type === 'UPDATE_CART') { renderCart(data.cart, data.total); }
+                else if (data.type === 'CLEAR_CART') { renderCart([], 0); }
               };
 
               function renderCart(cart, total) {
                 const container = document.getElementById('cdItems');
                 const totalEl = document.getElementById('cdTotal');
-                
                 if (!cart || cart.length === 0) {
                   container.innerHTML = '<div class="empty-state">Belum ada pesanan</div>';
                   totalEl.innerText = 'Rp 0';
                   return;
                 }
-
                 let htmlString = '';
                 cart.forEach(item => {
                   let subtotal = (item.price * item.qty).toLocaleString('id-ID');
-                  htmlString += '<div class="item-row">';
-                  htmlString += '<div><span class="item-name">' + item.name + '<span class="item-qty">x' + item.qty + '</span></span></div>';
-                  htmlString += '<span class="item-price">Rp ' + subtotal + '</span>';
-                  htmlString += '</div>';
+                  htmlString += '<div class="item-row"><div><span class="item-name">' + item.name + '<span class="item-qty">x' + item.qty + '</span></span></div><span class="item-price">Rp ' + subtotal + '</span></div>';
                 });
-                
                 container.innerHTML = htmlString;
                 totalEl.innerText = 'Rp ' + total.toLocaleString('id-ID');
                 container.scrollTop = container.scrollHeight;
@@ -6593,7 +6591,6 @@
           </html>
         `);
         customerWindow.document.close();
-
         posSyncChannel.postMessage({ type: 'UPDATE_CART', cart: CART, total: CURRENT_TOTAL });
       }
     </script>
@@ -7011,9 +7008,16 @@
                 <input class="form-check-input" type="checkbox" id="dualPosToggle" role="switch" onchange="toggleDualPosBtn()" style="width: 35px; height: 18px; cursor:pointer;">
               </div>
             </div>
-            <button class="btn btn-sm btn-outline-primary w-100 fw-bold mt-3 d-none" id="btnLaunchDualPos" onclick="launchCustomerDisplay()">
-              <i class="fas fa-desktop me-1"></i> Buka Layar Pelanggan
-            </button>
+            
+            <div id="dualPosControls" class="d-none mt-3">
+              <div class="mb-2">
+                <label class="small fw-bold text-muted mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">LINK VIDEO PROMO (YOUTUBE)</label>
+                <input type="text" id="dualPosVideoUrl" class="form-control form-control-sm border-2 fw-bold" placeholder="https://www.youtube.com/watch?v=..." oninput="saveDualPosVideo()">
+              </div>
+              <button class="btn btn-sm btn-outline-primary w-100 fw-bold mt-2" id="btnLaunchDualPos" onclick="launchCustomerDisplay()">
+                <i class="fas fa-desktop me-1"></i> Buka Layar Pelanggan
+              </button>
+            </div>
           </div>
 
         </div>
