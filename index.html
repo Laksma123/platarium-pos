@@ -1218,34 +1218,12 @@
           <div class="d-flex flex-column h-100 p-2 p-md-3">
               <div class="d-flex justify-content-between align-items-center mb-2">
                   <h5 class="fw-bold text-white m-0"><i class="fas fa-fire-burner me-2 text-warning"></i>Kitchen Monitor</h5>
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                  <ul class="nav nav-pills gap-2" id="monitorTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                      <button class="btn btn-outline-warning active rounded-pill fw-bold px-3 px-md-4" id="tab-kitchen" data-bs-toggle="pill" data-bs-target="#content-kitchen" type="button" role="tab"><i class="fas fa-fire-burner me-2"></i>Kitchen</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                      <button class="btn btn-outline-info rounded-pill fw-bold px-3 px-md-4" id="tab-bar" data-bs-toggle="pill" data-bs-target="#content-bar" type="button" role="tab"><i class="fas fa-mug-hot me-2"></i>Bar</button>
-                    </li>
-                  </ul>
                   <button class="btn btn-warning btn-sm rounded-pill fw-bold shadow-sm" onclick="showDoneOrders()"><i class="fas fa-check-circle me-1"></i>Selesai</button>
               </div>
               
               <div class="monitor-rope-container flex-fill mb-2">
                   <div class="rope-line"></div>
                   <div id="kitchenTicketsArea" class="d-inline-flex gap-2 align-items-start h-100" style="padding-left: 10px; padding-bottom: 10px;"></div>
-              <div class="tab-content flex-fill" id="monitorTabsContent">
-                <div class="tab-pane fade show active h-100" id="content-kitchen" role="tabpanel">
-                  <div class="monitor-rope-container h-100 mb-2">
-                      <div class="rope-line"></div>
-                      <div id="kitchenTicketsArea" class="d-inline-flex gap-2 align-items-start h-100" style="padding-left: 10px; padding-bottom: 10px;"></div>
-                  </div>
-                </div>
-                <div class="tab-pane fade h-100" id="content-bar" role="tabpanel">
-                  <div class="monitor-rope-container h-100 mb-2">
-                      <div class="rope-line"></div>
-                      <div id="barTicketsArea" class="d-inline-flex gap-2 align-items-start h-100" style="padding-left: 10px; padding-bottom: 10px;"></div>
-                  </div>
-                </div>
               </div>
 
               <h5 class="fw-bold text-white m-0 mb-2"><i class="fas fa-mug-hot me-2 text-info"></i>Bar Monitor</h5>
@@ -2944,8 +2922,6 @@
         // Set Empty State Jika Tidak Ada Order
         kArea.innerHTML = kHtml || '<div class="text-white-50 mt-5 w-100 text-center" style="position:absolute; left:0;"><i class="fas fa-bed fa-2x mb-2"></i><br>Tidak ada antrian Kitchen</div>';
         bArea.innerHTML = bHtml || '<div class="text-white-50 mt-5 w-100 text-center" style="position:absolute; left:0;"><i class="fas fa-glass-water fa-2x mb-2"></i><br>Tidak ada antrian Bar</div>';
-        kArea.innerHTML = kHtml || '<div class="text-white-50 mt-5 w-100 text-center" style="position:absolute; left:0;">Tidak ada antrian Kitchen</div>';
-        bArea.innerHTML = bHtml || '<div class="text-white-50 mt-5 w-100 text-center" style="position:absolute; left:0;">Tidak ada antrian Bar</div>';
         dArea.innerHTML = dHtml || '<div class="text-muted text-center p-4">Belum ada orderan yang diselesaikan hari ini</div>';
 
         if (!IS_SORTABLE_INIT) {
