@@ -6236,6 +6236,8 @@
 
       // Saat halaman dimuat, panggil konfigurasi yang tersimpan
       window.addEventListener('DOMContentLoaded', () => {
+        
+        // --- KONFIGURASI THERMAL PRINTER ---
         if (localStorage.getItem('pos_printer_active') === 'true') {
           document.getElementById('thermalToggle').checked = true;
           document.getElementById('btnThermalSetting').classList.remove('d-none');
@@ -6246,6 +6248,13 @@
         if (localStorage.getItem('pos_printer_size')) {
           document.getElementById('printerPaperSize').value = localStorage.getItem('pos_printer_size');
         }
+
+        // --- KONFIGURASI DUAL POS MONITOR (TAMBAHKAN BLOK INI) ---
+        if (localStorage.getItem('pos_dual_monitor_active') === 'true') {
+          document.getElementById('dualPosToggle').checked = true;
+          document.getElementById('btnLaunchDualPos').classList.remove('d-none');
+        }
+        
       });
 
       // 2. Format Teks ke ESC/POS (Rata Kiri Kanan / Justify)
@@ -6475,15 +6484,18 @@
       function toggleDualPosBtn() {
         const isChecked = document.getElementById('dualPosToggle').checked;
         const btn = document.getElementById('btnLaunchDualPos');
+        
         if (isChecked) {
           btn.classList.remove('d-none');
         } else {
           btn.classList.add('d-none');
         }
+
+        // [TAMBAHAN] Simpan pilihan ini ke memori browser PC ini
+        localStorage.setItem('pos_dual_monitor_active', isChecked ? 'true' : 'false');
       }
 
       function launchCustomerDisplay() {
-        // Buka window baru kosong
         const customerWindow = window.open('', 'CustomerDisplay', 'width=1024,height=768');
         
         if (!customerWindow) {
@@ -6491,7 +6503,6 @@
           return;
         }
 
-        // Tulis struktur HTML untuk layar pelanggan
         customerWindow.document.write(`
           <!DOCTYPE html>
           <html lang="id">
@@ -6503,17 +6514,24 @@
               body { margin: 0; overflow: hidden; background: #000; font-family: 'Poppins', sans-serif; display: flex; height: 100vh; }
               .video-container { flex: 7; position: relative; background: #000; }
               .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; pointer-events: none; }
-              .cart-container { flex: 3; background: #fff; display: flex; flex-direction: column; box-shadow: -10px 0 30px rgba(0,0,0,0.2); z-index: 10; }
-              .cart-header { background: #1a1a1a; color: #fff; padding: 25px; text-align: center; }
-              .cart-items { flex: 1; overflow-y: auto; padding: 20px; }
-              .item-row { display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #eee; font-size: 1.2rem; }
-              .item-name { font-weight: bold; color: #2d3436; }
-              .item-qty { color: #c5a059; font-weight: bold; margin-left: 10px; }
-              .item-price { font-weight: bold; color: #2d3436; }
-              .cart-footer { background: #f8f9fa; padding: 30px; border-top: 2px solid #eee; }
-              .total-row { display: flex; justify-content: space-between; font-size: 2rem; font-weight: 800; color: #2d3436; }
-              .total-price { color: #d35400; }
-              .empty-state { text-align: center; color: #aaa; margin-top: 50px; font-size: 1.2rem; }
+              .cart-container { flex: 3; background: #fff; display: flex; flex-direction: column; box-shadow: -10px 0 25px rgba(0,0,0,0.15); z-index: 10; }
+              
+              /* Font header diperkecil */
+              .cart-header { background: #1a1a1a; color: #fff; padding: 15px; text-align: center; border-bottom: 3px solid #c5a059; }
+              .cart-header h4 { font-size: 1rem; letter-spacing: 1px; font-weight: 600; margin: 0; }
+              
+              /* Area daftar belanja lebih rapat */
+              .cart-items { flex: 1; overflow-y: auto; padding: 15px; background: #fafafa; }
+              .item-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #ddd; font-size: 0.85rem; line-height: 1.3; }
+              .item-name { font-weight: 600; color: #2d3436; display: block; }
+              .item-qty { color: #c5a059; font-weight: 700; margin-left: 5px; font-size: 0.8rem; }
+              .item-price { font-weight: 600; color: #2d3436; white-space: nowrap; }
+              
+              /* Footer & Total Harga disesuaikan proporsinya */
+              .cart-footer { background: #fff; padding: 20px; border-top: 2px solid #eee; }
+              .total-row { display: flex; justify-content: space-between; align-items: center; font-size: 1.3rem; font-weight: 700; color: #2d3436; }
+              .total-price { color: #d35400; font-weight: 800; }
+              .empty-state { text-align: center; color: #999; margin-top: 40px; font-size: 0.85rem; font-style: italic; }
             </style>
           </head>
           <body>
@@ -6522,7 +6540,7 @@
             </div>
             <div class="cart-container">
               <div class="cart-header">
-                <h2 class="m-0 fw-bold" style="color: #c5a059;">PESANAN ANDA</h2>
+                <h4 style="color: #c5a059;">PESANAN ANDA</h4>
               </div>
               <div class="cart-items" id="cdItems">
                 <div class="empty-state">Belum ada pesanan</div>
@@ -6557,20 +6575,17 @@
                   return;
                 }
 
-                // [FIX] Menggunakan string concatenation biasa agar VSC tidak error
                 let htmlString = '';
                 cart.forEach(item => {
                   let subtotal = (item.price * item.qty).toLocaleString('id-ID');
                   htmlString += '<div class="item-row">';
-                  htmlString += '<div><span class="item-name">' + item.name + '</span><span class="item-qty">x' + item.qty + '</span></div>';
+                  htmlString += '<div><span class="item-name">' + item.name + '<span class="item-qty">x' + item.qty + '</span></span></div>';
                   htmlString += '<span class="item-price">Rp ' + subtotal + '</span>';
                   htmlString += '</div>';
                 });
                 
                 container.innerHTML = htmlString;
                 totalEl.innerText = 'Rp ' + total.toLocaleString('id-ID');
-                
-                // Auto scroll ke bawah agar item terbaru terlihat
                 container.scrollTop = container.scrollHeight;
               }
             <\/script>
@@ -6579,7 +6594,6 @@
         `);
         customerWindow.document.close();
 
-        // Kirim data awal (jika saat kasir menekan buka, sudah ada item di keranjang)
         posSyncChannel.postMessage({ type: 'UPDATE_CART', cart: CART, total: CURRENT_TOTAL });
       }
     </script>
@@ -6975,6 +6989,21 @@
           <div class="p-3 bg-light rounded-4 mb-2 border">
             <div class="d-flex justify-content-between align-items-center">
               <div>
+                <div class="fw-bold text-dark">Thermal Printer</div>
+                <div class="small text-muted" style="line-height: 1.2;">Print nota otomatis via Thermal Printer.</div>
+              </div>
+              <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" id="thermalToggle" role="switch" onchange="toggleThermalSettingBtn()" style="width: 35px; height: 18px; cursor:pointer;">
+              </div>
+            </div>
+            <button class="btn btn-sm btn-outline-dark w-100 fw-bold mt-3 d-none" id="btnThermalSetting" onclick="openThermalSettingModal()">
+              <i class="fas fa-print me-1"></i> Setting Printer
+            </button>
+          </div>
+
+          <div class="p-3 bg-light rounded-4 mb-2 border">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
                 <div class="fw-bold text-dark">Dual POS Monitor</div>
                 <div class="small text-muted" style="line-height: 1.2;">Layar kedua hadap pelanggan (Customer View).</div>
               </div>
@@ -6985,16 +7014,6 @@
             <button class="btn btn-sm btn-outline-primary w-100 fw-bold mt-3 d-none" id="btnLaunchDualPos" onclick="launchCustomerDisplay()">
               <i class="fas fa-desktop me-1"></i> Buka Layar Pelanggan
             </button>
-          </div>
-
-          <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-4 mb-2 border">
-            <div>
-              <div class="fw-bold text-dark">Dual POS Monitor</div>
-              <div class="small text-muted" style="line-height: 1.2;">Layar kedua hadap pelanggan (Customer View).</div>
-            </div>
-            <div class="form-check form-switch m-0">
-              <input class="form-check-input" type="checkbox" role="switch" style="width: 35px; height: 18px; cursor:pointer;">
-            </div>
           </div>
 
         </div>
