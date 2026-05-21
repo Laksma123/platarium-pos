@@ -3832,8 +3832,8 @@
         // [PERBAIKAN] Gunakan opsi maxWidth & maxHeight agar rasio asli dari cropBox tidak terdistorsi
         const canvasOptions = { 
           fillColor: '#ffffff',
-          maxWidth: 1080,
-          maxHeight: 1920 
+          maxWidth: 2560,  // Naikkan ke batas 2K
+          maxHeight: 2560  // Naikkan ke batas 2K
         };
         
         const canvas = CROPPER.getCroppedCanvas(canvasOptions);
