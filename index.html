@@ -1584,7 +1584,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                   <h6 class="fw-bold m-0 text-dark"><i class="fas fa-file-invoice-dollar text-success me-2"></i>Invoice Upgrade</h6>
                   <div class="form-check form-switch m-0">
-                    <input class="form-check-input" type="checkbox" role="switch" id="invoiceToggle" onchange="toggleInvoiceInputs()" style="width: 40px; height: 20px; cursor:pointer;">
+                    <input class="form-check-input" type="checkbox" role="switch" id="invoiceToggle" onchange="toggleInvoiceMain()" style="width: 40px; height: 20px; cursor:pointer;">
                   </div>
                 </div>
 
@@ -2706,6 +2706,15 @@
             btn.style.pointerEvents = 'none';
           }
         }
+      }
+
+      function toggleInvoiceMain() {
+        const isActive = document.getElementById('invoiceToggle').checked;
+        // Simpan status toggle utama ke memori browser/perangkat
+        localStorage.setItem('pos_invoice_main_active', isActive ? 'true' : 'false');
+        
+        // Panggil fungsi visual yang sudah ada
+        toggleInvoiceInputs();
       }
 
       function openInvoiceModal() {
@@ -6179,25 +6188,37 @@
         previewModal.style.display = 'flex';
       }
 
-      function confirmFinalSaveNota() {
-        const headerText = document.getElementById('notaHeaderText').value;
-        const footerText = document.getElementById('notaFooterText').value;
-        const logoSrc = document.getElementById('notaLogoImg').src;
-        const logoWidthValue = document.getElementById('logoSizeSlider').value;
+      function confirmFinalSaveNota(btnElement) {
+        // 1. Matikan tombol dan tampilkan spinner
+        const originalHTML = btnElement.innerHTML;
+        btnElement.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>MENYIMPAN...';
+        btnElement.disabled = true;
 
-        // Eksekusi penyimpanan final ke dalam localStorage perangkat
-        localStorage.setItem('pos_nota_header', headerText);
-        localStorage.setItem('pos_nota_footer', footerText);
-        localStorage.setItem('pos_nota_logo', logoSrc);
-        localStorage.setItem('pos_nota_logo_width', logoWidthValue);
+        // 2. Beri delay visual 600ms agar user merasa proses penyimpanan sedang berjalan
+        setTimeout(() => {
+          const headerText = document.getElementById('notaHeaderText').value;
+          const footerText = document.getElementById('notaFooterText').value;
+          const logoSrc = document.getElementById('notaLogoImg').src;
+          const logoWidthValue = document.getElementById('logoSizeSlider').value;
 
-        // Tutup seluruh tumpukan jendela arsitektur design struk
-        document.getElementById('modalKertasFisikPreview').classList.add('d-none');
-        document.getElementById('modalKertasFisikPreview').style.display = 'none';
-        document.getElementById('modalDesignNota').classList.add('d-none');
-        
-        // Kembalikan pengguna ke window setting utama printer thermal
-        document.getElementById('modalThermalSetting').classList.remove('d-none');
+          // Eksekusi penyimpanan final ke dalam localStorage perangkat
+          localStorage.setItem('pos_nota_header', headerText);
+          localStorage.setItem('pos_nota_footer', footerText);
+          localStorage.setItem('pos_nota_logo', logoSrc);
+          localStorage.setItem('pos_nota_logo_width', logoWidthValue);
+
+          // Tutup seluruh tumpukan jendela arsitektur design struk
+          document.getElementById('modalKertasFisikPreview').classList.add('d-none');
+          document.getElementById('modalKertasFisikPreview').style.display = 'none';
+          document.getElementById('modalDesignNota').classList.add('d-none');
+          
+          // Kembalikan pengguna ke window setting utama printer thermal
+          document.getElementById('modalThermalSetting').classList.remove('d-none');
+
+          // Kembalikan status tombol (berjaga-jaga jika modal dibuka lagi)
+          btnElement.innerHTML = originalHTML;
+          btnElement.disabled = false;
+        }, 600); 
       }
 
       function cancelPreviewNota() {
@@ -6245,6 +6266,15 @@
         }
         if (localStorage.getItem('pos_printer_size')) {
           document.getElementById('printerPaperSize').value = localStorage.getItem('pos_printer_size');
+        }
+
+        // Load status Invoice Upgrade (Main Toggle)
+        if (localStorage.getItem('pos_invoice_main_active') === 'true') {
+          const mainToggle = document.getElementById('invoiceToggle');
+          if (mainToggle) {
+            mainToggle.checked = true;
+            toggleInvoiceInputs(); // Update visual tombol "Advance Setting"
+          }
         }
 
         // --- LOGIKA PEMUAT CACHE DUAL POS MONITOR ---
@@ -6482,10 +6512,11 @@
 
       // Fungsi pembantu mengekstrak ID unik dari link YouTube apa saja
       function extractYouTubeId(url) {
-        if (!url) return "zpOULjyy-n8"; // ID default jika kosong
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        if (!url) return "zpOULjyy-n8"; // ID default
+        // Regex yang diperbarui: Mendukung Shorts, URL Mobile (youtu.be), dan format standar
+        const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/|youtube\.com\/shorts\/)([^"&?\/\s]{11})/i;
         const match = url.match(regExp);
-        return (match && match[2].length === 11) ? match[2] : "zpOULjyy-n8";
+        return (match && match[1]) ? match[1] : "zpOULjyy-n8";
       }
 
       function toggleDualPosBtn() {
@@ -7161,7 +7192,7 @@
 
         <div class="flex-shrink-0 pt-3 border-top mt-3 d-flex gap-2">
           <button class="btn btn-light w-100 py-3 rounded-pill fw-bold" onclick="cancelPreviewNota()">BATAL (EDIT LAGI)</button>
-          <button class="btn btn-success w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="confirmFinalSaveNota()">OK (SIMPAN)</button>
+          <button class="btn btn-success w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="confirmFinalSaveNota(this)">OK (SIMPAN)</button>
         </div>
       </div>
     </div>
