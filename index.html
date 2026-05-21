@@ -644,6 +644,16 @@
         from { transform: rotate(-1deg); }
         to { transform: rotate(1deg); }
       }
+
+      /* Thermal Printer & Nota Design Styles */
+      .receipt-textarea:focus { outline: 1px dashed var(--primary-gold); background: #fffcf5; }
+      .group-hover-edit { position: relative; border-radius: 8px; transition: 0.2s; padding: 5px; }
+      .group-hover-edit:hover { border: 1px dashed var(--primary-gold) !important; background: rgba(197, 160, 89, 0.05); }
+      .group-hover-edit .edit-overlay { 
+        display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.5); 
+        color: white; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; border-radius: 5px; 
+      }
+      .group-hover-edit:hover .edit-overlay { display: flex; }
     </style>
   </head>
   <body>
@@ -2703,7 +2713,7 @@
       function closeInvoiceModal() {
         document.getElementById('modalInvoiceSetting').classList.add('d-none');
       }
-      
+
       function saveSettingConfig() {
         const btn = document.getElementById('btnSaveSetting');
         if (btn) {
@@ -5960,13 +5970,16 @@
         if (!ACTIVE_CASHIER) return "Unknown";
         let finalName = ACTIVE_CASHIER;
         
-        if (USER_ROLE === 'ADMIN') {
-          if (ACTIVE_CASHIER !== 'Owner') {
-            finalName = ACTIVE_CASHIER.includes('(Admin)') ? ACTIVE_CASHIER : ACTIVE_CASHIER + " (Admin)";
-          }
+        // 1. Bersihkan imbuhan sebelumnya jika nyangkut di memori agar tidak dobel
+        finalName = finalName.replace(/\s*\((Admin|Pengganti)\)/ig, '');
+
+        // 2. Berikan imbuhan murni HANYA kepada Admin atau Owner
+        if (USER_ROLE === 'ADMIN' || finalName.toLowerCase() === 'owner') {
+          finalName = finalName + " (Admin)";
         } else if (IS_SUBSTITUTE) {
-          finalName = ACTIVE_CASHIER.includes('(Pengganti)') ? ACTIVE_CASHIER : ACTIVE_CASHIER + " (Pengganti)";
+          finalName = finalName + " (Pengganti)";
         }
+        
         return finalName;
       }
 
@@ -6018,31 +6031,12 @@
         return device;
       }
 
-      /**
-       * Fungsi pembantu universal untuk mengirim log ke Google Sheet secara asinkron.
-       * @param {string} activity - Judul aktivitas utama (Contoh: LOGIN, TRANSAKSI, ABSEN IN)
-       * @param {string} detail - Deskripsi tindakan terperinci
-       */
       async function triggerAuditLog(activity, detail) {
         try {
           const deviceName = await getDeviceDetails();
           
-          // Penentuan nama label user secara dinamis berdasarkan sesi aktif aplikasi Anda
-          let userLabel = "Owner"; 
-          if (typeof getFinalCashierName === "function") {
-            const cashier = getFinalCashierName();
-            if (cashier && cashier.toLowerCase() !== 'owner' && cashier.toLowerCase() !== 'admin') {
-              // Cek struktur role untuk menambahkan format (Admin) jika diperlukan
-              const welcomeText = document.getElementById('welcomeNameText') ? document.getElementById('welcomeNameText').innerText : "";
-              if (/admin/i.test(welcomeText)) {
-                userLabel = cashier + " (Admin)";
-              } else {
-                userLabel = cashier;
-              }
-            } else if (cashier && cashier.toLowerCase() === 'admin') {
-              userLabel = "Admin";
-            }
-          }
+          // Penentuan nama label memanggil getFinalCashierName yang sudah disempurnakan
+          let userLabel = typeof getFinalCashierName === "function" ? getFinalCashierName() : (ACTIVE_CASHIER || "Unknown");
 
           google.script.run.withSuccessHandler(res => {
             if (res && res.status !== 'success') {
@@ -6052,6 +6046,101 @@
         } catch (err) {
           console.error("Kesalahan sistem AuditLog:", err);
         }
+      }
+
+      // ==========================================
+      // FUNGSI THERMAL PRINTER & NOTA DESIGN
+      // ==========================================
+      function toggleThermalSettingBtn() {
+        const isChecked = document.getElementById('thermalToggle').checked;
+        const btn = document.getElementById('btnThermalSetting');
+        if (isChecked) {
+          btn.classList.remove('d-none');
+        } else {
+          btn.classList.add('d-none');
+        }
+      }
+
+      function openThermalSettingModal() {
+        document.getElementById('modalThermalSetting').classList.remove('d-none');
+      }
+
+      function closeThermalSettingModal() {
+        document.getElementById('modalThermalSetting').classList.add('d-none');
+      }
+
+      function openDesignNotaModal() {
+        document.getElementById('modalThermalSetting').classList.add('d-none');
+        
+        // Memuat setting dari memory lokal jika sebelumnya sudah pernah didesain
+        const savedHeader = localStorage.getItem('pos_nota_header');
+        const savedFooter = localStorage.getItem('pos_nota_footer');
+        const savedLogo = localStorage.getItem('pos_nota_logo');
+        
+        if (savedHeader) document.getElementById('notaHeaderText').value = savedHeader;
+        if (savedFooter) document.getElementById('notaFooterText').value = savedFooter;
+        if (savedLogo && savedLogo.startsWith('data:image')) {
+          document.getElementById('notaLogoImg').src = savedLogo;
+          document.getElementById('notaLogoImg').style.display = 'block';
+          document.getElementById('notaLogoPlaceholder').style.display = 'none';
+        }
+
+        document.getElementById('modalDesignNota').classList.remove('d-none');
+        
+        // Auto-resize textarea agar proporsional mirip kertas
+        document.querySelectorAll('.receipt-textarea').forEach(el => {
+          el.style.height = 'auto';
+          el.style.height = (el.scrollHeight) + 'px';
+          el.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+          });
+        });
+      }
+
+      function closeDesignNotaModal() {
+        document.getElementById('modalDesignNota').classList.add('d-none');
+        document.getElementById('modalThermalSetting').classList.remove('d-none');
+      }
+
+      function triggerNotaLogoUpload() {
+        document.getElementById('notaLogoInput').click();
+      }
+
+      function previewNotaLogo(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('notaLogoImg').src = e.target.result;
+          document.getElementById('notaLogoImg').style.display = 'block';
+          document.getElementById('notaLogoPlaceholder').style.display = 'none';
+        };
+        // Kompresi dasar dibaca langsung oleh Browser
+        reader.readAsDataURL(file);
+      }
+
+      function saveDesignNota(btnEl) {
+        const header = document.getElementById('notaHeaderText').value;
+        const footer = document.getElementById('notaFooterText').value;
+        const logo = document.getElementById('notaLogoImg').src;
+        
+        // Karena setting printer adalah per-Device, kita simpan desain ini di LocalStorage tablet/PC kasir tersebut
+        localStorage.setItem('pos_nota_header', header);
+        localStorage.setItem('pos_nota_footer', footer);
+        localStorage.setItem('pos_nota_logo', logo);
+
+        // Animasi Sukses
+        const originalText = btnEl.innerHTML;
+        btnEl.innerHTML = '<i class="fas fa-check"></i> TERSIMPAN';
+        btnEl.classList.replace('btn-primary', 'btn-success');
+        
+        setTimeout(() => {
+          btnEl.innerHTML = originalText;
+          btnEl.classList.replace('btn-success', 'btn-primary');
+          closeDesignNotaModal();
+        }, 1000);
       }
     </script>
 
@@ -6437,14 +6526,19 @@
         
         <div class="mb-4 text-start">
           
-          <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-4 mb-2 border">
-            <div>
-              <div class="fw-bold text-dark">Digital Invoice (WhatsApp)</div>
-              <div class="small text-muted" style="line-height: 1.2;">Kirim nota digital otomatis ke pelanggan.</div>
+          <div class="p-3 bg-light rounded-4 mb-2 border">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold text-dark">Thermal Printer</div>
+                <div class="small text-muted" style="line-height: 1.2;">Print nota otomatis via Thermal Printer.</div>
+              </div>
+              <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" id="thermalToggle" role="switch" onchange="toggleThermalSettingBtn()" style="width: 35px; height: 18px; cursor:pointer;">
+              </div>
             </div>
-            <div class="form-check form-switch m-0">
-              <input class="form-check-input" type="checkbox" role="switch" style="width: 35px; height: 18px; cursor:pointer;">
-            </div>
+            <button class="btn btn-sm btn-outline-dark w-100 fw-bold mt-3 d-none" id="btnThermalSetting" onclick="openThermalSettingModal()">
+              <i class="fas fa-print me-1"></i> Setting Printer
+            </button>
           </div>
           
           <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-4 mb-2 border">
@@ -6472,6 +6566,92 @@
         <button class="btn btn-success w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="closeInvoiceModal()">
           <i class="fas fa-save me-2"></i>SIMPAN & TUTUP
         </button>
+      </div>
+    </div>
+
+    <div id="modalThermalSetting" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 10700; opacity: 1 !important;">
+      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 400px; animation: slideUp 0.3s ease-out;">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+          <h5 class="fw-bold m-0"><i class="fas fa-print text-dark me-2"></i>Setting Printer</h5>
+          <button class="btn-close shadow-none" onclick="closeThermalSettingModal()"></button>
+        </div>
+        
+        <div class="mb-3">
+          <label class="small fw-bold text-muted mb-1">TIPE KONEKSI</label>
+          <select class="form-select border-2 fw-bold" id="printerConnectionType">
+            <option value="bluetooth">Bluetooth (Web Bluetooth API)</option>
+            <option value="usb">USB Desktop (QZ Tray)</option>
+          </select>
+          <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height:1.2;">Browser web butuh WebAPI untuk menembus perangkat keras (hardware) Anda.</small>
+        </div>
+
+        <div class="mb-4">
+          <label class="small fw-bold text-muted mb-1">LEBAR KERTAS THERMAL</label>
+          <select class="form-select border-2 fw-bold" id="printerPaperSize">
+            <option value="58">Kertas 58mm (Kecil)</option>
+            <option value="80">Kertas 80mm (Besar)</option>
+          </select>
+        </div>
+
+        <button class="btn btn-warning w-100 py-3 rounded-pill fw-bold shadow-sm mb-2 text-dark border border-warning" onclick="openDesignNotaModal()">
+          <i class="fas fa-paint-roller me-2"></i>DESIGN NOTA
+        </button>
+
+        <button class="btn btn-dark w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="closeThermalSettingModal()">
+          SIMPAN PENGATURAN
+        </button>
+      </div>
+    </div>
+
+    <div id="modalDesignNota" class="login-overlay d-none" style="background: rgba(0,0,0,0.9); z-index: 10800; opacity: 1 !important;">
+      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 400px; height: 90vh; animation: zoomIn 0.3s ease-out;">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2 flex-shrink-0">
+          <h5 class="fw-bold m-0"><i class="fas fa-receipt text-warning me-2"></i>Design Nota</h5>
+          <button class="btn-close shadow-none" onclick="closeDesignNotaModal()"></button>
+        </div>
+        
+        <div class="flex-fill overflow-auto d-flex justify-content-center align-items-start py-3" style="background: #f0f2f5; border-radius: 10px;">
+          <div class="receipt-preview shadow-sm" style="background: white; width: 260px; padding: 20px 15px; font-family: 'Courier New', Courier, monospace; font-size: 0.75rem; color: #000; border: 1px dashed #ccc; margin-bottom: 20px;">
+            
+            <div class="text-center mb-2 group-hover-edit" onclick="triggerNotaLogoUpload()" style="cursor: pointer; border: 1px dashed transparent;">
+              <div id="notaLogoContainer">
+                <i class="fas fa-image fa-2x text-muted opacity-50" id="notaLogoPlaceholder"></i>
+                <img id="notaLogoImg" src="" style="width: 60px; display: none; margin: 0 auto;">
+              </div>
+              <div class="edit-overlay"><i class="fas fa-camera me-1"></i> Ubah Logo</div>
+            </div>
+            
+            <div class="text-center mb-3 group-hover-edit">
+              <textarea id="notaHeaderText" class="form-control text-center p-0 m-0 border-0 shadow-none fw-bold receipt-textarea" style="font-family: 'Courier New'; font-size: 0.85rem; resize: none; overflow: hidden; background:transparent;" rows="2">PLATARIUM POS&#10;Jl. Kopi Nikmat No. 1</textarea>
+            </div>
+
+            <div style="border-bottom: 1px dashed #000; margin-bottom: 10px;"></div>
+            
+            <div class="mb-2 text-muted" style="user-select: none;">
+               <div>ORD-12345678</div>
+               <div>21/05/2026 14:30</div>
+               <div>Kasir: [Nama Kasir]</div>
+            </div>
+            <div style="border-bottom: 1px dashed #000; margin-bottom: 10px;"></div>
+            <div class="d-flex justify-content-between text-muted" style="user-select: none;"><span>Espresso (x1)</span><span>15.000</span></div>
+            <div class="d-flex justify-content-between text-muted" style="user-select: none;"><span>Latte (x1)</span><span>20.000</span></div>
+            <div style="border-bottom: 1px dashed #000; margin-top: 10px; margin-bottom: 10px;"></div>
+            <div class="d-flex justify-content-between fw-bold text-muted"><span>TOTAL</span><span>35.000</span></div>
+            <div style="border-bottom: 1px dashed #000; margin-top: 10px; margin-bottom: 10px;"></div>
+
+            <div class="text-center mt-3 group-hover-edit">
+              <textarea id="notaFooterText" class="form-control text-center p-0 m-0 border-0 shadow-none receipt-textarea" style="font-family: 'Courier New'; font-size: 0.75rem; resize: none; overflow: hidden; background:transparent;" rows="2">Terima Kasih&#10;Selamat Datang Kembali</textarea>
+            </div>
+            
+          </div>
+        </div>
+
+        <input type="file" id="notaLogoInput" style="display:none;" accept="image/jpeg, image/png" onchange="previewNotaLogo(event)">
+
+        <div class="flex-shrink-0 pt-3 border-top mt-3 d-flex gap-2">
+          <button class="btn btn-light w-100 py-3 rounded-pill fw-bold" onclick="closeDesignNotaModal()">KEMBALI</button>
+          <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="saveDesignNota(this)">SIMPAN DESIGN</button>
+        </div>
       </div>
     </div>
   </body>
