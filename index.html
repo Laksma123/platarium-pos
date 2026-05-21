@@ -2881,6 +2881,10 @@
           }
 
           document.getElementById('csExpectedTotal').innerText = "Rp " + (modalAwal + cashSales + adminCashSalesInShift).toLocaleString();
+          // Reset input setor
+          document.getElementById('inputSetorKe').value = '';
+          document.getElementById('btnTutupShiftFinal').disabled = true;
+          document.getElementById('warnSetorKe').classList.remove('d-none');
           document.getElementById('modalCloseShift').classList.remove('d-none');
         }).getAllTransactionData();
       }
@@ -2888,7 +2892,7 @@
       function confirmCloseShift() {
         if (!confirm("Apakah Anda yakin ingin menutup shift ini? Seluruh data penjualan akan dikunci.")) return;
         
-        // Membaca nilai dari elemen teks UI modal Rekapitulasi secara langsung agar aman dari eror variabel
+        // Membaca nilai dari elemen teks UI modal
         const txtModalAwal = document.getElementById('csModalAwal') ? document.getElementById('csModalAwal').innerText : "Rp 0";
         const txtCashSales = document.getElementById('csCashSales') ? document.getElementById('csCashSales').innerText : "Rp 0";
         const txtExpected = document.getElementById('csExpectedTotal') ? document.getElementById('csExpectedTotal').innerText : "Rp 0";
@@ -2913,22 +2917,40 @@
             }
         }
 
+        const setorKe = document.getElementById('inputSetorKe').value.trim().toUpperCase();
+
         const tgMsgClose = `🔴 <b>SHIFT DITUTUP</b>\n` +
-                           `<b>Kasir:</b> ${cashierName}\n` +
-                           `<b>Waktu Keluar:</b> ${new Date().toLocaleString('id-ID')}\n` +
-                           `<b>Modal Awal:</b> ${txtModalAwal}\n` +
-                           `<b>Cash Masuk:</b> ${txtCashSales}\n` +
-                           `<b>TOTAL DI LACI:</b> ${txtExpected}` + adminNote;
-                           
-        // Hapus session shift agar sesi login benar-benar ter-reset
+                          `<b>Kasir:</b> ${cashierName}\n` +
+                          `<b>Waktu Keluar:</b> ${new Date().toLocaleString('id-ID')}\n` +
+                          `<b>Modal Awal:</b> ${txtModalAwal}\n` +
+                          `<b>Cash Masuk:</b> ${txtCashSales}\n` +
+                          `<b>TOTAL DI LACI:</b> ${txtExpected}\n` +
+                          `<b>DISETOR KE:</b> ${setorKe}` + adminNote;
+                            
+        // --- DATA UNTUK GSHEET AUDIT LOG ---
+        const detailSetor = `Total Laci: ${txtExpected} (Modal: ${txtModalAwal}, Cash Masuk: ${txtCashSales}) | Diserahkan ke: ${setorKe}`;
+        
+        // Deteksi Device sederhana (mengambil sistem operasi / browser kasir)
+        let deviceStr = "WebPOS";
+        if (navigator.userAgent) {
+            // Ambil 30 karakter pertama untuk menghemat space di log
+            deviceStr = navigator.userAgent.substring(0, 30); 
+        }
+
+        // Hapus session shift
         localStorage.removeItem('pos_shift_data');
 
-        // Kirim data secara asinkron ke server GAS
         if (typeof google !== 'undefined' && google.script && google.script.run) {
+          
+          // 1. Eksekusi pencatatan Audit Log (Menggunakan 4 Parameter sesuai Code.js Anda)
+          google.script.run.addAuditLog(cashierName, 'SETOR', detailSetor, deviceStr);
+
+          // 2. Eksekusi pengiriman Telegram & Logout
           google.script.run
             .withSuccessHandler(() => { doLogout(); })
-            .withFailureHandler(() => { doLogout(); }) // Tetap logout jika telegram gagal agar sistem tidak macet
+            .withFailureHandler(() => { doLogout(); }) 
             .sendTelegramMessageBackend('TRANSACTION', tgMsgClose);
+            
         } else {
           doLogout();
         }
@@ -3037,7 +3059,9 @@
                                <div class="fw-bold fs-5">${t.orderId}</div>
                                <div class="small text-muted">${t.timestamp} | ${t.items.length} macam pesanan</div>
                            </div>
-                           <span class="badge bg-success px-3 py-2 shadow-sm"><i class="fas fa-check"></i> SELESAI</span>
+                           <button class="btn badge bg-success px-3 py-2 shadow-sm border-0" onclick="showDoneTicketDetail('${t.orderId}')" style="cursor: pointer;">
+                             <i class="fas fa-eye me-1"></i> LIHAT TIKET
+                           </button>
                        </div>
                    </div>
                 `;
@@ -6643,6 +6667,42 @@
         customerWindow.document.close();
         posSyncChannel.postMessage({ type: 'UPDATE_CART', cart: CART, total: CURRENT_TOTAL });
       }
+
+      function showDoneTicketDetail(orderId) {
+        const t = TRANSACTIONS_DATA.find(x => x.orderId === orderId);
+        if (!t) return;
+
+        document.getElementById('doneTicketId').innerText = t.orderId;
+        document.getElementById('doneTicketTime').innerText = t.timestamp;
+
+        const itemsHtml = t.items.map(i => `
+            <div class="ticket-item-row">
+                <span style="flex:1;">${i.name}</span>
+                <span class="ticket-qty">x${i.qty}</span>
+            </div>
+        `).join('');
+
+        document.getElementById('doneTicketItems').innerHTML = itemsHtml;
+        document.getElementById('modalDoneTicketDetail').classList.remove('d-none');
+      }
+
+      function closeDoneTicketDetail() {
+        document.getElementById('modalDoneTicketDetail').classList.add('d-none');
+      }
+
+      function validateCloseShift() {
+        const inputVal = document.getElementById('inputSetorKe').value.trim();
+        const btn = document.getElementById('btnTutupShiftFinal');
+        const warn = document.getElementById('warnSetorKe');
+        
+        if (inputVal.length > 2) {
+          btn.disabled = false;
+          warn.classList.add('d-none');
+        } else {
+          btn.disabled = true;
+          warn.classList.remove('d-none');
+        }
+      }
     </script>
 
     <div id="modalGridConfig" class="payment-overlay" style="z-index: 12000;">
@@ -6940,7 +7000,7 @@
           <small class="text-muted">Periksa kembali uang di laci kasir.</small>
         </div>
         
-        <div class="bg-light p-3 rounded-4 mb-4 border">
+        <div class="bg-light p-3 rounded-4 mb-3 border">
           <div class="d-flex justify-content-between mb-2 small fw-bold text-muted">
             <span>Modal Awal (Buka Shift):</span> <span id="csModalAwal">Rp 0</span>
           </div>
@@ -6953,10 +7013,16 @@
             <span class="fw-bold text-danger fs-5" id="csExpectedTotal">Rp 0</span>
           </div>
         </div>
+
+        <div class="mb-4 text-start">
+          <label class="small fw-bold text-dark mb-1">UANG FISIK DISETOR/DISERAHKAN KE:</label>
+          <input type="text" id="inputSetorKe" class="form-control border-2 fw-bold text-uppercase" placeholder="Contoh: PAK UDIN / BRANKAS" oninput="validateCloseShift()">
+          <small class="text-danger fw-bold d-none" id="warnSetorKe" style="font-size: 0.65rem;">*Wajib diisi untuk menutup shift!</small>
+        </div>
         
         <div class="d-flex gap-2">
           <button class="btn btn-light w-100 py-3 rounded-pill fw-bold" onclick="document.getElementById('modalCloseShift').classList.add('d-none')">BATAL</button>
-          <button class="btn btn-danger w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="confirmCloseShift()">TUTUP SHIFT</button>
+          <button class="btn btn-danger w-100 py-3 rounded-pill fw-bold shadow-sm" id="btnTutupShiftFinal" onclick="confirmCloseShift()" disabled>TUTUP SHIFT</button>
         </div>
       </div>
     </div>
@@ -7213,6 +7279,26 @@
           <button class="btn btn-light w-100 py-3 rounded-pill fw-bold" onclick="cancelPreviewNota()">BATAL (EDIT LAGI)</button>
           <button class="btn btn-success w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="confirmFinalSaveNota(this)">OK (SIMPAN)</button>
         </div>
+      </div>
+    </div>
+
+    <div id="modalDoneTicketDetail" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 11500; opacity: 1 !important;">
+      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column align-items-center" style="width: 90%; max-width: 350px; animation: slideUp 0.3s ease-out;">
+        <div class="w-100 d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+          <h6 class="fw-bold m-0 text-success"><i class="fas fa-check-circle me-1"></i> Detail Pesanan</h6>
+          <button class="btn-close shadow-none" onclick="closeDoneTicketDetail()"></button>
+        </div>
+        
+        <div class="ticket-paper mb-4" style="width: 100%; min-height: 150px; cursor: default; animation: none; transform: none;">
+          <div class="ticket-header">
+            <div class="fw-bold fs-5" id="doneTicketId">ORD-000</div>
+            <div class="ticket-time" id="doneTicketTime">--/--/---- --:--</div>
+          </div>
+          <div class="flex-fill" id="doneTicketItems">
+            </div>
+        </div>
+
+        <button class="btn btn-dark w-100 py-3 rounded-pill fw-bold" onclick="closeDoneTicketDetail()">TUTUP TIKET</button>
       </div>
     </div>
   </body>
