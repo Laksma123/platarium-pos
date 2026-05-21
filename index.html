@@ -2654,6 +2654,7 @@
           document.getElementById('tgChatTrans').value = res.chatTrans || '';
           
           toggleTelegramInputs();
+          toggleInvoiceInputs(); // <-- [TAMBAHAN FIX 1] Sinkronisasi status tombol Advance Invoice saat tab Setting dimuat
           
           if (btn) {
             btn.innerHTML = '<i class="fas fa-save me-2"></i>SIMPAN & TUTUP';
@@ -2708,6 +2709,7 @@
 
       function openInvoiceModal() {
         document.getElementById('modalInvoiceSetting').classList.remove('d-none');
+        toggleThermalSettingBtn(); // <-- [TAMBAHAN FIX 1] Sinkronisasi status tombol Thermal saat modal dibuka
       }
 
       function closeInvoiceModal() {
@@ -6076,13 +6078,28 @@
         const savedHeader = localStorage.getItem('pos_nota_header');
         const savedFooter = localStorage.getItem('pos_nota_footer');
         const savedLogo = localStorage.getItem('pos_nota_logo');
+        const savedLogoWidth = localStorage.getItem('pos_nota_logo_width') || "60"; // Default 60px
         
         if (savedHeader) document.getElementById('notaHeaderText').value = savedHeader;
         if (savedFooter) document.getElementById('notaFooterText').value = savedFooter;
+        
+        const sliderControl = document.getElementById('logoSizeControl');
+        
         if (savedLogo && savedLogo.startsWith('data:image')) {
-          document.getElementById('notaLogoImg').src = savedLogo;
-          document.getElementById('notaLogoImg').style.display = 'block';
+          const imgEl = document.getElementById('notaLogoImg');
+          imgEl.src = savedLogo;
+          imgEl.style.width = savedLogoWidth + 'px';
+          imgEl.style.display = 'block';
           document.getElementById('notaLogoPlaceholder').style.display = 'none';
+          
+          // Tampilkan slider dan set nilainya
+          sliderControl.classList.remove('d-none');
+          sliderControl.classList.add('d-flex');
+          document.getElementById('logoSizeSlider').value = savedLogoWidth;
+        } else {
+          // Sembunyikan slider jika tidak ada gambar
+          sliderControl.classList.add('d-none');
+          sliderControl.classList.remove('d-flex');
         }
 
         document.getElementById('modalDesignNota').classList.remove('d-none');
@@ -6096,6 +6113,10 @@
             this.style.height = (this.scrollHeight) + 'px';
           });
         });
+      }
+
+      function changeLogoSize(val) {
+        document.getElementById('notaLogoImg').style.width = val + 'px';
       }
 
       function closeDesignNotaModal() {
@@ -6113,11 +6134,16 @@
         
         const reader = new FileReader();
         reader.onload = function(e) {
-          document.getElementById('notaLogoImg').src = e.target.result;
-          document.getElementById('notaLogoImg').style.display = 'block';
+          const imgEl = document.getElementById('notaLogoImg');
+          imgEl.src = e.target.result;
+          imgEl.style.display = 'block';
           document.getElementById('notaLogoPlaceholder').style.display = 'none';
+          
+          // Munculkan slider setelah gambar berhasil di-load
+          const sliderControl = document.getElementById('logoSizeControl');
+          sliderControl.classList.remove('d-none');
+          sliderControl.classList.add('d-flex');
         };
-        // Kompresi dasar dibaca langsung oleh Browser
         reader.readAsDataURL(file);
       }
 
@@ -6125,11 +6151,13 @@
         const header = document.getElementById('notaHeaderText').value;
         const footer = document.getElementById('notaFooterText').value;
         const logo = document.getElementById('notaLogoImg').src;
+        const logoWidth = document.getElementById('logoSizeSlider').value; // Ambil nilai lebar terbaru
         
-        // Karena setting printer adalah per-Device, kita simpan desain ini di LocalStorage tablet/PC kasir tersebut
+        // Simpan semua konfigurasi termasuk width
         localStorage.setItem('pos_nota_header', header);
         localStorage.setItem('pos_nota_footer', footer);
         localStorage.setItem('pos_nota_logo', logo);
+        localStorage.setItem('pos_nota_logo_width', logoWidth);
 
         // Animasi Sukses
         const originalText = btnEl.innerHTML;
@@ -6621,6 +6649,20 @@
               <div class="edit-overlay"><i class="fas fa-camera me-1"></i> Ubah Logo</div>
             </div>
             
+            <div class="text-center mb-1 group-hover-edit" onclick="triggerNotaLogoUpload()" style="cursor: pointer; border: 1px dashed transparent;">
+              <div id="notaLogoContainer">
+                <i class="fas fa-image fa-2x text-muted opacity-50" id="notaLogoPlaceholder"></i>
+                <img id="notaLogoImg" src="" style="width: 60px; display: none; margin: 0 auto;">
+              </div>
+              <div class="edit-overlay"><i class="fas fa-camera me-1"></i> Ubah Logo</div>
+            </div>
+            
+            <div id="logoSizeControl" class="d-none justify-content-center align-items-center gap-2 mb-3 px-3" onclick="event.stopPropagation()">
+              <i class="fas fa-minus small text-muted" style="font-size:0.6rem;"></i>
+              <input type="range" id="logoSizeSlider" class="form-range" min="30" max="230" step="5" value="60" oninput="changeLogoSize(this.value)">
+              <i class="fas fa-plus small text-muted" style="font-size:0.6rem;"></i>
+            </div>
+
             <div class="text-center mb-3 group-hover-edit">
               <textarea id="notaHeaderText" class="form-control text-center p-0 m-0 border-0 shadow-none fw-bold receipt-textarea" style="font-family: 'Courier New'; font-size: 0.85rem; resize: none; overflow: hidden; background:transparent;" rows="2">PLATARIUM POS&#10;Jl. Kopi Nikmat No. 1</textarea>
             </div>
