@@ -2847,6 +2847,7 @@
             TRANSACTIONS_DATA = data;
             if (USER_ROLE === 'ADMIN') renderFinanceUI();
             if (['MONITOR', 'KITCHEN', 'BARISTA'].includes(USER_ROLE)) renderMonitorUI();
+            renderMonitorUI(); // Memperbarui Tab Order untuk semua role yang memiliki akses
           }).getAllTransactionData();
 
           google.script.run.withSuccessHandler(data => {
@@ -2856,6 +2857,10 @@
 
           loadStockData();
           if (includeAI) loadIndoMarketPulse();
+          if (USER_ROLE === 'ADMIN') {
+            loadStockData();
+            if (includeAI) loadIndoMarketPulse();
+          }
         }).getSystemConfigsAndHPP();
       }
 
@@ -2992,6 +2997,7 @@
         const menuItems = [
           {id: 'pos', label: 'Kasir', icon: 'fa-cash-register', roles: ['ADMIN', 'CASHIER']},
           {id: 'monitor', label: 'Order', icon: 'fa-receipt', roles: ['MONITOR', 'KITCHEN', 'BARISTA']},
+          {id: 'monitor', label: 'Order', icon: 'fa-receipt', roles: ['ADMIN', 'CASHIER', 'MONITOR', 'KITCHEN', 'BARISTA']},
           {id: 'stock', label: 'Stok', icon: 'fa-boxes-stacked', roles: ['ADMIN']},
           {id: 'products', label: 'Produk', icon: 'fa-utensils', roles: ['ADMIN']},
           {id: 'finance', label: 'Laporan', icon: 'fa-chart-pie', roles: ['ADMIN']},
