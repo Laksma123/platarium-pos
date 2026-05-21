@@ -1732,11 +1732,6 @@
                 };
               } else if (prop === 'withFailureHandler') {
                 return function(onFailure) {
-                  return {
-                    withSuccessHandler: function(onSuccess) {
-                      return createProxy(onSuccess, onFailure);
-                    }
-                  };
                   return createProxy(function(res){}, onFailure);
                 };
               } else {
@@ -2449,7 +2444,6 @@
         }
       }
 
-      // [2026-01-16] Fungsi Login Manual (Triggered by Button or Enter Key)
       function handleLogin() {
         const passField = document.getElementById('passInput');
         const statusField = document.getElementById('loginStatus');
@@ -2463,17 +2457,26 @@
         statusField.style.color = '#fff';
         statusField.innerText = 'Verifying...';
         
-        // Memanggil fungsi backend
-        google.script.run.withSuccessHandler(res => {
+        // Memanggil fungsi backend dengan penanganan error yang lengkap
+        google.script.run
+        .withSuccessHandler(res => {
           if(res.status === 'success') {
             onLoginSuccess(res);
           } else {
             statusField.style.color = '#ff7675';
-            statusField.innerText = 'PIN Salah!';
+            statusField.innerText = res.message || 'PIN Salah atau tidak terdaftar!';
             passField.value = '';
             passField.focus();
           }
-        }).loginUser(passValue);
+        })
+        .withFailureHandler(err => {
+          // --- INI AKAN MENANGKAP PESAN EXPIRED DARI KILL SWITCH ---
+          statusField.style.color = '#ff7675';
+          statusField.innerText = err.message || 'Terjadi kesalahan koneksi sistem.';
+          passField.value = '';
+          passField.focus();
+        })
+        .loginUser(passValue);
       }
 
       // [PRE-LOAD] Panggil data segera setelah script dimuat di browser
@@ -2892,6 +2895,11 @@
       function confirmCloseShift() {
         if (!confirm("Apakah Anda yakin ingin menutup shift ini? Seluruh data penjualan akan dikunci.")) return;
         
+        // Eksekusi spinner UI detik itu juga sebelum sistem mengumpulkan data
+        const btnTutup = document.getElementById('btnTutupShiftFinal');
+        btnTutup.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>MENUTUP...';
+        btnTutup.disabled = true;
+
         // Membaca nilai dari elemen teks UI modal
         const txtModalAwal = document.getElementById('csModalAwal') ? document.getElementById('csModalAwal').innerText : "Rp 0";
         const txtCashSales = document.getElementById('csCashSales') ? document.getElementById('csCashSales').innerText : "Rp 0";
