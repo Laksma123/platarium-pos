@@ -534,7 +534,7 @@
         border-radius: 50% !important;
       }
 
-            /* ========================================= */
+      /* ========================================= */
       /* ORDER MONITOR UI (KITCHEN & BAR)          */
       /* ========================================= */
       .monitor-rope-container {
@@ -608,6 +608,42 @@
       .ticket-qty { color: #d35400; font-weight: 800; font-size: 0.9rem; }
       .ticket-time { font-size: 0.7rem; color: #7f8c8d; }
       .ticket-actions { margin-top: auto; padding-top: 15px; }
+
+      /* ========================================= */
+      /* PERBAIKAN UI MONITOR (TAB & TICKET EDIT)  */
+      /* ========================================= */
+      .monitor-tab-btn {
+        background-color: #2c3e50 !important;
+        color: #ecf0f1 !important;
+        border: 1px solid #1a252f !important;
+        transition: all 0.3s ease;
+      }
+      .monitor-tab-btn:hover {
+        background-color: #34495e !important;
+      }
+      .monitor-tab-btn.active#tab-kitchen {
+        background-color: #d35400 !important;
+        border-color: #a04000 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 10px rgba(211, 84, 0, 0.4) !important;
+      }
+      .monitor-tab-btn.active#tab-bar {
+        background-color: #2980b9 !important;
+        border-color: #1c5980 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 10px rgba(41, 128, 185, 0.4) !important;
+      }
+      
+      /* Visual cue saat tiket bisa digeser */
+      .ticket-paper.reorder-mode {
+        border: 2px dashed #e74c3c;
+        cursor: move !important;
+        animation: shake-ticket 0.5s infinite alternate;
+      }
+      @keyframes shake-ticket {
+        from { transform: rotate(-1deg); }
+        to { transform: rotate(1deg); }
+      }
     </style>
   </head>
   <body>
@@ -1219,19 +1255,25 @@
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
               <ul class="nav nav-pills gap-2" id="monitorTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                  <button class="btn btn-outline-warning active rounded-pill fw-bold px-4 shadow-sm" id="tab-kitchen" data-bs-toggle="pill" data-bs-target="#content-kitchen" type="button" role="tab">
-                    <i class="fas fa-fire-burner me-2"></i>Kitchen Monitor
+                  <button class="btn rounded-pill fw-bold px-4 shadow-sm monitor-tab-btn active" id="tab-kitchen" data-bs-toggle="pill" data-bs-target="#content-kitchen" type="button" role="tab">
+                    <i class="fas fa-utensils me-2"></i>Kitchen Monitor
                   </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                  <button class="btn btn-outline-info rounded-pill fw-bold px-4 shadow-sm" id="tab-bar" data-bs-toggle="pill" data-bs-target="#content-bar" type="button" role="tab">
+                  <button class="btn rounded-pill fw-bold px-4 shadow-sm monitor-tab-btn" id="tab-bar" data-bs-toggle="pill" data-bs-target="#content-bar" type="button" role="tab">
                     <i class="fas fa-mug-hot me-2"></i>Bar Monitor
                   </button>
                 </li>
               </ul>
-              <button class="btn btn-warning rounded-pill fw-bold shadow-sm px-4" onclick="showDoneOrders()">
-                <i class="fas fa-check-circle me-2"></i>Selesai
-              </button>
+              
+              <div class="d-flex gap-2">
+                <button id="btnMonitorReorder" class="btn btn-white rounded-pill fw-bold shadow-sm px-4 border" onclick="toggleMonitorReorder()">
+                  <i class="fas fa-sort text-muted me-2"></i>Atur Urutan
+                </button>
+                <button class="btn btn-warning rounded-pill fw-bold shadow-sm px-4" onclick="showDoneOrders()">
+                  <i class="fas fa-check-circle me-2"></i>Selesai
+                </button>
+              </div>
             </div>
 
             <div class="tab-content flex-fill" id="monitorTabsContent">
@@ -1792,6 +1834,9 @@
       let POS_SORTABLE = null;
       let IS_SORTABLE_INIT = false;
       let IS_REORDER_MODE = false;
+      let IS_MONITOR_REORDER = false;
+      let KITCHEN_SORTABLE = null;
+      let BAR_SORTABLE = null;
       let CURRENT_GRID_COLS = 3;
       let TEMP_RECIPE_BASKET = [];
       let IS_FACE_API_READY = false;
@@ -2891,7 +2936,6 @@
         let bHtml = '';
         let dHtml = '';
         
-        // Hanya memproses order pada hari yang sama agar rapi, Sort ASC untuk visualisasi masuk dari kanan
         const todayStr = Utilities_formatDateIndo(new Date());
         const activeTrans = [...TRANSACTIONS_DATA]
             .filter(t => t.timestamp.startsWith(todayStr) && t.status !== 'Komplimen')
@@ -2909,7 +2953,6 @@
                 else kItems.push(item);
             });
 
-            // Tampilkan tiket di area masing-masing
             if (kItems.length > 0 && t.kitchenStatus !== 'DONE') {
                 kHtml += generateTicketHTML(t, kItems, 'KITCHEN', t.kitchenStatus);
             }
@@ -2917,7 +2960,6 @@
                 bHtml += generateTicketHTML(t, bItems, 'BAR', t.barStatus);
             }
             
-            // Evaluasi List Done
             const kDone = (kItems.length === 0 || t.kitchenStatus === 'DONE');
             const bDone = (bItems.length === 0 || t.barStatus === 'DONE');
             
@@ -2936,16 +2978,46 @@
             }
         });
 
-        // Set Empty State Jika Tidak Ada Order (Tanpa emoji dan disesuaikan untuk tema terang)
         kArea.innerHTML = kHtml || '<div class="text-muted mt-5 w-100 text-center fw-bold" style="position:absolute; left:0;"><br>Tidak ada antrian Kitchen</div>';
         bArea.innerHTML = bHtml || '<div class="text-muted mt-5 w-100 text-center fw-bold" style="position:absolute; left:0;"><br>Tidak ada antrian Bar</div>';
         dArea.innerHTML = dHtml || '<div class="text-muted text-center p-4">Belum ada orderan yang diselesaikan hari ini</div>';
 
-        if (!IS_SORTABLE_INIT) {
-            new Sortable(kArea, { animation: 150, ghostClass: 'opacity-50' });
-            new Sortable(bArea, { animation: 150, ghostClass: 'opacity-50' });
-            IS_SORTABLE_INIT = true;
+        // Hancurkan instance lama agar tidak terjadi memory leak dan bug pergerakan
+        if (KITCHEN_SORTABLE) KITCHEN_SORTABLE.destroy();
+        if (BAR_SORTABLE) BAR_SORTABLE.destroy();
+
+        // Re-inisialisasi Sortable. Ketika disable = true, scrolling kiri-kanan HP akan lancar
+        KITCHEN_SORTABLE = new Sortable(kArea, { 
+          animation: 150, 
+          ghostClass: 'opacity-50',
+          disabled: !IS_MONITOR_REORDER,
+          delay: 150,
+          delayOnTouchOnly: true
+        });
+        
+        BAR_SORTABLE = new Sortable(bArea, { 
+          animation: 150, 
+          ghostClass: 'opacity-50',
+          disabled: !IS_MONITOR_REORDER,
+          delay: 150,
+          delayOnTouchOnly: true
+        });
+      }
+
+      function toggleMonitorReorder() {
+        IS_MONITOR_REORDER = !IS_MONITOR_REORDER;
+        const btn = document.getElementById('btnMonitorReorder');
+        
+        if (IS_MONITOR_REORDER) {
+          btn.innerHTML = '<i class="fas fa-check text-success me-2"></i>Selesai Edit';
+          btn.classList.add('btn-light', 'border-success');
+        } else {
+          btn.innerHTML = '<i class="fas fa-sort text-muted me-2"></i>Atur Urutan';
+          btn.classList.remove('btn-light', 'border-success');
         }
+        
+        // Panggil ulang render untuk mengaplikasikan/menghilangkan class getar dan lock sortable
+        renderMonitorUI();
       }
 
       function generateTicketHTML(t, items, type, status) {
@@ -2962,9 +3034,12 @@
                 <span class="ticket-qty">x${i.qty}</span>
             </div>
         `).join('');
+        
+        // Membaca status untuk memicu visual css getar dan border
+        const reorderClass = IS_MONITOR_REORDER ? 'reorder-mode' : '';
 
         return `
-            <div class="ticket-paper">
+            <div class="ticket-paper ${reorderClass}">
                 <div class="ticket-header">
                     <div class="fw-bold fs-5">${t.orderId}</div>
                     <div class="ticket-time">${t.timestamp}</div>
@@ -3013,7 +3088,6 @@
       function buildNavigation() {
         const menuItems = [
           {id: 'pos', label: 'Kasir', icon: 'fa-cash-register', roles: ['ADMIN', 'CASHIER']},
-          {id: 'monitor', label: 'Order', icon: 'fa-receipt', roles: ['MONITOR', 'KITCHEN', 'BARISTA']},
           {id: 'monitor', label: 'Order', icon: 'fa-receipt', roles: ['ADMIN', 'CASHIER', 'MONITOR', 'KITCHEN', 'BARISTA']},
           {id: 'stock', label: 'Stok', icon: 'fa-boxes-stacked', roles: ['ADMIN']},
           {id: 'products', label: 'Produk', icon: 'fa-utensils', roles: ['ADMIN']},
