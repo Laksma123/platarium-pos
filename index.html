@@ -2124,6 +2124,9 @@
         const pinLabel = pinContainer.querySelector('label');
         const pinInput = document.getElementById('staffPinInput');
         const pinHelp = pinContainer.querySelector('small');
+        
+        const isNewStaff = !document.getElementById('staffIdInput').value;
+        const editedStaffName = document.getElementById('staffNameInput').dataset.originalName;
 
         if (role === 'CASHIER' || role === 'KASIR') {
           pinContainer.classList.remove('d-none');
@@ -2135,25 +2138,33 @@
           pinInput.placeholder = "••••";
           pinHelp.innerText = "*Isi untuk membuat/mereset PIN kasir (Hanya angka).";
         } else if (role === 'ADMIN') {
-          pinContainer.classList.remove('d-none');
-          pinContainer.style.display = 'block';
-          pinLabel.innerText = "PASSWORD ADMIN";
-          pinInput.removeAttribute('maxlength');
-          pinInput.removeAttribute('pattern');
-          pinInput.type = "text"; 
-          pinInput.placeholder = "Ketik password...";
-          pinHelp.innerText = "*Min. 4 karakter & wajib mengandung 1 angka.";
+          // --- LOGIKA VISIBILITAS PASSWORD ADMIN ---
+          // Hanya terekspos jika ini Admin baru, atau Admin yang sedang diedit adalah Admin yang sedang login sekarang
+          if (isNewStaff || editedStaffName === ACTIVE_CASHIER) {
+            pinContainer.classList.remove('d-none');
+            pinContainer.style.display = 'block';
+            pinLabel.innerText = "PASSWORD ADMIN";
+            pinInput.removeAttribute('maxlength');
+            pinInput.removeAttribute('pattern');
+            pinInput.type = "text"; 
+            pinInput.placeholder = "Ketik password...";
+            pinHelp.innerText = "*Min. 4 karakter & wajib mengandung 1 angka.";
+          } else {
+            // Sembunyikan untuk mencegah Admin mengintip password Admin lainnya
+            pinContainer.classList.add('d-none');
+            pinContainer.style.display = 'none';
+            pinInput.value = "";
+          }
         } else {
           pinContainer.classList.add('d-none');
           pinContainer.style.display = 'none';
         }
 
-        // --- LOGIKA INSTAN UNTUK MENGUBAH LABEL GAJI / SAHAM DI DALAM MODAL ---
         const salaryInput = document.getElementById('staffSalaryInput');
         if (salaryInput) {
           const inputGroup = salaryInput.parentElement;
-          const salaryLabel = inputGroup.previousElementSibling; // Mengambil elemen <label> di atasnya
-          const rpSpan = inputGroup.querySelector('.input-group-text'); // Mengambil teks "Rp" atau "%"
+          const salaryLabel = inputGroup.previousElementSibling; 
+          const rpSpan = inputGroup.querySelector('.input-group-text'); 
 
           if (typeof IS_MULTI_OWNER !== 'undefined' && IS_MULTI_OWNER && role === 'ADMIN') {
             if (salaryLabel) salaryLabel.innerText = "PERSENTASE SAHAM (%)";
@@ -2168,22 +2179,25 @@
       }
 
       function openStaffModal(id = null) {
+        const isNewStaff = (id === null);
         if (id) {
           const staff = STAFF_DATA.find(s => s.id === id);
           document.getElementById('staffIdInput').value = staff.id;
           document.getElementById('staffNameInput').value = staff.name;
           document.getElementById('staffRoleInput').value = staff.role;
           document.getElementById('staffSalaryInput').value = staff.salary;
+          
+          // Sisipkan atribut khusus untuk mengecek visibilitas password nanti
+          document.getElementById('staffNameInput').dataset.originalName = staff.name;
         } else {
           document.getElementById('staffIdInput').value = "";
           document.getElementById('staffNameInput').value = "";
+          document.getElementById('staffNameInput').dataset.originalName = "";
           document.getElementById('staffRoleInput').value = "CASHIER"; 
           document.getElementById('staffSalaryInput').value = "";
         }
         
         document.getElementById('staffPinInput').value = "";
-        
-        // Memanggil fungsi verifikasi pin sekaligus trigger perubahan label instan
         togglePinInput(); 
         
         document.getElementById('modalStaff').classList.remove('d-none');
@@ -2226,12 +2240,12 @@
         
         if (!name) return alert("Nama tidak boleh kosong!");
         
-        // Validasi PIN Kasir vs Password Admin
         if (role === 'CASHIER' || role === 'KASIR') {
             if (!id && !pin) return alert("PIN 4 digit wajib diisi untuk kasir baru!");
             if (pin && !/^\d{4}$/.test(pin)) return alert("PIN wajib menggunakan tepat 4 digit angka!");
         } else if (role === 'ADMIN') {
-            if (!id && !pin) return alert("Password wajib diisi untuk admin baru!");
+            // Tetap lakukan validasi pengetikan jika UI Password Admin ter-ekspos dan terisi
+            if (!id && !pin) return alert("Password sementara wajib diisi untuk Admin baru agar ia bisa login!");
             if (pin) {
                 if (pin.length < 4) return alert("Password Admin minimal 4 karakter!");
                 if (!/\d/.test(pin)) return alert("Password Admin harus mengandung minimal 1 angka!");
@@ -2246,6 +2260,12 @@
           btn.disabled = false;
           btn.innerText = 'SIMPAN DATA';
           if (res.status === 'success') {
+            
+            // --- ALERT ADMIN BARU ---
+            if (!id && role === 'ADMIN') {
+              alert("Admin di tambah, segera logout dan login untuk mengganti password admin baru.");
+            }
+
             closeStaffModal();
             STAFF_DATA = []; 
             initManningTab(); 
@@ -2860,7 +2880,6 @@
           CONFIG = res.config;
           ACTIVE_CASHIER = res.name;
           
-          // Menangkap data PPN
           IS_TAX_ACTIVE = res.config.TaxActive;
           TAX_PERCENTAGE = res.config.TaxPercent;
           
@@ -2872,8 +2891,22 @@
             document.getElementById('loginOverlay').classList.add('d-none');
             
             document.getElementById('welcomeNameText').innerText = ACTIVE_CASHIER;
-            document.getElementById('modalWelcome').classList.remove('d-none');
             
+            // --- LOGIKA PAKSA GANTI PASSWORD ADMIN BARU ---
+            const forceArea = document.getElementById('welcomeForcePassArea');
+            const btnMasuk = document.getElementById('btnWelcomeMasuk');
+            
+            // Hanya aktif jika isPassDone === false & bukan akun master Owner
+            if (res.isPassDone === false && ACTIVE_CASHIER !== 'Owner') {
+              forceArea.classList.remove('d-none');
+              document.getElementById('welcomeNewPass').value = '';
+              btnMasuk.disabled = true;
+            } else {
+              forceArea.classList.add('d-none');
+              btnMasuk.disabled = false;
+            }
+
+            document.getElementById('modalWelcome').classList.remove('d-none');
             window.TEMP_LOGIN_RES = res;
           } else if (['MONITOR', 'KITCHEN', 'BARISTA'].includes(USER_ROLE)) {
             IS_SUBSTITUTE = false;
@@ -2954,7 +2987,40 @@
         }
       }
 
+      function checkWelcomePass() {
+        const val = document.getElementById('welcomeNewPass').value;
+        const btnMasuk = document.getElementById('btnWelcomeMasuk');
+        if (val.length >= 4 && /\d/.test(val)) {
+            btnMasuk.disabled = false;
+        } else {
+            btnMasuk.disabled = true;
+        }
+      }
+
       function closeWelcomeModal() {
+        const forceArea = document.getElementById('welcomeForcePassArea');
+        // Jika UI wajib ganti password terekspos ke pengguna
+        if (!forceArea.classList.contains('d-none')) {
+          const newPass = document.getElementById('welcomeNewPass').value;
+          const btn = document.getElementById('btnWelcomeMasuk');
+          const ogHtml = btn.innerHTML;
+          
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+          btn.disabled = true;
+          
+          google.script.run.withSuccessHandler(res => {
+             if (res.status === 'success') {
+               document.getElementById('modalWelcome').classList.add('d-none');
+               proceedToMainUI(window.TEMP_LOGIN_RES);
+             } else {
+               alert("Gagal merubah password: " + res.message);
+               btn.innerHTML = ogHtml;
+               btn.disabled = false;
+             }
+          }).forceChangeAdminPass(ACTIVE_CASHIER, newPass);
+          return;
+        }
+
         document.getElementById('modalWelcome').classList.add('d-none');
         if (window.TEMP_LOGIN_RES) {
             proceedToMainUI(window.TEMP_LOGIN_RES);
@@ -7782,8 +7848,15 @@
         </div>
         <h4 class="fw-bold m-0 text-muted mb-1">Selamat Datang,</h4>
         <h2 class="fw-bold text-dark mb-3" id="welcomeNameText">Admin</h2>
-        <p class="text-muted small mb-5">Sistem telah terhubung. Seluruh akses kontrol, laporan, dan fitur keamanan telah dibuka sesuai dengan otorisasi Anda.</p>
-        <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="closeWelcomeModal()">
+        <p class="text-muted small mb-2">Sistem telah terhubung. Seluruh akses kontrol, laporan, dan fitur keamanan telah dibuka sesuai dengan otorisasi Anda.</p>
+        
+        <div id="welcomeForcePassArea" class="d-none mt-3 mb-4 text-start bg-danger bg-opacity-10 p-3 rounded-4 border border-danger border-opacity-50">
+          <p class="text-danger fw-bold text-center mb-2" style="font-size: 0.85rem; text-shadow: 0 0 8px rgba(255,0,0,0.2);">Ganti password sekarang untuk menghindari masalah di kemudian hari.</p>
+          <input type="text" id="welcomeNewPass" class="form-control border-2 border-danger text-center fw-bold" placeholder="Masukkan Password Baru" oninput="checkWelcomePass()">
+          <small class="text-muted d-block mt-1 text-center" style="font-size: 0.65rem;">*Min. 4 karakter & wajib mengandung 1 angka.</small>
+        </div>
+
+        <button id="btnWelcomeMasuk" class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-sm mt-3" onclick="closeWelcomeModal()">
           MASUK KE SISTEM <i class="fas fa-arrow-right ms-2"></i>
         </button>
       </div>
