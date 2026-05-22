@@ -714,10 +714,9 @@
       
       <div class="app-top-header shadow-sm">
         <div class="d-flex align-items-center gap-2">
-          <div class="rounded-circle bg-white border d-flex align-items-center justify-content-center overflow-hidden shadow-sm" style="width: 45px; height: 45px; cursor: pointer; flex-shrink: 0;"
-          onclick="openLogoManager()" title="Atur Logo">
-             <img id="uiLogo" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;" onerror="this.style.display='none'; document.getElementById('uiLogoPlaceholder').style.display='block';">
-             <div id="uiLogoPlaceholder" style="width: 100%; height: 100%; background-color: #ffffff; display: block;"></div>
+          <div id="uiLogoContainer" class="rounded-circle bg-white border d-flex align-items-center justify-content-center overflow-hidden shadow-sm" style="width: 45px; height: 45px; flex-shrink: 0;" title="Atur Logo">
+            <img id="uiLogo" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;" onerror="this.style.display='none'; document.getElementById('uiLogoPlaceholder').style.display='block';">
+            <div id="uiLogoPlaceholder" style="width: 100%; height: 100%; background-color: #ffffff; display: block;"></div>
           </div>
           <div>
             <h6 class="fw-bold m-0 lh-1 text-dark" id="uiStoreName">Gord-Cafe</h6>
@@ -931,7 +930,38 @@
               <i class="fas fa-user-plus me-2"></i>Tambah Staff
             </button>
           </div>
+          <div class="row mb-4">
+            <div class="col-12">
+              <div class="card border-0 shadow-sm rounded-4 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="fw-bold m-0"><i class="fas fa-chart-pie text-success me-2"></i>Net Profit & Operational Cost</h5>
+                  <button class="btn btn-sm btn-outline-success rounded-pill fw-bold" onclick="openOpCostModal()">+ Tambah Cost</button>
+                </div>
+                
+                <div class="mb-4">
+                  <div class="d-flex justify-content-between small fw-bold mb-1">
+                    <span class="text-muted">Target Penutupan Cost: <span id="opTotalCostText">Rp 0</span></span>
+                    <span id="opProfitText" class="text-primary">Profit Laporan: Rp 0</span>
+                  </div>
+                  <div class="progress" style="height: 25px; border-radius: 15px; background-color: #f1f2f6; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+                    <div id="opProfitBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; transition: width 1s ease-in-out, background-color 1s;">0%</div>
+                  </div>
+                  <div class="text-end mt-1 fw-bold fs-6" id="opNetProfitFinal">Net Profit: Rp 0</div>
+                </div>
 
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle m-0 small">
+                    <thead class="bg-light">
+                      <tr><th>Keterangan Cost</th><th class="text-end">Nominal (Rp)</th><th class="text-center" style="width: 80px;">Aksi</th></tr>
+                    </thead>
+                    <tbody id="opCostListBody">
+                      <tr><td colspan="3" class="text-center p-3 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Memuat data cost...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="row g-4" id="staffCardsContainer">
             </div>
         </div>
@@ -1057,6 +1087,31 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div id="modalOpCost" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10600; opacity: 1 !important;">
+          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 90%; max-width: 400px; animation: slideUp 0.3s ease-out;">
+            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+              <h5 class="fw-bold m-0"><i class="fas fa-money-bill-wave text-secondary me-2"></i>Operational Cost</h5>
+              <button class="btn-close shadow-none" onclick="closeOpCostModal()"></button>
+            </div>
+            
+            <input type="hidden" id="opCostId">
+            <div class="mb-3">
+              <label class="small fw-bold text-muted">KETERANGAN PENGELUARAN</label>
+              <input type="text" id="opCostName" class="form-control fw-bold border-2" placeholder="Contoh: Listrik, Air, Wifi, Sewa">
+            </div>
+            <div class="mb-4">
+              <label class="small fw-bold text-muted">NOMINAL BIAYA (Rp)</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-2 border-end-0 text-muted">Rp</span>
+                <input type="number" id="opCostAmount" class="form-control fw-bold border-2 border-start-0 ps-0" placeholder="0">
+              </div>
+            </div>
+            <button class="btn btn-success w-100 py-3 rounded-pill fw-bold shadow-sm" id="btnSaveOpCost" onclick="executeSaveOpCost()">
+              SIMPAN COST
+            </button>
           </div>
         </div>
 
@@ -1880,6 +1935,7 @@
       let SHIFT_DATA = null;
 
       function initManningTab() {
+        loadOpCosts(); // <--- TAMBAHKAN BARIS INI
         // Optimasi (Req 4): Jangan memuat ulang jika data sudah ada di cache
         if (STAFF_DATA && STAFF_DATA.length > 0) {
           renderManningUI(STAFF_FACES);
@@ -2348,6 +2404,144 @@
         }).join('');
       }
 
+      let OP_COSTS_DATA = [];
+      let TOTAL_SALARY_COST = 0;
+
+      // Kalkulator Murni Profit dari Laporan
+      function getPureProfitBersih() {
+          let totalRev = 0;
+          let totalHPP = 0;
+          if(!TRANSACTIONS_DATA) return 0;
+          
+          TRANSACTIONS_DATA.forEach(t => {
+              if (t.status === 'Komplimen') return;
+              totalRev += Number(t.total) || 0;
+              t.items.forEach(i => {
+                  let itemHPP = PRODUCT_HPP_MAP[i.id] || 0;
+                  totalHPP += (itemHPP * i.qty);
+              });
+          });
+          return totalRev - totalHPP;
+      }
+
+      function loadOpCosts() {
+          google.script.run.withSuccessHandler(res => {
+              if (res.status === 'success') {
+                  TOTAL_SALARY_COST = res.totalSalary;
+                  OP_COSTS_DATA = res.customCosts;
+                  renderOpCostsUI();
+              }
+          }).getOperationalData();
+      }
+
+      function renderOpCostsUI() {
+          const tbody = document.getElementById('opCostListBody');
+          let totalCost = TOTAL_SALARY_COST;
+          
+          // 1. Render Cost Otomatis (Gaji)
+          let html = `
+              <tr>
+                  <td class="fw-bold text-dark"><i class="fas fa-users text-primary me-2"></i>Gaji Karyawan (Otomatis)</td>
+                  <td class="text-end fw-bold text-danger">Rp ${TOTAL_SALARY_COST.toLocaleString()}</td>
+                  <td class="text-center"><span class="badge bg-light text-muted border px-3">Auto</span></td>
+              </tr>
+          `;
+
+          // 2. Render Custom Cost
+          OP_COSTS_DATA.forEach(cost => {
+              totalCost += cost.amount;
+              html += `
+              <tr>
+                  <td class="fw-bold text-dark"><i class="fas fa-file-invoice-dollar text-secondary me-2"></i>${cost.name}</td>
+                  <td class="text-end fw-bold text-danger">Rp ${cost.amount.toLocaleString()}</td>
+                  <td class="text-center">
+                  <div class="btn-group border rounded-pill shadow-sm overflow-hidden">
+                      <button class="btn btn-light btn-sm border-end" onclick="openOpCostModal('${cost.id}', '${cost.name}', ${cost.amount})"><i class="fas fa-pencil-alt text-primary"></i></button>
+                      <button class="btn btn-light btn-sm" onclick="executeDeleteOpCost('${cost.id}')"><i class="fas fa-trash text-danger"></i></button>
+                  </div>
+                  </td>
+              </tr>
+              `;
+          });
+
+          tbody.innerHTML = html;
+
+          // 3. Kalkulasi Net Profit & Update Meteran
+          const profitBersih = getPureProfitBersih();
+          const netProfit = profitBersih - totalCost;
+          
+          document.getElementById('opTotalCostText').innerText = 'Rp ' + totalCost.toLocaleString();
+          document.getElementById('opProfitText').innerText = 'Profit Laporan: Rp ' + profitBersih.toLocaleString();
+          
+          const finalEl = document.getElementById('opNetProfitFinal');
+          if (netProfit >= 0) {
+              finalEl.innerHTML = `Net Profit: <span class="text-success fs-5">Rp ${netProfit.toLocaleString()}</span>`;
+          } else {
+              finalEl.innerHTML = `Net Profit: <span class="text-danger fs-5">- Rp ${Math.abs(netProfit).toLocaleString()}</span>`;
+          }
+
+          // 4. Logika Animasi Meteran
+          const bar = document.getElementById('opProfitBar');
+          let percentage = totalCost > 0 ? (profitBersih / totalCost) * 100 : 100;
+          if (percentage < 0) percentage = 0;
+          if (percentage > 100) percentage = 100;
+
+          bar.style.width = percentage + '%';
+          bar.innerText = percentage.toFixed(1) + '%';
+
+          // Perubahan Warna: 
+          // <50% = Merah, 50%-99% = Kuning/Emas, >=100% = Hijau Terang (Profitable)
+          if (percentage < 50) {
+              bar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-danger';
+          } else if (percentage < 100) {
+              bar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-warning text-dark';
+          } else {
+              bar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-success';
+              bar.innerText = 'PROFITABLE!';
+          }
+      }
+
+      function openOpCostModal(id = '', name = '', amount = '') {
+          document.getElementById('opCostId').value = id;
+          document.getElementById('opCostName').value = name;
+          document.getElementById('opCostAmount').value = amount;
+          document.getElementById('modalOpCost').classList.remove('d-none');
+      }
+
+      function closeOpCostModal() {
+          document.getElementById('modalOpCost').classList.add('d-none');
+      }
+
+      function executeSaveOpCost() {
+          const id = document.getElementById('opCostId').value;
+          const name = document.getElementById('opCostName').value;
+          const amount = Number(document.getElementById('opCostAmount').value);
+          
+          if(!name || amount <= 0) return alert("Isi keterangan dan nominal yang benar!");
+          
+          const btn = document.getElementById('btnSaveOpCost');
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>MENYIMPAN...';
+          btn.disabled = true;
+
+          google.script.run.withSuccessHandler(res => {
+              btn.innerHTML = 'SIMPAN COST';
+              btn.disabled = false;
+              if(res.status === 'success') {
+                  closeOpCostModal();
+                  loadOpCosts(); // Segarkan data Cost & Animasi
+              } else alert(res.message);
+          }).saveOpCost(id, name, amount);
+      }
+
+      function executeDeleteOpCost(id) {
+          if(confirm("Hapus biaya operasional ini?")) {
+              google.script.run.withSuccessHandler(res => {
+                  if(res.status === 'success') loadOpCosts();
+                  else alert(res.message);
+              }).deleteOpCost(id);
+          }
+      }
+
       function startRealtimeClock() {
         setInterval(() => {
           const now = new Date();
@@ -2766,6 +2960,29 @@
         document.getElementById('uiStoreName').innerText = res.config.StoreName;
         document.getElementById('roleLabel').innerText = res.role;
         
+        // --- MULAI MODIFIKASI LOGO & STORE NAME ---
+        const logoContainer = document.getElementById('uiLogoContainer');
+        const storeNameEl = document.getElementById('uiStoreName');
+        
+        // Jika Role adalah ADMIN (Owner/Admin)
+        if (USER_ROLE === 'ADMIN') {
+            logoContainer.onclick = openLogoManager;
+            logoContainer.style.cursor = 'pointer';
+            
+            storeNameEl.onclick = promptStoreNameChange;
+            storeNameEl.style.cursor = 'pointer';
+            storeNameEl.title = "Klik untuk ubah nama toko";
+            storeNameEl.classList.add('text-primary'); // Penanda visual bahwa teks bisa diklik
+        } else {
+            logoContainer.onclick = null;
+            logoContainer.style.cursor = 'default';
+            
+            storeNameEl.onclick = null;
+            storeNameEl.style.cursor = 'default';
+            storeNameEl.title = "";
+            storeNameEl.classList.remove('text-primary');
+        }
+
         buildNavigation();
         renderProductGrid();
         renderProductTable();
@@ -2789,6 +3006,24 @@
         startRealtimeClock();
         initCategoryScroller();
         triggerAuditLog("LOGIN", "User berhasil masuk ke dalam sistem webapp.");
+      }
+
+      function promptStoreNameChange() {
+          const currentName = document.getElementById('uiStoreName').innerText;
+          const newName = prompt("Masukkan nama usaha baru untuk POS Anda:", currentName);
+          
+          if (newName && newName.trim() !== "" && newName !== currentName) {
+              document.getElementById('uiStoreName').innerText = "Menyimpan...";
+              google.script.run.withSuccessHandler(res => {
+                  if (res.status === 'success') {
+                      document.getElementById('uiStoreName').innerText = res.newName;
+                      CONFIG.StoreName = res.newName; // Perbarui memori global
+                  } else {
+                      alert("Gagal mengubah nama: " + res.message);
+                      document.getElementById('uiStoreName').innerText = currentName;
+                  }
+              }).updateStoreName(newName.trim());
+          }
       }
 
       function lockShift() {
