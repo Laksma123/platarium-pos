@@ -1792,7 +1792,7 @@
                 <label class="small fw-bold text-muted">3. NILAI BARU</label>
                 <div class="input-group">
                   <input type="number" id="bulkNewQty" class="form-control fw-bold border-2" placeholder="0" step="0.1">
-                  <span class="input-group-text bg-light border-2 fw-bold" id="bulkUnitLabel">unit</span>
+                  <select id="bulkNewUnit" class="form-select bg-light border-2 fw-bold" style="max-width: 90px;"></select>
                 </div>
               </div>
 
@@ -3977,25 +3977,27 @@
         if (select.value === 'NEW_MATERIAL') {
           newMatInput.classList.remove('d-none');
           unitSelect.disabled = false; 
+          unitSelect.innerHTML = '<option value="gr">gr</option><option value="ml">ml</option><option value="pcs">pcs</option><option value="Kg">Kg</option><option value="L">L</option><option value="shot">shot</option>';
           newMatInput.focus();
         } else {
           newMatInput.classList.add('d-none');
           const selectedOption = select.options[select.selectedIndex];
           
           if(selectedOption && selectedOption.dataset.unit) {
-            const targetUnit = selectedOption.dataset.unit;
+            const targetUnit = selectedOption.dataset.unit.toLowerCase();
+            let options = '';
             
-            // PERBAIKAN: Cek apakah unit target ada di dalam dropdown opsi standar F&B
-            let unitExists = Array.from(unitSelect.options).some(opt => opt.value === targetUnit);
-            
-            // Jika unit kustom ("pack", "l", dll) belum ada, tambahkan sementara ke dropdown
-            if (!unitExists) {
-              const newOption = new Option(targetUnit, targetUnit);
-              unitSelect.add(newOption);
+            if (targetUnit === 'kg' || targetUnit === 'gr') {
+              options = '<option value="gr">gr</option><option value="Kg">Kg</option><option value="shot">shot</option>';
+            } else if (targetUnit === 'l' || targetUnit === 'ml') {
+              options = '<option value="ml">ml</option><option value="L">L</option><option value="shot">shot</option>';
+            } else {
+              options = `<option value="${selectedOption.dataset.unit}">${selectedOption.dataset.unit}</option><option value="shot">shot</option>`;
             }
             
-            unitSelect.value = targetUnit;
-            unitSelect.disabled = true; 
+            unitSelect.innerHTML = options;
+            unitSelect.value = (targetUnit === 'kg' ? 'Kg' : (targetUnit === 'l' ? 'L' : selectedOption.dataset.unit));
+            unitSelect.disabled = false; 
           }
         }
       }
@@ -4007,6 +4009,8 @@
         
         if (!qtyInput || qtyInput <= 0) return alert("Masukkan takaran yang valid!");
         let matId, matName;
+        let finalQty = parseFloat(qtyInput);
+        let finalUnit = unitSelect;
 
         if (select.value === 'NEW_MATERIAL') {
           matName = document.getElementById('recipeNewMaterialName').value.trim();
@@ -4015,19 +4019,38 @@
         } else {
           matId = select.value;
           const selectedOption = select.options[select.selectedIndex];
-          // PERBAIKAN: Ambil nama utuh langsung dari atribut dataset, bukan hasil split teks
           matName = selectedOption.dataset.name; 
+          
+          const baseUnit = selectedOption.dataset.unit;
+          // Konversi otomatis kembali ke Satuan Dasar Stok (kecuali unit = shot)
+          if (finalUnit.toLowerCase() !== 'shot') {
+              if (finalUnit === 'Kg' && baseUnit.toLowerCase() === 'gr') {
+                  finalQty = finalQty * 1000;
+                  finalUnit = baseUnit;
+              } else if (finalUnit === 'gr' && baseUnit.toLowerCase() === 'kg') {
+                  finalQty = finalQty / 1000;
+                  finalUnit = baseUnit;
+              } else if (finalUnit === 'L' && baseUnit.toLowerCase() === 'ml') {
+                  finalQty = finalQty * 1000;
+                  finalUnit = baseUnit;
+              } else if (finalUnit === 'ml' && baseUnit.toLowerCase() === 'l') {
+                  finalQty = finalQty / 1000;
+                  finalUnit = baseUnit;
+              } else {
+                  finalUnit = baseUnit;
+              }
+          }
         }
 
         const existingIndex = TEMP_RECIPE_BASKET.findIndex(item => item.id === matId || item.name === matName);
-        if (existingIndex !== -1) {
-          TEMP_RECIPE_BASKET[existingIndex].qty += parseFloat(qtyInput);
+        if (existingIndex !== -1 && TEMP_RECIPE_BASKET[existingIndex].unit === finalUnit) {
+          TEMP_RECIPE_BASKET[existingIndex].qty += finalQty;
         } else {
           TEMP_RECIPE_BASKET.push({
             id: matId,
             name: matName,
-            qty: parseFloat(qtyInput),
-            unit: unitSelect,
+            qty: finalQty,
+            unit: finalUnit,
             isNew: select.value === 'NEW_MATERIAL'
           });
         }
@@ -4129,9 +4152,22 @@
         const matId = select.value;
         if(!matId) return;
 
-        // Auto-Match Unit
+        // Auto-Match Unit & Options
         const selectedOption = select.options[select.selectedIndex];
-        document.getElementById('bulkUnitLabel').innerText = selectedOption.dataset.unit || "unit";
+        const baseUnit = selectedOption.dataset.unit;
+        const bUnitLower = baseUnit.toLowerCase();
+        
+        const unitSelect = document.getElementById('bulkNewUnit');
+        let options = '';
+        if (bUnitLower === 'kg' || bUnitLower === 'gr') {
+          options = '<option value="gr">gr</option><option value="Kg">Kg</option><option value="shot">shot</option>';
+        } else if (bUnitLower === 'l' || bUnitLower === 'ml') {
+          options = '<option value="ml">ml</option><option value="L">L</option><option value="shot">shot</option>';
+        } else {
+          options = `<option value="${baseUnit}">${baseUnit}</option><option value="shot">shot</option>`;
+        }
+        unitSelect.innerHTML = options;
+        unitSelect.value = (bUnitLower === 'kg' ? 'Kg' : (bUnitLower === 'l' ? 'L' : baseUnit));
 
         // Fetch Live Affected Menus
         const listBody = document.getElementById('bulkAffectedList');
@@ -4174,13 +4210,38 @@
       }
       
       function executeBulkAction() {
-        const matId = document.getElementById('bulkMaterialSelect').value;
+        const selectMat = document.getElementById('bulkMaterialSelect');
+        const matId = selectMat.value;
         const action = document.getElementById('bulkActionSelect').value;
-        const newValue = document.getElementById('bulkNewQty').value;
+        const inputValue = parseFloat(document.getElementById('bulkNewQty').value);
+        const inputUnit = document.getElementById('bulkNewUnit').value;
 
         if(!matId) return alert("Pilih bahan target!");
-        if(action === 'EDIT' && (!newValue || newValue <= 0)) return alert("Masukkan nilai takaran yang valid!");
+        if(action === 'EDIT' && (!inputValue || inputValue <= 0)) return alert("Masukkan nilai takaran yang valid!");
         if(BULK_AFFECTED_PRODUCTS.length === 0) return alert("Tidak ada menu terdampak untuk diproses.");
+
+        const baseUnit = selectMat.options[selectMat.selectedIndex].dataset.unit;
+        let finalQty = inputValue;
+        let finalUnit = inputUnit;
+
+        // Konversi Bulk ke Unit Dasar 
+        if (action === 'EDIT' && inputUnit.toLowerCase() !== 'shot') {
+            if (inputUnit === 'Kg' && baseUnit.toLowerCase() === 'gr') {
+                finalQty = inputValue * 1000;
+                finalUnit = baseUnit;
+            } else if (inputUnit === 'gr' && baseUnit.toLowerCase() === 'kg') {
+                finalQty = inputValue / 1000;
+                finalUnit = baseUnit;
+            } else if (inputUnit === 'L' && baseUnit.toLowerCase() === 'ml') {
+                finalQty = inputValue * 1000;
+                finalUnit = baseUnit;
+            } else if (inputUnit === 'ml' && baseUnit.toLowerCase() === 'l') {
+                finalQty = inputValue / 1000;
+                finalUnit = baseUnit;
+            } else {
+                finalUnit = baseUnit;
+            }
+        }
 
         const productIds = BULK_AFFECTED_PRODUCTS.map(p => p.id);
 
@@ -4193,9 +4254,8 @@
             btn.innerHTML = ogText;
             btn.disabled = false;
             if(res.status === 'success') {
-                const selectMat = document.getElementById('bulkMaterialSelect');
                 const matName = selectMat.options[selectMat.selectedIndex].text.split('(')[0].trim();
-                const actionText = action === 'DELETE' ? 'Menghapus' : `Mengubah takaran menjadi ${newValue}`;
+                const actionText = action === 'DELETE' ? 'Menghapus' : `Mengubah takaran menjadi ${finalQty} ${finalUnit}`;
                 triggerAuditLog("BULK EDIT RESEP", `${actionText} untuk bahan ${matName} pada ${BULK_AFFECTED_PRODUCTS.length} menu sekaligus.`);
 
                 alert("Pembaruan massal resep berhasil!");
@@ -4203,7 +4263,7 @@
             } else {
                 alert("Terjadi kesalahan: " + res.message);
             }
-        }).executeBulkRecipeAction(matId, action, newValue, productIds);
+        }).executeBulkRecipeAction(matId, action, finalQty, productIds, finalUnit);
       }
 
       function closeBulkRecipeModal() {
@@ -4306,14 +4366,27 @@
             } else {
                 recipe.forEach(r => {
                     let m = MATERIALS_DATA.find(x => x.id === r.id);
-                    let mPrice = m ? m.price : 0; // Harga HPP dasar per Base Unit
+                    let mPrice = m ? m.price : 0; 
                     let baseUnit = m ? m.unit.toLowerCase() : r.unit.toLowerCase();
                     let qty = r.qty;
                     let unit = r.unit.toLowerCase();
+                    let cost = 0;
 
                     // Konversi Takaran Shot
                     if (unit === 'shot') {
-                        let shotGram = SHOTS_MAP[r.id] || 1;
+                        let shotGram = SHOTS_MAP[r.id];
+                        if (!shotGram) { // Jika Shot Belum Diatur
+                            breakdownHtml += `
+                              <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2">
+                                <div>
+                                  <div class="fw-bold text-dark" style="font-size: 0.8rem;">${r.name}</div>
+                                  <div class="text-danger" style="font-size: 0.7rem;"><i class="fas fa-exclamation-triangle"></i> Shot belum di atur untuk ${r.name}</div>
+                                </div>
+                                <div class="fw-bold text-danger" style="font-size: 0.85rem;">Rp 0</div>
+                              </div>
+                            `;
+                            return; // Lompati kalkulasi HPP untuk bahan ini (Setara continue di forEach)
+                        }
                         qty = qty * shotGram;
                         unit = (baseUnit === 'l' || baseUnit === 'ml') ? 'ml' : 'gr';
                     }
@@ -4326,7 +4399,7 @@
                         calcQty = calcQty * 1000;
                     }
 
-                    let cost = calcQty * mPrice;
+                    cost = calcQty * mPrice;
                     totalHpp += cost;
 
                     breakdownHtml += `
@@ -6080,39 +6153,58 @@
         return inputValue * multiplier * unitMultiplier;
       }
 
-      // Timpa fungsi ini di index.html (Penyimpanan dan Visual Loading di Tabel Stok)
       function savePrecisionStock() {
-        const rawStock = parseFloat(document.getElementById('inputNewStock').value) || 0;
-        const rawPrice = parseFloat(document.getElementById('inputNewPrice').value) || 0;
+        const stockInputStr = document.getElementById('inputNewStock').value;
+        const priceInputStr = document.getElementById('inputNewPrice').value;
 
         const isBalStock = document.getElementById('checkBalStock').checked;
         const balStockVal = parseFloat(document.getElementById('balStockValue').value) || 1;
         const unitStock = document.getElementById('stockUnitDropdown').value;
         const subUnitStock = document.getElementById('balStockSubUnit').value;
 
+        const newBaseUnit = isBalStock ? subUnitStock : unitStock;
+
+        // BUG FIX: Jika ada input stok, replace stok murni tanpa konversi dari baseUnit lama.
+        let finalStockToSave;
+        if (stockInputStr !== '') {
+           finalStockToSave = parseFloat(stockInputStr) * (isBalStock ? balStockVal : 1);
+        } else {
+           // Jika stok kosong, biarkan angka stok lama (tapi jika unit berubah, maknanya jadi beda)
+           finalStockToSave = parseFloat(document.getElementById('editStockCurrent').innerText.replace(/,/g, ''));
+        }
+
         const isBalPrice = document.getElementById('checkBalPrice').checked;
         const balPriceVal = parseFloat(document.getElementById('balPriceValue').value) || 1;
         const unitPrice = document.getElementById('priceUnitToggle').value;
         const subUnitPrice = document.getElementById('balPriceSubUnit').value;
 
-        const finalBaseStock = calculateAndGetBaseValue(rawStock, unitStock, isBalStock, balStockVal, subUnitStock);
-        const baseUnitsBoughtForRawPrice = calculateAndGetBaseValue(1, unitPrice, isBalPrice, balPriceVal, subUnitPrice);
-        const finalBasePrice = rawPrice / baseUnitsBoughtForRawPrice;
+        let finalPriceToSave = 0;
+        if (priceInputStr !== '') {
+           let rawPrice = parseFloat(priceInputStr);
+           let unitMultiplier = 1;
+           const bUnitLower = newBaseUnit.toLowerCase();
+           const fUnitLower = (isBalPrice ? subUnitPrice : unitPrice).toLowerCase();
+
+           if (fUnitLower === 'kg' && bUnitLower === 'gr') unitMultiplier = 1000;
+           if (fUnitLower === 'l' && bUnitLower === 'ml') unitMultiplier = 1000;
+           if (fUnitLower === 'gr' && bUnitLower === 'kg') unitMultiplier = 0.001;
+           if (fUnitLower === 'ml' && bUnitLower === 'l') unitMultiplier = 0.001;
+
+           let baseUnitsBoughtForRawPrice = (isBalPrice ? balPriceVal : 1) * unitMultiplier;
+           finalPriceToSave = rawPrice / baseUnitsBoughtForRawPrice;
+        }
 
         const btn = document.getElementById('btnSavePrecisionStock');
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> MENYIMPAN...';
         btn.disabled = true;
 
-        // VISUAL SPINNER DI TABEL STOK UTAMA (poin 6)
         const tbody = document.getElementById('stockTableBody');
         if (tbody) {
           const rows = tbody.querySelectorAll('tr');
           rows.forEach(row => {
             if (row.innerHTML.includes(`'${CURRENT_EDIT_MAT_ID}'`)) {
               const priceCell = row.querySelectorAll('td')[4]; 
-              if (priceCell) {
-                  priceCell.innerHTML = '<i class="fas fa-spinner fa-spin text-warning me-1"></i> <span class="small text-muted italic">Menyimpan...</span>';
-              }
+              if (priceCell) priceCell.innerHTML = '<i class="fas fa-spinner fa-spin text-warning me-1"></i> <span class="small text-muted italic">Menyimpan...</span>';
             }
           });
         }
@@ -6122,14 +6214,15 @@
           btn.disabled = false;
           if (res.status === 'success') {
             const matName = document.getElementById('editStockMatName').innerText;
-            triggerAuditLog("CHANGE PRICE BAHAN", `Mengubah stok menjadi ${finalBaseStock} dan harga (HPP) menjadi Rp ${finalBasePrice.toLocaleString()} untuk bahan ${matName}.`);
-        
+            if (typeof triggerAuditLog === 'function') {
+                triggerAuditLog("UPDATE STOK & HARGA", `Mengubah stok (${finalStockToSave} ${newBaseUnit}) dan harga dasar (Rp ${finalPriceToSave.toLocaleString()}) untuk bahan ${matName}.`);
+            }
             closeEditStockModal();
             fetchInitialData(); 
           } else {
             alert("Gagal menyimpan stok: " + res.message);
           }
-        }).updateMaterialStockAndPrice(CURRENT_EDIT_MAT_ID, finalBaseStock, finalBasePrice);
+        }).updateMaterialStockAndPrice(CURRENT_EDIT_MAT_ID, finalStockToSave, finalPriceToSave, newBaseUnit);
       }
 
       function toggleTransactionStatus(orderId, currentStatus, btnElement) {
@@ -6711,13 +6804,35 @@
               <td class="text-center"><span class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary border-0 px-3">${m.unit}</span></td>
               <td class="text-center fw-bold text-success">${priceDisplay} <span class="small text-muted fw-normal">/${m.unit}</span></td>
               <td class="text-center pe-4">
-                <button class="btn btn-white btn-sm shadow-sm rounded-circle border" onclick="openEditStockModal('${m.id}', '${m.name}', '${m.unit}', ${m.stock}, ${m.price || 0})">
+                <button class="btn btn-white btn-sm shadow-sm rounded-circle border" onclick="openEditStockModal('${m.id}', '${m.name}', '${m.unit}', ${m.stock}, ${m.price || 0})" title="Edit Stok & Harga">
                   <i class="fas fa-pencil text-primary" style="font-size: 0.7rem;"></i>
+                </button>
+                <button class="btn btn-white btn-sm shadow-sm rounded-circle border ms-1" onclick="deleteMaterialUI('${m.id}', '${m.name}')" title="Hapus Bahan Permanen">
+                  <i class="fas fa-trash text-danger" style="font-size: 0.7rem;"></i>
                 </button>
               </td>
             </tr>
           `;
         }).join('');
+      }
+
+      function deleteMaterialUI(id, name) {
+        if (confirm(`Yakin ingin menghapus bahan baku "${name}" secara permanen?\n\nPeringatan: Menghapus bahan yang masih terkait di sebuah resep menu dapat menyebabkan kalkulasi HPP bermasalah.`)) {
+          const tbody = document.getElementById('stockTableBody');
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center p-5"><i class="fas fa-spinner fa-spin text-danger me-2"></i>Menghapus bahan...</td></tr>';
+          
+          google.script.run.withSuccessHandler(res => {
+            if (res.status === 'success') {
+              if (typeof triggerAuditLog === 'function') {
+                 triggerAuditLog("HAPUS BAHAN", `Menghapus bahan baku ${name} (ID: ${id}) secara permanen dari database gudang.`);
+              }
+              fetchInitialData(); 
+            } else {
+              alert("Gagal menghapus: " + res.message);
+              fetchInitialData(); 
+            }
+          }).deleteMaterialRecord(id);
+        }
       }
 
       /**
