@@ -6041,10 +6041,10 @@
       }
 
 
-      // Timpa fungsi ini di index.html (Perbaikan Modal Edit Stok Unit Pair)
       function openEditStockModal(id, name, baseUnit, currentStock, currentPrice) {
         CURRENT_EDIT_MAT_ID = id;
         CURRENT_EDIT_BASE_UNIT = baseUnit;
+        window.CURRENT_EDIT_OLD_PRICE = currentPrice;
 
         document.getElementById('editStockMatName').innerText = name;
         document.getElementById('editStockCurrent').innerText = currentStock.toLocaleString();
@@ -6162,17 +6162,29 @@
         const unitStock = document.getElementById('stockUnitDropdown').value;
         const subUnitStock = document.getElementById('balStockSubUnit').value;
 
+        // SATUAN DASAR BARU (Acuan Konversi Utama)
         const newBaseUnit = isBalStock ? subUnitStock : unitStock;
 
-        // BUG FIX: Jika ada input stok, replace stok murni tanpa konversi dari baseUnit lama.
+        // KALKULASI STOK
         let finalStockToSave;
         if (stockInputStr !== '') {
            finalStockToSave = parseFloat(stockInputStr) * (isBalStock ? balStockVal : 1);
         } else {
-           // Jika stok kosong, biarkan angka stok lama (tapi jika unit berubah, maknanya jadi beda)
-           finalStockToSave = parseFloat(document.getElementById('editStockCurrent').innerText.replace(/,/g, ''));
+           // Jika input stok kosong, ambil stok lama lalu sesuaikan dengan satuan dasar baru
+           let oldStock = parseFloat(document.getElementById('editStockCurrent').innerText.replace(/,/g, ''));
+           let unitMultiplier = 1;
+           const bUnitLower = CURRENT_EDIT_BASE_UNIT.toLowerCase();
+           const newUnitLower = newBaseUnit.toLowerCase();
+
+           if (newUnitLower === 'kg' && bUnitLower === 'gr') unitMultiplier = 0.001;
+           if (newUnitLower === 'l' && bUnitLower === 'ml') unitMultiplier = 0.001;
+           if (newUnitLower === 'gr' && bUnitLower === 'kg') unitMultiplier = 1000;
+           if (newUnitLower === 'ml' && bUnitLower === 'l') unitMultiplier = 1000;
+
+           finalStockToSave = oldStock * unitMultiplier;
         }
 
+        // KALKULASI HARGA
         const isBalPrice = document.getElementById('checkBalPrice').checked;
         const balPriceVal = parseFloat(document.getElementById('balPriceValue').value) || 1;
         const unitPrice = document.getElementById('priceUnitToggle').value;
@@ -6192,6 +6204,20 @@
 
            let baseUnitsBoughtForRawPrice = (isBalPrice ? balPriceVal : 1) * unitMultiplier;
            finalPriceToSave = rawPrice / baseUnitsBoughtForRawPrice;
+        } else {
+           // Jika harga kosong, pertahankan harga lama. TETAPI jika satuan dasar berubah, harganya juga harus dihitung ulang!
+           // Misal harga lama Rp 20.000 / L. Sekarang satuan dasar baru adalah ml. Maka harga lama per ml = 20.
+           let oldPrice = window.CURRENT_EDIT_OLD_PRICE || 0; 
+           let unitMultiplier = 1;
+           const bUnitLower = CURRENT_EDIT_BASE_UNIT.toLowerCase(); // Satuan lama
+           const newUnitLower = newBaseUnit.toLowerCase(); // Satuan baru
+
+           if (newUnitLower === 'kg' && bUnitLower === 'gr') unitMultiplier = 1000;  // 1 gr = Rp 20 -> 1 kg = Rp 20000
+           if (newUnitLower === 'l' && bUnitLower === 'ml') unitMultiplier = 1000;
+           if (newUnitLower === 'gr' && bUnitLower === 'kg') unitMultiplier = 0.001; // 1 kg = Rp 20000 -> 1 gr = Rp 20
+           if (newUnitLower === 'ml' && bUnitLower === 'l') unitMultiplier = 0.001;
+
+           finalPriceToSave = oldPrice * unitMultiplier;
         }
 
         const btn = document.getElementById('btnSavePrecisionStock');
