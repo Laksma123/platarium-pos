@@ -930,7 +930,7 @@
               <i class="fas fa-user-plus me-2"></i>Tambah Staff
             </button>
           </div>
-          <div class="row mb-4">
+          <div class="row mb-4" id="netProfitContainer">
             <div class="col-12">
               <div class="card border-0 shadow-sm rounded-4 p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -2514,6 +2514,17 @@
                   OP_COSTS_DATA = res.customCosts;
                   ADMIN_SHARES_DATA = res.adminShares || []; // Tangkap data saham
                   IS_MULTI_OWNER = res.isMultiOwner; // Pastikan status sinkron
+
+                  // [PERBAIKAN] Tampilkan atau sembunyikan container Net Profit berdasarkan IS_MULTI_OWNER
+                  const netProfitContainer = document.getElementById('netProfitContainer');
+                  if (netProfitContainer) {
+                      if (IS_MULTI_OWNER) {
+                          netProfitContainer.classList.remove('d-none');
+                      } else {
+                          netProfitContainer.classList.add('d-none');
+                      }
+                  }
+
                   renderOpCostsUI();
               }
           }).getOperationalData();
@@ -2987,6 +2998,16 @@
         updateOwnerSettingUI(document.getElementById('settingOwnerPass').value);
         saveSettingConfig(); 
         
+        // [PERBAIKAN] Realtime update visibility container Net Profit saat toggle ditekan
+        const netProfitContainer = document.getElementById('netProfitContainer');
+        if (netProfitContainer) {
+            if (IS_MULTI_OWNER) {
+                netProfitContainer.classList.remove('d-none');
+            } else {
+                netProfitContainer.classList.add('d-none');
+            }
+        }
+        
         // Paksa re-render kartu staf di background secara instan saat toggle diubah
         if (typeof STAFF_DATA !== 'undefined' && STAFF_DATA && STAFF_DATA.length > 0) {
           renderManningUI(STAFF_FACES);
@@ -3303,11 +3324,25 @@
         // --- DATA UNTUK GSHEET AUDIT LOG ---
         const detailSetor = `Total Laci: ${txtExpected} (Modal: ${txtModalAwal}, Cash Masuk: ${txtCashSales}) | Diserahkan ke: ${setorKe}`;
         
-        // Deteksi Device sederhana (mengambil sistem operasi / browser kasir)
+        // [PERBAIKAN] Deteksi Device yang lebih rapi (parsing User-Agent)
         let deviceStr = "WebPOS";
         if (navigator.userAgent) {
-            // Ambil 30 karakter pertama untuk menghemat space di log
-            deviceStr = navigator.userAgent.substring(0, 30); 
+            const ua = navigator.userAgent;
+            if (ua.match(/Windows NT/i)) {
+                deviceStr = "Windows (PC)";
+            } else if (ua.match(/Mac OS X/i) && !ua.match(/iPhone|iPad|iPod/i)) {
+                deviceStr = "Mac (Apple)";
+            } else if (ua.match(/Linux/i) && !ua.match(/Android/i)) {
+                deviceStr = "Linux";
+            } else if (ua.match(/Android/i)) {
+                // Ambil model android misal "Android 10; CPH2603"
+                const match = ua.match(/Android[^;]+; ([^)]+)/);
+                deviceStr = match ? match[1].trim() : "Android Device";
+            } else if (ua.match(/iPhone|iPad|iPod/i)) {
+                deviceStr = "iOS Device";
+            } else {
+                deviceStr = ua.substring(0, 30); 
+            }
         }
 
         // Hapus session shift
@@ -3315,7 +3350,7 @@
 
         if (typeof google !== 'undefined' && google.script && google.script.run) {
           
-          // 1. Eksekusi pencatatan Audit Log (Menggunakan 4 Parameter sesuai Code.js Anda)
+          // 1. Eksekusi pencatatan Audit Log
           google.script.run.addAuditLog(cashierName, 'SETOR', detailSetor, deviceStr);
 
           // 2. Eksekusi pengiriman Telegram & Logout
