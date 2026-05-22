@@ -2096,12 +2096,30 @@
           pinLabel.innerText = "PASSWORD ADMIN";
           pinInput.removeAttribute('maxlength');
           pinInput.removeAttribute('pattern');
-          pinInput.type = "text"; // Biarkan terlihat sedikit saat diketik, atau ganti "password"
+          pinInput.type = "text"; 
           pinInput.placeholder = "Ketik password...";
           pinHelp.innerText = "*Min. 4 karakter & wajib mengandung 1 angka.";
         } else {
           pinContainer.classList.add('d-none');
           pinContainer.style.display = 'none';
+        }
+
+        // --- LOGIKA INSTAN UNTUK MENGUBAH LABEL GAJI / SAHAM DI DALAM MODAL ---
+        const salaryInput = document.getElementById('staffSalaryInput');
+        if (salaryInput) {
+          const inputGroup = salaryInput.parentElement;
+          const salaryLabel = inputGroup.previousElementSibling; // Mengambil elemen <label> di atasnya
+          const rpSpan = inputGroup.querySelector('.input-group-text'); // Mengambil teks "Rp" atau "%"
+
+          if (typeof IS_MULTI_OWNER !== 'undefined' && IS_MULTI_OWNER && role === 'ADMIN') {
+            if (salaryLabel) salaryLabel.innerText = "PERSENTASE SAHAM (%)";
+            if (rpSpan) rpSpan.innerText = "%";
+            salaryInput.placeholder = "Contoh: 25";
+          } else {
+            if (salaryLabel) salaryLabel.innerText = "GAJI POKOK (Base Salary)";
+            if (rpSpan) rpSpan.innerText = "Rp";
+            salaryInput.placeholder = "0";
+          }
         }
       }
 
@@ -2115,13 +2133,15 @@
         } else {
           document.getElementById('staffIdInput').value = "";
           document.getElementById('staffNameInput').value = "";
-          document.getElementById('staffRoleInput').value = "CASHIER";
+          document.getElementById('staffRoleInput').value = "CASHIER"; 
           document.getElementById('staffSalaryInput').value = "";
         }
         
         document.getElementById('staffPinInput').value = "";
+        
+        // Memanggil fungsi verifikasi pin sekaligus trigger perubahan label instan
         togglePinInput(); 
-        adjustSalaryLabel(); // Panggil fungsi baru untuk menyesuaikan label
+        
         document.getElementById('modalStaff').classList.remove('d-none');
       }
 
@@ -2965,11 +2985,11 @@
       function toggleMultiOwner() {
         IS_MULTI_OWNER = document.getElementById('multiOwnerToggle').checked;
         updateOwnerSettingUI(document.getElementById('settingOwnerPass').value);
-        saveSettingConfig(); // Auto-save saat toggle diubah
+        saveSettingConfig(); 
         
-        // Refresh Tab Manning jika sedang terbuka, agar label Gaji/Saham langsung berubah
-        if(!document.getElementById('view-manning').classList.contains('d-none')){
-          initManningTab();
+        // Paksa re-render kartu staf di background secara instan saat toggle diubah
+        if (typeof STAFF_DATA !== 'undefined' && STAFF_DATA && STAFF_DATA.length > 0) {
+          renderManningUI(STAFF_FACES);
         }
       }
 
