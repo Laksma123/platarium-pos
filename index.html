@@ -3087,8 +3087,10 @@
       }
 
       function toggleTelegramInputs() {
-        const isActive = document.getElementById('tgToggle').checked;
+        const tgToggleEl = document.getElementById('tgToggle');
+        const isActive = tgToggleEl ? tgToggleEl.checked : false;
         const btn = document.getElementById('btnAdvanceTelegram');
+        
         if (btn) {
           if (isActive) {
             btn.style.opacity = '1';
@@ -3099,8 +3101,16 @@
           }
         }
         
-        // Memastikan toggle sinkron ke satu gateway penyimpan untuk cegah bouncing
-        saveSettingConfig();
+        // Auto-save toggle dari luar modal secara cerdas (Background Process)
+        TELEGRAM_CONFIG.active = isActive;
+        if (document.getElementById('tgBotToken')) TELEGRAM_CONFIG.token = document.getElementById('tgBotToken').value.trim();
+        if (document.getElementById('tgChatAudit')) TELEGRAM_CONFIG.chatAudit = document.getElementById('tgChatAudit').value.trim();
+        if (document.getElementById('tgChatTrans')) TELEGRAM_CONFIG.chatTrans = document.getElementById('tgChatTrans').value.trim();
+        
+        // Menambahkan success handler kosong agar antrian request ke server tidak macet dan memperlancar animasi toggle
+        google.script.run.withSuccessHandler(() => {
+          console.log("Telegram setting auto-saved in background");
+        }).saveSettingConfig(TELEGRAM_CONFIG);
       }
 
       function openTelegramModal() {
@@ -3144,7 +3154,7 @@
         document.getElementById('modalInvoiceSetting').classList.add('d-none');
       }
 
-      function saveSettingConfig() {
+      function saveSettingConfig(e) {
         TELEGRAM_CONFIG = {
           active: document.getElementById('tgToggle') ? document.getElementById('tgToggle').checked : false,
           token: document.getElementById('tgBotToken') ? document.getElementById('tgBotToken').value.trim() : '',
@@ -3159,12 +3169,28 @@
 
         IS_TAX_ACTIVE = TELEGRAM_CONFIG.taxActive;
         TAX_PERCENTAGE = TELEGRAM_CONFIG.taxPercent;
+
+        // Menangkap event secara aman dari parameter (e) atau global window agar tidak memicu error yang membuat toggle batal/memantul
+        const currentEvent = e || (typeof event !== 'undefined' ? event : window.event);
+        const btn = currentEvent && currentEvent.currentTarget ? currentEvent.currentTarget : null;
+        let originalHtml = '';
+        
+        // HANYA EKSEKUSI JIKA ELEMEN ADALAH TOMBOL (Mencegah toggle memantul)
+        if (btn && btn.tagName === 'BUTTON') {
+            originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true; // Tambahan kecil: cegah spam klik ganda saat loading
+        }
         
         google.script.run.withSuccessHandler(res => {
+          if (btn && btn.tagName === 'BUTTON') {
+              btn.innerHTML = originalHtml;
+              btn.disabled = false;
+          }
           if(res.status === 'success') {
-            console.log("Setting saved successfully.");
+            console.log("Setting saved.");
           } else {
-            console.error("Gagal menyimpan setting: " + res.message);
+            alert("Gagal menyimpan: " + res.message);
           }
         }).saveSettingConfig(TELEGRAM_CONFIG);
       }
