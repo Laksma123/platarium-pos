@@ -1684,7 +1684,7 @@
                 <div id="taxInputArea" class="d-none mt-2">
                   <label class="small fw-bold text-muted mb-1">PRESENTASE PPN (%)</label>
                   <div class="input-group">
-                    <input type="number" id="settingTaxPercent" class="form-control border-2 fw-bold" placeholder="Contoh: 11" onchange="saveSettingConfig()">
+                    <input type="number" id="settingTaxPercent" class="form-control border-2 fw-bold" placeholder="Contoh: 11" onchange="toggleTaxSetting()">
                     <span class="input-group-text bg-light border-2">%</span>
                   </div>
                   <small class="text-muted d-block mt-1" style="font-size:0.65rem;">PPN otomatis ditambahkan pada Total Belanja.</small>
@@ -2537,10 +2537,10 @@
                   ADMIN_SHARES_DATA = res.adminShares || []; // Tangkap data saham
                   IS_MULTI_OWNER = res.isMultiOwner; // Pastikan status sinkron
 
-                  // [PERBAIKAN] Tampilkan atau sembunyikan container Net Profit berdasarkan IS_MULTI_OWNER
+                  // [PERBAIKAN] Tampilkan container jika Owner, atau jika Multi Owner ON (Admin)
                   const netProfitContainer = document.getElementById('netProfitContainer');
                   if (netProfitContainer) {
-                      if (IS_MULTI_OWNER) {
+                      if (ACTIVE_CASHIER === 'Owner' || IS_MULTI_OWNER) {
                           netProfitContainer.classList.remove('d-none');
                       } else {
                           netProfitContainer.classList.add('d-none');
@@ -2583,7 +2583,7 @@
                   totalCost += totalTaxCollected;
                   html += `
                   <tr>
-                      <td class="fw-bold text-dark"><i class="fas fa-percent text-danger me-2"></i>Pajak PPN ${TAX_PERCENTAGE}% (Auto)</td>
+                      <td class="fw-bold text-dark"><i class="fas fa-percent text-danger me-2"></i>Pengurangan Tax (PPN ${TAX_PERCENTAGE}%)</td>
                       <td class="text-end fw-bold text-danger">Rp ${totalTaxCollected.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
                       <td class="text-center"><span class="badge bg-light text-muted border px-3">Auto</span></td>
                   </tr>
@@ -3051,7 +3051,7 @@
         // [PERBAIKAN] Realtime update visibility container Net Profit saat toggle ditekan
         const netProfitContainer = document.getElementById('netProfitContainer');
         if (netProfitContainer) {
-            if (IS_MULTI_OWNER) {
+            if (ACTIVE_CASHIER === 'Owner' || IS_MULTI_OWNER) {
                 netProfitContainer.classList.remove('d-none');
             } else {
                 netProfitContainer.classList.add('d-none');
@@ -3139,19 +3139,20 @@
           isOwner: ACTIVE_CASHIER === 'Owner'
         };
 
-        // Sinkronisasi memori realtime
         IS_TAX_ACTIVE = TELEGRAM_CONFIG.taxActive;
         TAX_PERCENTAGE = TELEGRAM_CONFIG.taxPercent;
 
         const btn = event && event.currentTarget ? event.currentTarget : null;
         let originalHtml = '';
-        if (btn) {
+        
+        // HANYA EKSEKUSI JIKA ELEMEN ADALAH TOMBOL (Mencegah toggle memantul)
+        if (btn && btn.tagName === 'BUTTON') {
             originalHtml = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         }
         
         google.script.run.withSuccessHandler(res => {
-          if (btn) btn.innerHTML = originalHtml;
+          if (btn && btn.tagName === 'BUTTON') btn.innerHTML = originalHtml;
           if(res.status === 'success') {
             console.log("Setting saved.");
           } else {
@@ -3175,6 +3176,8 @@
         if (document.getElementById('settingTaxPercent')) {
             TAX_PERCENTAGE = Number(document.getElementById('settingTaxPercent').value) || 0;
         }
+        
+        if (typeof renderOpCostsUI === 'function') renderOpCostsUI();
         saveSettingConfig();
       }
 
@@ -3458,17 +3461,21 @@
         const btn = document.getElementById('btnRefresh');
         const originalContent = btn.innerHTML;
         btn.disabled = true;
-        // Hilangkan teks, putar icon sync yang sudah ada
         btn.innerHTML = '<i class="fas fa-sync-alt fa-spin text-secondary"></i>';
         
-        // Langsung panggil fetchInitialData dengan AI aktif.
-        // Karena clearMarketCache dihapus, Gemini hanya dipanggil jika cache > 1 jam.
+        // Memuat semua endpoint secara komprehensif
         fetchInitialData(true);
+        loadProducts(); 
+        
+        if (USER_ROLE === 'ADMIN') {
+            initManningTab();
+            loadSettingConfig();
+        }
         
         setTimeout(() => {
           btn.disabled = false;
           btn.innerHTML = originalContent;
-        }, 1000);
+        }, 1500);
       }
 
       function fetchInitialData(includeAI = false) {
@@ -4637,23 +4644,18 @@
         const grid = document.getElementById('productGrid');
         if (!grid) return; 
 
-        // [FIX] Bersihkan inline style display loading TANPA menghapus variabel --pos-grid-cols
         grid.style.display = '';
         grid.style.height = '';
         grid.style.alignItems = '';
         grid.style.justifyContent = '';
         
-        // Memastikan konfigurasi grid kolom tetap teraplikasikan dengan memanggil fungsi ini:
         applyGridCols(CURRENT_GRID_COLS);
         
         grid.className = 'pos-grid-container';
 
         const searchKeyword = document.getElementById('searchPOS').value;
-
-        // Clone array agar tidak mengubah urutan PRODUCTS asli secara permanen
         let displayData = [...dataToRender];
 
-        // Logika Sorting (Hanya jika tidak sedang search)
         if (!searchKeyword) {
           const savedOrder = JSON.parse(localStorage.getItem('pos_grid_order') || '[]');
 
@@ -4663,20 +4665,17 @@
               let indexB = savedOrder.indexOf(b.id);
               if (indexA === -1) indexA = 999;
               if (indexB === -1) indexB = 999;
-       
               return indexA - indexB;
             });
           }
         }
 
-        // Render HTML Produk
         grid.innerHTML = displayData.map(p => {
           let classes = ["pos-product-card"]; 
-          if (IS_REORDER_MODE) classes.push("reorder-mode"); // Visualisasi mode edit
+          if (IS_REORDER_MODE) classes.push("reorder-mode");
 
           let icons = [];
           if (p.category === 'Best Seller') {
-           
             classes.push("effect-best-seller");
             icons.push(`<i class="fas fa-crown crown-anim"></i>`);
           }
@@ -4685,7 +4684,6 @@
             icons.push(`<i class="fas fa-snowflake ice-anim"></i>`);
           } else if (p.name.includes('(Hot)')) {
             classes.push("effect-hot");
-         
             icons.push(`<i class="fas fa-fire hot-anim"></i>`);
           }
 
@@ -4698,48 +4696,63 @@
                 ${iconHTML}
                 <img src="${p.img || 'https://via.placeholder.com/150'}" class="pos-img-thumb">
                 <div class="pos-card-body">
-               
                   <div class="pos-title" title="${p.name}">${p.name}</div>
                   <div class="pos-price">Rp ${p.price.toLocaleString()}</div>
                 </div>
               </div>
             </div>
           `;
-
         }).join('');
 
-        // Inisialisasi Sortable (Drag & Drop)
         if (!searchKeyword) {
           if (POS_SORTABLE) {
             POS_SORTABLE.destroy();
-
             POS_SORTABLE = null;
           }
 
-          // Konfigurasi Auto Scroll Final Fix
           POS_SORTABLE = new Sortable(grid, {
             animation: 150,
             ghostClass: 'opacity-50',
             disabled: !IS_REORDER_MODE, 
             delay: 200, 
-   
             delayOnTouchOnly: true,
-            
-            // Konfigurasi Scroll Touchscreen
             scroll: document.querySelector('.pos-menu'), 
             scrollSensitivity: 150, 
-            
             scrollSpeed: 25, 
             bubbleScroll: true,
             forceFallback: true, 
 
-            onEnd: function() {
-              const newOrder = Array.from(grid.querySelectorAll('[data-id]')).map(el => el.dataset.id);
-              localStorage.setItem('pos_grid_order', JSON.stringify(newOrder));
-
+            onEnd: function(evt) {
+              const currentOrder = JSON.parse(localStorage.getItem('pos_grid_order') || '[]');
+              if (currentOrder.length === 0) {
+                PRODUCTS.forEach(p => currentOrder.push(p.id));
+              }
+              
+              const itemEl = evt.item;
+              const id = itemEl.dataset.id;
+              const visibleIds = Array.from(grid.querySelectorAll('[data-id]')).map(el => el.dataset.id);
+              
+              const oldIndex = currentOrder.indexOf(id);
+              if (oldIndex > -1) currentOrder.splice(oldIndex, 1);
+              
+              const newVisibleIndex = visibleIds.indexOf(id);
+              if (newVisibleIndex === 0) {
+                if (visibleIds.length > 1) {
+                    const nextId = visibleIds[1];
+                    const nextIndex = currentOrder.indexOf(nextId);
+                    currentOrder.splice(nextIndex > -1 ? nextIndex : 0, 0, id);
+                } else {
+                    currentOrder.push(id);
+                }
+              } else {
+                const prevId = visibleIds[newVisibleIndex - 1];
+                const prevIndex = currentOrder.indexOf(prevId);
+                currentOrder.splice(prevIndex > -1 ? prevIndex + 1 : currentOrder.length, 0, id);
+              }
+              
+              localStorage.setItem('pos_grid_order', JSON.stringify(currentOrder));
             }
           });
-
         }
       }
 
@@ -4748,7 +4761,6 @@
         const btn = document.getElementById('btnReorderToggle');
         
         if (IS_REORDER_MODE) {
-          // MODE EDIT AKTIF: Update Teks Tombol Baru
           btn.innerHTML = '<i class="fas fa-check text-success me-2"></i>Selesai Edit';
           btn.classList.add('btn-light', 'border-success');
           
@@ -4758,12 +4770,11 @@
             el.removeAttribute('onclick');
           });
         } else {
-          // MODE EDIT MATI: Kembalikan Teks Tombol Baru
           btn.innerHTML = '<i class="fas fa-sort text-muted me-2"></i>Atur Urutan';
           btn.classList.remove('btn-light', 'border-success');
           
           if(POS_SORTABLE) POS_SORTABLE.option("disabled", true);
-          renderProductGrid();
+          filterPOS(); // Diubah agar mempertahankan filter kategori saat ini
         }
       }
 
@@ -5726,7 +5737,7 @@
                 <td class="text-center"><span class="badge bg-light text-dark border" style="font-size:0.6rem;">${cashierDisplayName}</span></td>
                 <td class="text-center pe-4">
                   <div class="btn-group shadow-sm rounded-pill border overflow-hidden">
-                     <button class="btn btn-light btn-sm border-end" onclick="toggleTransactionStatus('${t.orderId}', '${t.status}')" title="Ubah Status">
+                     <button class="btn btn-light btn-sm border-end" onclick="toggleTransactionStatus('${t.orderId}', '${t.status}', this)" title="Ubah Status">
                       <i class="fas ${isKomplimen ? 'fa-undo text-success' : 'fa-exchange-alt text-warning'}" style="font-size:0.7rem;"></i>
                     </button>
                     <button class="btn btn-light btn-sm" onclick="confirmDeleteTransaction('${t.orderId}', this)" title="Hapus">
@@ -6014,21 +6025,30 @@
         }).updateMaterialStockAndPrice(CURRENT_EDIT_MAT_ID, finalBaseStock, finalBasePrice);
       }
 
-      // [FUNGSI BARU] Pemicu ubah status transaksi
-      function toggleTransactionStatus(orderId, currentStatus) {
+      function toggleTransactionStatus(orderId, currentStatus, btnElement) {
         const newStatus = currentStatus === 'Komplimen' ? 'Normal' : 'Komplimen';
         const msg = newStatus === 'Komplimen' ?
           `Ubah transaksi ${orderId} menjadi KOMPLIMEN?\nTotal akan dikurangkan dari Revenue, tapi stok tetap terpotong.` :
           `Kembalikan transaksi ${orderId} menjadi NORMAL?\nTotal akan dimasukkan kembali ke perhitungan Revenue.`;
 
         if (confirm(msg)) {
+          let originalHtml = '';
+          if (btnElement) {
+            originalHtml = btnElement.innerHTML;
+            btnElement.innerHTML = '<i class="fas fa-spinner fa-spin text-warning" style="font-size:0.7rem;"></i>';
+            btnElement.disabled = true;
+          }
+
           google.script.run.withSuccessHandler(res => {
             if (res.status === 'success') {
               triggerAuditLog("EDIT TRANSAKSI", `Mengubah status transaksi ${orderId} menjadi ${newStatus}.`);
-
-              loadFinanceData(); // Segarkan ulang UI Laporan
+              loadFinanceData(); 
             } else {
               alert("Gagal memperbarui status: " + res.message);
+              if (btnElement) {
+                btnElement.innerHTML = originalHtml;
+                btnElement.disabled = false;
+              }
             }
           }).updateTransactionStatus(orderId, newStatus);
         }
