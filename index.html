@@ -4828,6 +4828,9 @@
               mobCountEl.innerText = '0';
           }
           CURRENT_TOTAL = 0;
+          
+          // Sinkronisasi Dual Monitor saat keranjang kosong
+          posSyncChannel.postMessage({ type: 'UPDATE_CART', cart: CART, total: CURRENT_TOTAL, taxActive: false, taxAmount: 0 });
           return;
         }
 
@@ -4850,6 +4853,7 @@
         }).join('');
 
         let finalTotal = subtotal;
+        let activeTaxAmount = 0; 
         
         let taxNote = document.getElementById('taxNoteInfo');
         if (!taxNote) {
@@ -4861,10 +4865,10 @@
         }
         
         if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
-            const taxAmount = subtotal * (TAX_PERCENTAGE / 100);
-            finalTotal = subtotal + taxAmount;
+            activeTaxAmount = subtotal * (TAX_PERCENTAGE / 100);
+            finalTotal = subtotal + activeTaxAmount;
             
-            taxNote.innerText = `*Sudah termasuk PPN ${TAX_PERCENTAGE}% (Rp ${taxAmount.toLocaleString(undefined, {maximumFractionDigits:0})})`;
+            taxNote.innerText = `*Sudah termasuk PPN ${TAX_PERCENTAGE}% (Rp ${activeTaxAmount.toLocaleString(undefined, {maximumFractionDigits:0})})`;
             taxNote.classList.remove('d-none');
         } else {
             taxNote.classList.add('d-none');
@@ -4881,6 +4885,16 @@
         }
         
         CURRENT_TOTAL = finalTotal;
+        
+        // MENGIRIM PAYLOAD PAJAK KE CUSTOMER DISPLAY
+        posSyncChannel.postMessage({ 
+          type: 'UPDATE_CART', 
+          cart: CART, 
+          total: finalTotal, 
+          taxActive: (typeof IS_TAX_ACTIVE !== 'undefined' ? IS_TAX_ACTIVE : false),
+          taxPercent: (typeof TAX_PERCENTAGE !== 'undefined' ? TAX_PERCENTAGE : 0),
+          taxAmount: activeTaxAmount 
+        });
       }
 
       function toggleMobileCart(show) {
@@ -7176,7 +7190,6 @@
           return;
         }
 
-        // Ambil link ter-save lalu ekstrak menjadi ID
         const savedUrl = localStorage.getItem('pos_dual_monitor_video_url') || "";
         const youtubeId = extractYouTubeId(savedUrl);
 
@@ -7203,6 +7216,7 @@
               .total-row { display: flex; justify-content: space-between; align-items: center; font-size: 1.3rem; font-weight: 700; color: #2d3436; }
               .total-price { color: #d35400; font-weight: 800; }
               .empty-state { text-align: center; color: #999; margin-top: 40px; font-size: 0.85rem; font-style: italic; }
+              .tax-note { font-size: 0.75rem; color: #e74c3c; font-weight: bold; text-align: right; margin-top: 5px; }
             </style>
           </head>
           <body>
@@ -7221,6 +7235,7 @@
                   <span>TOTAL</span>
                   <span class="total-price" id="cdTotal">Rp 0</span>
                 </div>
+                <div id="cdTaxNote" class="tax-note" style="display: none;">*Sudah termasuk PPN</div>
               </div>
             </div>
 
@@ -7228,16 +7243,23 @@
               const syncChannel = new BroadcastChannel('platarium_pos_sync');
               syncChannel.onmessage = (event) => {
                 const data = event.data;
-                if (data.type === 'UPDATE_CART') { renderCart(data.cart, data.total); }
-                else if (data.type === 'CLEAR_CART') { renderCart([], 0); }
+                if (data.type === 'UPDATE_CART') { 
+                  renderCart(data.cart, data.total, data.taxActive, data.taxPercent, data.taxAmount); 
+                }
+                else if (data.type === 'CLEAR_CART') { 
+                  renderCart([], 0, false, 0, 0); 
+                }
               };
 
-              function renderCart(cart, total) {
+              function renderCart(cart, total, taxActive, taxPercent, taxAmount) {
                 const container = document.getElementById('cdItems');
                 const totalEl = document.getElementById('cdTotal');
+                const taxNoteEl = document.getElementById('cdTaxNote');
+
                 if (!cart || cart.length === 0) {
                   container.innerHTML = '<div class="empty-state">Belum ada pesanan</div>';
                   totalEl.innerText = 'Rp 0';
+                  taxNoteEl.style.display = 'none';
                   return;
                 }
                 let htmlString = '';
@@ -7246,7 +7268,16 @@
                   htmlString += '<div class="item-row"><div><span class="item-name">' + item.name + '<span class="item-qty">x' + item.qty + '</span></span></div><span class="item-price">Rp ' + subtotal + '</span></div>';
                 });
                 container.innerHTML = htmlString;
-                totalEl.innerText = 'Rp ' + total.toLocaleString('id-ID');
+                
+                totalEl.innerText = 'Rp ' + total.toLocaleString('id-ID', {maximumFractionDigits:0});
+                
+                if (taxActive && taxAmount > 0) {
+                  taxNoteEl.innerText = '*Sudah termasuk PPN ' + taxPercent + '% (Rp ' + taxAmount.toLocaleString('id-ID', {maximumFractionDigits:0}) + ')';
+                  taxNoteEl.style.display = 'block';
+                } else {
+                  taxNoteEl.style.display = 'none';
+                }
+
                 container.scrollTop = container.scrollHeight;
               }
             <\/script>
@@ -7254,7 +7285,22 @@
           </html>
         `);
         customerWindow.document.close();
-        posSyncChannel.postMessage({ type: 'UPDATE_CART', cart: CART, total: CURRENT_TOTAL });
+        
+        let activeTaxAmount = 0;
+        if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
+            const subtotal = CART.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            activeTaxAmount = subtotal * (TAX_PERCENTAGE / 100);
+        }
+
+        // Trigger tampilan pertama kali setelah popup terbuka
+        posSyncChannel.postMessage({ 
+          type: 'UPDATE_CART', 
+          cart: CART, 
+          total: CURRENT_TOTAL,
+          taxActive: (typeof IS_TAX_ACTIVE !== 'undefined' ? IS_TAX_ACTIVE : false),
+          taxPercent: (typeof TAX_PERCENTAGE !== 'undefined' ? TAX_PERCENTAGE : 0),
+          taxAmount: activeTaxAmount 
+        });
       }
 
       function showDoneTicketDetail(orderId) {
