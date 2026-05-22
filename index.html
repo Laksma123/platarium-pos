@@ -1671,6 +1671,26 @@
                 </div>
               </div>
             </div>
+
+            <div class="col-12 col-md-6 col-lg-5">
+              <div class="card border-0 shadow-sm rounded-4 p-4 h-100 border-start border-4 border-danger">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                  <h6 class="fw-bold m-0 text-dark"><i class="fas fa-percent text-danger me-2"></i>Tambah Tax (PPN)</h6>
+                  <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" role="switch" id="taxToggle" onchange="toggleTaxSetting()" style="width: 40px; height: 20px; cursor:pointer;">
+                  </div>
+                </div>
+                
+                <div id="taxInputArea" class="d-none mt-2">
+                  <label class="small fw-bold text-muted mb-1">PRESENTASE PPN (%)</label>
+                  <div class="input-group">
+                    <input type="number" id="settingTaxPercent" class="form-control border-2 fw-bold" placeholder="Contoh: 11" onchange="saveSettingConfig()">
+                    <span class="input-group-text bg-light border-2">%</span>
+                  </div>
+                  <small class="text-muted d-block mt-1" style="font-size:0.65rem;">PPN otomatis ditambahkan pada Total Belanja.</small>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -1958,6 +1978,8 @@
       let SHIFT_DATA = null;
       let IS_MULTI_OWNER = false;
       let ADMIN_SHARES_DATA = [];
+      let IS_TAX_ACTIVE = false;
+      let TAX_PERCENTAGE = 0;
 
       function initManningTab() {
         loadOpCosts(); // <--- TAMBAHKAN BARIS INI
@@ -2534,7 +2556,6 @@
           const tbody = document.getElementById('opCostListBody');
           let totalCost = TOTAL_SALARY_COST;
           
-          // 1. Render Cost Otomatis (Gaji - Yang mana admin sudah di-exclude jika MultiOwner ON)
           let html = `
               <tr>
                   <td class="fw-bold text-dark"><i class="fas fa-users text-primary me-2"></i>Gaji Karyawan (Otomatis)</td>
@@ -2543,7 +2564,33 @@
               </tr>
           `;
 
-          // 2. Render Custom Cost
+          // Kalkulasi Pajak Auto Inklusif dari Pendapatan
+          let totalTaxCollected = 0;
+          if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
+              let totalRevenueFromTransactions = 0;
+              if (TRANSACTIONS_DATA) {
+                  TRANSACTIONS_DATA.forEach(t => {
+                      if (t.status !== 'Komplimen') {
+                          totalRevenueFromTransactions += Number(t.total) || 0;
+                      }
+                  });
+              }
+              
+              let calculatedSubtotal = totalRevenueFromTransactions / (1 + (TAX_PERCENTAGE / 100));
+              totalTaxCollected = totalRevenueFromTransactions - calculatedSubtotal;
+              
+              if (totalTaxCollected > 0) {
+                  totalCost += totalTaxCollected;
+                  html += `
+                  <tr>
+                      <td class="fw-bold text-dark"><i class="fas fa-percent text-danger me-2"></i>Pajak PPN ${TAX_PERCENTAGE}% (Auto)</td>
+                      <td class="text-end fw-bold text-danger">Rp ${totalTaxCollected.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                      <td class="text-center"><span class="badge bg-light text-muted border px-3">Auto</span></td>
+                  </tr>
+                  `;
+              }
+          }
+
           OP_COSTS_DATA.forEach(cost => {
               totalCost += cost.amount;
               html += `
@@ -2562,23 +2609,21 @@
 
           tbody.innerHTML = html;
 
-          // 3. Kalkulasi Net Profit
-          const profitBersih = getPureProfitBersih();
-          const netProfit = profitBersih - totalCost;
+          const profitBersih = getPureProfitBersih(); 
+          const netProfit = profitBersih - totalCost; 
           
-          document.getElementById('opTotalCostText').innerText = 'Rp ' + totalCost.toLocaleString();
-          document.getElementById('opProfitText').innerText = 'Profit Laporan: Rp ' + profitBersih.toLocaleString();
+          document.getElementById('opTotalCostText').innerText = 'Rp ' + totalCost.toLocaleString(undefined, {maximumFractionDigits:0});
+          document.getElementById('opProfitText').innerText = 'Profit Laporan: Rp ' + profitBersih.toLocaleString(undefined, {maximumFractionDigits:0});
           
           const finalEl = document.getElementById('opNetProfitFinal');
           let profitHtml = '';
           if (netProfit >= 0) {
-              profitHtml = `Net Profit: <span class="text-success fs-5">Rp ${netProfit.toLocaleString()}</span>`;
+              profitHtml = `Net Profit: <span class="text-success fs-5">Rp ${netProfit.toLocaleString(undefined, {maximumFractionDigits:0})}</span>`;
           } else {
-              profitHtml = `Net Profit: <span class="text-danger fs-5">- Rp ${Math.abs(netProfit).toLocaleString()}</span>`;
+              profitHtml = `Net Profit: <span class="text-danger fs-5">- Rp ${Math.abs(netProfit).toLocaleString(undefined, {maximumFractionDigits:0})}</span>`;
           }
           
-          // --- TAMBAHAN LOGIKA MULTI OWNER (PEMBAGIAN SAHAM) ---
-          if (IS_MULTI_OWNER && ADMIN_SHARES_DATA.length > 0 && ACTIVE_CASHIER) {
+          if (IS_MULTI_OWNER && ADMIN_SHARES_DATA && ADMIN_SHARES_DATA.length > 0 && ACTIVE_CASHIER) {
             let myShare = ADMIN_SHARES_DATA.find(a => a.name === ACTIVE_CASHIER);
             if (myShare) {
               let myProfit = (netProfit > 0) ? (netProfit * (myShare.percentage / 100)) : 0;
@@ -2590,7 +2635,6 @@
           
           finalEl.innerHTML = profitHtml;
 
-          // 4. Logika Animasi Meteran (tetap sama)
           const bar = document.getElementById('opProfitBar');
           let percentage = totalCost > 0 ? (profitBersih / totalCost) * 100 : 100;
           if (percentage < 0) percentage = 0;
@@ -2794,6 +2838,10 @@
           CONFIG = res.config;
           ACTIVE_CASHIER = res.name;
           
+          // Menangkap data PPN
+          IS_TAX_ACTIVE = res.config.TaxActive;
+          TAX_PERCENTAGE = res.config.TaxPercent;
+          
           document.getElementById('activeCashierName').innerText = ACTIVE_CASHIER;
 
           if (USER_ROLE === 'ADMIN') {
@@ -2815,20 +2863,13 @@
             
             if (savedShift) {
               SHIFT_DATA = JSON.parse(savedShift);
-              
-              // [BUG FIX]: Cek identitas Kasir tanpa mempedulikan status 'locked'
-              // Ini menangani kasus reload browser mendadak.
               if (SHIFT_DATA.cashier === ACTIVE_CASHIER) {
-                // Kasir asli kembali (entah dari locked screen atau reload mendadak)
                 SHIFT_DATA.locked = false;
                 localStorage.setItem('pos_shift_data', JSON.stringify(SHIFT_DATA));
                 IS_SUBSTITUTE = false;
                 proceedToMainUI(res);
               } else {
-                // Kasir B login di atas shift Kasir A
                 IS_SUBSTITUTE = true;
-                
-                // Paksa kunci shift Kasir A di sistem agar aman
                 SHIFT_DATA.locked = true;
                 localStorage.setItem('pos_shift_data', JSON.stringify(SHIFT_DATA));
 
@@ -2838,7 +2879,6 @@
                 proceedToMainUI(res);
               }
             } else {
-              // LOGIN AWAL KASIR (Belum ada Shift Terbuka)
               IS_SUBSTITUTE = false;
               document.getElementById('loginOverlay').classList.add('d-none');
               document.getElementById('shiftWelcomeName').innerText = `Halo, ${ACTIVE_CASHIER}`;
@@ -2949,13 +2989,16 @@
       let TELEGRAM_CONFIG = { active: false, token: '', chatAudit: '', chatTrans: '' };
 
       function loadSettingConfig() {
-        const btn = document.getElementById('btnSaveSetting'); // Tombol di modal telegram (bisa diabaikan jika tidak ada)
+        const btn = document.getElementById('btnSaveSetting');
         
         google.script.run.withSuccessHandler(res => {
           TELEGRAM_CONFIG = res;
           IS_MULTI_OWNER = res.multiOwner;
           
-          // Set UI Toggles
+          // Setup Memory Tax
+          IS_TAX_ACTIVE = res.taxActive;
+          TAX_PERCENTAGE = res.taxPercent;
+          
           document.getElementById('tgToggle').checked = res.active;
           document.getElementById('tgBotToken').value = res.token || '';
           document.getElementById('tgChatAudit').value = res.chatAudit || '';
@@ -2964,11 +3007,18 @@
           const multiToggle = document.getElementById('multiOwnerToggle');
           if (multiToggle) multiToggle.checked = IS_MULTI_OWNER;
           
+          // Setup UI Tax
+          const taxTgl = document.getElementById('taxToggle');
+          if (taxTgl) taxTgl.checked = IS_TAX_ACTIVE;
+          const taxPct = document.getElementById('settingTaxPercent');
+          if (taxPct) taxPct.value = TAX_PERCENTAGE || '';
+          toggleTaxSetting();
+          
           toggleTelegramInputs();
           toggleInvoiceInputs();
-          updateOwnerSettingUI(res.ownerPass); // Panggil fungsi update UI Owner
+          updateOwnerSettingUI(res.ownerPass); 
 
-        }).getSettingConfig(ACTIVE_CASHIER); // Kirim ACTIVE_CASHIER (nama user yang login)
+        }).getSettingConfig(ACTIVE_CASHIER); 
       }
 
       function updateOwnerSettingUI(ownerPass) {
@@ -3082,24 +3132,50 @@
           token: document.getElementById('tgBotToken').value.trim(),
           chatAudit: document.getElementById('tgChatAudit').value.trim(),
           chatTrans: document.getElementById('tgChatTrans').value.trim(),
-          multiOwner: document.getElementById('multiOwnerToggle').checked,
+          multiOwner: document.getElementById('multiOwnerToggle') ? document.getElementById('multiOwnerToggle').checked : false,
+          taxActive: document.getElementById('taxToggle') ? document.getElementById('taxToggle').checked : false,
+          taxPercent: document.getElementById('settingTaxPercent') ? (Number(document.getElementById('settingTaxPercent').value) || 0) : 0,
           ownerPass: document.getElementById('settingOwnerPass') ? document.getElementById('settingOwnerPass').value : '',
           isOwner: ACTIVE_CASHIER === 'Owner'
         };
 
-        const btn = event.currentTarget;
-        const originalHtml = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        // Sinkronisasi memori realtime
+        IS_TAX_ACTIVE = TELEGRAM_CONFIG.taxActive;
+        TAX_PERCENTAGE = TELEGRAM_CONFIG.taxPercent;
+
+        const btn = event && event.currentTarget ? event.currentTarget : null;
+        let originalHtml = '';
+        if (btn) {
+            originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        }
         
         google.script.run.withSuccessHandler(res => {
-          btn.innerHTML = originalHtml;
+          if (btn) btn.innerHTML = originalHtml;
           if(res.status === 'success') {
             console.log("Setting saved.");
-            // Optional: beri notifikasi toast kecil
           } else {
             alert("Gagal menyimpan: " + res.message);
           }
         }).saveSettingConfig(TELEGRAM_CONFIG);
+      }
+
+      function toggleTaxSetting() {
+        const isActive = document.getElementById('taxToggle') ? document.getElementById('taxToggle').checked : false;
+        const taxArea = document.getElementById('taxInputArea');
+        if (taxArea) {
+            if (isActive) {
+                taxArea.classList.remove('d-none');
+            } else {
+                taxArea.classList.add('d-none');
+            }
+        }
+        
+        IS_TAX_ACTIVE = isActive;
+        if (document.getElementById('settingTaxPercent')) {
+            TAX_PERCENTAGE = Number(document.getElementById('settingTaxPercent').value) || 0;
+        }
+        saveSettingConfig();
       }
 
       function proceedToMainUI(res) {
@@ -4734,35 +4810,77 @@
 
       function updateCartUI() {
         const container = document.getElementById('cartItems');
-        let total = 0; let count = 0;
+        let subtotal = 0;
+        let count = 0;
+
         if (CART.length === 0) {
           container.innerHTML = `<div class="text-center mt-5 text-muted"><i class="fas fa-shopping-cart fa-3x mb-3 opacity-25"></i><p>Belum ada pesanan</p></div>`;
-        } else {
-          container.innerHTML = CART.map(item => {
-            total += item.price * item.qty; count += item.qty;
-            return `
-              <div class="d-flex align-items-center mb-3 p-2 bg-light rounded-3">
-                <div class="flex-fill">
-                  <div class="fw-bold small">${item.name}</div>
-                  <div class="text-muted small">Rp ${(item.price * item.qty).toLocaleString()}</div>
-                </div>
-                <div class="qty-control">
-                  <button class="btn-qty" onclick="updateCart('${item.id}', -1)"><i class="fas fa-minus"></i></button>
-                  <span class="fw-bold small">${item.qty}</span>
-                  <button class="btn-qty" onclick="updateCart('${item.id}', 1)"><i class="fas fa-plus"></i></button>
-                </div>
-              </div>
-            `;
-          }).join('');
+          document.getElementById('txtSubtotal').innerText = 'Rp 0';
+          document.getElementById('txtTotal').innerText = 'Rp 0';
+          
+          let taxNote = document.getElementById('taxNoteInfo');
+          if (taxNote) taxNote.classList.add('d-none');
+          
+          const mobTotalEl = document.getElementById('mobTotal');
+          const mobCountEl = document.getElementById('mobItemCount');
+          if (mobTotalEl && mobCountEl) {
+              mobTotalEl.innerText = 'Rp 0';
+              mobCountEl.innerText = '0';
+          }
+          CURRENT_TOTAL = 0;
+          return;
         }
-        const formattedTotal = 'Rp ' + total.toLocaleString();
-        document.getElementById('txtTotal').innerText = formattedTotal;
-        document.getElementById('txtSubtotal').innerText = formattedTotal;
-        const trigger = document.getElementById('mobileCartTrigger');
-        trigger.style.display = (count > 0) ? 'flex' : 'none';
-        document.getElementById('mobItemCount').innerText = count;
-        document.getElementById('mobTotal').innerText = formattedTotal;
-        posSyncChannel.postMessage({ type: 'UPDATE_CART', cart: CART, total: total });
+
+        container.innerHTML = CART.map(item => {
+          subtotal += item.price * item.qty;
+          count += item.qty;
+          return `
+            <div class="d-flex align-items-center mb-3 p-2 bg-light rounded-3">
+              <div class="flex-fill">
+                <div class="fw-bold small">${item.name}</div>
+                <div class="text-muted small">Rp ${(item.price * item.qty).toLocaleString()}</div>
+              </div>
+              <div class="qty-control">
+                <button class="btn-qty" onclick="updateCart('${item.id}', -1)"><i class="fas fa-minus"></i></button>
+                <span class="fw-bold small">${item.qty}</span>
+                <button class="btn-qty" onclick="updateCart('${item.id}', 1)"><i class="fas fa-plus"></i></button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        let finalTotal = subtotal;
+        
+        let taxNote = document.getElementById('taxNoteInfo');
+        if (!taxNote) {
+            taxNote = document.createElement('div');
+            taxNote.id = 'taxNoteInfo';
+            taxNote.className = 'text-danger small fw-bold text-end mt-1';
+            taxNote.style.fontSize = '0.65rem';
+            document.getElementById('txtTotal').parentNode.parentNode.appendChild(taxNote);
+        }
+        
+        if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
+            const taxAmount = subtotal * (TAX_PERCENTAGE / 100);
+            finalTotal = subtotal + taxAmount;
+            
+            taxNote.innerText = `*Sudah termasuk PPN ${TAX_PERCENTAGE}% (Rp ${taxAmount.toLocaleString(undefined, {maximumFractionDigits:0})})`;
+            taxNote.classList.remove('d-none');
+        } else {
+            taxNote.classList.add('d-none');
+        }
+
+        document.getElementById('txtSubtotal').innerText = 'Rp ' + subtotal.toLocaleString();
+        document.getElementById('txtTotal').innerText = 'Rp ' + finalTotal.toLocaleString(undefined, {maximumFractionDigits:0});
+        
+        const mobTotalEl = document.getElementById('mobTotal');
+        const mobCountEl = document.getElementById('mobItemCount');
+        if (mobTotalEl && mobCountEl) {
+            mobTotalEl.innerText = 'Rp ' + finalTotal.toLocaleString(undefined, {maximumFractionDigits:0});
+            mobCountEl.innerText = count.toString();
+        }
+        
+        CURRENT_TOTAL = finalTotal;
       }
 
       function toggleMobileCart(show) {
@@ -6158,17 +6276,20 @@
 
       function renderManualBasket() {
         const tbody = document.getElementById('manBasketBody');
-        let total = 0;
+        let subtotal = 0;
         
         if (MANUAL_BASKET.length === 0) {
           tbody.innerHTML = '<tr><td colspan="4" class="text-center p-3 text-muted italic">Belum ada item ditambahkan</td></tr>';
           document.getElementById('manTotalText').innerText = "Rp 0";
+          
+          let taxNote = document.getElementById('manTaxNoteInfo');
+          if (taxNote) taxNote.classList.add('d-none');
           return;
         }
         
         tbody.innerHTML = MANUAL_BASKET.map((item, index) => {
           const sub = item.price * item.qty;
-          total += sub;
+          subtotal += sub;
           return `
             <tr>
               <td class="ps-2 py-2 fw-bold">${item.name}</td>
@@ -6180,8 +6301,29 @@
             </tr>
           `;
         }).join('');
+
+        let finalTotal = subtotal;
         
-        document.getElementById('manTotalText').innerText = "Rp " + total.toLocaleString();
+        let taxNote = document.getElementById('manTaxNoteInfo');
+        if (!taxNote) {
+            taxNote = document.createElement('div');
+            taxNote.id = 'manTaxNoteInfo';
+            taxNote.className = 'text-danger small fw-bold text-end w-100 px-2 mb-2';
+            taxNote.style.fontSize = '0.65rem';
+            document.getElementById('manTotalText').parentNode.after(taxNote);
+        }
+        
+        if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
+            const taxAmount = subtotal * (TAX_PERCENTAGE / 100);
+            finalTotal = subtotal + taxAmount;
+            
+            taxNote.innerText = `*Sudah termasuk PPN ${TAX_PERCENTAGE}% (Rp ${taxAmount.toLocaleString(undefined, {maximumFractionDigits:0})})`;
+            taxNote.classList.remove('d-none');
+        } else {
+            taxNote.classList.add('d-none');
+        }
+
+        document.getElementById('manTotalText').innerText = "Rp " + finalTotal.toLocaleString(undefined, {maximumFractionDigits:0});
       }
 
       function submitManualTransaction() {
@@ -6191,16 +6333,20 @@
         }
         
         const btn = document.getElementById('btnSubmitManual');
-        const total = MANUAL_BASKET.reduce((sum, item) => sum + (item.price * item.qty), 0);
         
-        const finalCashierName = getFinalCashierName(); // Fix nama admin
+        let subtotal = MANUAL_BASKET.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        let finalTotal = subtotal;
+        if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
+            finalTotal = subtotal + (subtotal * (TAX_PERCENTAGE / 100));
+        }
+
+        const finalCashierName = typeof getFinalCashierName === 'function' ? getFinalCashierName() : 'Manual'; 
         const selectedMethod = document.getElementById('manMethodSelect').value;
-        
         const data = {
           manualId: NEXT_MANUAL_ID,
-          total: total,
+          total: finalTotal,
           method: selectedMethod,
-          cash: total,
+          cash: finalTotal,
           change: 0,
           items: MANUAL_BASKET,
           cashier: finalCashierName
@@ -6208,17 +6354,16 @@
 
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
+
         google.script.run.withSuccessHandler(res => {
           btn.disabled = false;
           btn.innerText = "SIMPAN TRANSAKSI";
           if (res.status === 'success') {
             alert("Transaksi Manual Berhasil Disimpan!");
-
             const itemDetails = MANUAL_BASKET.map(i => `${i.name} (x${i.qty})`).join(', ');
-            triggerAuditLog("TRANSAKSI", `Menyimpan transaksi manual senilai Rp ${total.toLocaleString()} dengan item: [ ${itemDetails} ]`);
-
+            triggerAuditLog("TRANSAKSI", `Menyimpan transaksi manual senilai Rp ${finalTotal.toLocaleString(undefined, {maximumFractionDigits:0})} dengan item: [ ${itemDetails} ]`);
             closeManualTransactionModal();
-            loadFinanceData(); // Refresh list laporan
+            loadFinanceData(); 
           } else {
             alert("Gagal: " + res.message);
           }
