@@ -5216,8 +5216,14 @@
           return;
         }
         if (CART.length === 0) return;
-        CURRENT_TOTAL = CART.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        document.getElementById('payTotalText').innerText = 'Rp ' + CURRENT_TOTAL.toLocaleString();
+        
+        // HAPUS BARIS INI: 
+        // CURRENT_TOTAL = CART.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        
+        // PASTIKAN CURRENT_TOTAL DIAMBIL LANGSUNG, KARENA SUDAH DISET OLEH updateCartUI()
+        // Fungsi updateCartUI() sudah menghitung subtotal + tax = CURRENT_TOTAL
+        
+        document.getElementById('payTotalText').innerText = 'Rp ' + CURRENT_TOTAL.toLocaleString(undefined, {maximumFractionDigits:0});
         document.getElementById('inputCashAmount').value = '';
         document.getElementById('payChangeText').innerText = 'Rp 0';
         document.getElementById('payCash').checked = true;
@@ -5294,7 +5300,7 @@
         }
 
         const transactionData = {
-          total: CURRENT_TOTAL,
+          total: CURRENT_TOTAL, // Ini sekarang sudah mengandung nilai + PPN
           method: method,
           cash: method === 'CASH' ? cash : CURRENT_TOTAL,
           change: method === 'CASH' ? (cash - CURRENT_TOTAL) : 0,
