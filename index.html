@@ -975,71 +975,69 @@
           </div>
           <div class="row g-4" id="staffCardsContainer">
             </div>
-        </div>
+          <div id="view-schedule-grid" class="container-fluid mt-5 border-top pt-4 pb-5">
+            <div class="row">
+              <div class="col-md-3 col-12 mb-3">
+                <div class="bg-light p-3 rounded-4 border shadow-sm h-100">
+                  <h6 class="fw-bold mb-3"><i class="fas fa-users text-primary"></i> Daftar Staff</h6>
+                  <p class="text-muted" style="font-size: 12px;">Tarik (Drag) nama staff ke tabel jadwal di kanan. <br><br>*Hanya staff berstatus Active yang muncul.</p>
+                  
+                  <div id="staffPillsSource" class="d-flex flex-wrap gap-2 p-2 border border-dashed rounded bg-white" style="min-height: 150px;">
+                    </div>
+                </div>
+              </div>
 
-        <div id="view-schedule-grid" class="container-fluid mt-4">
-          <div class="row">
-            <div class="col-md-3 col-12 mb-3">
-              <div class="bg-light p-3 rounded-4 border shadow-sm">
-                <h6 class="fw-bold mb-3"><i class="fas fa-users text-primary"></i> Daftar Staff</h6>
-                <p class="text-muted" style="font-size: 12px;">Tarik (Drag) nama staff ke tabel jadwal di kanan.</p>
+              <div class="col-md-9 col-12">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h5 class="fw-bold m-0"><i class="fas fa-calendar-alt text-success"></i> Pengaturan Jadwal Mingguan</h5>
+                  <button class="btn btn-success rounded-pill fw-bold shadow-sm" id="btnBroadcastSchedule" onclick="broadcastSchedule()">
+                      <i class="fab fa-telegram-plane me-2"></i>Kirim ke Telegram
+                  </button>
+                </div>
                 
-                <div id="staffPillsSource" class="d-flex flex-wrap gap-2 p-2 border border-dashed rounded bg-white" style="min-height: 150px;">
-                  <span class="badge bg-primary fs-6 p-2 draggable-pill" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> Budi (K)</span>
-                  <span class="badge bg-success fs-6 p-2 draggable-pill" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> Siti (B)</span>
-                  <span class="badge bg-info text-dark fs-6 p-2 draggable-pill" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> Joko (W)</span>
-                  <span class="badge bg-warning text-dark fs-6 p-2 draggable-pill" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> Rina (K)</span>
-                </div>
-              </div>
-            </div>
+                <div id="scheduleGridToCapture" class="table-responsive bg-white p-3 rounded-4 border shadow-sm">
+                  <div class="text-center mb-3">
+                    <h4 class="fw-bold m-0">JADWAL OPERASIONAL STAFF</h4>
+                    <p class="text-muted m-0">Harap hadir 15 menit sebelum shift dimulai.</p>
+                  </div>
 
-            <div class="col-md-9 col-12">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5 class="fw-bold m-0"><i class="fas fa-calendar-alt text-success"></i> Pengaturan Jadwal Mingguan</h5>
-                <button class="btn btn-success rounded-pill fw-bold shadow-sm" id="btnBroadcastSchedule" onclick="broadcastSchedule()">
-                    <i class="fab fa-telegram-plane me-2"></i>Kirim ke Telegram
-                </button>
-              </div>
-              
-              <div id="scheduleGridToCapture" class="table-responsive bg-white p-3 rounded-4 border shadow-sm">
-                <div class="text-center mb-3">
-                  <h4 class="fw-bold m-0">JADWAL OPERASIONAL STAFF</h4>
-                  <p class="text-muted m-0">Harap hadir 15 menit sebelum shift dimulai.</p>
+                  <table class="table table-bordered text-center align-middle" style="table-layout: fixed; min-width: 800px;">
+                    <thead class="table-dark">
+                      <tr>
+                        <th style="width: 9%;">Shift</th>
+                        <th style="width: 13%;" id="th-senin">Senin</th>
+                        <th style="width: 13%;" id="th-selasa">Selasa</th>
+                        <th style="width: 13%;" id="th-rabu">Rabu</th>
+                        <th style="width: 13%;" id="th-kamis">Kamis</th>
+                        <th style="width: 13%;" id="th-jumat">Jumat</th>
+                        <th style="width: 13%;" id="th-sabtu">Sabtu</th>
+                        <th style="width: 13%;" id="th-minggu">Minggu</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="fw-bold bg-light">Pagi<br><small class="text-muted">(08:00 - 16:00)</small></td>
+                        <td id="drop-senin-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                        <td id="drop-selasa-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                        <td id="drop-rabu-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                        <td id="drop-kamis-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                        <td id="drop-jumat-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                        <td id="drop-sabtu-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                        <td id="drop-minggu-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                      </tr>
+                      <tr>
+                        <td class="fw-bold bg-light">Malam<br><small class="text-muted">(16:00 - 24:00)</small></td>
+                        <td id="drop-senin-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                        <td id="drop-selasa-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                        <td id="drop-rabu-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                        <td id="drop-kamis-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                        <td id="drop-jumat-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                        <td id="drop-sabtu-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                        <td id="drop-minggu-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
-
-                <table class="table table-bordered text-center align-middle" style="table-layout: fixed;">
-                  <thead class="table-dark">
-                    <tr>
-                      <th style="width: 16%;">Shift</th>
-                      <th style="width: 14%;">Senin</th>
-                      <th style="width: 14%;">Selasa</th>
-                      <th style="width: 14%;">Rabu</th>
-                      <th style="width: 14%;">Kamis</th>
-                      <th style="width: 14%;">Jumat</th>
-                      <th style="width: 14%;">Sabtu</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td class="fw-bold bg-light">Pagi<br><small class="text-muted">(08:00 - 16:00)</small></td>
-                      <td id="drop-senin-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                      <td id="drop-selasa-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                      <td id="drop-rabu-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                      <td id="drop-kamis-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                      <td id="drop-jumat-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                      <td id="drop-sabtu-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                    </tr>
-                    <tr>
-                      <td class="fw-bold bg-light">Malam<br><small class="text-muted">(16:00 - 24:00)</small></td>
-                      <td id="drop-senin-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                      <td id="drop-selasa-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                      <td id="drop-rabu-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                      <td id="drop-kamis-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                      <td id="drop-jumat-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                      <td id="drop-sabtu-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                    </tr>
-                  </tbody>
-                </table>
               </div>
             </div>
           </div>
@@ -2061,10 +2059,149 @@
               const opLoader = document.getElementById('manningLoadingArea');
               if (opLoader) opLoader.classList.add('d-none');
               
-              // TAHAN RENDER: Kita panggil fungsi render HANYA di sini
-              // agar data Karyawan & Operasional (termasuk Gaji/Tax) muncul bersamaan!
               if (typeof renderManningUI === 'function') renderManningUI(STAFF_FACES);
               if (typeof renderOpCostsUI === 'function') renderOpCostsUI();
+              
+              // BARU: Eksekusi rendering Grid Schedule secara riil!
+              if (typeof renderWeeklyScheduleGrid === 'function') renderWeeklyScheduleGrid();
+          }
+      }
+
+      function getWeekDates() {
+          let curr = new Date(); 
+          let day = curr.getDay(); 
+          let diff = curr.getDate() - day + (day === 0 ? -6 : 1); 
+          let monday = new Date(curr.setDate(diff));
+          
+          let dates = {};
+          let daysMap = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
+          for(let i = 0; i < 7; i++) {
+              let nextDay = new Date(monday);
+              nextDay.setDate(monday.getDate() + i);
+              dates[daysMap[i]] = Utilities_formatDateIndo(nextDay);
+          }
+          return dates;
+      }
+
+      let SCHEDULE_SORTABLES = []; // Menampung instance memori Sortable
+
+      function renderWeeklyScheduleGrid() {
+          // 1. Reset memori Sortable lama untuk cegah error tumpang tindih
+          SCHEDULE_SORTABLES.forEach(s => s.destroy());
+          SCHEDULE_SORTABLES = [];
+
+          // 2. Render Daftar Staff Riil (Hanya yang Active)
+          const source = document.getElementById('staffPillsSource');
+          if (source) {
+            const activeStaff = STAFF_DATA.filter(s => s.status === 'Active');
+            source.innerHTML = activeStaff.map(s => {
+              let roleInit = s.role.charAt(0);
+              let bgClass = s.role === 'ADMIN' ? 'bg-danger' : (s.role === 'KITCHEN' ? 'bg-warning text-dark' : (s.role === 'BARISTA' ? 'bg-info text-dark' : 'bg-primary'));
+              return `<span class="badge ${bgClass} fs-6 p-2 draggable-pill shadow-sm" data-name="${s.name}" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> ${s.name} (${roleInit})</span>`;
+            }).join('');
+
+            SCHEDULE_SORTABLES.push(new Sortable(source, {
+                group: { name: 'shared-schedule', pull: 'clone', put: false },
+                animation: 150, sort: false, ghostClass: 'bg-secondary'
+            }));
+          }
+
+          // 3. Pasang Kalender Dinamis 1 Minggu Ke Depan di Table Header
+          let weekDates = getWeekDates();
+          let daysMap = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
+          
+          daysMap.forEach(day => {
+              let dStr = weekDates[day];
+              let th = document.getElementById('th-' + day);
+              if(th) {
+                  th.innerHTML = `${day.charAt(0).toUpperCase() + day.slice(1)}<br><small class="text-white-50 fw-normal" style="font-size:0.65rem;">${dStr.substring(0,5)}</small>`;
+              }
+              
+              ['pagi', 'malam'].forEach(shift => {
+                  let dz = document.getElementById(`drop-${day}-${shift}`);
+                  if(dz) {
+                      dz.innerHTML = '';
+                      dz.dataset.date = dStr;
+                      dz.dataset.shift = shift;
+                  }
+              });
+          });
+
+          // 4. Injeksi Data Riil dari Backend (SCHEDULE_DATA)
+          if(SCHEDULE_DATA && SCHEDULE_DATA.length > 0) {
+              SCHEDULE_DATA.forEach(s => {
+                  let targetDay = Object.keys(weekDates).find(k => weekDates[k] === s.date);
+                  if (targetDay) {
+                      let shiftType = 'pagi';
+                      let startHour = parseInt(s.start.split(':')[0]);
+                      if (startHour >= 15) shiftType = 'malam'; 
+                      
+                      const dz = document.getElementById(`drop-${targetDay}-${shiftType}`);
+                      if (dz) {
+                          const staff = STAFF_DATA.find(st => st.name === s.staffName);
+                          let roleInit = staff ? staff.role.charAt(0) : 'U';
+                          let bgClass = staff ? (staff.role === 'ADMIN' ? 'bg-danger' : (staff.role === 'KITCHEN' ? 'bg-warning text-dark' : (staff.role === 'BARISTA' ? 'bg-info text-dark' : 'bg-primary'))) : 'bg-secondary';
+                          
+                          dz.innerHTML += `<span class="badge ${bgClass} fs-6 p-2 draggable-pill m-1 shadow-sm" data-id="${s.id}" data-name="${s.staffName}" style="cursor: grab;" ondblclick="deleteGridSchedule('${s.id}')" title="Klik ganda untuk menghapus"><i class="fas fa-user-circle me-1"></i> ${s.staffName} (${roleInit})</span>`;
+                      }
+                  }
+              });
+          }
+
+          // 5. Inisiasi Dropzone Table
+          const dropzones = document.querySelectorAll('.shift-dropzone');
+          dropzones.forEach(zone => {
+              SCHEDULE_SORTABLES.push(new Sortable(zone, {
+                  group: 'shared-schedule',
+                  animation: 150,
+                  ghostClass: 'bg-secondary',
+                  onAdd: function(evt) {
+                      const itemEl = evt.item;
+                      const zoneEl = evt.to;
+                      
+                      const staffName = itemEl.dataset.name;
+                      const date = zoneEl.dataset.date;
+                      const shift = zoneEl.dataset.shift;
+                      const existingId = itemEl.dataset.id || ""; // Deteksi apakah ini drag baru (kopian) atau pindah hari
+                      
+                      let start = shift === 'pagi' ? '08:00' : '16:00';
+                      let end = shift === 'pagi' ? '16:00' : '23:59';
+                      
+                      itemEl.style.opacity = '0.5';
+                      itemEl.innerHTML += ' <i class="fas fa-spinner fa-spin ms-1 text-white"></i>';
+                      
+                      google.script.run.withSuccessHandler(res => {
+                          if(res.status === 'success') {
+                              google.script.run.withSuccessHandler(mRes => {
+                                  if (mRes.status === 'success') {
+                                      SCHEDULE_DATA = mRes.schedules || [];
+                                      renderWeeklyScheduleGrid();
+                                  }
+                              }).getManningData();
+                          } else {
+                              alert("Gagal memperbarui shift: " + res.message);
+                              renderWeeklyScheduleGrid(); // Rollback UI
+                          }
+                      }).saveSchedule(staffName, date, start, end, existingId);
+                  }
+              }));
+          });
+      }
+
+      function deleteGridSchedule(id) {
+          if(confirm("Hapus shift jadwal karyawan ini?")) {
+              google.script.run.withSuccessHandler(res => {
+                  if(res.status === 'success') {
+                      google.script.run.withSuccessHandler(mRes => {
+                          if (mRes.status === 'success') {
+                              SCHEDULE_DATA = mRes.schedules || [];
+                              renderWeeklyScheduleGrid();
+                          }
+                      }).getManningData();
+                  } else {
+                      alert("Gagal menghapus: " + res.message);
+                  }
+              }).deleteSchedule(id);
           }
       }
 
@@ -3175,42 +3312,33 @@
 
       function loadSettingConfig() {
         const btn = document.getElementById('btnSaveSetting');
-        
         const loadingArea = document.getElementById('settingLoadingArea');
         const contentArea = document.getElementById('settingContentArea');
         
-        // 1. Tampilkan Loading UI dan sembunyikan toggle sementara server merespon
         if (loadingArea) loadingArea.classList.remove('d-none');
         if (contentArea) contentArea.classList.add('d-none');
         
         google.script.run.withSuccessHandler(res => {
           TELEGRAM_CONFIG = res;
           IS_MULTI_OWNER = res.multiOwner;
-          
-          // Setup Memory Tax
           IS_TAX_ACTIVE = res.taxActive;
           TAX_PERCENTAGE = res.taxPercent;
           
-          document.getElementById('tgToggle').checked = res.active;
-          document.getElementById('tgBotToken').value = res.token || '';
-          document.getElementById('tgChatAudit').value = res.chatAudit || '';
-          document.getElementById('tgChatTrans').value = res.chatTrans || '';
+          if(document.getElementById('tgToggle')) document.getElementById('tgToggle').checked = res.active;
+          if(document.getElementById('tgBotToken')) document.getElementById('tgBotToken').value = res.token || '';
+          if(document.getElementById('tgChatAudit')) document.getElementById('tgChatAudit').value = res.chatAudit || '';
+          if(document.getElementById('tgChatTrans')) document.getElementById('tgChatTrans').value = res.chatTrans || '';
+          if(document.getElementById('tgChatSchedule')) document.getElementById('tgChatSchedule').value = res.chatSchedule || '';
           
-          const multiToggle = document.getElementById('multiOwnerToggle');
-          if (multiToggle) multiToggle.checked = IS_MULTI_OWNER;
+          if(document.getElementById('multiOwnerToggle')) document.getElementById('multiOwnerToggle').checked = IS_MULTI_OWNER;
+          if(document.getElementById('taxToggle')) document.getElementById('taxToggle').checked = IS_TAX_ACTIVE;
+          if(document.getElementById('settingTaxPercent')) document.getElementById('settingTaxPercent').value = TAX_PERCENTAGE || '';
           
-          // Setup UI Tax
-          const taxTgl = document.getElementById('taxToggle');
-          if (taxTgl) taxTgl.checked = IS_TAX_ACTIVE;
-          const taxPct = document.getElementById('settingTaxPercent');
-          if (taxPct) taxPct.value = TAX_PERCENTAGE || '';
           toggleTaxSetting();
-          
           toggleTelegramInputs();
           toggleInvoiceInputs();
           updateOwnerSettingUI(res.ownerPass); 
 
-          // 2. Data sudah ready, sembunyikan spinner dan tampilkan ulang toggle
           if (loadingArea) loadingArea.classList.add('d-none');
           if (contentArea) contentArea.classList.remove('d-none');
 
@@ -3282,13 +3410,12 @@
           }
         }
         
-        // Auto-save toggle dari luar modal secara cerdas (Background Process)
         TELEGRAM_CONFIG.active = isActive;
         if (document.getElementById('tgBotToken')) TELEGRAM_CONFIG.token = document.getElementById('tgBotToken').value.trim();
         if (document.getElementById('tgChatAudit')) TELEGRAM_CONFIG.chatAudit = document.getElementById('tgChatAudit').value.trim();
         if (document.getElementById('tgChatTrans')) TELEGRAM_CONFIG.chatTrans = document.getElementById('tgChatTrans').value.trim();
+        if (document.getElementById('tgChatSchedule')) TELEGRAM_CONFIG.chatSchedule = document.getElementById('tgChatSchedule').value.trim();
         
-        // Menambahkan success handler kosong agar antrian request ke server tidak macet dan memperlancar animasi toggle
         google.script.run.withSuccessHandler(() => {
           console.log("Telegram setting auto-saved in background");
         }).saveSettingConfig(TELEGRAM_CONFIG);
@@ -3341,6 +3468,7 @@
           token: document.getElementById('tgBotToken') ? document.getElementById('tgBotToken').value.trim() : '',
           chatAudit: document.getElementById('tgChatAudit') ? document.getElementById('tgChatAudit').value.trim() : '',
           chatTrans: document.getElementById('tgChatTrans') ? document.getElementById('tgChatTrans').value.trim() : '',
+          chatSchedule: document.getElementById('tgChatSchedule') ? document.getElementById('tgChatSchedule').value.trim() : '',
           multiOwner: document.getElementById('multiOwnerToggle') ? document.getElementById('multiOwnerToggle').checked : false,
           taxActive: document.getElementById('taxToggle') ? document.getElementById('taxToggle').checked : false,
           taxPercent: document.getElementById('settingTaxPercent') ? (Number(document.getElementById('settingTaxPercent').value) || 0) : 0,
@@ -3351,16 +3479,14 @@
         IS_TAX_ACTIVE = TELEGRAM_CONFIG.taxActive;
         TAX_PERCENTAGE = TELEGRAM_CONFIG.taxPercent;
 
-        // Menangkap event secara aman dari parameter (e) atau global window agar tidak memicu error yang membuat toggle batal/memantul
-        const currentEvent = e || (typeof event !== 'undefined' ? event : window.event);
+        const currentEvent = e || window.event;
         const btn = currentEvent && currentEvent.currentTarget ? currentEvent.currentTarget : null;
         let originalHtml = '';
         
-        // HANYA EKSEKUSI JIKA ELEMEN ADALAH TOMBOL (Mencegah toggle memantul)
         if (btn && btn.tagName === 'BUTTON') {
             originalHtml = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            btn.disabled = true; // Tambahan kecil: cegah spam klik ganda saat loading
+            btn.disabled = true; 
         }
         
         google.script.run.withSuccessHandler(res => {
@@ -3368,11 +3494,7 @@
               btn.innerHTML = originalHtml;
               btn.disabled = false;
           }
-          if(res.status === 'success') {
-            console.log("Setting saved.");
-          } else {
-            alert("Gagal menyimpan: " + res.message);
-          }
+          if(res.status !== 'success') alert("Gagal menyimpan: " + res.message);
         }).saveSettingConfig(TELEGRAM_CONFIG);
       }
 
@@ -7838,29 +7960,6 @@
         document.getElementById('modalDoneTicketDetail').classList.add('d-none');
       }
 
-      // --- INISIALISASI DRAG & DROP SCHEDULE ---
-      document.addEventListener('DOMContentLoaded', function() {
-        // 1. Inisiasi wadah sumber staff
-        const staffSource = document.getElementById('staffPillsSource');
-        if(staffSource) {
-          new Sortable(staffSource, {
-            group: 'shared-schedule', // nama grup harus sama
-            animation: 150,
-            ghostClass: 'bg-secondary'
-          });
-        }
-
-        // 2. Inisiasi semua kotak dropzone di dalam tabel (Senin - Sabtu)
-        const dropzones = document.querySelectorAll('.shift-dropzone');
-        dropzones.forEach(zone => {
-          new Sortable(zone, {
-            group: 'shared-schedule', // grup sama agar bisa pindah-pindah
-            animation: 150,
-            ghostClass: 'bg-secondary'
-          });
-        });
-      });
-
       // --- FUNGSI CAPTURE DAN KIRIM KE TELEGRAM ---
       function broadcastSchedule() {
         const gridElement = document.getElementById('scheduleGridToCapture');
@@ -8343,11 +8442,10 @@
             <input type="text" id="tgChatAudit" class="form-control border-2 fw-bold" placeholder="Contoh: -100123456789">
             <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Semua riwayat aksi AuditLog akan dikirim ke sini secara realtime.</small>
           </div>
-          <div class="mb-4">
-            <label class="small fw-bold text-muted mb-1">CHAT ID (GRUP LOG TRANSAKSI)</label>
-            <input type="text" id="tgChatTrans" class="form-control border-2 fw-bold" placeholder="Contoh: -100987654321">
-            <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Hanya mencatat modal awal kasir masuk & total akhir saat kasir logout.</small>
-            <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Mencatat semua aksi transaksi, termasuk input manual, edit/hapus, serta buka/tutup shift kasir.</small>
+          <div class="mb-4 mt-3">
+            <label class="small fw-bold text-muted mb-1">CHAT ID (GRUP JADWAL STAFF)</label>
+            <input type="text" id="tgChatSchedule" class="form-control border-2 fw-bold text-success" placeholder="Contoh: -10011223344">
+            <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Hasil tangkapan gambar jadwal (Broadcast) akan terkirim ke Grup ini secara spesifik.</small>
           </div>
         </div>
 
