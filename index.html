@@ -3563,19 +3563,79 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-sync-alt fa-spin text-secondary"></i>';
         
-        // Memuat semua endpoint secara komprehensif
+        // 1. Memuat ulang data utama (Produk, Transaksi, Absensi, HPP, dll)
         fetchInitialData(true);
         loadProducts(); 
         
         if (USER_ROLE === 'ADMIN') {
             initManningTab();
-            loadSettingConfig();
         }
         
-        setTimeout(() => {
-          btn.disabled = false;
-          btn.innerHTML = originalContent;
-        }, 1500);
+        // 2. Memuat ulang setting global dari server (Termasuk setting Tax) untuk SEMUA role
+        google.script.run.withSuccessHandler(res => {
+          // Perbarui variabel global yang mempengaruhi kalkulasi
+          IS_MULTI_OWNER = res.multiOwner;
+          IS_TAX_ACTIVE = res.taxActive;
+          TAX_PERCENTAGE = res.taxPercent;
+          
+          if (CONFIG) {
+              CONFIG.TaxActive = res.taxActive;
+              CONFIG.TaxPercent = res.taxPercent;
+          }
+
+          // Perbarui UI form Setting khusus untuk Admin
+          if (USER_ROLE === 'ADMIN') {
+              TELEGRAM_CONFIG = res;
+              
+              const tgTgl = document.getElementById('tgToggle');
+              if (tgTgl) tgTgl.checked = res.active;
+              
+              const tgToken = document.getElementById('tgBotToken');
+              if (tgToken) tgToken.value = res.token || '';
+              
+              const tgAudit = document.getElementById('tgChatAudit');
+              if (tgAudit) tgAudit.value = res.chatAudit || '';
+              
+              const tgTrans = document.getElementById('tgChatTrans');
+              if (tgTrans) tgTrans.value = res.chatTrans || '';
+              
+              const multiTgl = document.getElementById('multiOwnerToggle');
+              if (multiTgl) multiTgl.checked = IS_MULTI_OWNER;
+              
+              const taxTgl = document.getElementById('taxToggle');
+              if (taxTgl) taxTgl.checked = IS_TAX_ACTIVE;
+              
+              const taxPct = document.getElementById('settingTaxPercent');
+              if (taxPct) taxPct.value = TAX_PERCENTAGE || '';
+              
+              toggleTaxSetting();
+              toggleTelegramInputs();
+              toggleInvoiceInputs();
+              updateOwnerSettingUI(res.ownerPass);
+          }
+
+          // 3. FORCE REFRESH DOM UI (Kalkulasi ulang secara Live)
+          // Memaksa render ulang keranjang & kalkulasi PPN dengan data setting terbaru
+          updateCartUI();
+          
+          // Jika modal Transaksi Manual sedang terbuka, render ulang juga
+          if (document.getElementById('modalManualTransaction') && !document.getElementById('modalManualTransaction').classList.contains('d-none')) {
+              renderManualBasket();
+          }
+
+          // Render ulang laporan Dashboard & Profit untuk menyesuaikan perubahan Tax terbaru
+          if (USER_ROLE === 'ADMIN') {
+              renderOpCostsUI();
+              renderFinanceUI();
+          }
+
+          // Kembalikan status tombol
+          setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+          }, 500);
+
+        }).getSettingConfig(ACTIVE_CASHIER);
       }
 
       function fetchInitialData(includeAI = false) {
