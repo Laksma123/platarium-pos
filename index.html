@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -931,7 +933,14 @@
               <i class="fas fa-user-plus me-2"></i>Tambah Staff
             </button>
           </div>
-          <div class="row mb-4" id="netProfitContainer">
+
+          <div id="manningLoadingArea" class="text-center py-5">
+            <div class="spinner-border text-warning mb-3" style="width: 3.5rem; height: 3.5rem; border-width: 0.3rem;" role="status"></div>
+            <h5 class="fw-bold text-dark mb-1">Memuat Data Keuangan...</h5>
+            <p class="text-muted small">Sinkronisasi data operasional dengan server, mohon tunggu.</p>
+          </div>
+
+          <div class="row mb-4 d-none" id="netProfitContainer">
             <div class="col-12">
               <div class="card border-0 shadow-sm rounded-4 p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -1244,12 +1253,21 @@
                       <option value="CASH">CASH</option>
                       <option value="QRIS">QRIS</option>
                     </select>
-                    <select id="revFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill" style="cursor:pointer;" onchange="renderFinanceUI()">
-                      <option value="today">Hari Ini</option>
-                      <option value="month" selected>Bulan Ini</option>
-                      <option value="year">Tahun Ini</option>
-                      <option value="all">Semua</option>
-                    </select>
+                    <div class="d-flex align-items-center">
+                      <select id="revFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill" style="cursor:pointer;" onchange="handleRevFilterChange(this)">
+                        <option value="today">Hari Ini</option>
+                        <option value="month" selected>Bulan Ini</option>
+                        <option value="year">Tahun Ini</option>
+                        <option value="custom">Tanggal Tertentu</option>
+                        <option value="all">Semua</option>
+                      </select>
+                      
+                      <input type="text" id="customDateFilter" style="display:none; width:0; height:0; border:none; padding:0;">
+                      <span id="customDateLabel" class="badge bg-warning text-dark border d-none align-items-center ms-2 shadow-sm py-2 px-3 rounded-pill" style="cursor:pointer; font-size: 0.75rem;" onclick="CUSTOM_DATEPICKER.open()">
+                          <i class="fas fa-calendar-alt me-2"></i><span id="customDateText"></span>
+                          <i class="fas fa-times ms-2 text-danger" onclick="event.stopPropagation(); resetCustomDate();" title="Batal Filter"></i>
+                      </span>
+                    </div>
                     <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold" onclick="openManualTransactionModal()">
                       <i class="fas fa-edit me-1"></i> Input Manual
                     </button>
@@ -2011,8 +2029,15 @@
       let TAX_PERCENTAGE = 0;
 
       function initManningTab() {
-        loadOpCosts(); // <--- TAMBAHKAN BARIS INI
-        // Optimasi (Req 4): Jangan memuat ulang jika data sudah ada di cache
+        // Tampilkan spinner loading untuk OpCost, Kunci container
+        const opLoader = document.getElementById('manningLoadingArea');
+        const netProfitContainer = document.getElementById('netProfitContainer');
+        if (opLoader) opLoader.classList.remove('d-none');
+        if (netProfitContainer) netProfitContainer.classList.add('d-none');
+
+        loadOpCosts(); 
+        
+        // Optimasi (Req 4): Jangan memuat ulang data karyawan jika sudah ada di cache
         if (STAFF_DATA && STAFF_DATA.length > 0) {
           renderManningUI(STAFF_FACES);
           return;
@@ -2583,10 +2608,14 @@
               if (res.status === 'success') {
                   TOTAL_SALARY_COST = res.totalSalary;
                   OP_COSTS_DATA = res.customCosts;
-                  ADMIN_SHARES_DATA = res.adminShares || []; // Tangkap data saham
-                  IS_MULTI_OWNER = res.isMultiOwner; // Pastikan status sinkron
+                  ADMIN_SHARES_DATA = res.adminShares || []; 
+                  IS_MULTI_OWNER = res.isMultiOwner; 
 
-                  // [PERBAIKAN] Tampilkan container jika Owner, atau jika Multi Owner ON (Admin)
+                  // Hilangkan Spinner Loading
+                  const opLoader = document.getElementById('manningLoadingArea');
+                  if (opLoader) opLoader.classList.add('d-none');
+
+                  // [PERBAIKAN] Tampilkan container secara elegan jika Owner atau Multi Owner ON
                   const netProfitContainer = document.getElementById('netProfitContainer');
                   if (netProfitContainer) {
                       if (ACTIVE_CASHIER === 'Owner' || IS_MULTI_OWNER) {
@@ -3127,11 +3156,17 @@
         }).getSettingConfig(ACTIVE_CASHIER); 
       }
 
+      // Di file index.html
       function updateOwnerSettingUI(ownerPass) {
         const isMulti = document.getElementById('multiOwnerToggle').checked;
         const passArea = document.getElementById('ownerPasswordArea');
         const infoArea = document.getElementById('multiOwnerInfo');
         
+        // ---> PERBAIKAN: Selalu isi value ke input terlepas area disembunyikan atau tidak <---
+        if (document.getElementById('settingOwnerPass')) {
+            document.getElementById('settingOwnerPass').value = ownerPass || '';
+        }
+
         if (isMulti) {
           if(passArea) passArea.classList.add('d-none');
           if(infoArea) infoArea.classList.remove('d-none');
@@ -3139,10 +3174,7 @@
           if(infoArea) infoArea.classList.add('d-none');
           // Hanya tampilkan jika yang login adalah "Owner"
           if (ACTIVE_CASHIER === 'Owner') {
-            if(passArea) {
-              passArea.classList.remove('d-none');
-              document.getElementById('settingOwnerPass').value = ownerPass || '';
-            }
+            if(passArea) passArea.classList.remove('d-none');
           } else {
             if(passArea) passArea.classList.add('d-none');
           }
@@ -3154,6 +3186,10 @@
         updateOwnerSettingUI(document.getElementById('settingOwnerPass').value);
         saveSettingConfig(); 
         
+        // ---> TAMBAHKAN KODE INI UNTUK TELEGRAM & AUDIT LOG <---
+        const statusText = IS_MULTI_OWNER ? "Aktif" : "Non-Aktif";
+        triggerAuditLog("SETTING MULTI OWNER", `Mengubah status Multi Owner / Saham menjadi ${statusText}.`);
+
         // [PERBAIKAN] Realtime update visibility container Net Profit saat toggle ditekan
         const netProfitContainer = document.getElementById('netProfitContainer');
         if (netProfitContainer) {
@@ -3297,6 +3333,9 @@
         
         if (typeof renderOpCostsUI === 'function') renderOpCostsUI();
         saveSettingConfig();
+        
+        const statusText = isActive ? "Aktif" : "Non-Aktif";
+        triggerAuditLog("SETTING TAX", `Mengubah status Pajak (Tax) menjadi ${statusText} dengan besaran ${TAX_PERCENTAGE}%.`);
       }
 
       function proceedToMainUI(res) {
@@ -3913,12 +3952,13 @@
         });
       }
 
+      // Di file index.html
       function loadProductsTable() {
         const tbody = document.getElementById('productTableBody');
-        // Perbaikan: Ubah colspan dari 5 menjadi 6 agar sel loading memakan seluruh kolom dan rata tengah sempurna
+        // Ubah colspan menjadi 7 agar memakan seluruh lebar tabel
         tbody.innerHTML = `
           <tr>
-            <td colspan="6" class="text-center p-5">
+            <td colspan="7" class="text-center p-5">
               <div class="d-flex flex-column align-items-center justify-content-center">
                 <div class="spinner-border text-warning mb-3" role="status"></div>
                 <span class="fw-bold text-secondary">Memuat data produk...</span>
@@ -5929,6 +5969,7 @@
           if (filter === 'today') timeMatch = (tDate === todayStr);
           else if (filter === 'month') timeMatch = tDate.includes(monthStr);
           else if (filter === 'year') timeMatch = tDate.includes(now.getFullYear().toString());
+          else if (filter === 'custom') timeMatch = (tDate === SELECTED_CUSTOM_DATE); // Baris Baru
           
           let methodMatch = true;
           if (mFilter !== 'all') {
@@ -6042,6 +6083,51 @@
         updateSalesChart(chartDataNormal);
       }
       
+      // ==========================================
+      // FUNGSI FILTER KALENDER (FLATPICKR)
+      // ==========================================
+      let CUSTOM_DATEPICKER = null;
+      let SELECTED_CUSTOM_DATE = "";
+
+      function handleRevFilterChange(select) {
+        if (select.value === 'custom') {
+          if (!CUSTOM_DATEPICKER) {
+            CUSTOM_DATEPICKER = flatpickr("#customDateFilter", {
+              dateFormat: "d/m/Y", 
+              disableMobile: true, // Memaksa UI kalender seragam, mencegah bentrok dengan UI default HP
+              onChange: function(selectedDates, dateStr, instance) {
+                if (dateStr) {
+                  SELECTED_CUSTOM_DATE = dateStr;
+                  document.getElementById('customDateText').innerText = dateStr;
+                  document.getElementById('customDateLabel').classList.remove('d-none');
+                  document.getElementById('customDateLabel').classList.add('d-flex');
+                  renderFinanceUI();
+                }
+              },
+              onClose: function(selectedDates, dateStr) {
+                // Jika panel ditutup tapi belum ada tanggal yang dipilih, kembalikan ke default
+                if (!dateStr && !SELECTED_CUSTOM_DATE) {
+                   document.getElementById('revFilter').value = 'month';
+                   renderFinanceUI();
+                }
+              }
+            });
+          }
+          setTimeout(() => CUSTOM_DATEPICKER.open(), 50);
+        } else {
+          // Sembunyikan label kalender jika metode lain dipilih
+          document.getElementById('customDateLabel').classList.remove('d-flex');
+          document.getElementById('customDateLabel').classList.add('d-none');
+          SELECTED_CUSTOM_DATE = "";
+          renderFinanceUI();
+        }
+      }
+
+      function resetCustomDate() {
+        document.getElementById('revFilter').value = 'month';
+        handleRevFilterChange(document.getElementById('revFilter'));
+      }
+
       // --- FUNGSI BARU: LOGIKA MODAL SHOT ---
       function openShotModal() {
         const select = document.getElementById('shotMaterialSelect');
