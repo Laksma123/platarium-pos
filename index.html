@@ -1640,7 +1640,13 @@
             </div>
           </div>
 
-          <div class="row g-4">
+          <div id="settingLoadingArea" class="text-center py-5 d-none">
+            <div class="spinner-border text-warning mb-3" style="width: 3.5rem; height: 3.5rem; border-width: 0.3rem;" role="status"></div>
+            <h5 class="fw-bold text-dark mb-1">Memuat Pengaturan...</h5>
+            <p class="text-muted small">Sinkronisasi data sistem dengan server, mohon tunggu.</p>
+          </div>
+
+          <div class="row g-4" id="settingContentArea">
             <div class="col-12 col-md-6 col-lg-5">
               <div class="card border-0 shadow-sm rounded-4 p-4 h-100 border-start border-4 border-info">
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -3079,6 +3085,13 @@
       function loadSettingConfig() {
         const btn = document.getElementById('btnSaveSetting');
         
+        const loadingArea = document.getElementById('settingLoadingArea');
+        const contentArea = document.getElementById('settingContentArea');
+        
+        // 1. Tampilkan Loading UI dan sembunyikan toggle sementara server merespon
+        if (loadingArea) loadingArea.classList.remove('d-none');
+        if (contentArea) contentArea.classList.add('d-none');
+        
         google.script.run.withSuccessHandler(res => {
           TELEGRAM_CONFIG = res;
           IS_MULTI_OWNER = res.multiOwner;
@@ -3105,6 +3118,10 @@
           toggleTelegramInputs();
           toggleInvoiceInputs();
           updateOwnerSettingUI(res.ownerPass); 
+
+          // 2. Data sudah ready, sembunyikan spinner dan tampilkan ulang toggle
+          if (loadingArea) loadingArea.classList.add('d-none');
+          if (contentArea) contentArea.classList.remove('d-none');
 
         }).getSettingConfig(ACTIVE_CASHIER); 
       }
