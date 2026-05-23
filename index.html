@@ -319,8 +319,8 @@
         -webkit-overflow-scrolling: touch; position: relative; padding-bottom: 0;
       }
 
-      /* Cart Desktop Mode (Layar Besar) - Split View */
-      @media (min-width: 992px) {
+      /* Cart Desktop Mode (Layar Besar ATAU Mode Landscape) - Split View */
+      @media (min-width: 992px), (orientation: landscape) {
         .pos-layout { flex-direction: row; }
         .pos-cart { 
           width: 350px;
@@ -331,11 +331,12 @@
           top: 0; background: white; z-index: 50;
         }
         .btn-close-cart-desktop { display: none; }
+        .pos-cart .d-lg-none { display: none !important; } /* Sembunyikan tombol close mobile di mode landscape */
         .mobile-cart-summ { display: none !important; }
       }
 
-      /* FIX UI CART MOBILE */
-      @media (max-width: 991px) {
+      /* FIX UI CART MOBILE (Hanya Portrait dan Layar Kecil) */
+      @media (max-width: 991px) and (orientation: portrait) {
         .pos-cart { 
           position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; 
           bottom: calc(70px + env(safe-area-inset-bottom)) !important; 
@@ -4766,12 +4767,13 @@
         } else if (viewId === 'manning' && USER_ROLE === 'ADMIN') {
           initManningTab();
         } else if (viewId === 'setting' && USER_ROLE === 'ADMIN') {
-          loadSettingConfig(); // <--- TRIGGER DATA SETTING
+          loadSettingConfig();
         } else if (viewId === 'monitor') {
           renderMonitorUI();
         }
 
-        targetView.style.display = (viewId === 'pos' && window.innerWidth > 768) ? 'flex' : 'block';
+        // PERBAIKAN: Pastikan POS & Monitor selalu berformat flex untuk menjaga struktur Grid dan Split-Screen
+        targetView.style.display = (viewId === 'pos' || viewId === 'monitor') ? 'flex' : 'block';
 
         document.querySelectorAll('.nav-item-custom, .nav-icon-mob').forEach(el => el.classList.remove('active'));
         const dEl = document.getElementById('desk-' + viewId);
@@ -5078,6 +5080,7 @@
 
       function updateCartUI() {
         const container = document.getElementById('cartItems');
+        const mobileTrigger = document.getElementById('mobileCartTrigger'); // Panggil Elemen Grey Bar Mobile
         let subtotal = 0;
         let count = 0;
 
@@ -5095,12 +5098,17 @@
               mobTotalEl.innerText = 'Rp 0';
               mobCountEl.innerText = '0';
           }
+          
+          if (mobileTrigger) mobileTrigger.style.display = 'none'; // Sembunyikan bar cart saat data kosong
+          
           CURRENT_TOTAL = 0;
           
           // Sinkronisasi Dual Monitor saat keranjang kosong
           posSyncChannel.postMessage({ type: 'UPDATE_CART', cart: CART, total: CURRENT_TOTAL, taxActive: false, taxAmount: 0 });
           return;
         }
+
+        if (mobileTrigger) mobileTrigger.style.display = 'flex'; // Munculkan bar grey saat keranjang mulai terisi
 
         container.innerHTML = CART.map(item => {
           subtotal += item.price * item.qty;
