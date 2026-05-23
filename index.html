@@ -2035,6 +2035,11 @@
           if (IS_STAFF_LOADED && IS_OPCOST_LOADED) {
               const opLoader = document.getElementById('manningLoadingArea');
               if (opLoader) opLoader.classList.add('d-none');
+              
+              // TAHAN RENDER: Kita panggil fungsi render HANYA di sini
+              // agar data Karyawan & Operasional (termasuk Gaji/Tax) muncul bersamaan!
+              if (typeof renderManningUI === 'function') renderManningUI(STAFF_FACES);
+              if (typeof renderOpCostsUI === 'function') renderOpCostsUI();
           }
       }
 
@@ -2044,10 +2049,10 @@
           const netProfitContainer = document.getElementById('netProfitContainer');
           const staffContainer = document.getElementById('staffCardsContainer');
 
+          // Reset status keduanya agar selalu menunggu data terbaru
           IS_OPCOST_LOADED = false;
-          IS_STAFF_LOADED = (STAFF_DATA && STAFF_DATA.length > 0);
+          IS_STAFF_LOADED = false; 
 
-          // Tampilkan 1 Spinner Utama
           if (opLoader) {
               opLoader.querySelector('h5').innerText = 'Memuat Data...';
               opLoader.querySelector('p').innerText = 'Sinkronisasi data staff & operasional, mohon tunggu.';
@@ -2055,28 +2060,30 @@
           }
           
           if (netProfitContainer) netProfitContainer.classList.add('d-none');
+
+          // Kosongkan area container agar layar bersih (tidak ada UI setengah matang) saat loading
+          if (staffContainer) staffContainer.innerHTML = '';
           
-          loadOpCosts(); 
+          loadOpCosts(); // Tarik data operasional
           
-          if (IS_STAFF_LOADED) {
-              renderManningUI(STAFF_FACES);
+          // Cek jika data staff sudah ada di cache memory
+          if (STAFF_DATA && STAFF_DATA.length > 0) {
+              IS_STAFF_LOADED = true;
+              checkManningLoaders(); 
               return;
           }
 
-          // KOSONGKAN isi container staff agar tidak menampilkan spinner kedua
-          staffContainer.innerHTML = ''; 
-
+          // Jika belum ada di memory, tarik dari backend
           google.script.run.withSuccessHandler(res => {
               if (res.status === 'success') {
                   STAFF_DATA = res.staff || [];
                   SCHEDULE_DATA = res.schedules || [];
                   STAFF_FACES = res.faces || {};
-                  renderManningUI(STAFF_FACES); 
               } else {
-                  staffContainer.innerHTML = `<div class="col-12 text-center text-danger p-5">Gagal memuat data: ${res.message}</div>`;
+                  if (staffContainer) staffContainer.innerHTML = `<div class="col-12 text-center text-danger p-5">Gagal memuat data: ${res.message}</div>`;
               }
               IS_STAFF_LOADED = true;
-              checkManningLoaders(); // Cek dan matikan spinner jika OpCost juga sudah siap
+              checkManningLoaders(); 
           }).getManningData();
       }
 
@@ -2626,14 +2633,15 @@
       }
 
       function loadOpCosts() {
-          IS_OPCOST_LOADED = false;
-          
-          // Tampilkan spinner mandiri JIKA loadOpCosts dipanggil sendiri (misal: saat klik simpan cost baru)
-          const opLoader = document.getElementById('manningLoadingArea');
-          if (opLoader && IS_STAFF_LOADED) {
-              opLoader.querySelector('h5').innerText = 'Memuat Data Keuangan...';
-              opLoader.querySelector('p').innerText = 'Sinkronisasi data operasional...';
-              opLoader.classList.remove('d-none');
+          // Tampilkan spinner jika dipanggil mandiri (misal: saat save input cost baru)
+          if (IS_STAFF_LOADED) {
+              const opLoader = document.getElementById('manningLoadingArea');
+              if (opLoader) {
+                  opLoader.querySelector('h5').innerText = 'Memperbarui Keuangan...';
+                  opLoader.querySelector('p').innerText = 'Menyimpan & kalkulasi ulang data...';
+                  opLoader.classList.remove('d-none');
+              }
+              IS_OPCOST_LOADED = false;
           }
 
           google.script.run.withSuccessHandler(res => {
@@ -2652,9 +2660,8 @@
                       }
                   }
 
-                  renderOpCostsUI();
                   IS_OPCOST_LOADED = true;
-                  checkManningLoaders(); // Matikan spinner utama
+                  checkManningLoaders(); // Panggil pengecekan, jika staff juga siap, langsung render!
               }
           }).getOperationalData();
       }
