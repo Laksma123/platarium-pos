@@ -12,6 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.2/qz-tray.min.js"></script>
@@ -976,6 +977,74 @@
             </div>
         </div>
 
+        <div id="view-schedule-grid" class="container-fluid mt-4">
+          <div class="row">
+            <div class="col-md-3 col-12 mb-3">
+              <div class="bg-light p-3 rounded-4 border shadow-sm">
+                <h6 class="fw-bold mb-3"><i class="fas fa-users text-primary"></i> Daftar Staff</h6>
+                <p class="text-muted" style="font-size: 12px;">Tarik (Drag) nama staff ke tabel jadwal di kanan.</p>
+                
+                <div id="staffPillsSource" class="d-flex flex-wrap gap-2 p-2 border border-dashed rounded bg-white" style="min-height: 150px;">
+                  <span class="badge bg-primary fs-6 p-2 draggable-pill" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> Budi (K)</span>
+                  <span class="badge bg-success fs-6 p-2 draggable-pill" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> Siti (B)</span>
+                  <span class="badge bg-info text-dark fs-6 p-2 draggable-pill" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> Joko (W)</span>
+                  <span class="badge bg-warning text-dark fs-6 p-2 draggable-pill" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> Rina (K)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-9 col-12">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="fw-bold m-0"><i class="fas fa-calendar-alt text-success"></i> Pengaturan Jadwal Mingguan</h5>
+                <button class="btn btn-success rounded-pill fw-bold shadow-sm" id="btnBroadcastSchedule" onclick="broadcastSchedule()">
+                    <i class="fab fa-telegram-plane me-2"></i>Kirim ke Telegram
+                </button>
+              </div>
+              
+              <div id="scheduleGridToCapture" class="table-responsive bg-white p-3 rounded-4 border shadow-sm">
+                <div class="text-center mb-3">
+                  <h4 class="fw-bold m-0">JADWAL OPERASIONAL STAFF</h4>
+                  <p class="text-muted m-0">Harap hadir 15 menit sebelum shift dimulai.</p>
+                </div>
+
+                <table class="table table-bordered text-center align-middle" style="table-layout: fixed;">
+                  <thead class="table-dark">
+                    <tr>
+                      <th style="width: 16%;">Shift</th>
+                      <th style="width: 14%;">Senin</th>
+                      <th style="width: 14%;">Selasa</th>
+                      <th style="width: 14%;">Rabu</th>
+                      <th style="width: 14%;">Kamis</th>
+                      <th style="width: 14%;">Jumat</th>
+                      <th style="width: 14%;">Sabtu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="fw-bold bg-light">Pagi<br><small class="text-muted">(08:00 - 16:00)</small></td>
+                      <td id="drop-senin-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                      <td id="drop-selasa-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                      <td id="drop-rabu-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                      <td id="drop-kamis-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                      <td id="drop-jumat-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                      <td id="drop-sabtu-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                    </tr>
+                    <tr>
+                      <td class="fw-bold bg-light">Malam<br><small class="text-muted">(16:00 - 24:00)</small></td>
+                      <td id="drop-senin-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                      <td id="drop-selasa-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                      <td id="drop-rabu-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                      <td id="drop-kamis-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                      <td id="drop-jumat-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                      <td id="drop-sabtu-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div id="modalStaff" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10500; opacity: 1 !important;">
           <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 90%; max-width: 400px; animation: slideUp 0.3s ease-out;">
             <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
@@ -1039,50 +1108,6 @@
               </ul>
 
               <div class="tab-content" id="staffPillsContent">
-                <div class="tab-pane fade show active" id="content-schedule" role="tabpanel">
-                  <div class="row g-3 mb-4">
-                    <div class="col-6 col-md-3">
-                      <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-4 border-primary">
-                        <small class="text-muted fw-bold d-block mb-1" style="font-size:0.65rem;">JAM KERJA (MINGGU INI)</small>
-                        <h5 class="fw-bold m-0 text-primary" id="statWeekHours">0 Jam</h5>
-                      </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                      <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-4 border-success">
-                        <small class="text-muted fw-bold d-block mb-1" style="font-size:0.65rem;">JAM KERJA (BULAN INI)</small>
-                        <h5 class="fw-bold m-0 text-success" id="statMonthHours">0 Jam</h5>
-                      </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                      <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-4 border-secondary">
-                        <small class="text-muted fw-bold d-block mb-1" style="font-size:0.65rem;">HARI LIBUR (BULAN INI)</small>
-                        <h5 class="fw-bold m-0 text-dark" id="statDaysOff">0 Hari</h5>
-                      </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                      <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-4 border-danger bg-danger bg-opacity-10">
-                        <small class="text-danger fw-bold d-block mb-1" style="font-size:0.65rem;">PERINGATAN (WARNING)</small>
-                        <h6 class="fw-bold m-0 text-danger" id="statWarnings" style="font-size:0.8rem;">Aman</h6>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-3">
-                    <div class="bg-white p-3 border-bottom d-flex justify-content-between align-items-center">
-                      <h6 class="fw-bold m-0">Daftar Shift & Jadwal</h6>
-                      <button class="btn btn-sm btn-luxury rounded-pill px-3 fw-bold" onclick="openAddScheduleModal()">+ Tambah Shift</button>
-                    </div>
-                    <div class="table-responsive" style="max-height: 250px;">
-                      <table class="table table-hover align-middle m-0 small">
-                        <thead class="bg-light sticky-top">
-                          <tr><th>Tanggal</th><th>Jam Mulai</th><th>Jam Selesai</th><th>Durasi</th><th class="text-center">Aksi</th></tr>
-                        </thead>
-                        <tbody id="scheduleTableBody"></tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-
                 <div class="tab-pane fade" id="content-absen" role="tabpanel">
                   <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
                     <div class="table-responsive" style="max-height: 400px;">
@@ -7811,6 +7836,84 @@
 
       function closeDoneTicketDetail() {
         document.getElementById('modalDoneTicketDetail').classList.add('d-none');
+      }
+
+      // --- INISIALISASI DRAG & DROP SCHEDULE ---
+      document.addEventListener('DOMContentLoaded', function() {
+        // 1. Inisiasi wadah sumber staff
+        const staffSource = document.getElementById('staffPillsSource');
+        if(staffSource) {
+          new Sortable(staffSource, {
+            group: 'shared-schedule', // nama grup harus sama
+            animation: 150,
+            ghostClass: 'bg-secondary'
+          });
+        }
+
+        // 2. Inisiasi semua kotak dropzone di dalam tabel (Senin - Sabtu)
+        const dropzones = document.querySelectorAll('.shift-dropzone');
+        dropzones.forEach(zone => {
+          new Sortable(zone, {
+            group: 'shared-schedule', // grup sama agar bisa pindah-pindah
+            animation: 150,
+            ghostClass: 'bg-secondary'
+          });
+        });
+      });
+
+      // --- FUNGSI CAPTURE DAN KIRIM KE TELEGRAM ---
+      function broadcastSchedule() {
+        const gridElement = document.getElementById('scheduleGridToCapture');
+        const btn = document.getElementById('btnBroadcastSchedule');
+        
+        // Simpan text tombol asli
+        const originalHtml = btn.innerHTML;
+        
+        // Ubah status tombol menjadi loading
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses Gambar...';
+
+        // 1. Jalankan html2canvas
+        html2canvas(gridElement, { 
+          scale: 2, // Kualitas HD
+          backgroundColor: "#ffffff",
+          useCORS: true // Membantu merender jika ada icon/font eksternal
+        }).then(canvas => {
+          
+          // 2. Convert ke format JPEG base64
+          const base64Image = canvas.toDataURL("image/jpeg", 0.9);
+          
+          btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Mengirim...';
+          
+          // 3. Persiapkan payload untuk dikirim ke Code.js via google.script.run
+          const action = 'sendScheduleToTelegram';
+          const captionMsg = "📅 <b>JADWAL STAFF MINGGU INI</b>\nHarap simpan dan perhatikan jam shift masing-masing ya tim!";
+          
+          // Asumsi kamu menggunakan sistem Fetch custom kamu (atau langsung google.script.run)
+          // Jika kamu pakai google.script.run bawaan:
+          google.script.run
+            .withSuccessHandler(function(res) {
+              btn.disabled = false;
+              btn.innerHTML = originalHtml;
+              
+              let result = typeof res === 'string' ? JSON.parse(res) : res;
+              
+              if(result.status === 'success') {
+                alert("✅ Jadwal berhasil dikirim ke grup Telegram!");
+              } else {
+                alert("❌ Gagal mengirim: " + result.message);
+              }
+            })
+            .withFailureHandler(function(err) {
+              btn.disabled = false;
+              btn.innerHTML = originalHtml;
+              alert("Terjadi kesalahan sistem: " + err);
+            })
+            // Memanggil fungsi router doPost bawaanmu 
+            // (Perhatikan format payload ini menyesuaikan cara kerjamu, 
+            // jika kamu memanggilnya beda, sesuaikan dengan cara POST-mu)
+            .sendScheduleToTelegram(base64Image, captionMsg);
+        });
       }
 
       function validateCloseShift() {
