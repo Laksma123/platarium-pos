@@ -3494,7 +3494,15 @@
               btn.innerHTML = originalHtml;
               btn.disabled = false;
           }
-          if(res.status !== 'success') alert("Gagal menyimpan: " + res.message);
+          if(res.status !== 'success') {
+              alert("Gagal menyimpan: " + res.message);
+          } else {
+              // Jika simpan sukses dan modal telegram sedang aktif, otomatis tutup
+              const tgModal = document.getElementById('modalTelegramSetting');
+              if (tgModal && !tgModal.classList.contains('d-none')) {
+                  closeTelegramModal();
+              }
+          }
         }).saveSettingConfig(TELEGRAM_CONFIG);
       }
 
@@ -8559,12 +8567,15 @@
         <div class="flex-fill overflow-auto d-flex justify-content-center align-items-start py-3" style="background: #f0f2f5; border-radius: 10px;">
           <div class="receipt-preview shadow-sm" style="background: white; width: 260px; padding: 20px 15px; font-family: 'Courier New', Courier, monospace; font-size: 0.75rem; color: #000; border: 1px dashed #ccc; margin-bottom: 20px;">
             
-            <div class="text-center mb-2 group-hover-edit" onclick="triggerNotaLogoUpload()" style="cursor: pointer; border: 1px dashed transparent;">
+            <div class="text-center group-hover-edit" onclick="triggerNotaLogoUpload()" style="cursor: pointer; border: 1px dashed transparent;">
               <div id="notaLogoContainer">
                 <i class="fas fa-image fa-2x text-muted opacity-50" id="notaLogoPlaceholder"></i>
                 <img id="notaLogoImg" src="" style="width: 60px; display: none; margin: 0 auto;">
               </div>
               <div class="edit-overlay"><i class="fas fa-camera me-1"></i> Ubah Logo</div>
+            </div>
+            <div class="text-center text-danger mb-2 mt-1" style="font-size: 0.6rem; font-weight: bold;">
+              *Maks file 300 KB
             </div>
 
             <div id="logoSizeControl" class="d-none justify-content-center align-items-center gap-2 mb-3 px-3" onclick="event.stopPropagation()">
