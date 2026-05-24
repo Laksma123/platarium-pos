@@ -7,9 +7,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.2/qz-tray.min.js"></script>
@@ -656,6 +659,45 @@
         color: white; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; border-radius: 5px; 
       }
       .group-hover-edit:hover .edit-overlay { display: flex; }
+
+      /* ========================================= */
+      /* TAMBAHAN UI SCHEDULING PILLS              */
+      /* ========================================= */
+      .draggable-pill {
+        cursor: grab;
+        border-radius: 20px;
+        font-size: 0.75rem !important;
+        font-weight: 600;
+        padding: 6px 12px !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+        white-space: nowrap;
+      }
+      .draggable-pill:active {
+        cursor: grabbing !important;
+      }
+      .draggable-pill:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+      }
+      .shift-dropzone {
+        min-height: 80px;
+        background-color: #fdfdfd;
+        transition: background-color 0.2s;
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 10px !important;
+        height: 100%;
+      }
+      .shift-dropzone.bg-highlight {
+        background-color: #f1f8ff !important;
+      }
     </style>
   </head>
   <body>
@@ -931,7 +973,14 @@
               <i class="fas fa-user-plus me-2"></i>Tambah Staff
             </button>
           </div>
-          <div class="row mb-4" id="netProfitContainer">
+
+          <div id="manningLoadingArea" class="text-center py-5">
+            <div class="spinner-border text-warning mb-3" style="width: 3.5rem; height: 3.5rem; border-width: 0.3rem;" role="status"></div>
+            <h5 class="fw-bold text-dark mb-1">Memuat Data Keuangan...</h5>
+            <p class="text-muted small">Sinkronisasi data operasional dengan server, mohon tunggu.</p>
+          </div>
+
+          <div class="row mb-4 d-none" id="netProfitContainer">
             <div class="col-12">
               <div class="card border-0 shadow-sm rounded-4 p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -965,6 +1014,65 @@
           </div>
           <div class="row g-4" id="staffCardsContainer">
             </div>
+          <div id="view-schedule-grid" class="container-fluid mt-5 border-top pt-4 pb-5">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+              <div>
+                <h4 class="fw-bold m-0"><i class="fas fa-calendar-alt text-success me-2"></i>Pengaturan Jadwal Mingguan</h4>
+                <p class="text-muted small m-0">Atur jadwal shift operasional staff dengan drag & drop.</p>
+              </div>
+              <div class="d-flex gap-2 mt-2 mt-md-0">
+                <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
+                  <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-layer-group me-1"></i>Shift/Hari</span>
+                  <select id="shiftCountSelector" class="form-select border-0 shadow-none fw-bold bg-white px-3" style="font-size: 0.85rem; cursor:pointer;" onchange="changeShiftCount(this.value)">
+                    <option value="1">1 Shift</option>
+                    <option value="2" selected>2 Shift (Pagi, Malam)</option>
+                    <option value="3">3 Shift (Pagi, Sore, Malam)</option>
+                  </select>
+                </div>
+                <button class="btn btn-success rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnBroadcastSchedule" onclick="broadcastSchedule()">
+                    <i class="fab fa-telegram-plane me-2"></i>Kirim ke Telegram
+                </button>
+              </div>
+            </div>
+
+            <div class="row g-4">
+              <div class="col-12 col-xl-3">
+                <div class="bg-light p-3 rounded-4 border shadow-sm h-100 d-flex flex-column">
+                  <h6 class="fw-bold mb-1"><i class="fas fa-users text-primary me-1"></i> Daftar Staff</h6>
+                  <p class="text-muted mb-3" style="font-size: 11px;">Tarik (Drag) staff ke tabel jadwal.<br>*Hanya staff berstatus Active yang muncul.</p>
+                  
+                  <div id="staffPillsSource" class="d-flex flex-wrap align-content-start gap-2 p-2 border border-dashed rounded bg-white flex-fill shadow-sm" style="min-height: 150px;">
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-xl-9">
+                <div id="scheduleGridToCapture" class="table-responsive bg-white p-0 rounded-4 border shadow-sm overflow-hidden" style="scrollbar-width: thin;">
+                  <div class="text-center p-3 border-bottom bg-light">
+                    <h5 class="fw-bold m-0" style="letter-spacing: 1px;">JADWAL OPERASIONAL STAFF</h5>
+                    <p class="text-muted m-0 small">*Harap hadir 15 menit sebelum shift dimulai.</p>
+                  </div>
+
+                  <table class="table table-bordered text-center align-middle m-0" style="table-layout: fixed; min-width: 800px;">
+                    <thead class="table-dark">
+                      <tr>
+                        <th style="width: 10%; border-bottom: none;" class="py-3">Shift</th>
+                        <th style="width: 12.8%; border-bottom: none;" id="th-senin" class="py-3">Senin</th>
+                        <th style="width: 12.8%; border-bottom: none;" id="th-selasa" class="py-3">Selasa</th>
+                        <th style="width: 12.8%; border-bottom: none;" id="th-rabu" class="py-3">Rabu</th>
+                        <th style="width: 12.8%; border-bottom: none;" id="th-kamis" class="py-3">Kamis</th>
+                        <th style="width: 12.8%; border-bottom: none;" id="th-jumat" class="py-3">Jumat</th>
+                        <th style="width: 12.8%; border-bottom: none;" id="th-sabtu" class="py-3">Sabtu</th>
+                        <th style="width: 12.8%; border-bottom: none;" id="th-minggu" class="py-3">Minggu</th>
+                      </tr>
+                    </thead>
+                    <tbody id="scheduleGridBody">
+                      </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div id="modalStaff" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10500; opacity: 1 !important;">
@@ -1030,50 +1138,6 @@
               </ul>
 
               <div class="tab-content" id="staffPillsContent">
-                <div class="tab-pane fade show active" id="content-schedule" role="tabpanel">
-                  <div class="row g-3 mb-4">
-                    <div class="col-6 col-md-3">
-                      <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-4 border-primary">
-                        <small class="text-muted fw-bold d-block mb-1" style="font-size:0.65rem;">JAM KERJA (MINGGU INI)</small>
-                        <h5 class="fw-bold m-0 text-primary" id="statWeekHours">0 Jam</h5>
-                      </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                      <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-4 border-success">
-                        <small class="text-muted fw-bold d-block mb-1" style="font-size:0.65rem;">JAM KERJA (BULAN INI)</small>
-                        <h5 class="fw-bold m-0 text-success" id="statMonthHours">0 Jam</h5>
-                      </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                      <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-4 border-secondary">
-                        <small class="text-muted fw-bold d-block mb-1" style="font-size:0.65rem;">HARI LIBUR (BULAN INI)</small>
-                        <h5 class="fw-bold m-0 text-dark" id="statDaysOff">0 Hari</h5>
-                      </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                      <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-4 border-danger bg-danger bg-opacity-10">
-                        <small class="text-danger fw-bold d-block mb-1" style="font-size:0.65rem;">PERINGATAN (WARNING)</small>
-                        <h6 class="fw-bold m-0 text-danger" id="statWarnings" style="font-size:0.8rem;">Aman</h6>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-3">
-                    <div class="bg-white p-3 border-bottom d-flex justify-content-between align-items-center">
-                      <h6 class="fw-bold m-0">Daftar Shift & Jadwal</h6>
-                      <button class="btn btn-sm btn-luxury rounded-pill px-3 fw-bold" onclick="openAddScheduleModal()">+ Tambah Shift</button>
-                    </div>
-                    <div class="table-responsive" style="max-height: 250px;">
-                      <table class="table table-hover align-middle m-0 small">
-                        <thead class="bg-light sticky-top">
-                          <tr><th>Tanggal</th><th>Jam Mulai</th><th>Jam Selesai</th><th>Durasi</th><th class="text-center">Aksi</th></tr>
-                        </thead>
-                        <tbody id="scheduleTableBody"></tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-
                 <div class="tab-pane fade" id="content-absen" role="tabpanel">
                   <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
                     <div class="table-responsive" style="max-height: 400px;">
@@ -1244,12 +1308,21 @@
                       <option value="CASH">CASH</option>
                       <option value="QRIS">QRIS</option>
                     </select>
-                    <select id="revFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill" style="cursor:pointer;" onchange="renderFinanceUI()">
-                      <option value="today">Hari Ini</option>
-                      <option value="month" selected>Bulan Ini</option>
-                      <option value="year">Tahun Ini</option>
-                      <option value="all">Semua</option>
-                    </select>
+                    <div class="d-flex align-items-center">
+                      <select id="revFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill" style="cursor:pointer;" onchange="handleRevFilterChange(this)">
+                        <option value="today">Hari Ini</option>
+                        <option value="month" selected>Bulan Ini</option>
+                        <option value="year">Tahun Ini</option>
+                        <option value="custom">Tanggal Tertentu</option>
+                        <option value="all">Semua</option>
+                      </select>
+                      
+                      <input type="text" id="customDateFilter" style="display:none; width:0; height:0; border:none; padding:0;">
+                      <span id="customDateLabel" class="badge bg-warning text-dark border d-none align-items-center ms-2 shadow-sm py-2 px-3 rounded-pill" style="cursor:pointer; font-size: 0.75rem;" onclick="CUSTOM_DATEPICKER.open()">
+                          <i class="fas fa-calendar-alt me-2"></i><span id="customDateText"></span>
+                          <i class="fas fa-times ms-2 text-danger" onclick="event.stopPropagation(); resetCustomDate();" title="Batal Filter"></i>
+                      </span>
+                    </div>
                     <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold" onclick="openManualTransactionModal()">
                       <i class="fas fa-edit me-1"></i> Input Manual
                     </button>
@@ -1633,7 +1706,7 @@
           </div>
         </div>
 
-        <div id="view-setting" class="app-view p-4" style="display:none; background: #f8f9fa;">
+        <div id="view-setting" class="app-view p-4" style="display:none; background: #f8f9fa; padding-bottom: 120px !important; overflow-y: auto;">
           <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pt-3 gap-3">
             <div>
               <h3 class="fw-bold m-0 text-dark"><i class="fas fa-cog me-2 text-warning"></i>Pengaturan Sistem</h3>
@@ -1649,7 +1722,7 @@
 
           <div class="row g-4" id="settingContentArea">
             <div class="col-12 col-md-6 col-lg-5">
-              <div class="card border-0 shadow-sm rounded-4 p-4 h-100 border-start border-4 border-info">
+              <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-4 border-info">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                   <h6 class="fw-bold m-0 text-dark"><i class="fab fa-telegram text-primary me-2"></i>Notifikasi Telegram</h6>
                   <div class="form-check form-switch m-0">
@@ -1664,7 +1737,7 @@
             </div>
 
             <div class="col-12 col-md-6 col-lg-5">
-              <div class="card border-0 shadow-sm rounded-4 p-4 h-100 border-start border-4 border-success">
+              <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-4 border-success">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                   <h6 class="fw-bold m-0 text-dark"><i class="fas fa-file-invoice-dollar text-success me-2"></i>Invoice Upgrade</h6>
                   <div class="form-check form-switch m-0">
@@ -1679,7 +1752,7 @@
             </div>
 
             <div class="col-12 col-md-6 col-lg-5">
-              <div class="card border-0 shadow-sm rounded-4 p-4 h-100 border-start border-4 border-warning">
+              <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-4 border-warning">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                   <h6 class="fw-bold m-0 text-dark"><i class="fas fa-building text-warning me-2"></i>Multi Owner / Saham</h6>
                   <div class="form-check form-switch m-0">
@@ -1702,18 +1775,18 @@
             </div>
 
             <div class="col-12 col-md-6 col-lg-5">
-              <div class="card border-0 shadow-sm rounded-4 p-4 h-100 border-start border-4 border-danger">
+              <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-4 border-danger">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                   <h6 class="fw-bold m-0 text-dark"><i class="fas fa-percent text-danger me-2"></i>Tambah Tax (PPN)</h6>
                   <div class="form-check form-switch m-0">
-                    <input class="form-check-input" type="checkbox" role="switch" id="taxToggle" onchange="toggleTaxSetting()" style="width: 40px; height: 20px; cursor:pointer;">
+                    <input class="form-check-input" type="checkbox" role="switch" id="taxToggle" onchange="toggleTaxSetting(true)" style="width: 40px; height: 20px; cursor:pointer;">
                   </div>
                 </div>
                 
                 <div id="taxInputArea" class="d-none mt-2">
                   <label class="small fw-bold text-muted mb-1">PRESENTASE PPN (%)</label>
                   <div class="input-group">
-                    <input type="number" id="settingTaxPercent" class="form-control border-2 fw-bold" placeholder="Contoh: 11" onchange="toggleTaxSetting()">
+                    <input type="number" id="settingTaxPercent" class="form-control border-2 fw-bold" placeholder="Contoh: 11" onchange="toggleTaxSetting(true)">
                     <span class="input-group-text bg-light border-2">%</span>
                   </div>
                   <small class="text-muted d-block mt-1" style="font-size:0.65rem;">PPN otomatis ditambahkan pada Total Belanja.</small>
@@ -2009,28 +2082,252 @@
       let ADMIN_SHARES_DATA = [];
       let IS_TAX_ACTIVE = false;
       let TAX_PERCENTAGE = 0;
+      let IS_STAFF_LOADED = false;
+      let IS_OPCOST_LOADED = false;
+
+      // =========================================
+      // SETTING SHIFT DINAMIS
+      // =========================================
+      let CURRENT_SHIFT_COUNT = 2; // Default
+      const SHIFT_CONFIGS = {
+        1: [ { id: 'pagi', label: 'Pagi', time: '08:00 - 16:00', start: '08:00', end: '16:00' } ],
+        2: [
+          { id: 'pagi', label: 'Pagi', time: '08:00 - 16:00', start: '08:00', end: '16:00' },
+          { id: 'malam', label: 'Malam', time: '16:00 - 24:00', start: '16:00', end: '23:59' }
+        ],
+        3: [
+          { id: 'pagi', label: 'Pagi', time: '08:00 - 15:00', start: '08:00', end: '15:00' },
+          { id: 'sore', label: 'Sore', time: '15:00 - 22:00', start: '15:00', end: '22:00' },
+          { id: 'malam', label: 'Malam', time: '22:00 - 05:00', start: '22:00', end: '05:00' }
+        ]
+      };
+
+      function changeShiftCount(count) {
+        CURRENT_SHIFT_COUNT = parseInt(count);
+        localStorage.setItem('pos_shift_count', CURRENT_SHIFT_COUNT);
+        renderWeeklyScheduleGrid();
+      }
+
+      // =========================================
+      // SPINNER & LOADING TERPUSAT
+      // =========================================
+      function checkManningLoaders() {
+          if (IS_STAFF_LOADED && IS_OPCOST_LOADED) {
+              const opLoader = document.getElementById('manningLoadingArea');
+              if (opLoader) opLoader.classList.add('d-none');
+              
+              const netProfitContainer = document.getElementById('netProfitContainer');
+              if (netProfitContainer && (ACTIVE_CASHIER === 'Owner' || IS_MULTI_OWNER)) {
+                  netProfitContainer.classList.remove('d-none');
+              }
+              
+              const scheduleGrid = document.getElementById('view-schedule-grid');
+              if (scheduleGrid) scheduleGrid.classList.remove('d-none');
+
+              if (typeof renderManningUI === 'function') renderManningUI(STAFF_FACES);
+              if (typeof renderOpCostsUI === 'function') renderOpCostsUI();
+              if (typeof renderWeeklyScheduleGrid === 'function') renderWeeklyScheduleGrid();
+          }
+      }
+
+      function getWeekDates() {
+          let curr = new Date(); 
+          let day = curr.getDay(); 
+          let diff = curr.getDate() - day + (day === 0 ? -6 : 1); 
+          let monday = new Date(curr.setDate(diff));
+          
+          let dates = {};
+          let daysMap = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
+          for(let i = 0; i < 7; i++) {
+              let nextDay = new Date(monday);
+              nextDay.setDate(monday.getDate() + i);
+              dates[daysMap[i]] = Utilities_formatDateIndo(nextDay);
+          }
+          return dates;
+      }
+
+      let SCHEDULE_SORTABLES = []; // Menampung instance memori Sortable
+
+      function renderWeeklyScheduleGrid() {
+          SCHEDULE_SORTABLES.forEach(s => s.destroy());
+          SCHEDULE_SORTABLES = [];
+
+          let savedCount = localStorage.getItem('pos_shift_count');
+          if (savedCount) {
+             CURRENT_SHIFT_COUNT = parseInt(savedCount);
+             let sel = document.getElementById('shiftCountSelector');
+             if (sel) sel.value = CURRENT_SHIFT_COUNT;
+          }
+
+          const source = document.getElementById('staffPillsSource');
+          if (source) {
+            const activeStaff = STAFF_DATA.filter(s => s.status === 'Active');
+            source.innerHTML = activeStaff.map(s => {
+              let roleInit = s.role.charAt(0);
+              let bgClass = s.role === 'ADMIN' ? 'bg-danger text-white' : (s.role === 'KITCHEN' ? 'bg-warning text-dark' : (s.role === 'BARISTA' ? 'bg-info text-dark' : 'bg-primary text-white'));
+              return `<span class="badge ${bgClass} draggable-pill shadow-sm" data-name="${s.name}" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> ${s.name} (${roleInit})</span>`;
+            }).join('');
+
+            SCHEDULE_SORTABLES.push(new Sortable(source, {
+                group: { name: 'shared-schedule', pull: 'clone', put: false },
+                animation: 150, sort: false, ghostClass: 'bg-secondary'
+            }));
+          }
+
+          let weekDates = getWeekDates();
+          let daysMap = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
+          
+          daysMap.forEach(day => {
+              let dStr = weekDates[day];
+              let th = document.getElementById('th-' + day);
+              if(th) {
+                  th.innerHTML = `${day.charAt(0).toUpperCase() + day.slice(1)}<br><small class="text-white-50 fw-normal" style="font-size:0.65rem;">${dStr.substring(0,5)}</small>`;
+              }
+          });
+
+          const tbody = document.getElementById('scheduleGridBody');
+          if (tbody) {
+            const shifts = SHIFT_CONFIGS[CURRENT_SHIFT_COUNT] || SHIFT_CONFIGS[2];
+            let rowsHtml = '';
+            
+            shifts.forEach(shift => {
+              let row = `<tr>
+                <td class="fw-bold bg-light align-middle text-dark">
+                  ${shift.label}<br><small class="text-muted fw-normal" style="font-size: 0.7rem;">(${shift.time})</small>
+                </td>`;
+                
+              daysMap.forEach(day => {
+                let dStr = weekDates[day];
+                row += `
+                <td class="p-0 align-middle bg-white" style="position: relative;">
+                  <div id="drop-${day}-${shift.id}" class="shift-dropzone w-100 h-100" data-date="${dStr}" data-shift="${shift.id}" data-start="${shift.start}" data-end="${shift.end}"></div>
+                </td>`;
+              });
+              row += `</tr>`;
+              rowsHtml += row;
+            });
+            tbody.innerHTML = rowsHtml;
+          }
+
+          if(SCHEDULE_DATA && SCHEDULE_DATA.length > 0) {
+              SCHEDULE_DATA.forEach(s => {
+                  let targetDay = Object.keys(weekDates).find(k => weekDates[k] === s.date);
+                  if (targetDay) {
+                      let shiftType = 'pagi';
+                      let startHour = parseInt(s.start.split(':')[0]);
+                      
+                      if (CURRENT_SHIFT_COUNT === 3) {
+                         if (startHour >= 15 && startHour < 22) shiftType = 'sore';
+                         else if (startHour >= 22 || startHour < 8) shiftType = 'malam';
+                      } else if (CURRENT_SHIFT_COUNT === 2) {
+                         if (startHour >= 16) shiftType = 'malam';
+                      }
+                      
+                      const dz = document.getElementById(`drop-${targetDay}-${shiftType}`);
+                      if (dz) {
+                          const staff = STAFF_DATA.find(st => st.name === s.staffName);
+                          let roleInit = staff ? staff.role.charAt(0) : 'U';
+                          let bgClass = staff ? (staff.role === 'ADMIN' ? 'bg-danger text-white' : (staff.role === 'KITCHEN' ? 'bg-warning text-dark' : (staff.role === 'BARISTA' ? 'bg-info text-dark' : 'bg-primary text-white'))) : 'bg-secondary text-white';
+                          
+                          dz.innerHTML += `<span class="badge ${bgClass} draggable-pill shadow-sm m-1" data-id="${s.id}" data-name="${s.staffName}" style="cursor: grab;" ondblclick="deleteGridSchedule('${s.id}')" title="Klik ganda untuk menghapus"><i class="fas fa-user-circle me-1"></i> ${s.staffName} (${roleInit})</span>`;
+                      }
+                  }
+              });
+          }
+
+          const dropzones = document.querySelectorAll('.shift-dropzone');
+          dropzones.forEach(zone => {
+              SCHEDULE_SORTABLES.push(new Sortable(zone, {
+                  group: 'shared-schedule',
+                  animation: 150,
+                  ghostClass: 'bg-secondary',
+                  onAdd: function(evt) {
+                      const itemEl = evt.item;
+                      const zoneEl = evt.to;
+                      
+                      const staffName = itemEl.dataset.name;
+                      const date = zoneEl.dataset.date;
+                      const start = zoneEl.dataset.start;
+                      const end = zoneEl.dataset.end;
+                      const existingId = itemEl.dataset.id || ""; 
+                      
+                      itemEl.style.opacity = '0.5';
+                      itemEl.innerHTML += ' <i class="fas fa-spinner fa-spin ms-1 text-white"></i>';
+                      
+                      google.script.run.withSuccessHandler(res => {
+                          if(res.status === 'success') {
+                              google.script.run.withSuccessHandler(mRes => {
+                                  if (mRes.status === 'success') {
+                                      SCHEDULE_DATA = mRes.schedules || [];
+                                      renderWeeklyScheduleGrid();
+                                  }
+                              }).getManningData();
+                          } else {
+                              alert("Gagal memperbarui shift: " + res.message);
+                              renderWeeklyScheduleGrid();
+                          }
+                      }).saveSchedule(staffName, date, start, end, existingId);
+                  }
+              }));
+          });
+      }
+
+      function deleteGridSchedule(id) {
+          if(confirm("Hapus shift jadwal karyawan ini?")) {
+              google.script.run.withSuccessHandler(res => {
+                  if(res.status === 'success') {
+                      google.script.run.withSuccessHandler(mRes => {
+                          if (mRes.status === 'success') {
+                              SCHEDULE_DATA = mRes.schedules || [];
+                              renderWeeklyScheduleGrid();
+                          }
+                      }).getManningData();
+                  } else {
+                      alert("Gagal menghapus: " + res.message);
+                  }
+              }).deleteSchedule(id);
+          }
+      }
 
       function initManningTab() {
-        loadOpCosts(); // <--- TAMBAHKAN BARIS INI
-        // Optimasi (Req 4): Jangan memuat ulang jika data sudah ada di cache
-        if (STAFF_DATA && STAFF_DATA.length > 0) {
-          renderManningUI(STAFF_FACES);
-          return;
-        }
+          const opLoader = document.getElementById('manningLoadingArea');
+          const netProfitContainer = document.getElementById('netProfitContainer');
+          const staffContainer = document.getElementById('staffCardsContainer');
+          const scheduleGrid = document.getElementById('view-schedule-grid');
 
-        const container = document.getElementById('staffCardsContainer');
-        container.innerHTML = '<div class="col-12 text-center p-5"><div class="spinner-border text-warning mb-3"></div><p class="text-muted fw-bold">Memuat data Staff & Jadwal...</p></div>';
+          IS_OPCOST_LOADED = false;
+          IS_STAFF_LOADED = false; 
 
-        google.script.run.withSuccessHandler(res => {
-          if (res.status === 'success') {
-            STAFF_DATA = res.staff || [];
-            SCHEDULE_DATA = res.schedules || [];
-            STAFF_FACES = res.faces || {};
-            renderManningUI(STAFF_FACES); 
-          } else {
-            container.innerHTML = `<div class="col-12 text-center text-danger p-5">Gagal memuat data: ${res.message}</div>`;
+          if (opLoader) {
+              opLoader.querySelector('h5').innerText = 'Memuat Data...';
+              opLoader.querySelector('p').innerText = 'Sinkronisasi data staff & operasional, mohon tunggu.';
+              opLoader.classList.remove('d-none');
           }
-        }).getManningData();
+          
+          // Sembunyikan seluruh UI konten tab saat memuat
+          if (netProfitContainer) netProfitContainer.classList.add('d-none');
+          if (scheduleGrid) scheduleGrid.classList.add('d-none');
+          if (staffContainer) staffContainer.innerHTML = '';
+          
+          loadOpCosts();
+          
+          if (STAFF_DATA && STAFF_DATA.length > 0) {
+              IS_STAFF_LOADED = true;
+              checkManningLoaders(); 
+              return;
+          }
+
+          google.script.run.withSuccessHandler(res => {
+              if (res.status === 'success') {
+                  STAFF_DATA = res.staff || [];
+                  SCHEDULE_DATA = res.schedules || [];
+                  STAFF_FACES = res.faces || {};
+              } else {
+                  if (staffContainer) staffContainer.innerHTML = `<div class="col-12 text-center text-danger p-5">Gagal memuat data: ${res.message}</div>`;
+              }
+              IS_STAFF_LOADED = true;
+              checkManningLoaders(); 
+          }).getManningData();
       }
 
       function renderManningUI(faces = {}) {
@@ -2579,24 +2876,30 @@
       }
 
       function loadOpCosts() {
+          if (IS_STAFF_LOADED) {
+              const opLoader = document.getElementById('manningLoadingArea');
+              if (opLoader) {
+                  opLoader.querySelector('h5').innerText = 'Memperbarui Keuangan...';
+                  opLoader.querySelector('p').innerText = 'Menyimpan & kalkulasi ulang data...';
+                  opLoader.classList.remove('d-none');
+              }
+              const netProfitContainer = document.getElementById('netProfitContainer');
+              if (netProfitContainer) netProfitContainer.classList.add('d-none');
+              const scheduleGrid = document.getElementById('view-schedule-grid');
+              if (scheduleGrid) scheduleGrid.classList.add('d-none');
+              
+              IS_OPCOST_LOADED = false;
+          }
+
           google.script.run.withSuccessHandler(res => {
               if (res.status === 'success') {
                   TOTAL_SALARY_COST = res.totalSalary;
                   OP_COSTS_DATA = res.customCosts;
-                  ADMIN_SHARES_DATA = res.adminShares || []; // Tangkap data saham
-                  IS_MULTI_OWNER = res.isMultiOwner; // Pastikan status sinkron
+                  ADMIN_SHARES_DATA = res.adminShares || []; 
+                  IS_MULTI_OWNER = res.isMultiOwner; 
 
-                  // [PERBAIKAN] Tampilkan container jika Owner, atau jika Multi Owner ON (Admin)
-                  const netProfitContainer = document.getElementById('netProfitContainer');
-                  if (netProfitContainer) {
-                      if (ACTIVE_CASHIER === 'Owner' || IS_MULTI_OWNER) {
-                          netProfitContainer.classList.remove('d-none');
-                      } else {
-                          netProfitContainer.classList.add('d-none');
-                      }
-                  }
-
-                  renderOpCostsUI();
+                  IS_OPCOST_LOADED = true;
+                  checkManningLoaders(); 
               }
           }).getOperationalData();
       }
@@ -3085,53 +3388,50 @@
 
       function loadSettingConfig() {
         const btn = document.getElementById('btnSaveSetting');
-        
         const loadingArea = document.getElementById('settingLoadingArea');
         const contentArea = document.getElementById('settingContentArea');
         
-        // 1. Tampilkan Loading UI dan sembunyikan toggle sementara server merespon
         if (loadingArea) loadingArea.classList.remove('d-none');
         if (contentArea) contentArea.classList.add('d-none');
         
         google.script.run.withSuccessHandler(res => {
           TELEGRAM_CONFIG = res;
           IS_MULTI_OWNER = res.multiOwner;
-          
-          // Setup Memory Tax
           IS_TAX_ACTIVE = res.taxActive;
           TAX_PERCENTAGE = res.taxPercent;
           
-          document.getElementById('tgToggle').checked = res.active;
-          document.getElementById('tgBotToken').value = res.token || '';
-          document.getElementById('tgChatAudit').value = res.chatAudit || '';
-          document.getElementById('tgChatTrans').value = res.chatTrans || '';
+          if(document.getElementById('tgToggle')) document.getElementById('tgToggle').checked = res.active;
+          if(document.getElementById('tgBotToken')) document.getElementById('tgBotToken').value = res.token || '';
+          if(document.getElementById('tgChatAudit')) document.getElementById('tgChatAudit').value = res.chatAudit || '';
+          if(document.getElementById('tgChatTrans')) document.getElementById('tgChatTrans').value = res.chatTrans || '';
+          if(document.getElementById('tgChatSchedule')) document.getElementById('tgChatSchedule').value = res.chatSchedule || '';
           
-          const multiToggle = document.getElementById('multiOwnerToggle');
-          if (multiToggle) multiToggle.checked = IS_MULTI_OWNER;
+          if(document.getElementById('multiOwnerToggle')) document.getElementById('multiOwnerToggle').checked = IS_MULTI_OWNER;
+          if(document.getElementById('taxToggle')) document.getElementById('taxToggle').checked = IS_TAX_ACTIVE;
+          if(document.getElementById('settingTaxPercent')) document.getElementById('settingTaxPercent').value = TAX_PERCENTAGE || '';
           
-          // Setup UI Tax
-          const taxTgl = document.getElementById('taxToggle');
-          if (taxTgl) taxTgl.checked = IS_TAX_ACTIVE;
-          const taxPct = document.getElementById('settingTaxPercent');
-          if (taxPct) taxPct.value = TAX_PERCENTAGE || '';
           toggleTaxSetting();
-          
           toggleTelegramInputs();
           toggleInvoiceInputs();
           updateOwnerSettingUI(res.ownerPass); 
 
-          // 2. Data sudah ready, sembunyikan spinner dan tampilkan ulang toggle
           if (loadingArea) loadingArea.classList.add('d-none');
           if (contentArea) contentArea.classList.remove('d-none');
 
         }).getSettingConfig(ACTIVE_CASHIER); 
       }
 
+      // Di file index.html
       function updateOwnerSettingUI(ownerPass) {
         const isMulti = document.getElementById('multiOwnerToggle').checked;
         const passArea = document.getElementById('ownerPasswordArea');
         const infoArea = document.getElementById('multiOwnerInfo');
         
+        // ---> PERBAIKAN: Selalu isi value ke input terlepas area disembunyikan atau tidak <---
+        if (document.getElementById('settingOwnerPass')) {
+            document.getElementById('settingOwnerPass').value = ownerPass || '';
+        }
+
         if (isMulti) {
           if(passArea) passArea.classList.add('d-none');
           if(infoArea) infoArea.classList.remove('d-none');
@@ -3139,10 +3439,7 @@
           if(infoArea) infoArea.classList.add('d-none');
           // Hanya tampilkan jika yang login adalah "Owner"
           if (ACTIVE_CASHIER === 'Owner') {
-            if(passArea) {
-              passArea.classList.remove('d-none');
-              document.getElementById('settingOwnerPass').value = ownerPass || '';
-            }
+            if(passArea) passArea.classList.remove('d-none');
           } else {
             if(passArea) passArea.classList.add('d-none');
           }
@@ -3154,6 +3451,10 @@
         updateOwnerSettingUI(document.getElementById('settingOwnerPass').value);
         saveSettingConfig(); 
         
+        // ---> TAMBAHKAN KODE INI UNTUK TELEGRAM & AUDIT LOG <---
+        const statusText = IS_MULTI_OWNER ? "Aktif" : "Non-Aktif";
+        triggerAuditLog("SETTING MULTI OWNER", `Mengubah status Multi Owner / Saham menjadi ${statusText}.`);
+
         // [PERBAIKAN] Realtime update visibility container Net Profit saat toggle ditekan
         const netProfitContainer = document.getElementById('netProfitContainer');
         if (netProfitContainer) {
@@ -3185,13 +3486,12 @@
           }
         }
         
-        // Auto-save toggle dari luar modal secara cerdas (Background Process)
         TELEGRAM_CONFIG.active = isActive;
         if (document.getElementById('tgBotToken')) TELEGRAM_CONFIG.token = document.getElementById('tgBotToken').value.trim();
         if (document.getElementById('tgChatAudit')) TELEGRAM_CONFIG.chatAudit = document.getElementById('tgChatAudit').value.trim();
         if (document.getElementById('tgChatTrans')) TELEGRAM_CONFIG.chatTrans = document.getElementById('tgChatTrans').value.trim();
+        if (document.getElementById('tgChatSchedule')) TELEGRAM_CONFIG.chatSchedule = document.getElementById('tgChatSchedule').value.trim();
         
-        // Menambahkan success handler kosong agar antrian request ke server tidak macet dan memperlancar animasi toggle
         google.script.run.withSuccessHandler(() => {
           console.log("Telegram setting auto-saved in background");
         }).saveSettingConfig(TELEGRAM_CONFIG);
@@ -3244,6 +3544,7 @@
           token: document.getElementById('tgBotToken') ? document.getElementById('tgBotToken').value.trim() : '',
           chatAudit: document.getElementById('tgChatAudit') ? document.getElementById('tgChatAudit').value.trim() : '',
           chatTrans: document.getElementById('tgChatTrans') ? document.getElementById('tgChatTrans').value.trim() : '',
+          chatSchedule: document.getElementById('tgChatSchedule') ? document.getElementById('tgChatSchedule').value.trim() : '',
           multiOwner: document.getElementById('multiOwnerToggle') ? document.getElementById('multiOwnerToggle').checked : false,
           taxActive: document.getElementById('taxToggle') ? document.getElementById('taxToggle').checked : false,
           taxPercent: document.getElementById('settingTaxPercent') ? (Number(document.getElementById('settingTaxPercent').value) || 0) : 0,
@@ -3254,16 +3555,14 @@
         IS_TAX_ACTIVE = TELEGRAM_CONFIG.taxActive;
         TAX_PERCENTAGE = TELEGRAM_CONFIG.taxPercent;
 
-        // Menangkap event secara aman dari parameter (e) atau global window agar tidak memicu error yang membuat toggle batal/memantul
-        const currentEvent = e || (typeof event !== 'undefined' ? event : window.event);
+        const currentEvent = e || window.event;
         const btn = currentEvent && currentEvent.currentTarget ? currentEvent.currentTarget : null;
         let originalHtml = '';
         
-        // HANYA EKSEKUSI JIKA ELEMEN ADALAH TOMBOL (Mencegah toggle memantul)
         if (btn && btn.tagName === 'BUTTON') {
             originalHtml = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            btn.disabled = true; // Tambahan kecil: cegah spam klik ganda saat loading
+            btn.disabled = true; 
         }
         
         google.script.run.withSuccessHandler(res => {
@@ -3271,15 +3570,19 @@
               btn.innerHTML = originalHtml;
               btn.disabled = false;
           }
-          if(res.status === 'success') {
-            console.log("Setting saved.");
+          if(res.status !== 'success') {
+              alert("Gagal menyimpan: " + res.message);
           } else {
-            alert("Gagal menyimpan: " + res.message);
+              // Jika simpan sukses dan modal telegram sedang aktif, otomatis tutup
+              const tgModal = document.getElementById('modalTelegramSetting');
+              if (tgModal && !tgModal.classList.contains('d-none')) {
+                  closeTelegramModal();
+              }
           }
         }).saveSettingConfig(TELEGRAM_CONFIG);
       }
 
-      function toggleTaxSetting() {
+      function toggleTaxSetting(isUserAction = false) {
         const isActive = document.getElementById('taxToggle') ? document.getElementById('taxToggle').checked : false;
         const taxArea = document.getElementById('taxInputArea');
         if (taxArea) {
@@ -3296,7 +3599,13 @@
         }
         
         if (typeof renderOpCostsUI === 'function') renderOpCostsUI();
-        saveSettingConfig();
+        
+        // HANYA jalankan penyimpanan & audit log JIKA ini adalah aksi klik/ketik langsung dari pengguna
+        if (isUserAction === true) {
+            saveSettingConfig();
+            const statusText = isActive ? "Aktif" : "Non-Aktif";
+            triggerAuditLog("SETTING TAX", `Mengubah status Pajak (Tax) menjadi ${statusText} dengan besaran ${TAX_PERCENTAGE}%.`);
+        }
       }
 
       function proceedToMainUI(res) {
@@ -3913,12 +4222,13 @@
         });
       }
 
+      // Di file index.html
       function loadProductsTable() {
         const tbody = document.getElementById('productTableBody');
-        // Perbaikan: Ubah colspan dari 5 menjadi 6 agar sel loading memakan seluruh kolom dan rata tengah sempurna
+        // Ubah colspan menjadi 7 agar memakan seluruh lebar tabel
         tbody.innerHTML = `
           <tr>
-            <td colspan="6" class="text-center p-5">
+            <td colspan="7" class="text-center p-5">
               <div class="d-flex flex-column align-items-center justify-content-center">
                 <div class="spinner-border text-warning mb-3" role="status"></div>
                 <span class="fw-bold text-secondary">Memuat data produk...</span>
@@ -5929,6 +6239,7 @@
           if (filter === 'today') timeMatch = (tDate === todayStr);
           else if (filter === 'month') timeMatch = tDate.includes(monthStr);
           else if (filter === 'year') timeMatch = tDate.includes(now.getFullYear().toString());
+          else if (filter === 'custom') timeMatch = (tDate === SELECTED_CUSTOM_DATE); // Baris Baru
           
           let methodMatch = true;
           if (mFilter !== 'all') {
@@ -6042,6 +6353,51 @@
         updateSalesChart(chartDataNormal);
       }
       
+      // ==========================================
+      // FUNGSI FILTER KALENDER (FLATPICKR)
+      // ==========================================
+      let CUSTOM_DATEPICKER = null;
+      let SELECTED_CUSTOM_DATE = "";
+
+      function handleRevFilterChange(select) {
+        if (select.value === 'custom') {
+          if (!CUSTOM_DATEPICKER) {
+            CUSTOM_DATEPICKER = flatpickr("#customDateFilter", {
+              dateFormat: "d/m/Y", 
+              disableMobile: true, // Memaksa UI kalender seragam, mencegah bentrok dengan UI default HP
+              onChange: function(selectedDates, dateStr, instance) {
+                if (dateStr) {
+                  SELECTED_CUSTOM_DATE = dateStr;
+                  document.getElementById('customDateText').innerText = dateStr;
+                  document.getElementById('customDateLabel').classList.remove('d-none');
+                  document.getElementById('customDateLabel').classList.add('d-flex');
+                  renderFinanceUI();
+                }
+              },
+              onClose: function(selectedDates, dateStr) {
+                // Jika panel ditutup tapi belum ada tanggal yang dipilih, kembalikan ke default
+                if (!dateStr && !SELECTED_CUSTOM_DATE) {
+                   document.getElementById('revFilter').value = 'month';
+                   renderFinanceUI();
+                }
+              }
+            });
+          }
+          setTimeout(() => CUSTOM_DATEPICKER.open(), 50);
+        } else {
+          // Sembunyikan label kalender jika metode lain dipilih
+          document.getElementById('customDateLabel').classList.remove('d-flex');
+          document.getElementById('customDateLabel').classList.add('d-none');
+          SELECTED_CUSTOM_DATE = "";
+          renderFinanceUI();
+        }
+      }
+
+      function resetCustomDate() {
+        document.getElementById('revFilter').value = 'month';
+        handleRevFilterChange(document.getElementById('revFilter'));
+      }
+
       // --- FUNGSI BARU: LOGIKA MODAL SHOT ---
       function openShotModal() {
         const select = document.getElementById('shotMaterialSelect');
@@ -7493,6 +7849,10 @@
 
       // 7. Master Controller
       async function autoPrintReceipt(transactionData) {
+        // [PERBAIKAN] 1. Cek apakah Induk Fitur Invoice Upgrade Aktif. Jika OFF, hiraukan pencetakan
+        if (localStorage.getItem('pos_invoice_main_active') !== 'true') return;
+
+        // [PERBAIKAN] 2. Cek apakah Sub-Fitur Thermal Printer Aktif
         if (localStorage.getItem('pos_printer_active') !== 'true') return;
         
         const connType = localStorage.getItem('pos_printer_type') || 'bluetooth';
@@ -7505,7 +7865,7 @@
             await executeQZPrint(bytes);
           }
         } catch (e) {
-          console.warn("Proses cetak terhenti.");
+          console.warn("Proses cetak terhenti: ", e);
         }
       }
 
@@ -7682,6 +8042,61 @@
 
       function closeDoneTicketDetail() {
         document.getElementById('modalDoneTicketDetail').classList.add('d-none');
+      }
+
+      // --- FUNGSI CAPTURE DAN KIRIM KE TELEGRAM ---
+      function broadcastSchedule() {
+        const gridElement = document.getElementById('scheduleGridToCapture');
+        const btn = document.getElementById('btnBroadcastSchedule');
+        
+        // Simpan text tombol asli
+        const originalHtml = btn.innerHTML;
+        
+        // Ubah status tombol menjadi loading
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses Gambar...';
+
+        // 1. Jalankan html2canvas
+        html2canvas(gridElement, { 
+          scale: 2, // Kualitas HD
+          backgroundColor: "#ffffff",
+          useCORS: true // Membantu merender jika ada icon/font eksternal
+        }).then(canvas => {
+          
+          // 2. Convert ke format JPEG base64
+          const base64Image = canvas.toDataURL("image/jpeg", 0.9);
+          
+          btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Mengirim...';
+          
+          // 3. Persiapkan payload untuk dikirim ke Code.js via google.script.run
+          const action = 'sendScheduleToTelegram';
+          const captionMsg = "📅 <b>JADWAL STAFF MINGGU INI</b>\nHarap simpan dan perhatikan jam shift masing-masing ya tim!";
+          
+          // Asumsi kamu menggunakan sistem Fetch custom kamu (atau langsung google.script.run)
+          // Jika kamu pakai google.script.run bawaan:
+          google.script.run
+            .withSuccessHandler(function(res) {
+              btn.disabled = false;
+              btn.innerHTML = originalHtml;
+              
+              let result = typeof res === 'string' ? JSON.parse(res) : res;
+              
+              if(result.status === 'success') {
+                alert("✅ Jadwal berhasil dikirim ke grup Telegram!");
+              } else {
+                alert("❌ Gagal mengirim: " + result.message);
+              }
+            })
+            .withFailureHandler(function(err) {
+              btn.disabled = false;
+              btn.innerHTML = originalHtml;
+              alert("Terjadi kesalahan sistem: " + err);
+            })
+            // Memanggil fungsi router doPost bawaanmu 
+            // (Perhatikan format payload ini menyesuaikan cara kerjamu, 
+            // jika kamu memanggilnya beda, sesuaikan dengan cara POST-mu)
+            .sendScheduleToTelegram(base64Image, captionMsg);
+        });
       }
 
       function validateCloseShift() {
@@ -8117,6 +8532,11 @@
             <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Hanya mencatat modal awal kasir masuk & total akhir saat kasir logout.</small>
             <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Mencatat semua aksi transaksi, termasuk input manual, edit/hapus, serta buka/tutup shift kasir.</small>
           </div>
+          <div class="mb-4 mt-3">
+            <label class="small fw-bold text-muted mb-1">CHAT ID (GRUP JADWAL STAFF)</label>
+            <input type="text" id="tgChatSchedule" class="form-control border-2 fw-bold text-success" placeholder="Contoh: -10011223344">
+            <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Hasil tangkapan gambar jadwal (Broadcast) akan terkirim ke Grup ini secara spesifik.</small>
+          </div>
         </div>
 
         <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-sm" id="btnSaveSetting" onclick="saveSettingConfig()">
@@ -8223,12 +8643,15 @@
         <div class="flex-fill overflow-auto d-flex justify-content-center align-items-start py-3" style="background: #f0f2f5; border-radius: 10px;">
           <div class="receipt-preview shadow-sm" style="background: white; width: 260px; padding: 20px 15px; font-family: 'Courier New', Courier, monospace; font-size: 0.75rem; color: #000; border: 1px dashed #ccc; margin-bottom: 20px;">
             
-            <div class="text-center mb-2 group-hover-edit" onclick="triggerNotaLogoUpload()" style="cursor: pointer; border: 1px dashed transparent;">
+            <div class="text-center group-hover-edit" onclick="triggerNotaLogoUpload()" style="cursor: pointer; border: 1px dashed transparent;">
               <div id="notaLogoContainer">
                 <i class="fas fa-image fa-2x text-muted opacity-50" id="notaLogoPlaceholder"></i>
                 <img id="notaLogoImg" src="" style="width: 60px; display: none; margin: 0 auto;">
               </div>
               <div class="edit-overlay"><i class="fas fa-camera me-1"></i> Ubah Logo</div>
+            </div>
+            <div class="text-center text-danger mb-2 mt-1" style="font-size: 0.6rem; font-weight: bold;">
+              *Maks file 300 KB
             </div>
 
             <div id="logoSizeControl" class="d-none justify-content-center align-items-center gap-2 mb-3 px-3" onclick="event.stopPropagation()">
