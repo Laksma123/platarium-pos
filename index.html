@@ -659,6 +659,45 @@
         color: white; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; border-radius: 5px; 
       }
       .group-hover-edit:hover .edit-overlay { display: flex; }
+
+      /* ========================================= */
+      /* TAMBAHAN UI SCHEDULING PILLS              */
+      /* ========================================= */
+      .draggable-pill {
+        cursor: grab;
+        border-radius: 20px;
+        font-size: 0.75rem !important;
+        font-weight: 600;
+        padding: 6px 12px !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+        white-space: nowrap;
+      }
+      .draggable-pill:active {
+        cursor: grabbing !important;
+      }
+      .draggable-pill:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+      }
+      .shift-dropzone {
+        min-height: 80px;
+        background-color: #fdfdfd;
+        transition: background-color 0.2s;
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 10px !important;
+        height: 100%;
+      }
+      .shift-dropzone.bg-highlight {
+        background-color: #f1f8ff !important;
+      }
     </style>
   </head>
   <body>
@@ -976,66 +1015,59 @@
           <div class="row g-4" id="staffCardsContainer">
             </div>
           <div id="view-schedule-grid" class="container-fluid mt-5 border-top pt-4 pb-5">
-            <div class="row">
-              <div class="col-md-3 col-12 mb-3">
-                <div class="bg-light p-3 rounded-4 border shadow-sm h-100">
-                  <h6 class="fw-bold mb-3"><i class="fas fa-users text-primary"></i> Daftar Staff</h6>
-                  <p class="text-muted" style="font-size: 12px;">Tarik (Drag) nama staff ke tabel jadwal di kanan. <br><br>*Hanya staff berstatus Active yang muncul.</p>
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+              <div>
+                <h4 class="fw-bold m-0"><i class="fas fa-calendar-alt text-success me-2"></i>Pengaturan Jadwal Mingguan</h4>
+                <p class="text-muted small m-0">Atur jadwal shift operasional staff dengan drag & drop.</p>
+              </div>
+              <div class="d-flex gap-2 mt-2 mt-md-0">
+                <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
+                  <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-layer-group me-1"></i>Shift/Hari</span>
+                  <select id="shiftCountSelector" class="form-select border-0 shadow-none fw-bold bg-white px-3" style="font-size: 0.85rem; cursor:pointer;" onchange="changeShiftCount(this.value)">
+                    <option value="1">1 Shift</option>
+                    <option value="2" selected>2 Shift (Pagi, Malam)</option>
+                    <option value="3">3 Shift (Pagi, Sore, Malam)</option>
+                  </select>
+                </div>
+                <button class="btn btn-success rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnBroadcastSchedule" onclick="broadcastSchedule()">
+                    <i class="fab fa-telegram-plane me-2"></i>Kirim ke Telegram
+                </button>
+              </div>
+            </div>
+
+            <div class="row g-4">
+              <div class="col-12 col-xl-3">
+                <div class="bg-light p-3 rounded-4 border shadow-sm h-100 d-flex flex-column">
+                  <h6 class="fw-bold mb-1"><i class="fas fa-users text-primary me-1"></i> Daftar Staff</h6>
+                  <p class="text-muted mb-3" style="font-size: 11px;">Tarik (Drag) staff ke tabel jadwal.<br>*Hanya staff berstatus Active yang muncul.</p>
                   
-                  <div id="staffPillsSource" class="d-flex flex-wrap gap-2 p-2 border border-dashed rounded bg-white" style="min-height: 150px;">
-                    </div>
+                  <div id="staffPillsSource" class="d-flex flex-wrap align-content-start gap-2 p-2 border border-dashed rounded bg-white flex-fill shadow-sm" style="min-height: 150px;">
+                  </div>
                 </div>
               </div>
 
-              <div class="col-md-9 col-12">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <h5 class="fw-bold m-0"><i class="fas fa-calendar-alt text-success"></i> Pengaturan Jadwal Mingguan</h5>
-                  <button class="btn btn-success rounded-pill fw-bold shadow-sm" id="btnBroadcastSchedule" onclick="broadcastSchedule()">
-                      <i class="fab fa-telegram-plane me-2"></i>Kirim ke Telegram
-                  </button>
-                </div>
-                
-                <div id="scheduleGridToCapture" class="table-responsive bg-white p-3 rounded-4 border shadow-sm">
-                  <div class="text-center mb-3">
-                    <h4 class="fw-bold m-0">JADWAL OPERASIONAL STAFF</h4>
-                    <p class="text-muted m-0">Harap hadir 15 menit sebelum shift dimulai.</p>
+              <div class="col-12 col-xl-9">
+                <div id="scheduleGridToCapture" class="table-responsive bg-white p-0 rounded-4 border shadow-sm overflow-hidden" style="scrollbar-width: thin;">
+                  <div class="text-center p-3 border-bottom bg-light">
+                    <h5 class="fw-bold m-0" style="letter-spacing: 1px;">JADWAL OPERASIONAL STAFF</h5>
+                    <p class="text-muted m-0 small">*Harap hadir 15 menit sebelum shift dimulai.</p>
                   </div>
 
-                  <table class="table table-bordered text-center align-middle" style="table-layout: fixed; min-width: 800px;">
+                  <table class="table table-bordered text-center align-middle m-0" style="table-layout: fixed; min-width: 800px;">
                     <thead class="table-dark">
                       <tr>
-                        <th style="width: 9%;">Shift</th>
-                        <th style="width: 13%;" id="th-senin">Senin</th>
-                        <th style="width: 13%;" id="th-selasa">Selasa</th>
-                        <th style="width: 13%;" id="th-rabu">Rabu</th>
-                        <th style="width: 13%;" id="th-kamis">Kamis</th>
-                        <th style="width: 13%;" id="th-jumat">Jumat</th>
-                        <th style="width: 13%;" id="th-sabtu">Sabtu</th>
-                        <th style="width: 13%;" id="th-minggu">Minggu</th>
+                        <th style="width: 10%; border-bottom: none;" class="py-3">Shift</th>
+                        <th style="width: 12.8%; border-bottom: none;" id="th-senin" class="py-3">Senin</th>
+                        <th style="width: 12.8%; border-bottom: none;" id="th-selasa" class="py-3">Selasa</th>
+                        <th style="width: 12.8%; border-bottom: none;" id="th-rabu" class="py-3">Rabu</th>
+                        <th style="width: 12.8%; border-bottom: none;" id="th-kamis" class="py-3">Kamis</th>
+                        <th style="width: 12.8%; border-bottom: none;" id="th-jumat" class="py-3">Jumat</th>
+                        <th style="width: 12.8%; border-bottom: none;" id="th-sabtu" class="py-3">Sabtu</th>
+                        <th style="width: 12.8%; border-bottom: none;" id="th-minggu" class="py-3">Minggu</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      <tr>
-                        <td class="fw-bold bg-light">Pagi<br><small class="text-muted">(08:00 - 16:00)</small></td>
-                        <td id="drop-senin-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                        <td id="drop-selasa-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                        <td id="drop-rabu-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                        <td id="drop-kamis-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                        <td id="drop-jumat-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                        <td id="drop-sabtu-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                        <td id="drop-minggu-pagi" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                      </tr>
-                      <tr>
-                        <td class="fw-bold bg-light">Malam<br><small class="text-muted">(16:00 - 24:00)</small></td>
-                        <td id="drop-senin-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                        <td id="drop-selasa-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                        <td id="drop-rabu-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                        <td id="drop-kamis-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                        <td id="drop-jumat-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                        <td id="drop-sabtu-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                        <td id="drop-minggu-malam" class="shift-dropzone bg-white p-2" style="min-height: 80px; vertical-align: top;"></td>
-                      </tr>
-                    </tbody>
+                    <tbody id="scheduleGridBody">
+                      </tbody>
                   </table>
                 </div>
               </div>
@@ -2053,16 +2085,47 @@
       let IS_STAFF_LOADED = false;
       let IS_OPCOST_LOADED = false;
 
-      // Fungsi untuk mengecek jika kedua data sudah selesai diunduh
+      // =========================================
+      // SETTING SHIFT DINAMIS
+      // =========================================
+      let CURRENT_SHIFT_COUNT = 2; // Default
+      const SHIFT_CONFIGS = {
+        1: [ { id: 'pagi', label: 'Pagi', time: '08:00 - 16:00', start: '08:00', end: '16:00' } ],
+        2: [
+          { id: 'pagi', label: 'Pagi', time: '08:00 - 16:00', start: '08:00', end: '16:00' },
+          { id: 'malam', label: 'Malam', time: '16:00 - 24:00', start: '16:00', end: '23:59' }
+        ],
+        3: [
+          { id: 'pagi', label: 'Pagi', time: '08:00 - 15:00', start: '08:00', end: '15:00' },
+          { id: 'sore', label: 'Sore', time: '15:00 - 22:00', start: '15:00', end: '22:00' },
+          { id: 'malam', label: 'Malam', time: '22:00 - 05:00', start: '22:00', end: '05:00' }
+        ]
+      };
+
+      function changeShiftCount(count) {
+        CURRENT_SHIFT_COUNT = parseInt(count);
+        localStorage.setItem('pos_shift_count', CURRENT_SHIFT_COUNT);
+        renderWeeklyScheduleGrid();
+      }
+
+      // =========================================
+      // SPINNER & LOADING TERPUSAT
+      // =========================================
       function checkManningLoaders() {
           if (IS_STAFF_LOADED && IS_OPCOST_LOADED) {
               const opLoader = document.getElementById('manningLoadingArea');
               if (opLoader) opLoader.classList.add('d-none');
               
+              const netProfitContainer = document.getElementById('netProfitContainer');
+              if (netProfitContainer && (ACTIVE_CASHIER === 'Owner' || IS_MULTI_OWNER)) {
+                  netProfitContainer.classList.remove('d-none');
+              }
+              
+              const scheduleGrid = document.getElementById('view-schedule-grid');
+              if (scheduleGrid) scheduleGrid.classList.remove('d-none');
+
               if (typeof renderManningUI === 'function') renderManningUI(STAFF_FACES);
               if (typeof renderOpCostsUI === 'function') renderOpCostsUI();
-              
-              // BARU: Eksekusi rendering Grid Schedule secara riil!
               if (typeof renderWeeklyScheduleGrid === 'function') renderWeeklyScheduleGrid();
           }
       }
@@ -2086,18 +2149,23 @@
       let SCHEDULE_SORTABLES = []; // Menampung instance memori Sortable
 
       function renderWeeklyScheduleGrid() {
-          // 1. Reset memori Sortable lama untuk cegah error tumpang tindih
           SCHEDULE_SORTABLES.forEach(s => s.destroy());
           SCHEDULE_SORTABLES = [];
 
-          // 2. Render Daftar Staff Riil (Hanya yang Active)
+          let savedCount = localStorage.getItem('pos_shift_count');
+          if (savedCount) {
+             CURRENT_SHIFT_COUNT = parseInt(savedCount);
+             let sel = document.getElementById('shiftCountSelector');
+             if (sel) sel.value = CURRENT_SHIFT_COUNT;
+          }
+
           const source = document.getElementById('staffPillsSource');
           if (source) {
             const activeStaff = STAFF_DATA.filter(s => s.status === 'Active');
             source.innerHTML = activeStaff.map(s => {
               let roleInit = s.role.charAt(0);
-              let bgClass = s.role === 'ADMIN' ? 'bg-danger' : (s.role === 'KITCHEN' ? 'bg-warning text-dark' : (s.role === 'BARISTA' ? 'bg-info text-dark' : 'bg-primary'));
-              return `<span class="badge ${bgClass} fs-6 p-2 draggable-pill shadow-sm" data-name="${s.name}" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> ${s.name} (${roleInit})</span>`;
+              let bgClass = s.role === 'ADMIN' ? 'bg-danger text-white' : (s.role === 'KITCHEN' ? 'bg-warning text-dark' : (s.role === 'BARISTA' ? 'bg-info text-dark' : 'bg-primary text-white'));
+              return `<span class="badge ${bgClass} draggable-pill shadow-sm" data-name="${s.name}" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> ${s.name} (${roleInit})</span>`;
             }).join('');
 
             SCHEDULE_SORTABLES.push(new Sortable(source, {
@@ -2106,7 +2174,6 @@
             }));
           }
 
-          // 3. Pasang Kalender Dinamis 1 Minggu Ke Depan di Table Header
           let weekDates = getWeekDates();
           let daysMap = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
           
@@ -2116,39 +2183,58 @@
               if(th) {
                   th.innerHTML = `${day.charAt(0).toUpperCase() + day.slice(1)}<br><small class="text-white-50 fw-normal" style="font-size:0.65rem;">${dStr.substring(0,5)}</small>`;
               }
-              
-              ['pagi', 'malam'].forEach(shift => {
-                  let dz = document.getElementById(`drop-${day}-${shift}`);
-                  if(dz) {
-                      dz.innerHTML = '';
-                      dz.dataset.date = dStr;
-                      dz.dataset.shift = shift;
-                  }
-              });
           });
 
-          // 4. Injeksi Data Riil dari Backend (SCHEDULE_DATA)
+          const tbody = document.getElementById('scheduleGridBody');
+          if (tbody) {
+            const shifts = SHIFT_CONFIGS[CURRENT_SHIFT_COUNT] || SHIFT_CONFIGS[2];
+            let rowsHtml = '';
+            
+            shifts.forEach(shift => {
+              let row = `<tr>
+                <td class="fw-bold bg-light align-middle text-dark">
+                  ${shift.label}<br><small class="text-muted fw-normal" style="font-size: 0.7rem;">(${shift.time})</small>
+                </td>`;
+                
+              daysMap.forEach(day => {
+                let dStr = weekDates[day];
+                row += `
+                <td class="p-0 align-middle bg-white" style="position: relative;">
+                  <div id="drop-${day}-${shift.id}" class="shift-dropzone w-100 h-100" data-date="${dStr}" data-shift="${shift.id}" data-start="${shift.start}" data-end="${shift.end}"></div>
+                </td>`;
+              });
+              row += `</tr>`;
+              rowsHtml += row;
+            });
+            tbody.innerHTML = rowsHtml;
+          }
+
           if(SCHEDULE_DATA && SCHEDULE_DATA.length > 0) {
               SCHEDULE_DATA.forEach(s => {
                   let targetDay = Object.keys(weekDates).find(k => weekDates[k] === s.date);
                   if (targetDay) {
                       let shiftType = 'pagi';
                       let startHour = parseInt(s.start.split(':')[0]);
-                      if (startHour >= 15) shiftType = 'malam'; 
+                      
+                      if (CURRENT_SHIFT_COUNT === 3) {
+                         if (startHour >= 15 && startHour < 22) shiftType = 'sore';
+                         else if (startHour >= 22 || startHour < 8) shiftType = 'malam';
+                      } else if (CURRENT_SHIFT_COUNT === 2) {
+                         if (startHour >= 16) shiftType = 'malam';
+                      }
                       
                       const dz = document.getElementById(`drop-${targetDay}-${shiftType}`);
                       if (dz) {
                           const staff = STAFF_DATA.find(st => st.name === s.staffName);
                           let roleInit = staff ? staff.role.charAt(0) : 'U';
-                          let bgClass = staff ? (staff.role === 'ADMIN' ? 'bg-danger' : (staff.role === 'KITCHEN' ? 'bg-warning text-dark' : (staff.role === 'BARISTA' ? 'bg-info text-dark' : 'bg-primary'))) : 'bg-secondary';
+                          let bgClass = staff ? (staff.role === 'ADMIN' ? 'bg-danger text-white' : (staff.role === 'KITCHEN' ? 'bg-warning text-dark' : (staff.role === 'BARISTA' ? 'bg-info text-dark' : 'bg-primary text-white'))) : 'bg-secondary text-white';
                           
-                          dz.innerHTML += `<span class="badge ${bgClass} fs-6 p-2 draggable-pill m-1 shadow-sm" data-id="${s.id}" data-name="${s.staffName}" style="cursor: grab;" ondblclick="deleteGridSchedule('${s.id}')" title="Klik ganda untuk menghapus"><i class="fas fa-user-circle me-1"></i> ${s.staffName} (${roleInit})</span>`;
+                          dz.innerHTML += `<span class="badge ${bgClass} draggable-pill shadow-sm m-1" data-id="${s.id}" data-name="${s.staffName}" style="cursor: grab;" ondblclick="deleteGridSchedule('${s.id}')" title="Klik ganda untuk menghapus"><i class="fas fa-user-circle me-1"></i> ${s.staffName} (${roleInit})</span>`;
                       }
                   }
               });
           }
 
-          // 5. Inisiasi Dropzone Table
           const dropzones = document.querySelectorAll('.shift-dropzone');
           dropzones.forEach(zone => {
               SCHEDULE_SORTABLES.push(new Sortable(zone, {
@@ -2161,11 +2247,9 @@
                       
                       const staffName = itemEl.dataset.name;
                       const date = zoneEl.dataset.date;
-                      const shift = zoneEl.dataset.shift;
-                      const existingId = itemEl.dataset.id || ""; // Deteksi apakah ini drag baru (kopian) atau pindah hari
-                      
-                      let start = shift === 'pagi' ? '08:00' : '16:00';
-                      let end = shift === 'pagi' ? '16:00' : '23:59';
+                      const start = zoneEl.dataset.start;
+                      const end = zoneEl.dataset.end;
+                      const existingId = itemEl.dataset.id || ""; 
                       
                       itemEl.style.opacity = '0.5';
                       itemEl.innerHTML += ' <i class="fas fa-spinner fa-spin ms-1 text-white"></i>';
@@ -2180,7 +2264,7 @@
                               }).getManningData();
                           } else {
                               alert("Gagal memperbarui shift: " + res.message);
-                              renderWeeklyScheduleGrid(); // Rollback UI
+                              renderWeeklyScheduleGrid();
                           }
                       }).saveSchedule(staffName, date, start, end, existingId);
                   }
@@ -2205,13 +2289,12 @@
           }
       }
 
-      // 1. Timpa fungsi initManningTab() lama dengan yang baru ini
       function initManningTab() {
           const opLoader = document.getElementById('manningLoadingArea');
           const netProfitContainer = document.getElementById('netProfitContainer');
           const staffContainer = document.getElementById('staffCardsContainer');
+          const scheduleGrid = document.getElementById('view-schedule-grid');
 
-          // Reset status keduanya agar selalu menunggu data terbaru
           IS_OPCOST_LOADED = false;
           IS_STAFF_LOADED = false; 
 
@@ -2221,21 +2304,19 @@
               opLoader.classList.remove('d-none');
           }
           
+          // Sembunyikan seluruh UI konten tab saat memuat
           if (netProfitContainer) netProfitContainer.classList.add('d-none');
-
-          // Kosongkan area container agar layar bersih (tidak ada UI setengah matang) saat loading
+          if (scheduleGrid) scheduleGrid.classList.add('d-none');
           if (staffContainer) staffContainer.innerHTML = '';
           
-          loadOpCosts(); // Tarik data operasional
+          loadOpCosts();
           
-          // Cek jika data staff sudah ada di cache memory
           if (STAFF_DATA && STAFF_DATA.length > 0) {
               IS_STAFF_LOADED = true;
               checkManningLoaders(); 
               return;
           }
 
-          // Jika belum ada di memory, tarik dari backend
           google.script.run.withSuccessHandler(res => {
               if (res.status === 'success') {
                   STAFF_DATA = res.staff || [];
@@ -2795,7 +2876,6 @@
       }
 
       function loadOpCosts() {
-          // Tampilkan spinner jika dipanggil mandiri (misal: saat save input cost baru)
           if (IS_STAFF_LOADED) {
               const opLoader = document.getElementById('manningLoadingArea');
               if (opLoader) {
@@ -2803,6 +2883,11 @@
                   opLoader.querySelector('p').innerText = 'Menyimpan & kalkulasi ulang data...';
                   opLoader.classList.remove('d-none');
               }
+              const netProfitContainer = document.getElementById('netProfitContainer');
+              if (netProfitContainer) netProfitContainer.classList.add('d-none');
+              const scheduleGrid = document.getElementById('view-schedule-grid');
+              if (scheduleGrid) scheduleGrid.classList.add('d-none');
+              
               IS_OPCOST_LOADED = false;
           }
 
@@ -2813,17 +2898,8 @@
                   ADMIN_SHARES_DATA = res.adminShares || []; 
                   IS_MULTI_OWNER = res.isMultiOwner; 
 
-                  const netProfitContainer = document.getElementById('netProfitContainer');
-                  if (netProfitContainer) {
-                      if (ACTIVE_CASHIER === 'Owner' || IS_MULTI_OWNER) {
-                          netProfitContainer.classList.remove('d-none');
-                      } else {
-                          netProfitContainer.classList.add('d-none');
-                      }
-                  }
-
                   IS_OPCOST_LOADED = true;
-                  checkManningLoaders(); // Panggil pengecekan, jika staff juga siap, langsung render!
+                  checkManningLoaders(); 
               }
           }).getOperationalData();
       }
