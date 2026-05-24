@@ -1017,17 +1017,23 @@
                 <h4 class="fw-bold m-0"><i class="fas fa-calendar-alt text-success me-2"></i>Pengaturan Jadwal Mingguan</h4>
                 <p class="text-muted small m-0">Atur jadwal shift operasional staff dengan drag & drop.</p>
               </div>
-              <div class="d-flex gap-2 mt-2 mt-md-0">
+              <div class="d-flex gap-2 mt-2 mt-md-0 flex-wrap justify-content-end">
+                <button class="btn btn-light rounded-pill border fw-bold shadow-sm d-flex align-items-center" onclick="openShiftTimeModal()">
+                    <i class="fas fa-clock text-warning me-2"></i>Waktu Shift
+                </button>
                 <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
                   <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-layer-group me-1"></i>Shift/Hari</span>
-                  <select id="shiftCountSelector" class="form-select border-0 shadow-none fw-bold bg-white px-3" style="font-size: 0.85rem; cursor:pointer;" onchange="changeShiftCount(this.value)">
+                  <select id="shiftCountSelector" class="form-select border-0 shadow-none fw-bold bg-white px-3 pe-4" style="font-size: 0.85rem; cursor:pointer;" onchange="changeShiftCount(this.value)">
                     <option value="1">1 Shift</option>
-                    <option value="2" selected>2 Shift (Pagi, Malam)</option>
-                    <option value="3">3 Shift (Pagi, Sore, Malam)</option>
+                    <option value="2" selected>2 Shift</option>
+                    <option value="3">3 Shift</option>
                   </select>
                 </div>
+                <button class="btn btn-primary rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnSaveBatchSchedule" onclick="executeBatchSaveSchedule()">
+                    <i class="fas fa-save me-2"></i>Save Schedule
+                </button>
                 <button class="btn btn-success rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnBroadcastSchedule" onclick="broadcastSchedule()">
-                    <i class="fab fa-telegram-plane me-2"></i>Kirim ke Telegram
+                    <i class="fab fa-telegram-plane me-2"></i>Kirim Telegram
                 </button>
               </div>
             </div>
@@ -1036,7 +1042,7 @@
               <div class="col-12 col-xl-3">
                 <div class="bg-light p-3 rounded-4 border shadow-sm h-100 d-flex flex-column">
                   <h6 class="fw-bold mb-1"><i class="fas fa-users text-primary me-1"></i> Daftar Staff</h6>
-                  <p class="text-muted mb-3" style="font-size: 11px;">Tarik (Drag) staff ke tabel jadwal.<br>*Hanya staff berstatus Active yang muncul.</p>
+                  <p class="text-muted mb-3" style="font-size: 11px;">Tarik (Drag) staff ke tabel jadwal.</p>
                   
                   <div id="staffPillsSource" class="d-flex flex-wrap align-content-start gap-2 p-2 border border-dashed rounded bg-white flex-fill shadow-sm" style="min-height: 150px;">
                   </div>
@@ -1047,7 +1053,11 @@
                 <div id="scheduleGridToCapture" class="table-responsive bg-white p-0 rounded-4 border shadow-sm overflow-hidden" style="scrollbar-width: thin;">
                   <div class="text-center p-3 border-bottom bg-light">
                     <h5 class="fw-bold m-0" style="letter-spacing: 1px;">JADWAL OPERASIONAL STAFF</h5>
-                    <p class="text-muted m-0 small">*Harap hadir 15 menit sebelum shift dimulai.</p>
+                    <div class="mt-2">
+                        <span id="shiftInfoText" class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm" style="cursor:pointer; font-size: 0.75rem;" onclick="editShiftInfoText()" title="Klik untuk mengubah pesan">
+                            *Harap hadir 15 menit sebelum shift dimulai.
+                        </span>
+                    </div>
                   </div>
 
                   <table class="table table-bordered text-center align-middle m-0" style="table-layout: fixed; min-width: 800px;">
@@ -1205,6 +1215,17 @@
           </div>
         </div>
         
+        <div id="modalShiftTime" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 10600; opacity: 1 !important;">
+          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 90%; max-width: 400px; animation: slideUp 0.3s ease-out;">
+            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+              <h5 class="fw-bold m-0"><i class="fas fa-clock text-warning me-2"></i>Atur Waktu Shift</h5>
+              <button class="btn-close shadow-none" onclick="document.getElementById('modalShiftTime').classList.add('d-none')"></button>
+            </div>
+            <div id="shiftTimeInputsContainer" class="overflow-auto" style="max-height: 50vh;"></div>
+            <button class="btn btn-success w-100 rounded-pill py-3 fw-bold mt-3 shadow-sm" onclick="saveShiftTimes()">Simpan Konfigurasi</button>
+          </div>
+        </div>
+
         <div id="view-finance" class="app-view p-4" style="display:none; background: #f8f9fa;">
           <div class="d-flex align-items-center justify-content-between mb-4 pt-2">
             <h3 class="fw-bold m-0 text-dark" style="white-space: nowrap; flex-shrink: 0;">
@@ -2088,8 +2109,7 @@
       // =========================================
       // SETTING SHIFT DINAMIS
       // =========================================
-      let CURRENT_SHIFT_COUNT = 2; // Default
-      const SHIFT_CONFIGS = {
+      let SHIFT_CONFIGS = JSON.parse(localStorage.getItem('pos_shift_configs')) || {
         1: [ { id: 'pagi', label: 'Pagi', time: '08:00 - 16:00', start: '08:00', end: '16:00' } ],
         2: [
           { id: 'pagi', label: 'Pagi', time: '08:00 - 16:00', start: '08:00', end: '16:00' },
@@ -2162,10 +2182,19 @@
           const source = document.getElementById('staffPillsSource');
           if (source) {
             const activeStaff = STAFF_DATA.filter(s => s.status === 'Active');
+            
+            // Kategori dan Urutan Staff: Admin -> Cashier -> Barista -> Kitchen
+            const roleOrder = { 'ADMIN': 1, 'CASHIER': 2, 'KASIR': 2, 'BARISTA': 3, 'KITCHEN': 4 };
+            activeStaff.sort((a, b) => {
+               const orderA = roleOrder[a.role.toUpperCase()] || 99;
+               const orderB = roleOrder[b.role.toUpperCase()] || 99;
+               return orderA - orderB;
+            });
+            
             source.innerHTML = activeStaff.map(s => {
               let roleInit = s.role.charAt(0);
               let bgClass = s.role === 'ADMIN' ? 'bg-danger text-white' : (s.role === 'KITCHEN' ? 'bg-warning text-dark' : (s.role === 'BARISTA' ? 'bg-info text-dark' : 'bg-primary text-white'));
-              return `<span class="badge ${bgClass} draggable-pill shadow-sm" data-name="${s.name}" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> ${s.name} (${roleInit})</span>`;
+              return `<span class="badge ${bgClass} draggable-pill shadow-sm m-1" data-name="${s.name}" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> ${s.name} (${roleInit})</span>`;
             }).join('');
 
             SCHEDULE_SORTABLES.push(new Sortable(source, {
@@ -2187,7 +2216,7 @@
 
           const tbody = document.getElementById('scheduleGridBody');
           if (tbody) {
-            const shifts = SHIFT_CONFIGS[CURRENT_SHIFT_COUNT] || SHIFT_CONFIGS[2];
+            const shifts = SHIFT_CONFIGS[CURRENT_SHIFT_COUNT];
             let rowsHtml = '';
             
             shifts.forEach(shift => {
@@ -2209,18 +2238,27 @@
             tbody.innerHTML = rowsHtml;
           }
 
+          // Render memory jadwal yang sudah di simpan di backend
+          const shiftsConfig = SHIFT_CONFIGS[CURRENT_SHIFT_COUNT];
           if(SCHEDULE_DATA && SCHEDULE_DATA.length > 0) {
               SCHEDULE_DATA.forEach(s => {
                   let targetDay = Object.keys(weekDates).find(k => weekDates[k] === s.date);
                   if (targetDay) {
                       let shiftType = 'pagi';
-                      let startHour = parseInt(s.start.split(':')[0]);
                       
-                      if (CURRENT_SHIFT_COUNT === 3) {
-                         if (startHour >= 15 && startHour < 22) shiftType = 'sore';
-                         else if (startHour >= 22 || startHour < 8) shiftType = 'malam';
-                      } else if (CURRENT_SHIFT_COUNT === 2) {
-                         if (startHour >= 16) shiftType = 'malam';
+                      // Fix Bounce/Missing Pills: Menelusuri kecocokan waktu start secara dinamis
+                      const foundShift = shiftsConfig.find(sh => s.start === sh.start);
+                      if (foundShift) {
+                          shiftType = foundShift.id;
+                      } else {
+                          // Fallback jika tidak presisi (mencari irisan jam)
+                          let startHour = parseInt(s.start.split(':')[0]);
+                          if (CURRENT_SHIFT_COUNT === 3) {
+                             if (startHour >= parseInt(shiftsConfig[1].start.split(':')[0]) && startHour < parseInt(shiftsConfig[2].start.split(':')[0])) shiftType = 'sore';
+                             else if (startHour >= parseInt(shiftsConfig[2].start.split(':')[0]) || startHour < parseInt(shiftsConfig[0].start.split(':')[0])) shiftType = 'malam';
+                          } else if (CURRENT_SHIFT_COUNT === 2) {
+                             if (startHour >= parseInt(shiftsConfig[1].start.split(':')[0])) shiftType = 'malam';
+                          }
                       }
                       
                       const dz = document.getElementById(`drop-${targetDay}-${shiftType}`);
@@ -2229,47 +2267,117 @@
                           let roleInit = staff ? staff.role.charAt(0) : 'U';
                           let bgClass = staff ? (staff.role === 'ADMIN' ? 'bg-danger text-white' : (staff.role === 'KITCHEN' ? 'bg-warning text-dark' : (staff.role === 'BARISTA' ? 'bg-info text-dark' : 'bg-primary text-white'))) : 'bg-secondary text-white';
                           
-                          dz.innerHTML += `<span class="badge ${bgClass} draggable-pill shadow-sm m-1" data-id="${s.id}" data-name="${s.staffName}" style="cursor: grab;" ondblclick="deleteGridSchedule('${s.id}')" title="Klik ganda untuk menghapus"><i class="fas fa-user-circle me-1"></i> ${s.staffName} (${roleInit})</span>`;
+                          dz.innerHTML += `<span class="badge ${bgClass} draggable-pill shadow-sm m-1" data-name="${s.staffName}" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> ${s.staffName} (${roleInit}) <i class="fas fa-times ms-2 btn-delete-pill" onclick="this.parentElement.remove()" style="cursor:pointer; opacity: 0.7;" title="Hapus"></i></span>`;
                       }
                   }
               });
           }
 
+          // Inisiasi dropzone
           const dropzones = document.querySelectorAll('.shift-dropzone');
           dropzones.forEach(zone => {
               SCHEDULE_SORTABLES.push(new Sortable(zone, {
                   group: 'shared-schedule',
                   animation: 150,
+                  filter: '.btn-delete-pill', // Prevent Sortable menahan click pada X
                   ghostClass: 'bg-secondary',
                   onAdd: function(evt) {
                       const itemEl = evt.item;
-                      const zoneEl = evt.to;
-                      
-                      const staffName = itemEl.dataset.name;
-                      const date = zoneEl.dataset.date;
-                      const start = zoneEl.dataset.start;
-                      const end = zoneEl.dataset.end;
-                      const existingId = itemEl.dataset.id || ""; 
-                      
-                      itemEl.style.opacity = '0.5';
-                      itemEl.innerHTML += ' <i class="fas fa-spinner fa-spin ms-1 text-white"></i>';
-                      
-                      google.script.run.withSuccessHandler(res => {
-                          if(res.status === 'success') {
-                              google.script.run.withSuccessHandler(mRes => {
-                                  if (mRes.status === 'success') {
-                                      SCHEDULE_DATA = mRes.schedules || [];
-                                      renderWeeklyScheduleGrid();
-                                  }
-                              }).getManningData();
-                          } else {
-                              alert("Gagal memperbarui shift: " + res.message);
-                              renderWeeklyScheduleGrid();
-                          }
-                      }).saveSchedule(staffName, date, start, end, existingId);
+                      // Tambahkan tombol silang secara otomatis untuk Pill baru yang di drop
+                      if (!itemEl.querySelector('.btn-delete-pill')) {
+                          itemEl.innerHTML += ' <i class="fas fa-times ms-2 btn-delete-pill" onclick="this.parentElement.remove()" style="cursor:pointer; opacity: 0.7;" title="Hapus"></i>';
+                      }
+                      // UI Smooth: Tidak ada load atau lock memanggil backend disini. 
                   }
               }));
           });
+      }
+
+      function executeBatchSaveSchedule() {
+          const btn = document.getElementById('btnSaveBatchSchedule');
+          const originalHtml = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
+          btn.disabled = true;
+
+          const weekDatesObj = getWeekDates();
+          const weekDatesArr = Object.values(weekDatesObj);
+          
+          let newSchedules = [];
+          const dropzones = document.querySelectorAll('.shift-dropzone');
+          
+          // Loop seluruh kolom dan ekstrak nama pill di dalamnya
+          dropzones.forEach(zone => {
+              const date = zone.dataset.date;
+              const start = zone.dataset.start;
+              const end = zone.dataset.end;
+              
+              const pills = zone.querySelectorAll('.draggable-pill');
+              pills.forEach(pill => {
+                  newSchedules.push({
+                      staffName: pill.dataset.name,
+                      date: date,
+                      start: start,
+                      end: end
+                  });
+              });
+          });
+
+          google.script.run.withSuccessHandler(res => {
+              btn.innerHTML = originalHtml;
+              btn.disabled = false;
+              if (res.status === 'success') {
+                  // Tarik data secara silent dari background untuk mengisi memory, tidak perlu merender ulang UI karena sudah sinkron.
+                  google.script.run.withSuccessHandler(mRes => {
+                      if (mRes.status === 'success') SCHEDULE_DATA = mRes.schedules || [];
+                  }).getManningData();
+              } else {
+                  alert("Gagal menyimpan jadwal: " + res.message);
+              }
+          }).saveBatchSchedule(weekDatesArr, newSchedules);
+      }
+
+      function editShiftInfoText() {
+          const el = document.getElementById('shiftInfoText');
+          const newText = prompt("Ubah pesan info jadwal yang tampil di Telegram:", el.innerText);
+          if (newText && newText.trim() !== "") {
+              el.innerText = newText;
+          }
+      }
+
+      function openShiftTimeModal() {
+          const container = document.getElementById('shiftTimeInputsContainer');
+          const shifts = SHIFT_CONFIGS[CURRENT_SHIFT_COUNT];
+          container.innerHTML = shifts.map((s, i) => `
+              <div class="mb-3 border p-3 rounded-4 bg-light">
+                  <label class="fw-bold text-dark mb-2">${s.label}</label>
+                  <div class="row g-2">
+                     <div class="col-6">
+                        <small class="text-muted">Start</small>
+                        <input type="time" class="form-control fw-bold shift-start-input" data-idx="${i}" value="${s.start}">
+                     </div>
+                     <div class="col-6">
+                        <small class="text-muted">End</small>
+                        <input type="time" class="form-control fw-bold shift-end-input" data-idx="${i}" value="${s.end}">
+                     </div>
+                  </div>
+              </div>
+          `).join('');
+          document.getElementById('modalShiftTime').classList.remove('d-none');
+      }
+      
+      function saveShiftTimes() {
+          const starts = document.querySelectorAll('.shift-start-input');
+          const ends = document.querySelectorAll('.shift-end-input');
+          starts.forEach((el, idx) => {
+              const startVal = el.value;
+              const endVal = ends[idx].value;
+              SHIFT_CONFIGS[CURRENT_SHIFT_COUNT][idx].start = startVal;
+              SHIFT_CONFIGS[CURRENT_SHIFT_COUNT][idx].end = endVal;
+              SHIFT_CONFIGS[CURRENT_SHIFT_COUNT][idx].time = `${startVal} - ${endVal}`;
+          });
+          localStorage.setItem('pos_shift_configs', JSON.stringify(SHIFT_CONFIGS));
+          document.getElementById('modalShiftTime').classList.add('d-none');
+          renderWeeklyScheduleGrid();
       }
 
       function deleteGridSchedule(id) {
@@ -8045,43 +8153,35 @@
         document.getElementById('modalDoneTicketDetail').classList.add('d-none');
       }
 
-      // --- FUNGSI CAPTURE DAN KIRIM KE TELEGRAM ---
       function broadcastSchedule() {
         const gridElement = document.getElementById('scheduleGridToCapture');
         const btn = document.getElementById('btnBroadcastSchedule');
-        
-        // Simpan text tombol asli
         const originalHtml = btn.innerHTML;
-        
-        // Ubah status tombol menjadi loading
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses Gambar...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
 
-        // 1. Jalankan html2canvas
-        html2canvas(gridElement, { 
-          scale: 2, // Kualitas HD
+        // Sembunyikan semua tombol X pada Pill secara massal agar tidak ikut difoto
+        document.querySelectorAll('.btn-delete-pill').forEach(el => el.classList.add('d-none'));
+
+        html2canvas(gridElement, {
+          scale: 2,
           backgroundColor: "#ffffff",
-          useCORS: true // Membantu merender jika ada icon/font eksternal
+          useCORS: true
         }).then(canvas => {
-          
-          // 2. Convert ke format JPEG base64
+          // Kembalikan visibilitas tombol X untuk next edit
+          document.querySelectorAll('.btn-delete-pill').forEach(el => el.classList.remove('d-none'));
+
           const base64Image = canvas.toDataURL("image/jpeg", 0.9);
-          
           btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Mengirim...';
           
-          // 3. Persiapkan payload untuk dikirim ke Code.js via google.script.run
-          const action = 'sendScheduleToTelegram';
-          const captionMsg = "📅 <b>JADWAL STAFF MINGGU INI</b>\nHarap simpan dan perhatikan jam shift masing-masing ya tim!";
-          
-          // Asumsi kamu menggunakan sistem Fetch custom kamu (atau langsung google.script.run)
-          // Jika kamu pakai google.script.run bawaan:
+          const shiftInfo = document.getElementById('shiftInfoText').innerText;
+          const captionMsg = `📅 <b>JADWAL STAFF MINGGU INI</b>\n${shiftInfo}`;
+
           google.script.run
             .withSuccessHandler(function(res) {
               btn.disabled = false;
               btn.innerHTML = originalHtml;
-              
               let result = typeof res === 'string' ? JSON.parse(res) : res;
-              
               if(result.status === 'success') {
                 alert("✅ Jadwal berhasil dikirim ke grup Telegram!");
               } else {
@@ -8093,10 +8193,12 @@
               btn.innerHTML = originalHtml;
               alert("Terjadi kesalahan sistem: " + err);
             })
-            // Memanggil fungsi router doPost bawaanmu 
-            // (Perhatikan format payload ini menyesuaikan cara kerjamu, 
-            // jika kamu memanggilnya beda, sesuaikan dengan cara POST-mu)
             .sendScheduleToTelegram(base64Image, captionMsg);
+        }).catch(err => {
+            document.querySelectorAll('.btn-delete-pill').forEach(el => el.classList.remove('d-none'));
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+            alert("Gagal memproses gambar: " + err);
         });
       }
 
