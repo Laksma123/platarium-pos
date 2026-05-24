@@ -544,18 +544,15 @@
       /* ========================================= */
       .monitor-rope-container {
         position: relative;
-        height: 310px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        white-space: nowrap;
-        padding-top: 15px;
-        scrollbar-width: thin;
+        min-width: 100%;
+        width: max-content; /* Kontainer akan otomatis memanjang mengikuti jumlah tiket/zoom */
       }
+      
       .rope-line {
         position: absolute;
         top: 25px;
         left: -50px;
-        width: 10000px; /* Panjang ekstrim agar tidak pernah terputus saat di-scroll */
+        right: -100vw; /* Membentang ekstrem ke kanan tanpa batas pasti agar tidak putus */
         height: 3px;
         background: #bdc3c7;
         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
