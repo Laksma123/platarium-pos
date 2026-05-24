@@ -1244,88 +1244,86 @@
             </div>
           </div>
 
-          <div class="row g-3 mb-4">
-            <div class="col-12 col-md-4">
-              <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-primary">
-                <small class="text-muted fw-bold d-block mb-1">TOTAL REVENUE (KOTOR)</small>
-                <h4 class="fw-bold m-0 text-primary" id="dashTotalRevenue">Rp 0</h4>
-              </div>
-            </div>
-            <div class="col-6 col-md-4">
-              <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-danger">
-                <small class="text-muted fw-bold d-block mb-1">TOTAL HPP (MODAL)</small>
-                <h4 class="fw-bold m-0 text-danger" id="dashTotalHPP">Rp 0</h4>
-              </div>
-            </div>
-            <div class="col-6 col-md-4">
-              <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-success">
-                <small class="text-muted fw-bold d-block mb-1">PROFIT BERSIH</small>
-                <h4 class="fw-bold m-0 text-success" id="dashNetProfit">Rp 0</h4>
+          <div class="row g-2 mb-4">
+            <div class="col-6 col-md-4 col-xl-2">
+              <div class="d-flex align-items-center bg-white border shadow-sm rounded-pill p-2" style="min-width: 0;">
+                <div class="rounded-circle d-flex justify-content-center align-items-center text-primary" style="width: 32px; height: 32px; background: rgba(13, 110, 253, 0.1); flex-shrink: 0;">
+                  <i class="fas fa-wallet" style="font-size: 0.85rem;"></i>
+                </div>
+                <div class="ms-2 overflow-hidden w-100">
+                  <div class="text-muted fw-bold text-uppercase" style="font-size: 0.55rem; letter-spacing: 0.5px;">Total Revenue</div>
+                  <div class="fw-bold text-dark text-truncate lh-1 mt-1" id="dashTotalRevenue" style="font-size: 0.85rem;">Rp 0</div>
+                </div>
               </div>
             </div>
 
-            <div class="col-4">
-              <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-secondary">
-                <small class="text-muted fw-bold d-block mb-1">TOTAL PESANAN</small>
-                <h5 class="fw-bold m-0 text-dark" id="dashTotalOrders">0</h5>
+            <div class="col-6 col-md-4 col-xl-2">
+              <div class="d-flex align-items-center bg-white border shadow-sm rounded-pill p-2" style="min-width: 0;">
+                <div class="rounded-circle d-flex justify-content-center align-items-center text-danger" style="width: 32px; height: 32px; background: rgba(220, 53, 69, 0.1); flex-shrink: 0;">
+                  <i class="fas fa-boxes" style="font-size: 0.85rem;"></i>
+                </div>
+                <div class="ms-2 overflow-hidden w-100">
+                  <div class="text-muted fw-bold text-uppercase" style="font-size: 0.55rem; letter-spacing: 0.5px;">Total HPP</div>
+                  <div class="fw-bold text-danger text-truncate lh-1 mt-1" id="dashTotalHPP" style="font-size: 0.85rem;">Rp 0</div>
+                </div>
               </div>
             </div>
-            <div class="col-4">
-              <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-warning">
-                <small class="text-muted fw-bold d-block mb-1">PRODUK TERLARIS</small>
-                <h6 class="fw-bold m-0 text-dark text-truncate" id="dashTopProduct">-</h6>
+
+            <div class="col-6 col-md-4 col-xl-2">
+              <div class="d-flex align-items-center bg-white border shadow-sm rounded-pill p-2" style="min-width: 0;">
+                <div class="rounded-circle d-flex justify-content-center align-items-center text-success" style="width: 32px; height: 32px; background: rgba(25, 135, 84, 0.1); flex-shrink: 0;">
+                  <i class="fas fa-chart-pie" style="font-size: 0.85rem;"></i>
+                </div>
+                <div class="ms-2 overflow-hidden w-100">
+                  <div class="text-muted fw-bold text-uppercase" style="font-size: 0.55rem; letter-spacing: 0.5px;">Profit Kotor</div>
+                  <div class="fw-bold text-success text-truncate lh-1 mt-1" id="dashNetProfit" style="font-size: 0.85rem;">Rp 0</div>
+                </div>
               </div>
             </div>
-            <div class="col-4">
-              <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-info">
-                <small class="text-muted fw-bold d-block mb-1">TOP KASIR</small>
-                <h6 class="fw-bold m-0 text-dark" id="dashTopCashier">-</h6>
+
+            <div class="col-6 col-md-4 col-xl-2">
+              <div class="d-flex align-items-center bg-white border shadow-sm rounded-pill p-2" style="min-width: 0;">
+                <div class="rounded-circle d-flex justify-content-center align-items-center text-secondary" style="width: 32px; height: 32px; background: rgba(108, 117, 125, 0.1); flex-shrink: 0;">
+                  <i class="fas fa-receipt" style="font-size: 0.85rem;"></i>
+                </div>
+                <div class="ms-2 overflow-hidden w-100">
+                  <div class="text-muted fw-bold text-uppercase" style="font-size: 0.55rem; letter-spacing: 0.5px;">Total Pesanan</div>
+                  <div class="fw-bold text-dark text-truncate lh-1 mt-1" id="dashTotalOrders" style="font-size: 0.85rem;">0</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-xl-2">
+              <div class="d-flex align-items-center bg-white border shadow-sm rounded-pill p-2" style="min-width: 0;">
+                <div class="rounded-circle d-flex justify-content-center align-items-center text-warning" style="width: 32px; height: 32px; background: rgba(255, 193, 7, 0.2); flex-shrink: 0;">
+                  <i class="fas fa-star" style="font-size: 0.85rem; color: #d39e00;"></i>
+                </div>
+                <div class="ms-2 overflow-hidden w-100">
+                  <div class="text-muted fw-bold text-uppercase" style="font-size: 0.55rem; letter-spacing: 0.5px;">Top Product</div>
+                  <div class="fw-bold text-dark text-truncate lh-1 mt-1" id="dashTopProduct" style="font-size: 0.85rem;">-</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-xl-2">
+              <div class="d-flex align-items-center bg-white border shadow-sm rounded-pill p-2" style="min-width: 0;">
+                <div class="rounded-circle d-flex justify-content-center align-items-center text-info" style="width: 32px; height: 32px; background: rgba(13, 202, 240, 0.1); flex-shrink: 0;">
+                  <i class="fas fa-user-tie" style="font-size: 0.85rem; color: #087990;"></i>
+                </div>
+                <div class="ms-2 overflow-hidden w-100">
+                  <div class="text-muted fw-bold text-uppercase" style="font-size: 0.55rem; letter-spacing: 0.5px;">Top Kasir</div>
+                  <div class="fw-bold text-dark text-truncate lh-1 mt-1" id="dashTopCashier" style="font-size: 0.85rem;">-</div>
+                </div>
               </div>
             </div>
           </div>
 
           <div class="row g-4 mb-4">
-            <div class="col-12 col-xl-4">
-              <div class="card border-0 shadow-sm rounded-4 p-4 h-100" style="position: relative;">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h6 class="fw-bold m-0 text-muted">ANALISA BISNIS</h6>
-                  <span class="badge bg-light text-dark border-0 small opacity-75" style="font-size: 0.6rem;">REAL-TIME SYNC</span>
-                </div>
-
-                <div id="chartLoading" class="chart-loading-overlay">
-                  <div class="loader-pulse mb-3"></div>
-                  <small class="fw-bold text-muted" style="font-size: 0.6rem; letter-spacing: 1px;">SINKRONISASI DATA...</small>
-                </div>
-
-                <div id="chartContentArea" style="opacity: 0;">
-                  <div class="chart-split-grid">
-                    <div class="trend-section">
-                      <small class="fw-bold text-muted opacity-50 d-block mb-2" style="font-size: 0.65rem; letter-spacing: 1px;">
-                        TREND PENDAPATAN (10 TERAKHIR)
-                      </small>
-                      <div class="canvas-wrapper">
-                        <canvas id="salesTrendChart"></canvas>
-                      </div>
-                    </div>
-
-                    <div class="product-section pt-3 border-top pb-5 mb-5">
-                      <small class="fw-bold text-muted opacity-50 d-block mb-4" style="font-size: 0.65rem; letter-spacing: 1px;">
-                        5 PRODUK TERLARIS (QTY)
-                      </small>
-                      <div class="canvas-wrapper">
-                        <canvas id="paymentMethodChart"></canvas>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="col-12 col-xl-8">
+            <div class="col-12">
               <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
-                <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white">
+                <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white flex-wrap gap-3">
                   <h6 class="fw-bold m-0 text-muted">List Penjualan</h6>
-                  <div class="d-flex gap-2">
+                  <div class="d-flex flex-wrap gap-2">
                     <select id="methodFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill" style="cursor:pointer;" onchange="renderFinanceUI()">
                       <option value="all" selected>Semua</option>
                       <option value="CASH">CASH</option>
@@ -1359,7 +1357,7 @@
                         <th class="ps-4">ID & Waktu</th>
                         <th style="width: 150px;">Item</th>
                         <th class="text-end">Total</th>
-                        <th class="text-end">Profit Bersih</th>
+                        <th class="text-end">Profit Kotor</th>
                         <th class="text-center">Kasir</th>
                         <th class="text-center pe-4">Aksi</th>
                       </tr>
@@ -7289,144 +7287,21 @@
         }).saveTransaction(data);
       }
 
-      /**
-       * [FIXED 2026-01-21] Unified Sales Chart Logic
-       * Menggabungkan penanganan Loading UI, Penghancuran Instance Lama (Anti-Ghosting),
-       * dan Visualisasi Produk Terlaris.
-       */
       function updateSalesChart(data) {
-        const loading = document.getElementById('chartLoading');
-        const content = document.getElementById('chartContentArea');
+        // Hanya membersihkan state interval/instance lama jika ada untuk mencegah memory leak
+        if (CHART_TREND) {
+          CHART_TREND.destroy();
+          CHART_TREND = null;
+        }
+        if (CHART_PAYMENT) {
+          CHART_PAYMENT.destroy();
+          CHART_PAYMENT = null;
+        }
+        if (window.CHART_ANIM_INTERVAL) {
+          clearInterval(window.CHART_ANIM_INTERVAL);
+        }
         
-        // 1. Tampilkan loading & sembunyikan konten (Visual Feedback)
-        if (loading) loading.style.display = 'flex';
-        if (content) content.style.opacity = '0';
-
-        // 2. Hancurkan instance chart lama agar tidak terjadi penumpukan (Memory Leak)
-        if (CHART_TREND) { CHART_TREND.destroy(); CHART_TREND = null; }
-        if (CHART_PAYMENT) { CHART_PAYMENT.destroy(); CHART_PAYMENT = null; }
-        if (window.CHART_ANIM_INTERVAL) clearInterval(window.CHART_ANIM_INTERVAL);
-
-        // 3. Jika data kosong, matikan loading dan berhenti
-        if (!data || data.length === 0) {
-          if (loading) loading.style.display = 'none';
-          return;
-        }
-
-        try {
-          const trendCtx = document.getElementById('salesTrendChart').getContext('2d');
-          const productCtx = document.getElementById('paymentMethodChart').getContext('2d');
-
-          // A. Olah Data Tren (10 Transaksi Terakhir)
-          const lastData = [...data].reverse().slice(-10);
-          const trendLabels = lastData.map(t => t.timestamp.split(' ')[1] || "00:00");
-          const trendValues = lastData.map(t => Number(t.total) || 0);
-
-          // B. Olah Data Produk Terlaris (QTY)
-          let productQtyMap = {};
-          data.forEach(t => {
-            if (t.items) {
-              t.items.forEach(item => {
-                productQtyMap[item.name] = (productQtyMap[item.name] || 0) + (Number(item.qty) || 0);
-              });
-            }
-          });
-
-          const sortedProducts = Object.entries(productQtyMap)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5);
-          const productLabels = sortedProducts.map(p => p[0]);
-          const productValues = sortedProducts.map(p => p[1]);
-
-          // C. Rendering dengan sedikit delay agar container stabil
-          setTimeout(() => {
-            // 1. Chart Tren (Line Chart)
-            const goldGradient = trendCtx.createLinearGradient(0, 0, 0, 100);
-            goldGradient.addColorStop(0, 'rgba(197, 160, 89, 0.4)');
-            goldGradient.addColorStop(1, 'rgba(197, 160, 89, 0)');
-
-            CHART_TREND = new Chart(trendCtx, {
-              type: 'line',
-              data: {
-                labels: trendLabels,
-                datasets: [{
-                  data: trendValues,
-                  borderColor: '#c5a059',
-                  backgroundColor: goldGradient,
-                  fill: true,
-                  tension: 0.4,
-                  pointRadius: 0
-                }]
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                  y: { display: false },
-                  x: { grid: { display: false }, ticks: { font: { size: 8 }, color: '#aaa' } }
-                }
-              }
-            });
-
-            // Gantilah bagian CHART_PAYMENT di fungsi updateSalesChart Anda dengan ini:
-            CHART_PAYMENT = new Chart(productCtx, {
-              type: 'doughnut',
-              data: {
-                labels: productLabels,
-                datasets: [{
-                  data: productValues,
-                  backgroundColor: ['#c5a059', '#2ecc71', '#3498db', '#e67e22', '#9b59b6'],
-                  borderWidth: 0,
-                  hoverOffset: 10
-                }]
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '70%',
-                layout: {
-                  padding: {
-                    left: 0,
-                    right: 20, // Memberi ruang ekstra di kanan agar teks (Ice)/(Hot) tidak terpotong
-                  }
-                },
-                plugins: {
-                  legend: {
-                    position: 'right', // Tetap di kanan agar urut ke bawah 
-                    align: 'center',    // KUNCI: Memaksa label mulai dari atas secara vertikal
-                    labels: {
-                      boxWidth: 10,
-                      font: { 
-                        size: 10, 
-                        weight: '600' 
-                      },
-                      padding: 12,     // Jarak antar baris label agar lebih lega 
-                      usePointStyle: true // Mengubah kotak warna menjadi titik agar lebih ringkas
-                    }
-                  }
-                }
-              }
-            });
-
-            // 4. Sembunyikan loading dan tampilkan chart
-            if (loading) loading.style.display = 'none';
-            if (content) content.style.opacity = '1';
-
-            // Jalankan Jitter Animasi (Opsional)
-            window.CHART_ANIM_INTERVAL = setInterval(() => {
-              if (CHART_TREND && document.getElementById('view-finance').style.display !== 'none') {
-                CHART_TREND.data.datasets[0].data = CHART_TREND.data.datasets[0].data.map(v => v + (Math.random() * 10 - 5));
-                CHART_TREND.update('none');
-              }
-            }, 4000);
-          }, 400);
-
-        } catch (e) {
-          console.error("Chart Error:", e);
-          if (loading) loading.style.display = 'none';
-          if (content) content.style.opacity = '1';
-        }
+        // Container chart (Analisa Bisnis) sudah dihapus, jadi eksekusi rendering chart dihentikan disini.
       }
 
       /**
