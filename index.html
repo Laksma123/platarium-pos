@@ -987,10 +987,21 @@
           <div id="view-schedule-grid" class="container-fluid mt-5 border-top pt-4 pb-5">
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
               <div>
-                <h4 class="fw-bold m-0"><i class="fas fa-calendar-alt text-success me-2"></i>Pengaturan Jadwal Mingguan</h4>
+                <h4 class="fw-bold m-0"><i class="fas fa-calendar-alt text-success me-2"></i>Pengaturan Jadwal Dinamis</h4>
                 <p class="text-muted small m-0">Atur jadwal shift operasional staff dengan drag & drop.</p>
               </div>
               <div class="d-flex gap-2 mt-2 mt-md-0 flex-wrap justify-content-end">
+                
+                <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
+                  <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-calendar-day me-1"></i>Mulai</span>
+                  <input type="date" id="schedStartDate" class="form-control border-0 shadow-none bg-white px-2" style="font-size: 0.85rem;" onchange="renderWeeklyScheduleGrid()">
+                </div>
+                <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
+                  <span class="input-group-text bg-light border-0 fw-bold small text-muted">Rentang</span>
+                  <input type="number" id="schedDayCount" class="form-control border-0 shadow-none bg-white px-2 text-center" style="font-size: 0.85rem; width: 60px;" min="1" max="14" value="7" onchange="renderWeeklyScheduleGrid()">
+                  <span class="input-group-text bg-light border-0 fw-bold small text-muted">Hari</span>
+                </div>
+
                 <button class="btn btn-light rounded-pill border fw-bold shadow-sm d-flex align-items-center" onclick="openShiftTimeModal()">
                     <i class="fas fa-clock text-warning me-2"></i>Waktu Shift
                 </button>
@@ -1034,20 +1045,8 @@
                   </div>
 
                   <table class="table table-bordered text-center align-middle m-0" style="table-layout: fixed; min-width: 800px;">
-                    <thead class="table-dark">
-                      <tr>
-                        <th style="width: 10%; border-bottom: none;" class="py-3">Shift</th>
-                        <th style="width: 12.8%; border-bottom: none;" id="th-senin" class="py-3">Senin</th>
-                        <th style="width: 12.8%; border-bottom: none;" id="th-selasa" class="py-3">Selasa</th>
-                        <th style="width: 12.8%; border-bottom: none;" id="th-rabu" class="py-3">Rabu</th>
-                        <th style="width: 12.8%; border-bottom: none;" id="th-kamis" class="py-3">Kamis</th>
-                        <th style="width: 12.8%; border-bottom: none;" id="th-jumat" class="py-3">Jumat</th>
-                        <th style="width: 12.8%; border-bottom: none;" id="th-sabtu" class="py-3">Sabtu</th>
-                        <th style="width: 12.8%; border-bottom: none;" id="th-minggu" class="py-3">Minggu</th>
-                      </tr>
-                    </thead>
                     <tbody id="scheduleGridBody">
-                      </tbody>
+                    </tbody>
                   </table>
                 </div>
               </div>
@@ -1096,39 +1095,30 @@
           </div>
         </div>
 
-        <div id="modalStaffDetail" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10400; opacity: 1 !important;">
+        <div id="modalStaffAbsensi" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10400; opacity: 1 !important;">
           <div class="bg-white p-0 rounded-5 shadow-lg d-flex flex-column overflow-hidden" style="width: 95%; max-width: 800px; max-height: 90vh; animation: slideUp 0.3s ease-out;">
-            
             <div class="bg-dark text-white p-4 d-flex justify-content-between align-items-center">
               <div>
-                <h4 class="fw-bold m-0" id="detailStaffName">Nama Staff</h4>
-                <span class="badge bg-warning text-dark mt-1" id="detailStaffRole">Role</span>
+                <h4 class="fw-bold m-0" id="absensiStaffName">Nama Staff</h4>
+                <span class="badge bg-warning text-dark mt-1">Detail Absensi</span>
               </div>
-              <button class="btn-close btn-close-white shadow-none" onclick="closeStaffDetailModal()"></button>
+              <button class="btn-close btn-close-white shadow-none" onclick="document.getElementById('modalStaffAbsensi').classList.add('d-none')"></button>
             </div>
-
             <div class="p-4 overflow-auto flex-fill" style="background: #f8f9fa;">
-              <ul class="nav nav-pills mb-4 gap-2" id="staffPills" role="tablist">
-                <li class="nav-item" role="presentation">
-                  <button class="btn btn-outline-primary active rounded-pill fw-bold px-4" id="tab-schedule" data-bs-toggle="pill" data-bs-target="#content-schedule" type="button" role="tab">📅 Jadwal & Shift</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                  <button class="btn btn-outline-success rounded-pill fw-bold px-4" id="tab-absen" data-bs-toggle="pill" data-bs-target="#content-absen" type="button" role="tab">📸 Bukti Absensi</button>
-                </li>
-              </ul>
-
-              <div class="tab-content" id="staffPillsContent">
-                <div class="tab-pane fade" id="content-absen" role="tabpanel">
-                  <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                    <div class="table-responsive" style="max-height: 400px;">
-                      <table class="table table-hover align-middle m-0 small">
-                        <thead class="bg-light sticky-top">
-                          <tr><th>Tanggal</th><th class="text-center">IN</th><th class="text-center">OUT</th><th class="text-center">Bukti Foto</th></tr>
-                        </thead>
-                        <tbody id="staffAbsenTableBody"></tbody>
-                      </table>
-                    </div>
-                  </div>
+              <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="table-responsive" style="max-height: 60vh; scrollbar-width: thin;">
+                  <table class="table table-hover align-middle m-0">
+                    <thead class="bg-light sticky-top">
+                      <tr class="small">
+                        <th class="ps-4 py-3">Tanggal</th>
+                        <th class="col-time text-center">IN</th>
+                        <th class="col-time text-center">OUT</th>
+                        <th class="col-photo text-center">Bukti Foto</th>
+                        <th class="col-action text-center">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody id="staffAbsensiTableBody" class="small"></tbody>
+                  </table>
                 </div>
               </div>
             </div>
@@ -2210,15 +2200,12 @@
           const source = document.getElementById('staffPillsSource');
           if (source) {
             const activeStaff = STAFF_DATA.filter(s => s.status === 'Active');
-            
-            // Kategori dan Urutan Staff: Admin -> Cashier -> Barista -> Kitchen
             const roleOrder = { 'ADMIN': 1, 'CASHIER': 2, 'KASIR': 2, 'BARISTA': 3, 'KITCHEN': 4 };
             activeStaff.sort((a, b) => {
                const orderA = roleOrder[a.role.toUpperCase()] || 99;
                const orderB = roleOrder[b.role.toUpperCase()] || 99;
                return orderA - orderB;
             });
-            
             source.innerHTML = activeStaff.map(s => {
               let roleInit = s.role.charAt(0);
               let bgClass = s.role === 'ADMIN' ? 'bg-danger text-white' : (s.role === 'KITCHEN' ? 'bg-warning text-dark' : (s.role === 'BARISTA' ? 'bg-info text-dark' : 'bg-primary text-white'));
@@ -2231,55 +2218,90 @@
             }));
           }
 
-          let weekDates = getWeekDates();
-          let daysMap = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
-          
-          daysMap.forEach(day => {
-              let dStr = weekDates[day];
-              let th = document.getElementById('th-' + day);
-              if(th) {
-                  th.innerHTML = `${day.charAt(0).toUpperCase() + day.slice(1)}<br><small class="text-white-50 fw-normal" style="font-size:0.65rem;">${dStr.substring(0,5)}</small>`;
-              }
-          });
+          let startDateInput = document.getElementById('schedStartDate').value;
+          let daysCount = parseInt(document.getElementById('schedDayCount').value) || 7;
+          if (daysCount > 14) daysCount = 14;
+          if (daysCount < 1) daysCount = 1;
 
-          const tbody = document.getElementById('scheduleGridBody');
-          if (tbody) {
-            const shifts = SHIFT_CONFIGS[CURRENT_SHIFT_COUNT];
-            let rowsHtml = '';
-            
-            shifts.forEach(shift => {
-              let row = `<tr>
-                <td class="fw-bold bg-light align-middle text-dark">
-                  ${shift.label}<br><small class="text-muted fw-normal" style="font-size: 0.7rem;">(${shift.time})</small>
-                </td>`;
-                
-              daysMap.forEach(day => {
-                let dStr = weekDates[day];
-                row += `
-                <td class="p-0 align-middle bg-white" style="position: relative;">
-                  <div id="drop-${day}-${shift.id}" class="shift-dropzone w-100 h-100" data-date="${dStr}" data-shift="${shift.id}" data-start="${shift.start}" data-end="${shift.end}"></div>
-                </td>`;
-              });
-              row += `</tr>`;
-              rowsHtml += row;
-            });
-            tbody.innerHTML = rowsHtml;
+          let startObj;
+          if (startDateInput) {
+              startObj = new Date(startDateInput + 'T00:00:00'); // pastikan local time
+          } else {
+              let curr = new Date(); 
+              let day = curr.getDay(); 
+              let diff = curr.getDate() - day + (day === 0 ? -6 : 1); 
+              startObj = new Date(curr.setDate(diff));
+              startObj.setHours(0,0,0,0);
+              
+              const tzoffset = startObj.getTimezoneOffset() * 60000;
+              const localISOTime = (new Date(startObj - tzoffset)).toISOString().slice(0, 10);
+              document.getElementById('schedStartDate').value = localISOTime;
+              document.getElementById('schedDayCount').value = daysCount;
           }
 
-          // Render memory jadwal yang sudah di simpan di backend
+          let dateList = [];
+          const hariIndo = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+          for(let i=0; i<daysCount; i++) {
+              let nextDay = new Date(startObj);
+              nextDay.setDate(startObj.getDate() + i);
+              dateList.push({
+                  dStr: Utilities_formatDateIndo(nextDay),
+                  dayName: hariIndo[nextDay.getDay()],
+                  idSafe: Utilities_formatDateIndo(nextDay).replace(/\//g, '')
+              });
+          }
+
+          const tbody = document.getElementById('scheduleGridBody');
           const shiftsConfig = SHIFT_CONFIGS[CURRENT_SHIFT_COUNT];
+          let rowsHtml = '';
+
+          // Grup menjadi batch per minggu (Maks 7 hari per row Header)
+          for(let week=0; week < Math.ceil(daysCount/7); week++) {
+              let chunk = dateList.slice(week*7, (week+1)*7);
+              
+              // 1. Tulis Header Mingguan
+              rowsHtml += `<tr class="table-dark">
+                  <th style="width: 10%; border-bottom: none;" class="py-3 align-middle">Shift</th>`;
+              for(let i=0; i<7; i++) {
+                  if (i < chunk.length) {
+                      rowsHtml += `<th style="width: 12.8%; border-bottom: none;" class="py-3 align-middle">${chunk[i].dayName}<br><small class="text-white-50 fw-normal" style="font-size:0.65rem;">${chunk[i].dStr.substring(0,5)}</small></th>`;
+                  } else {
+                      rowsHtml += `<th style="width: 12.8%; border-bottom: none;" class="py-3"></th>`;
+                  }
+              }
+              rowsHtml += `</tr>`;
+
+              // 2. Tulis Slot Shift untuk Batch Minggu Tersebut
+              shiftsConfig.forEach(shift => {
+                  rowsHtml += `<tr>
+                      <td class="fw-bold bg-light align-middle text-dark border-bottom-0">
+                          ${shift.label}<br><small class="text-muted fw-normal" style="font-size: 0.7rem;">(${shift.time})</small>
+                      </td>`;
+                  for(let i=0; i<7; i++) {
+                      if (i < chunk.length) {
+                          rowsHtml += `
+                          <td class="p-0 align-middle bg-white" style="position: relative;">
+                              <div id="drop-${chunk[i].idSafe}-${shift.id}" class="shift-dropzone w-100 h-100" data-date="${chunk[i].dStr}" data-shift="${shift.id}" data-start="${shift.start}" data-end="${shift.end}"></div>
+                          </td>`;
+                      } else {
+                          rowsHtml += `<td class="p-0 align-middle bg-light"></td>`;
+                      }
+                  }
+                  rowsHtml += `</tr>`;
+              });
+          }
+          if (tbody) tbody.innerHTML = rowsHtml;
+
+          // Render Memory Jadwal Backend (Map Logic)
           if(SCHEDULE_DATA && SCHEDULE_DATA.length > 0) {
               SCHEDULE_DATA.forEach(s => {
-                  let targetDay = Object.keys(weekDates).find(k => weekDates[k] === s.date);
-                  if (targetDay) {
+                  let tDayObj = dateList.find(d => d.dStr === s.date);
+                  if (tDayObj) {
                       let shiftType = 'pagi';
-                      
-                      // Fix Bounce/Missing Pills: Menelusuri kecocokan waktu start secara dinamis
                       const foundShift = shiftsConfig.find(sh => s.start === sh.start);
                       if (foundShift) {
                           shiftType = foundShift.id;
                       } else {
-                          // Fallback jika tidak presisi (mencari irisan jam)
                           let startHour = parseInt(s.start.split(':')[0]);
                           if (CURRENT_SHIFT_COUNT === 3) {
                              if (startHour >= parseInt(shiftsConfig[1].start.split(':')[0]) && startHour < parseInt(shiftsConfig[2].start.split(':')[0])) shiftType = 'sore';
@@ -2289,7 +2311,7 @@
                           }
                       }
                       
-                      const dz = document.getElementById(`drop-${targetDay}-${shiftType}`);
+                      const dz = document.getElementById(`drop-${tDayObj.idSafe}-${shiftType}`);
                       if (dz) {
                           const staff = STAFF_DATA.find(st => st.name === s.staffName);
                           let roleInit = staff ? staff.role.charAt(0) : 'U';
@@ -2301,21 +2323,18 @@
               });
           }
 
-          // Inisiasi dropzone
           const dropzones = document.querySelectorAll('.shift-dropzone');
           dropzones.forEach(zone => {
               SCHEDULE_SORTABLES.push(new Sortable(zone, {
                   group: 'shared-schedule',
                   animation: 150,
-                  filter: '.btn-delete-pill', // Prevent Sortable menahan click pada X
+                  filter: '.btn-delete-pill',
                   ghostClass: 'bg-secondary',
                   onAdd: function(evt) {
                       const itemEl = evt.item;
-                      // Tambahkan tombol silang secara otomatis untuk Pill baru yang di drop
                       if (!itemEl.querySelector('.btn-delete-pill')) {
                           itemEl.innerHTML += ' <i class="fas fa-times ms-2 btn-delete-pill" onclick="this.parentElement.remove()" style="cursor:pointer; opacity: 0.7;" title="Hapus"></i>';
                       }
-                      // UI Smooth: Tidak ada load atau lock memanggil backend disini. 
                   }
               }));
           });
@@ -2327,26 +2346,27 @@
           btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
           btn.disabled = true;
 
-          const weekDatesObj = getWeekDates();
-          const weekDatesArr = Object.values(weekDatesObj);
+          let startDateInput = document.getElementById('schedStartDate').value;
+          let daysCount = parseInt(document.getElementById('schedDayCount').value) || 7;
+          let startObj = new Date(startDateInput + 'T00:00:00');
+          
+          let weekDatesArr = [];
+          for(let i=0; i<daysCount; i++) {
+              let nextDay = new Date(startObj);
+              nextDay.setDate(startObj.getDate() + i);
+              weekDatesArr.push(Utilities_formatDateIndo(nextDay));
+          }
           
           let newSchedules = [];
           const dropzones = document.querySelectorAll('.shift-dropzone');
           
-          // Loop seluruh kolom dan ekstrak nama pill di dalamnya
           dropzones.forEach(zone => {
               const date = zone.dataset.date;
               const start = zone.dataset.start;
               const end = zone.dataset.end;
-              
               const pills = zone.querySelectorAll('.draggable-pill');
               pills.forEach(pill => {
-                  newSchedules.push({
-                      staffName: pill.dataset.name,
-                      date: date,
-                      start: start,
-                      end: end
-                  });
+                  newSchedules.push({ staffName: pill.dataset.name, date: date, start: start, end: end });
               });
           });
 
@@ -2354,7 +2374,6 @@
               btn.innerHTML = originalHtml;
               btn.disabled = false;
               if (res.status === 'success') {
-                  // Tarik data secara silent dari background untuk mengisi memory, tidak perlu merender ulang UI karena sudah sinkron.
                   google.script.run.withSuccessHandler(mRes => {
                       if (mRes.status === 'success') SCHEDULE_DATA = mRes.schedules || [];
                   }).getManningData();
@@ -2473,61 +2492,77 @@
           return;
         }
 
-        container.innerHTML = STAFF_DATA.map(staff => {
+        let html = `
+        <div class="col-12">
+          <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle m-0">
+                <thead class="bg-dark text-white">
+                  <tr>
+                    <th class="ps-4 py-3">Nama & Role</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Gaji / Persentase</th>
+                    <th class="text-center pe-4" style="width: 250px;">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white">
+        `;
+
+        STAFF_DATA.forEach(staff => {
           let photoUrl = faces[staff.name] || 'https://via.placeholder.com/150';
           const isActive = staff.status === 'Active';
-          // Visual border merah jika Inactive (Req 1)
-          const borderClass = isActive ? '' : 'border-danger border-2 border';
-
-          // --- AWAL TAMBAHAN LOGIKA MULTI OWNER ---
-          // Setup default: Label = "Gaji Pokok", Value = "Rp XXX.XXX"
-          let salaryLabel = "Gaji Pokok:";
+          let salaryLabel = "Gaji Pokok";
           let salaryValue = `Rp ${staff.salary.toLocaleString()}`;
           
-          // Jika Multi Owner ON dan role-nya ADMIN, ubah menjadi persentase saham
           if (typeof IS_MULTI_OWNER !== 'undefined' && IS_MULTI_OWNER && staff.role.toUpperCase() === 'ADMIN') {
-            salaryLabel = "Persentase Saham:";
+            salaryLabel = "Persentase Saham";
             salaryValue = `${staff.salary}%`;
           }
-          // --- AKHIR TAMBAHAN LOGIKA MULTI OWNER ---
 
-          return `
-            <div class="col-12 col-md-6 col-lg-4" id="staff-card-${staff.id}">
-              <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden ${borderClass}">
-                <div class="p-3 bg-light border-bottom d-flex align-items-center gap-3">
-                  <div class="rounded-circle overflow-hidden shadow-sm border border-2 border-white" style="width: 60px; height: 60px;">
+          html += `
+            <tr class="${!isActive ? 'opacity-75 bg-light' : ''}" id="staff-card-${staff.id}">
+              <td class="ps-4 py-3">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="rounded-circle overflow-hidden shadow-sm border border-2 border-white" style="width: 50px; height: 50px; flex-shrink: 0;">
                     <img src="${photoUrl}" style="width:100%; height:100%; object-fit:cover;">
                   </div>
                   <div>
                     <h6 class="fw-bold m-0 text-dark">${staff.name}</h6>
-                    <span class="badge bg-primary mt-1" style="font-size:0.65rem;">${staff.role}</span>
+                    <span class="badge ${staff.role === 'ADMIN' ? 'bg-danger' : (staff.role === 'KITCHEN' ? 'bg-warning text-dark' : 'bg-primary')} mt-1" style="font-size:0.65rem;">${staff.role}</span>
                   </div>
                 </div>
-                <div class="p-3 bg-white">
-                  
-                  <div class="d-flex justify-content-between mb-2 small align-items-center">
-                    <span class="text-muted fw-bold">${salaryLabel}</span>
-                    <span class="fw-bold text-success">${salaryValue}</span>
-                  </div>
-                  <div class="d-flex justify-content-between mb-3 small align-items-center">
-                    <span class="text-muted fw-bold">Status:</span>
-                    <span class="badge ${isActive ? 'bg-success' : 'bg-danger'}" 
-                          style="cursor: pointer;" 
-                          id="status-badge-${staff.id}" 
-                          onclick="toggleStaffStatus('${staff.id}', '${staff.status}')">
-                      ${staff.status} <i class="fas fa-caret-down ms-1"></i>
-                    </span>
-                  </div>
-                  <div class="d-flex gap-2">
-                    <button class="btn btn-light flex-fill rounded-pill fw-bold btn-sm border shadow-sm" onclick="openStaffModal('${staff.id}')"><i class="fas fa-pencil-alt text-muted"></i></button>
-                    <button class="btn btn-luxury flex-fill rounded-pill fw-bold btn-sm shadow-sm" onclick="openStaffDetailModal('${staff.name}')">Lihat Detail & Jadwal</button>
-                    <button class="btn btn-light text-danger flex-fill rounded-pill fw-bold btn-sm border shadow-sm" onclick="deleteStaffUI('${staff.id}', '${staff.name}')"><i class="fas fa-trash"></i></button>
-                  </div>
+              </td>
+              <td class="text-center">
+                <span class="badge ${isActive ? 'bg-success' : 'bg-danger'} shadow-sm" 
+                      style="cursor: pointer; padding: 6px 12px;" 
+                      id="status-badge-${staff.id}" 
+                      onclick="toggleStaffStatus('${staff.id}', '${staff.status}')">
+                  ${staff.status} <i class="fas fa-caret-down ms-1"></i>
+                </span>
+              </td>
+              <td class="text-center">
+                <div class="fw-bold text-success" style="font-size: 0.95rem;">${salaryValue}</div>
+                <div class="text-muted" style="font-size: 0.7rem;">${salaryLabel}</div>
+              </td>
+              <td class="text-center pe-4">
+                <div class="btn-group border rounded-pill shadow-sm overflow-hidden w-100">
+                  <button class="btn btn-light btn-sm border-end" onclick="openStaffModal('${staff.id}')" title="Edit Staff">
+                    <i class="fas fa-pencil-alt text-primary px-1"></i>
+                  </button>
+                  <button class="btn btn-luxury btn-sm fw-bold border-end px-3 text-white" onclick="openStaffAbsensiModal('${staff.name}')" title="Cek Absensi" style="font-size: 0.75rem;">
+                    <i class="fas fa-user-clock me-1"></i> Cek Absensi
+                  </button>
+                  <button class="btn btn-light btn-sm text-danger" onclick="deleteStaffUI('${staff.id}', '${staff.name}')" title="Hapus Staff">
+                    <i class="fas fa-trash px-1"></i>
+                  </button>
                 </div>
-              </div>
-            </div>
+              </td>
+            </tr>
           `;
-        }).join('');
+        });
+
+        html += `</tbody></table></div></div></div>`;
+        container.innerHTML = html;
       }
 
       function toggleStaffStatus(id, currentStatus) {
@@ -2722,53 +2757,67 @@
 
       function deleteStaffUI(id, name) {
         if (confirm(`Hapus permanen staff ${name} beserta gajinya? (Jadwal lama tetap ada di database tapi terputus)`)) {
-          // Hancurkan UI Card Secara Visual (Optimistic UI - Req 2)
           const card = document.getElementById('staff-card-' + id);
           if (card) {
               card.style.opacity = '0.5';
               card.style.pointerEvents = 'none';
-              card.innerHTML = '<div class="d-flex justify-content-center align-items-center h-100 p-5"><i class="fas fa-spinner fa-spin fa-2x text-danger"></i></div>';
+              card.innerHTML = '<td colspan="4" class="text-center p-4"><i class="fas fa-spinner fa-spin fa-2x text-danger"></i></td>';
           }
-
           google.script.run.withSuccessHandler(res => {
             if (res.status === 'success') {
-              // Hapus dari memory agar tidak ter-render ulang
               STAFF_DATA = STAFF_DATA.filter(s => s.id !== id);
-              if (card) card.remove(); // Hapus element murni
-              
+              if (card) card.remove();
               if (res.cashiers) {
                   CONFIG.Cashiers = res.cashiers;
                   renderCashierButtons();
               }
             } else {
               alert("Gagal menghapus: " + res.message);
-              renderManningUI(STAFF_FACES); // Rollback UI jika server error
+              renderManningUI(STAFF_FACES);
             }
           }).deleteStaff(id);
         }
       }
 
-      // --- LOGIKA DETAIL & JADWAL ---
-      function openStaffDetailModal(staffName) {
-        CURRENT_VIEW_STAFF = staffName;
-        const staff = STAFF_DATA.find(s => s.name === staffName);
-        if (!staff) return;
-
-        document.getElementById('detailStaffName').innerText = staff.name;
-        document.getElementById('detailStaffRole').innerText = staff.role;
+      function openStaffAbsensiModal(staffName) {
+        document.getElementById('absensiStaffName').innerText = "Absensi: " + staffName;
         
-        // Render Schedule Tab
-        renderStaffSchedule(staff.name);
+        const tbody = document.getElementById('staffAbsensiTableBody');
+        const myAbsen = ATTENDANCE_DATA.filter(a => a.nama.toLowerCase() === staffName.toLowerCase());
         
-        // Render Absensi Tab (Membaca dari ATTENDANCE_DATA yang di-load di fetchInitialData)
-        renderStaffAttendance(staff.name);
+        if (myAbsen.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="text-center p-5">
+            <div class="text-muted"><i class="fas fa-camera-slash fa-3x mb-3 opacity-25"></i>
+            <p class="fw-bold">Belum Ada Data Absensi</p>
+            <small>Staff ini belum pernah melakukan absensi.</small></div>
+          </td></tr>`;
+        } else {
+          tbody.innerHTML = myAbsen.map(a => {
+            const formatTime = (t) => {
+              if (!t || t === "-" || t === "undefined") return "-";
+              const match = t.match(/\d{2}:\d{2}:\d{2}/);
+              return match ? match[0] : t;
+            };
 
-        document.getElementById('modalStaffDetail').classList.remove('d-none');
-      }
+            return `
+              <tr class="border-bottom">
+                <td class="fw-bold ps-4">${a.tgl}</td>
+                <td class="text-center text-success fw-bold">${formatTime(a.in)}</td>
+                <td class="text-center text-danger fw-bold">${formatTime(a.out)}</td>
+                <td class="text-center">
+                  <img src="${a.img || 'https://via.placeholder.com/100'}" class="rounded-3 border shadow-sm" style="width:60px; height:40px; object-fit:cover; cursor:pointer;" onclick="window.open('${a.img}')">
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-white btn-sm border shadow-sm rounded-circle" title="Hapus Log" onclick="confirmDeleteAttendance('${a.nama}', '${a.tgl}', true)">
+                    <i class="fas fa-trash text-danger" style="font-size: 0.8rem;"></i>
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
 
-      function closeStaffDetailModal() {
-        document.getElementById('modalStaffDetail').classList.add('d-none');
-        CURRENT_VIEW_STAFF = null;
+        document.getElementById('modalStaffAbsensi').classList.remove('d-none');
       }
 
       function openAddScheduleModal() {
@@ -2957,40 +3006,6 @@
         }
       }
 
-      function renderStaffAttendance(staffName) {
-        const tbody = document.getElementById('staffAbsenTableBody');
-        const myAbsen = ATTENDANCE_DATA.filter(a => a.nama.toLowerCase() === staffName.toLowerCase());
-        
-        // Empty State Notifikasi (Permintaan 4)
-        if (myAbsen.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="4" class="text-center p-5">
-            <div class="text-muted"><i class="fas fa-camera-slash fa-3x mb-3 opacity-25"></i>
-            <p class="fw-bold">Belum Ada Data Absensi</p>
-            <small>Staff ini belum pernah melakukan absensi masuk atau keluar.</small></div>
-          </td></tr>`;
-          return;
-        }
-
-        tbody.innerHTML = myAbsen.map(a => {
-          const formatTime = (t) => {
-            if (!t || t === "-" || t === "undefined") return "-";
-            const match = t.match(/\d{2}:\d{2}:\d{2}/);
-            return match ? match[0] : t;
-          };
-
-          return `
-            <tr>
-              <td class="fw-bold">${a.tgl}</td>
-              <td class="text-center text-success fw-bold">${formatTime(a.in)}</td>
-              <td class="text-center text-danger fw-bold">${formatTime(a.out)}</td>
-              <td class="text-center">
-                <img src="${a.img || 'https://via.placeholder.com/100'}" class="rounded-3 border shadow-sm" style="width:60px; height:40px; object-fit:cover; cursor:pointer;" onclick="window.open('${a.img}')">
-              </td>
-            </tr>
-          `;
-        }).join('');
-      }
-
       let OP_COSTS_DATA = [];
       let TOTAL_SALARY_COST = 0;
 
@@ -3176,7 +3191,7 @@
               bar.innerText = 'PROFITABLE!';
           }
       }
-      
+
       function openOpCostModal(id = '', name = '', amount = '') {
           document.getElementById('opCostId').value = id;
           document.getElementById('opCostName').value = name;
@@ -6300,42 +6315,17 @@
         }).getAttendanceLogs();
       }
 
-      function confirmDeleteAttendance(nama, tgl) {
-        if (confirm(`Hapus permanen riwayat absensi ${nama} pada tanggal ${tgl}?`)) {
-          const tbody = document.getElementById('attendanceLogBody');
-          let originalContent = '';
-          let targetBtn = null;
-          
-          if (tbody) {
-            const buttons = tbody.querySelectorAll('button');
-            buttons.forEach(btn => {
-                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(nama) && btn.getAttribute('onclick').includes(tgl)) {
-                  targetBtn = btn;
-                  originalContent = btn.innerHTML;
-                  btn.disabled = true;
-                  btn.innerHTML = '<i class="fas fa-spinner fa-spin text-warning" style="font-size: 0.8rem;"></i>';
-                }
-            });
-          }
-
-          // Eksekusi TANPA withFailureHandler
-          google.script.run
-            .withSuccessHandler(function(res) {
-              if (res && res.status === 'success') {
-                if (targetBtn) {
-                  const tr = targetBtn.closest('tr');
-                  if (tr) tr.remove();
-                }
-                loadAttendanceLogs(); 
-              } else {
-                alert("Gagal menghapus: " + (res ? res.message : "Data gagal dicocokkan."));
-                if (targetBtn) {
-                  targetBtn.disabled = false;
-                  targetBtn.innerHTML = originalContent;
-                }
-              }
-            })
-            .deleteAttendanceRecord(nama, tgl);
+      function confirmDeleteAttendance(nama, tgl, isFromModal = false) {
+        if(confirm(`Hapus data absensi ${nama} pada ${tgl}?`)) {
+          google.script.run.withSuccessHandler(res => {
+            if(res.status === 'success') {
+              ATTENDANCE_DATA = ATTENDANCE_DATA.filter(a => !(a.nama === nama && a.tgl === tgl));
+              renderAttendanceLogsUI();
+              if (isFromModal) openStaffAbsensiModal(nama);
+            } else {
+              alert(res.message);
+            }
+          }).deleteAttendanceRecord(nama, tgl);
         }
       }
 
@@ -8187,45 +8177,49 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
 
-        // Sembunyikan semua tombol X pada Pill secara massal agar tidak ikut difoto
+        // Sembunyikan icon hapus massal
         document.querySelectorAll('.btn-delete-pill').forEach(el => el.classList.add('d-none'));
 
-        html2canvas(gridElement, {
-          scale: 2,
-          backgroundColor: "#ffffff",
-          useCORS: true
-        }).then(canvas => {
-          // Kembalikan visibilitas tombol X untuk next edit
-          document.querySelectorAll('.btn-delete-pill').forEach(el => el.classList.remove('d-none'));
+        // Matikan batasan display/overflow sesaat agar screenshot tidak terpotong (full-height)
+        gridElement.classList.remove('table-responsive', 'overflow-hidden');
+        gridElement.style.height = 'auto';
+        gridElement.style.maxHeight = 'none';
 
-          const base64Image = canvas.toDataURL("image/jpeg", 0.9);
-          btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Mengirim...';
-          
-          const shiftInfo = document.getElementById('shiftInfoText').innerText;
-          const captionMsg = `📅 <b>JADWAL STAFF MINGGU INI</b>\n${shiftInfo}`;
-
-          google.script.run
-            .withSuccessHandler(function(res) {
-              btn.disabled = false;
-              btn.innerHTML = originalHtml;
-              let result = typeof res === 'string' ? JSON.parse(res) : res;
-              if(result.status === 'success') {
-                alert("✅ Jadwal berhasil dikirim ke grup Telegram!");
-              } else {
-                alert("❌ Gagal mengirim: " + result.message);
-              }
-            })
-            .withFailureHandler(function(err) {
-              btn.disabled = false;
-              btn.innerHTML = originalHtml;
-              alert("Terjadi kesalahan sistem: " + err);
-            })
-            .sendScheduleToTelegram(base64Image, captionMsg);
-        }).catch(err => {
+        html2canvas(gridElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+            // Restore styling setelah gambar tertangkap
+            gridElement.classList.add('table-responsive', 'overflow-hidden');
+            gridElement.style.height = '';
             document.querySelectorAll('.btn-delete-pill').forEach(el => el.classList.remove('d-none'));
-            btn.disabled = false;
+
+            const base64Data = canvas.toDataURL('image/jpeg', 0.85);
+
+            let startDateInput = document.getElementById('schedStartDate').value;
+            let daysCount = document.getElementById('schedDayCount').value;
+            let dObj = new Date(startDateInput + 'T00:00:00');
+            let endObj = new Date(dObj);
+            endObj.setDate(dObj.getDate() + parseInt(daysCount) - 1);
+            let dateStr = Utilities_formatDateIndo(dObj) + " s/d " + Utilities_formatDateIndo(endObj);
+            
+            const captionMsg = `🗓 <b>Jadwal Shift Operasional Terbaru (${dateStr})</b>\n` + 
+                               `<i>Silakan cek gambar di atas untuk detail jadwal shift Anda.</i>\n\n` +
+                               `📌 <b>Info:</b> ${document.getElementById('shiftInfoText').innerText}`;
+
+            google.script.run.withSuccessHandler(res => {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+                if(res.status === 'success') {
+                    alert("Berhasil mengirim screenshot keseluruhan jadwal ke Telegram!");
+                } else {
+                    alert("Gagal: " + res.message);
+                }
+            }).sendScheduleToTelegram(base64Data, captionMsg);
+        }).catch(err => {
+            gridElement.classList.add('table-responsive', 'overflow-hidden');
+            gridElement.style.height = '';
+            document.querySelectorAll('.btn-delete-pill').forEach(el => el.classList.remove('d-none'));
             btn.innerHTML = originalHtml;
-            alert("Gagal memproses gambar: " + err);
+            btn.disabled = false;
+            alert("Gagal memproses screenshot: " + err);
         });
       }
 
