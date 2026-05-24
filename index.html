@@ -982,38 +982,6 @@
             <p class="text-muted small">Sinkronisasi data operasional dengan server, mohon tunggu.</p>
           </div>
 
-          <div class="row mb-4 d-none" id="netProfitContainer">
-            <div class="col-12">
-              <div class="card border-0 shadow-sm rounded-4 p-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h5 class="fw-bold m-0"><i class="fas fa-chart-pie text-success me-2"></i>Net Profit & Operational Cost</h5>
-                  <button class="btn btn-sm btn-outline-success rounded-pill fw-bold" onclick="openOpCostModal()">+ Tambah Cost</button>
-                </div>
-                
-                <div class="mb-4">
-                  <div class="d-flex justify-content-between small fw-bold mb-1">
-                    <span class="text-muted">Target Penutupan Cost: <span id="opTotalCostText">Rp 0</span></span>
-                    <span id="opProfitText" class="text-primary">Profit Laporan: Rp 0</span>
-                  </div>
-                  <div class="progress" style="height: 25px; border-radius: 15px; background-color: #f1f2f6; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
-                    <div id="opProfitBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; transition: width 1s ease-in-out, background-color 1s;">0%</div>
-                  </div>
-                  <div class="text-end mt-1 fw-bold fs-6" id="opNetProfitFinal">Net Profit: Rp 0</div>
-                </div>
-
-                <div class="table-responsive" style="max-height: 250px; overflow-y: auto; scrollbar-width: thin;">
-                  <table class="table table-hover align-middle m-0 small">
-                    <thead class="bg-light sticky-top" style="z-index: 5;">
-                      <tr><th>Keterangan Cost</th><th class="text-end">Nominal (Rp)</th><th class="text-center" style="width: 80px;">Aksi</th></tr>
-                    </thead>
-                    <tbody id="opCostListBody">
-                      <tr><td colspan="3" class="text-center p-3 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Memuat data cost...</td></tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
           <div class="row g-4" id="staffCardsContainer">
             </div>
           <div id="view-schedule-grid" class="container-fluid mt-5 border-top pt-4 pb-5">
@@ -1293,14 +1261,14 @@
               </div>
             </div>
 
-            <div class="col-6 col-md-4 col-xl-2">
-              <div class="d-flex align-items-center bg-white border shadow-sm rounded-pill p-2" style="min-width: 0;">
+            <div class="col-6 col-md-4 col-xl-2" style="cursor:pointer;" onclick="openTopProductModal()">
+              <div class="d-flex align-items-center bg-white border shadow-sm rounded-pill p-2" style="min-width: 0; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                 <div class="rounded-circle d-flex justify-content-center align-items-center text-warning" style="width: 32px; height: 32px; background: rgba(255, 193, 7, 0.2); flex-shrink: 0;">
                   <i class="fas fa-star" style="font-size: 0.85rem; color: #d39e00;"></i>
                 </div>
                 <div class="ms-2 overflow-hidden w-100">
                   <div class="text-muted fw-bold text-uppercase" style="font-size: 0.55rem; letter-spacing: 0.5px;">Top Product</div>
-                  <div class="fw-bold text-dark text-truncate lh-1 mt-1" id="dashTopProduct" style="font-size: 0.85rem;">-</div>
+                  <div class="fw-bold text-primary text-truncate lh-1 mt-1" id="dashTopProduct" style="font-size: 0.8rem;"><i class="fas fa-search me-1"></i>Lihat List</div>
                 </div>
               </div>
             </div>
@@ -1313,6 +1281,39 @@
                 <div class="ms-2 overflow-hidden w-100">
                   <div class="text-muted fw-bold text-uppercase" style="font-size: 0.55rem; letter-spacing: 0.5px;">Top Kasir</div>
                   <div class="fw-bold text-dark text-truncate lh-1 mt-1" id="dashTopCashier" style="font-size: 0.85rem;">-</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-4 d-none" id="netProfitContainer">
+            <div class="col-12">
+              <div class="card border-0 shadow-sm rounded-4 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="fw-bold text-muted small"><i class="fas fa-wallet me-1"></i> Progress Profit vs Cost</span>
+                  <button class="btn btn-sm btn-outline-success rounded-pill fw-bold" onclick="openOpCostModal()">+ Tambah Cost</button>
+                </div>
+                
+                <div class="mb-4">
+                  <div class="d-flex justify-content-between small fw-bold mb-1">
+                    <span class="text-muted">Target Penutupan Cost: <span id="opTotalCostText">Rp 0</span></span>
+                    <span id="opProfitText" class="text-primary">Profit Laporan: Rp 0</span>
+                  </div>
+                  <div class="progress" style="height: 25px; border-radius: 15px; background-color: #f1f2f6; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+                    <div id="opProfitBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; transition: width 1s ease-in-out, background-color 1s;">0%</div>
+                  </div>
+                  <div class="text-end mt-1 fw-bold fs-6" id="opNetProfitFinal">Net Profit: Rp 0</div>
+                </div>
+
+                <div class="table-responsive" style="max-height: 250px; overflow-y: auto; scrollbar-width: thin;">
+                  <table class="table table-hover align-middle m-0 small">
+                    <thead class="bg-light sticky-top" style="z-index: 5;">
+                      <tr><th>Keterangan Cost</th><th class="text-end">Nominal (Rp)</th><th class="text-center" style="width: 80px;">Aksi</th></tr>
+                    </thead>
+                    <tbody id="opCostListBody">
+                      <tr><td colspan="3" class="text-center p-3 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Memuat data cost...</td></tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
@@ -2070,6 +2071,7 @@
       let USER_ROLE = '';
       let CART = [];
       let PRODUCTS = [];
+      let CURRENT_PRODUCT_COUNT = {};
       let CONFIG = {};
       let CURRENT_UPLOAD_ID = null;
       let CROPPER = null; // Variabel untuk menyimpan instance Cropperjs
@@ -3012,8 +3014,6 @@
                   opLoader.querySelector('p').innerText = 'Menyimpan & kalkulasi ulang data...';
                   opLoader.classList.remove('d-none');
               }
-              const netProfitContainer = document.getElementById('netProfitContainer');
-              if (netProfitContainer) netProfitContainer.classList.add('d-none');
               const scheduleGrid = document.getElementById('view-schedule-grid');
               if (scheduleGrid) scheduleGrid.classList.add('d-none');
               
@@ -3029,10 +3029,44 @@
 
                   IS_OPCOST_LOADED = true;
                   checkManningLoaders(); 
+                  
+                  // Pastikan Meteran Profit di tab Laporan ikut ke-render
+                  renderOpCostsUI();
+                  const netProfitContainer = document.getElementById('netProfitContainer');
+                  if (netProfitContainer && (ACTIVE_CASHIER === 'Owner' || IS_MULTI_OWNER)) {
+                      netProfitContainer.classList.remove('d-none');
+                  }
               }
           }).getOperationalData();
       }
 
+      function openTopProductModal() {
+        const tbody = document.getElementById('topProductListBody');
+        const keys = Object.keys(CURRENT_PRODUCT_COUNT);
+        
+        if (keys.length === 0) {
+          tbody.innerHTML = '<li class="list-group-item text-center text-muted p-4">Belum ada data penjualan pada periode ini.</li>';
+        } else {
+          keys.sort((a, b) => CURRENT_PRODUCT_COUNT[b] - CURRENT_PRODUCT_COUNT[a]);
+          let html = '';
+          keys.forEach((key, index) => {
+            let badgeColor = index === 0 ? 'bg-warning text-dark' : (index === 1 ? 'bg-secondary text-white' : (index === 2 ? 'bg-danger text-white' : 'bg-light text-dark border'));
+            let trophy = index === 0 ? '<i class="fas fa-trophy text-warning me-2"></i>' : '';
+            html += `
+              <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                <div class="fw-bold text-dark" style="font-size: 0.85rem;">
+                  <span class="badge ${badgeColor} me-2" style="width: 24px;">${index + 1}</span>
+                  ${trophy}${key}
+                </div>
+                <span class="badge bg-primary rounded-pill px-3">${CURRENT_PRODUCT_COUNT[key]} Terjual</span>
+              </li>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+        document.getElementById('modalTopProduct').classList.remove('d-none');
+      }
+      
       function renderOpCostsUI() {
           const tbody = document.getElementById('opCostListBody');
           let totalCost = TOTAL_SALARY_COST;
@@ -6423,142 +6457,142 @@
       }
 
       function renderFinanceUI() {
-        const tbody = document.getElementById('financeTableBody');
-        const revFilter = document.getElementById('revFilter');
-        const methodFilter = document.getElementById('methodFilter');
-        if (!tbody || !revFilter) return;
+          const tbody = document.getElementById('financeTableBody');
+          const revFilter = document.getElementById('revFilter');
+          const methodFilter = document.getElementById('methodFilter');
+          if (!tbody || !revFilter) return;
 
-        const filter = revFilter.value;
-        const mFilter = methodFilter ? methodFilter.value : 'all';
-        const now = new Date();
-        const todayStr = Utilities_formatDateIndo(now);
-        const monthStr = (now.getMonth() + 1).toString().padStart(2, '0') + '/' + now.getFullYear();
-        
-        let totalRev = 0;
-        let totalKomplimen = 0; 
-        let totalHPP = 0; 
-        let validOrders = 0;
-        let cashierCount = {};
-        let productCount = {};
+          const filter = revFilter.value;
+          const mFilter = methodFilter ? methodFilter.value : 'all';
+          const now = new Date();
+          const todayStr = Utilities_formatDateIndo(now);
+          const monthStr = (now.getMonth() + 1).toString().padStart(2, '0') + '/' + now.getFullYear();
 
-        const filteredData = TRANSACTIONS_DATA.filter(t => {
-          const tDate = t.timestamp.split(' ')[0];
-          let timeMatch = true;
-          if (filter === 'today') timeMatch = (tDate === todayStr);
-          else if (filter === 'month') timeMatch = tDate.includes(monthStr);
-          else if (filter === 'year') timeMatch = tDate.includes(now.getFullYear().toString());
-          else if (filter === 'custom') timeMatch = (tDate === SELECTED_CUSTOM_DATE); // Baris Baru
-          
-          let methodMatch = true;
-          if (mFilter !== 'all') {
-            methodMatch = (t.method === mFilter);
+          let totalRev = 0;
+          let totalKomplimen = 0;
+          let totalHPP = 0;
+          let validOrders = 0;
+          let cashierCount = {};
+          let productCount = {};
+
+          const filteredData = TRANSACTIONS_DATA.filter(t => {
+              const tDate = t.timestamp.split(' ')[0];
+              let timeMatch = true;
+              if (filter === 'today') timeMatch = (tDate === todayStr);
+              else if (filter === 'month') timeMatch = tDate.includes(monthStr);
+              else if (filter === 'year') timeMatch = tDate.includes(now.getFullYear().toString());
+              else if (filter === 'custom') timeMatch = (tDate === SELECTED_CUSTOM_DATE);
+
+              let methodMatch = true;
+              if (mFilter !== 'all') {
+                  methodMatch = (t.method === mFilter);
+              }
+              return timeMatch && methodMatch;
+          });
+
+          if (filteredData.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="6" class="text-center p-5 text-muted">Tidak ada transaksi pada periode ini.</td></tr>';
+          } else {
+              tbody.innerHTML = filteredData.map(t => {
+                  const isKomplimen = t.status === 'Komplimen';
+                  let transHpp = 0;
+
+                  if (isKomplimen) {
+                      totalKomplimen += Number(t.total) || 0;
+                  } else {
+                      totalRev += Number(t.total) || 0;
+                      validOrders++;
+
+                      const isOwnerOrAdmin = t.cashier === 'Owner' || String(t.cashier).includes('(Admin)');
+                      if (!isOwnerOrAdmin) {
+                          cashierCount[t.cashier] = (cashierCount[t.cashier] || 0) + 1;
+                      }
+                  }
+
+                  t.items.forEach(i => {
+                      let itemHPP = PRODUCT_HPP_MAP[i.id] || 0;
+                      transHpp += (itemHPP * i.qty);
+                      if (!isKomplimen) {
+                          productCount[i.name] = (productCount[i.name] || 0) + i.qty;
+                          totalHPP += (itemHPP * i.qty);
+                      }
+                  });
+
+                  let tTotal = Number(t.total) || 0;
+                  let tProfit = tTotal - transHpp;
+                  let tMargin = tTotal > 0 ? ((tProfit / tTotal) * 100).toFixed(1) : 0;
+                  let profitClass = tProfit >= 0 ? 'text-success' : 'text-danger';
+                  
+                  const rowStyle = isKomplimen ? 'opacity: 0.6; background-color: #fff5f5;' : '';
+                  const totalStyle = isKomplimen ? 'text-decoration: line-through; color: #ff7675;' : 'text-success';
+                  const statusBadge = isKomplimen ? `<span class="badge bg-danger ms-2" style="font-size:0.6rem;">KOMPLIMEN</span>` : '';
+
+                  let cashierDisplayName = t.cashier;
+                  if (t.cashier.includes('(Pengganti)')) {
+                      cashierDisplayName = `<span class="text-danger fw-bold">${t.cashier}</span>`;
+                  } else if (t.cashier.includes('(Admin)')) {
+                      cashierDisplayName = `<span class="text-success fw-bold">${t.cashier}</span>`;
+                  } else if (t.cashier === 'Owner') {
+                      cashierDisplayName = `<span class="text-success fw-bold">${t.cashier}</span>`;
+                  }
+
+                  return `
+                      <tr class="border-bottom" style="${rowStyle}">
+                          <td class="ps-4 py-3">
+                              <div class="fw-bold text-dark" style="font-size: 0.75rem;">${t.orderId} ${statusBadge}</div>
+                              <div class="text-muted" style="font-size: 0.65rem;">${t.timestamp}</div>
+                          </td>
+                          <td>${t.items.map(i => `<div style="font-size:0.7rem;">• ${i.name} x${i.qty}</div>`).join('')}</td>
+                          <td class="text-end fw-bold ${totalStyle}">Rp ${tTotal.toLocaleString()}</td>
+                          <td class="text-end">
+                              <div class="fw-bold ${profitClass}" style="font-size: 0.8rem;">Rp ${tProfit.toLocaleString()}</div>
+                              <div class="${profitClass} opacity-75" style="font-size: 0.65rem;">${tMargin}% Margin</div>
+                          </td>
+                          <td class="text-center"><span class="badge bg-light text-dark border" style="font-size:0.6rem;">${cashierDisplayName}</span></td>
+                          <td class="text-center pe-4">
+                              <div class="btn-group shadow-sm rounded-pill border overflow-hidden">
+                                  <button class="btn btn-light btn-sm border-end" onclick="toggleTransactionStatus('${t.orderId}', '${t.status}', this)" title="Ubah Status">
+                                      <i class="fas ${isKomplimen ? 'fa-undo text-success' : 'fa-exchange-alt text-warning'}" style="font-size:0.7rem;"></i>
+                                  </button>
+                                  <button class="btn btn-light btn-sm" onclick="confirmDeleteTransaction('${t.orderId}', this)" title="Hapus">
+                                      <i class="fas fa-trash text-danger" style="font-size:0.7rem;"></i>
+                                  </button>
+                              </div>
+                          </td>
+                      </tr>`;
+              }).join('');
           }
+
+          document.getElementById('dashTotalRevenue').innerText = `Rp ${totalRev.toLocaleString()}`;
+          document.getElementById('dashTotalHPP').innerText = `Rp ${totalHPP.toLocaleString()}`;
+          document.getElementById('dashNetProfit').innerText = `Rp ${(totalRev - totalHPP).toLocaleString()}`;
+          document.getElementById('dashTotalOrders').innerText = validOrders;
+
+          const getWinners = (dataObj, isProduct = false) => {
+              const keys = Object.keys(dataObj);
+              if (keys.length === 0) return { display: "-", count: 0 };
+              const maxVal = Math.max(...Object.values(dataObj));
+              const winners = keys.filter(key => dataObj[key] === maxVal);
+              const displayText = winners.map(name => isProduct ? `${name} (${maxVal})` : name).join(', ');
+              return { display: displayText, count: winners.length };
+          };
+
+          document.getElementById('dashTopCashier').innerText = getWinners(cashierCount).display;
           
-          return timeMatch && methodMatch;
-        });
+          CURRENT_PRODUCT_COUNT = productCount;
 
-        if (filteredData.length === 0) {
-          // Ubah colspan menjadi 6
-          tbody.innerHTML = '<tr><td colspan="6" class="text-center p-5 text-muted">Tidak ada transaksi pada periode ini.</td></tr>';
-        } else {
-          tbody.innerHTML = filteredData.map(t => {
-            const isKomplimen = t.status === 'Komplimen';
-            let transHpp = 0; // HPP spesifik transaksi ini
+          const chartDataNormal = filteredData.filter(t => t.status !== 'Komplimen');
+          updateSalesChart(chartDataNormal);
 
-            // Kalkulasi Dashboard (Global)
-            if (isKomplimen) {
-              totalKomplimen += Number(t.total) || 0;
-            } else {
-              totalRev += Number(t.total) || 0;
-              validOrders++;
-              
-              // Filter Admin/Owner dari perhitungan Top Kasir
-              const isOwnerOrAdmin = t.cashier === 'Owner' || String(t.cashier).includes('(Admin)');
-              if (!isOwnerOrAdmin) {
-                cashierCount[t.cashier] = (cashierCount[t.cashier] || 0) + 1;
+          if (!IS_OPCOST_LOADED) {
+              loadOpCosts();
+          } else {
+              renderOpCostsUI();
+              const netProfitContainer = document.getElementById('netProfitContainer');
+              if (netProfitContainer && (ACTIVE_CASHIER === 'Owner' || IS_MULTI_OWNER)) {
+                  netProfitContainer.classList.remove('d-none');
               }
-            }
-
-            // Loop kalkulasi Item Per Transaksi
-            t.items.forEach(i => { 
-              let itemHPP = PRODUCT_HPP_MAP[i.id] || 0;
-              transHpp += (itemHPP * i.qty);
-              
-              if (!isKomplimen) {
-                productCount[i.name] = (productCount[i.name] || 0) + i.qty; 
-                totalHPP += (itemHPP * i.qty);
-              }
-            });
-
-            // Kalkulasi Profit & Margin Per Transaksi
-            let tTotal = Number(t.total) || 0;
-            let tProfit = tTotal - transHpp;
-            let tMargin = tTotal > 0 ? ((tProfit / tTotal) * 100).toFixed(1) : 0;
-            
-            let profitClass = tProfit >= 0 ? 'text-success' : 'text-danger';
-            const rowStyle = isKomplimen ? 'opacity: 0.6; background-color: #fff5f5;' : '';
-            const totalStyle = isKomplimen ? 'text-decoration: line-through; color: #ff7675;' : 'text-success';
-            const statusBadge = isKomplimen ? `<span class="badge bg-danger ms-2" style="font-size:0.6rem;">KOMPLIMEN</span>` : '';
-
-            // Visualisasi label Kasir Pengganti & Admin
-            let cashierDisplayName = t.cashier;
-            if (t.cashier.includes('(Pengganti)')) {
-              cashierDisplayName = `<span class="text-danger fw-bold">${t.cashier}</span>`;
-            } else if (t.cashier.includes('(Admin)')) {
-              cashierDisplayName = `<span class="text-success fw-bold">${t.cashier}</span>`;
-            } else if (t.cashier === 'Owner') {
-              cashierDisplayName = `<span class="text-success fw-bold">${t.cashier}</span>`;
-            }
-
-            return `
-              <tr class="border-bottom" style="${rowStyle}">
-                <td class="ps-4 py-3">
-                  <div class="fw-bold text-dark" style="font-size: 0.75rem;">${t.orderId} ${statusBadge}</div>
-                  <div class="text-muted" style="font-size: 0.65rem;">${t.timestamp}</div>
-                </td>
-                <td>${t.items.map(i => `<div style="font-size:0.7rem;">• ${i.name} x${i.qty}</div>`).join('')}</td>
-                <td class="text-end fw-bold ${totalStyle}">Rp ${tTotal.toLocaleString()}</td>
-                
-                <td class="text-end">
-                  <div class="fw-bold ${profitClass}" style="font-size: 0.8rem;">Rp ${tProfit.toLocaleString()}</div>
-                  <div class="${profitClass} opacity-75" style="font-size: 0.65rem;">${tMargin}% Margin</div>
-                </td>
-
-                <td class="text-center"><span class="badge bg-light text-dark border" style="font-size:0.6rem;">${cashierDisplayName}</span></td>
-                <td class="text-center pe-4">
-                  <div class="btn-group shadow-sm rounded-pill border overflow-hidden">
-                     <button class="btn btn-light btn-sm border-end" onclick="toggleTransactionStatus('${t.orderId}', '${t.status}', this)" title="Ubah Status">
-                      <i class="fas ${isKomplimen ? 'fa-undo text-success' : 'fa-exchange-alt text-warning'}" style="font-size:0.7rem;"></i>
-                    </button>
-                    <button class="btn btn-light btn-sm" onclick="confirmDeleteTransaction('${t.orderId}', this)" title="Hapus">
-                      <i class="fas fa-trash text-danger" style="font-size:0.7rem;"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>`;
-          }).join('');
-        }
-
-        // Update Kartu HPP & Profit Dashboard
-        document.getElementById('dashTotalRevenue').innerText = `Rp ${totalRev.toLocaleString()}`;
-        document.getElementById('dashTotalHPP').innerText = `Rp ${totalHPP.toLocaleString()}`;
-        document.getElementById('dashNetProfit').innerText = `Rp ${(totalRev - totalHPP).toLocaleString()}`;
-        document.getElementById('dashTotalOrders').innerText = validOrders;
-        
-        const getWinners = (dataObj, isProduct = false) => {
-          const keys = Object.keys(dataObj);
-          if (keys.length === 0) return { display: "-", count: 0 };
-          const maxVal = Math.max(...Object.values(dataObj));
-          const winners = keys.filter(key => dataObj[key] === maxVal);
-          const displayText = winners.map(name => isProduct ? `${name} (${maxVal})` : name).join(', ');
-          return { display: displayText, count: winners.length };
-        };
-
-        document.getElementById('dashTopCashier').innerText = getWinners(cashierCount).display;
-        document.getElementById('dashTopProduct').innerText = getWinners(productCount, true).display;
-
-        const chartDataNormal = filteredData.filter(t => t.status !== 'Komplimen');
-        updateSalesChart(chartDataNormal);
+          }
       }
       
       // ==========================================
@@ -8493,6 +8527,19 @@
                   </div>
                 </div>
             </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="modalTopProduct" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10600; opacity: 1 !important;">
+      <div class="bg-white p-0 rounded-5 shadow-lg d-flex flex-column overflow-hidden" style="width: 95%; max-width: 400px; max-height: 80vh; animation: slideUp 0.3s ease-out;">
+        <div class="bg-dark text-white p-3 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold m-0"><i class="fas fa-star text-warning me-2"></i>Ranking Produk</h5>
+          <button class="btn-close btn-close-white shadow-none" onclick="document.getElementById('modalTopProduct').classList.add('d-none')"></button>
+        </div>
+        <div class="p-0 overflow-auto flex-fill" style="background: #f8f9fa;">
+          <ul class="list-group list-group-flush" id="topProductListBody">
+          </ul>
         </div>
       </div>
     </div>
