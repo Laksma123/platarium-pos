@@ -1200,15 +1200,39 @@
         </div>
 
         <div id="view-finance" class="app-view p-4" style="display:none; background: #f8f9fa;">
-          <div class="d-flex align-items-center justify-content-between mb-4 pt-2">
+          
+          <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 pt-2 gap-3">
             <h3 class="fw-bold m-0 text-dark" style="white-space: nowrap; flex-shrink: 0;">
               <i class="fas fa-chart-line me-2 text-warning"></i>Dashboard Laporan
             </h3>
             
-            <div id="materialTicker" class="ticker-container">
-              <div class="ticker-wrapper" id="tickerContent">
-                <span class="text-white-50 small p-4">Menghubungkan ke API Pasar...</span>
+            <div class="d-flex flex-wrap gap-2 ms-auto">
+              <select id="methodFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill shadow-sm" style="cursor:pointer; height: 38px;" onchange="renderFinanceUI()">
+                <option value="all" selected>Semua Metode</option>
+                <option value="CASH">CASH</option>
+                <option value="QRIS">QRIS</option>
+              </select>
+              <div class="d-flex align-items-center">
+                <select id="revFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill shadow-sm" style="cursor:pointer; height: 38px;" onchange="handleRevFilterChange(this)">
+                  <option value="today">Hari Ini</option>
+                  <option value="month" selected>Bulan Ini</option>
+                  <option value="year">Tahun Ini</option>
+                  <option value="custom">Tanggal Tertentu</option>
+                  <option value="all">Semua Waktu</option>
+                </select>
+                
+                <input type="text" id="customDateFilter" style="display:none; width:0; height:0; border:none; padding:0;">
+                <span id="customDateLabel" class="badge bg-warning text-dark border d-none align-items-center ms-2 shadow-sm py-2 px-3 rounded-pill" style="cursor:pointer; font-size: 0.75rem;" onclick="CUSTOM_DATEPICKER.open()">
+                    <i class="fas fa-calendar-alt me-2"></i><span id="customDateText"></span>
+                    <i class="fas fa-times ms-2 text-danger" onclick="event.stopPropagation(); resetCustomDate();" title="Batal Filter"></i>
+                </span>
               </div>
+            </div>
+          </div>
+
+          <div id="materialTicker" class="ticker-container mb-4 shadow-sm" style="margin-left: 0; width: 100%;">
+            <div class="ticker-wrapper" id="tickerContent">
+              <span class="text-white-50 small p-4">Menghubungkan ke API Pasar...</span>
             </div>
           </div>
 
@@ -1324,27 +1348,8 @@
               <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
                 <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white flex-wrap gap-3">
                   <h6 class="fw-bold m-0 text-muted">List Penjualan</h6>
+                  
                   <div class="d-flex flex-wrap gap-2">
-                    <select id="methodFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill" style="cursor:pointer;" onchange="renderFinanceUI()">
-                      <option value="all" selected>Semua</option>
-                      <option value="CASH">CASH</option>
-                      <option value="QRIS">QRIS</option>
-                    </select>
-                    <div class="d-flex align-items-center">
-                      <select id="revFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill" style="cursor:pointer;" onchange="handleRevFilterChange(this)">
-                        <option value="today">Hari Ini</option>
-                        <option value="month" selected>Bulan Ini</option>
-                        <option value="year">Tahun Ini</option>
-                        <option value="custom">Tanggal Tertentu</option>
-                        <option value="all">Semua</option>
-                      </select>
-                      
-                      <input type="text" id="customDateFilter" style="display:none; width:0; height:0; border:none; padding:0;">
-                      <span id="customDateLabel" class="badge bg-warning text-dark border d-none align-items-center ms-2 shadow-sm py-2 px-3 rounded-pill" style="cursor:pointer; font-size: 0.75rem;" onclick="CUSTOM_DATEPICKER.open()">
-                          <i class="fas fa-calendar-alt me-2"></i><span id="customDateText"></span>
-                          <i class="fas fa-times ms-2 text-danger" onclick="event.stopPropagation(); resetCustomDate();" title="Batal Filter"></i>
-                      </span>
-                    </div>
                     <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold" onclick="openManualTransactionModal()">
                       <i class="fas fa-edit me-1"></i> Input Manual
                     </button>
@@ -3066,7 +3071,7 @@
         }
         document.getElementById('modalTopProduct').classList.remove('d-none');
       }
-      
+
       function renderOpCostsUI() {
           const tbody = document.getElementById('opCostListBody');
           let totalCost = TOTAL_SALARY_COST;
@@ -3079,11 +3084,13 @@
               </tr>
           `;
 
-          // Kalkulasi Pajak Auto Inklusif dari Pendapatan
+          // Kalkulasi Pajak Auto Inklusif berdasarkan Filter Tanggal
           let totalTaxCollected = 0;
           if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
-              let totalRevenueFromTransactions = 0;
-              if (TRANSACTIONS_DATA) {
+              let totalRevenueFromTransactions = window.CURRENT_FILTERED_REVENUE !== undefined ? window.CURRENT_FILTERED_REVENUE : 0;
+              
+              // Fallback jikalau terjadi bug asinkron pada load pertama
+              if (window.CURRENT_FILTERED_REVENUE === undefined && TRANSACTIONS_DATA) {
                   TRANSACTIONS_DATA.forEach(t => {
                       if (t.status !== 'Komplimen') {
                           totalRevenueFromTransactions += Number(t.total) || 0;
@@ -3124,7 +3131,8 @@
 
           tbody.innerHTML = html;
 
-          const profitBersih = getPureProfitBersih(); 
+          // Eksekusi Profit vs Cost (Sinkronisasi dengan global filter)
+          const profitBersih = window.CURRENT_FILTERED_PROFIT !== undefined ? window.CURRENT_FILTERED_PROFIT : getPureProfitBersih(); 
           const netProfit = profitBersih - totalCost; 
           
           document.getElementById('opTotalCostText').innerText = 'Rp ' + totalCost.toLocaleString(undefined, {maximumFractionDigits:0});
@@ -3150,6 +3158,7 @@
           
           finalEl.innerHTML = profitHtml;
 
+          // Animasi Progress Bar
           const bar = document.getElementById('opProfitBar');
           let percentage = totalCost > 0 ? (profitBersih / totalCost) * 100 : 100;
           if (percentage < 0) percentage = 0;
@@ -3167,7 +3176,7 @@
               bar.innerText = 'PROFITABLE!';
           }
       }
-
+      
       function openOpCostModal(id = '', name = '', amount = '') {
           document.getElementById('opCostId').value = id;
           document.getElementById('opCostName').value = name;
@@ -6457,144 +6466,149 @@
       }
 
       function renderFinanceUI() {
-          const tbody = document.getElementById('financeTableBody');
-          const revFilter = document.getElementById('revFilter');
-          const methodFilter = document.getElementById('methodFilter');
-          if (!tbody || !revFilter) return;
+        const tbody = document.getElementById('financeTableBody');
+        const revFilter = document.getElementById('revFilter');
+        const methodFilter = document.getElementById('methodFilter');
+        if (!tbody || !revFilter) return;
 
-          const filter = revFilter.value;
-          const mFilter = methodFilter ? methodFilter.value : 'all';
-          const now = new Date();
-          const todayStr = Utilities_formatDateIndo(now);
-          const monthStr = (now.getMonth() + 1).toString().padStart(2, '0') + '/' + now.getFullYear();
+        const filter = revFilter.value;
+        const mFilter = methodFilter ? methodFilter.value : 'all';
+        const now = new Date();
+        const todayStr = Utilities_formatDateIndo(now);
+        const monthStr = (now.getMonth() + 1).toString().padStart(2, '0') + '/' + now.getFullYear();
 
-          let totalRev = 0;
-          let totalKomplimen = 0;
-          let totalHPP = 0;
-          let validOrders = 0;
-          let cashierCount = {};
-          let productCount = {};
+        let totalRev = 0;
+        let totalKomplimen = 0;
+        let totalHPP = 0;
+        let validOrders = 0;
+        let cashierCount = {};
+        let productCount = {};
 
-          const filteredData = TRANSACTIONS_DATA.filter(t => {
-              const tDate = t.timestamp.split(' ')[0];
-              let timeMatch = true;
-              if (filter === 'today') timeMatch = (tDate === todayStr);
-              else if (filter === 'month') timeMatch = tDate.includes(monthStr);
-              else if (filter === 'year') timeMatch = tDate.includes(now.getFullYear().toString());
-              else if (filter === 'custom') timeMatch = (tDate === SELECTED_CUSTOM_DATE);
+        // Proses Filter Skala Global
+        const filteredData = TRANSACTIONS_DATA.filter(t => {
+          const tDate = t.timestamp.split(' ')[0];
+          let timeMatch = true;
+          if (filter === 'today') timeMatch = (tDate === todayStr);
+          else if (filter === 'month') timeMatch = tDate.includes(monthStr);
+          else if (filter === 'year') timeMatch = tDate.includes(now.getFullYear().toString());
+          else if (filter === 'custom') timeMatch = (tDate === SELECTED_CUSTOM_DATE);
 
-              let methodMatch = true;
-              if (mFilter !== 'all') {
-                  methodMatch = (t.method === mFilter);
-              }
-              return timeMatch && methodMatch;
-          });
-
-          if (filteredData.length === 0) {
-              tbody.innerHTML = '<tr><td colspan="6" class="text-center p-5 text-muted">Tidak ada transaksi pada periode ini.</td></tr>';
-          } else {
-              tbody.innerHTML = filteredData.map(t => {
-                  const isKomplimen = t.status === 'Komplimen';
-                  let transHpp = 0;
-
-                  if (isKomplimen) {
-                      totalKomplimen += Number(t.total) || 0;
-                  } else {
-                      totalRev += Number(t.total) || 0;
-                      validOrders++;
-
-                      const isOwnerOrAdmin = t.cashier === 'Owner' || String(t.cashier).includes('(Admin)');
-                      if (!isOwnerOrAdmin) {
-                          cashierCount[t.cashier] = (cashierCount[t.cashier] || 0) + 1;
-                      }
-                  }
-
-                  t.items.forEach(i => {
-                      let itemHPP = PRODUCT_HPP_MAP[i.id] || 0;
-                      transHpp += (itemHPP * i.qty);
-                      if (!isKomplimen) {
-                          productCount[i.name] = (productCount[i.name] || 0) + i.qty;
-                          totalHPP += (itemHPP * i.qty);
-                      }
-                  });
-
-                  let tTotal = Number(t.total) || 0;
-                  let tProfit = tTotal - transHpp;
-                  let tMargin = tTotal > 0 ? ((tProfit / tTotal) * 100).toFixed(1) : 0;
-                  let profitClass = tProfit >= 0 ? 'text-success' : 'text-danger';
-                  
-                  const rowStyle = isKomplimen ? 'opacity: 0.6; background-color: #fff5f5;' : '';
-                  const totalStyle = isKomplimen ? 'text-decoration: line-through; color: #ff7675;' : 'text-success';
-                  const statusBadge = isKomplimen ? `<span class="badge bg-danger ms-2" style="font-size:0.6rem;">KOMPLIMEN</span>` : '';
-
-                  let cashierDisplayName = t.cashier;
-                  if (t.cashier.includes('(Pengganti)')) {
-                      cashierDisplayName = `<span class="text-danger fw-bold">${t.cashier}</span>`;
-                  } else if (t.cashier.includes('(Admin)')) {
-                      cashierDisplayName = `<span class="text-success fw-bold">${t.cashier}</span>`;
-                  } else if (t.cashier === 'Owner') {
-                      cashierDisplayName = `<span class="text-success fw-bold">${t.cashier}</span>`;
-                  }
-
-                  return `
-                      <tr class="border-bottom" style="${rowStyle}">
-                          <td class="ps-4 py-3">
-                              <div class="fw-bold text-dark" style="font-size: 0.75rem;">${t.orderId} ${statusBadge}</div>
-                              <div class="text-muted" style="font-size: 0.65rem;">${t.timestamp}</div>
-                          </td>
-                          <td>${t.items.map(i => `<div style="font-size:0.7rem;">• ${i.name} x${i.qty}</div>`).join('')}</td>
-                          <td class="text-end fw-bold ${totalStyle}">Rp ${tTotal.toLocaleString()}</td>
-                          <td class="text-end">
-                              <div class="fw-bold ${profitClass}" style="font-size: 0.8rem;">Rp ${tProfit.toLocaleString()}</div>
-                              <div class="${profitClass} opacity-75" style="font-size: 0.65rem;">${tMargin}% Margin</div>
-                          </td>
-                          <td class="text-center"><span class="badge bg-light text-dark border" style="font-size:0.6rem;">${cashierDisplayName}</span></td>
-                          <td class="text-center pe-4">
-                              <div class="btn-group shadow-sm rounded-pill border overflow-hidden">
-                                  <button class="btn btn-light btn-sm border-end" onclick="toggleTransactionStatus('${t.orderId}', '${t.status}', this)" title="Ubah Status">
-                                      <i class="fas ${isKomplimen ? 'fa-undo text-success' : 'fa-exchange-alt text-warning'}" style="font-size:0.7rem;"></i>
-                                  </button>
-                                  <button class="btn btn-light btn-sm" onclick="confirmDeleteTransaction('${t.orderId}', this)" title="Hapus">
-                                      <i class="fas fa-trash text-danger" style="font-size:0.7rem;"></i>
-                                  </button>
-                              </div>
-                          </td>
-                      </tr>`;
-              }).join('');
+          let methodMatch = true;
+          if (mFilter !== 'all') {
+            methodMatch = (t.method === mFilter);
           }
+          return timeMatch && methodMatch;
+        });
 
-          document.getElementById('dashTotalRevenue').innerText = `Rp ${totalRev.toLocaleString()}`;
-          document.getElementById('dashTotalHPP').innerText = `Rp ${totalHPP.toLocaleString()}`;
-          document.getElementById('dashNetProfit').innerText = `Rp ${(totalRev - totalHPP).toLocaleString()}`;
-          document.getElementById('dashTotalOrders').innerText = validOrders;
-
-          const getWinners = (dataObj, isProduct = false) => {
-              const keys = Object.keys(dataObj);
-              if (keys.length === 0) return { display: "-", count: 0 };
-              const maxVal = Math.max(...Object.values(dataObj));
-              const winners = keys.filter(key => dataObj[key] === maxVal);
-              const displayText = winners.map(name => isProduct ? `${name} (${maxVal})` : name).join(', ');
-              return { display: displayText, count: winners.length };
-          };
-
-          document.getElementById('dashTopCashier').innerText = getWinners(cashierCount).display;
-          
-          CURRENT_PRODUCT_COUNT = productCount;
-
-          const chartDataNormal = filteredData.filter(t => t.status !== 'Komplimen');
-          updateSalesChart(chartDataNormal);
-
-          if (!IS_OPCOST_LOADED) {
-              loadOpCosts();
-          } else {
-              renderOpCostsUI();
-              const netProfitContainer = document.getElementById('netProfitContainer');
-              if (netProfitContainer && (ACTIVE_CASHIER === 'Owner' || IS_MULTI_OWNER)) {
-                  netProfitContainer.classList.remove('d-none');
+        if (filteredData.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center p-5 text-muted">Tidak ada transaksi pada periode ini.</td></tr>';
+        } else {
+          tbody.innerHTML = filteredData.map(t => {
+            const isKomplimen = t.status === 'Komplimen';
+            let transHpp = 0;
+            
+            if (isKomplimen) {
+              totalKomplimen += Number(t.total) || 0;
+            } else {
+              totalRev += Number(t.total) || 0;
+              validOrders++;
+              const isOwnerOrAdmin = t.cashier === 'Owner' || String(t.cashier).includes('(Admin)');
+              if (!isOwnerOrAdmin) {
+                cashierCount[t.cashier] = (cashierCount[t.cashier] || 0) + 1;
               }
-          }
+            }
+
+            t.items.forEach(i => {
+              let itemHPP = PRODUCT_HPP_MAP[i.id] || 0;
+              transHpp += (itemHPP * i.qty);
+              if (!isKomplimen) {
+                productCount[i.name] = (productCount[i.name] || 0) + i.qty;
+                totalHPP += (itemHPP * i.qty);
+              }
+            });
+
+            let tTotal = Number(t.total) || 0;
+            let tProfit = tTotal - transHpp;
+            let tMargin = tTotal > 0 ? ((tProfit / tTotal) * 100).toFixed(1) : 0;
+            let profitClass = tProfit >= 0 ? 'text-success' : 'text-danger';
+            
+            const rowStyle = isKomplimen ? 'opacity: 0.6; background-color: #fff5f5;' : '';
+            const totalStyle = isKomplimen ? 'text-decoration: line-through; color: #ff7675;' : 'text-success';
+            const statusBadge = isKomplimen ? `<span class="badge bg-danger ms-2" style="font-size:0.6rem;">KOMPLIMEN</span>` : '';
+            
+            let cashierDisplayName = t.cashier;
+            if (t.cashier.includes('(Pengganti)')) {
+              cashierDisplayName = `<span class="text-danger fw-bold">${t.cashier}</span>`;
+            } else if (t.cashier.includes('(Admin)')) {
+              cashierDisplayName = `<span class="text-success fw-bold">${t.cashier}</span>`;
+            } else if (t.cashier === 'Owner') {
+              cashierDisplayName = `<span class="text-success fw-bold">${t.cashier}</span>`;
+            }
+
+            return `
+            <tr class="border-bottom" style="${rowStyle}">
+              <td class="ps-4 py-3">
+                <div class="fw-bold text-dark" style="font-size: 0.75rem;">${t.orderId} ${statusBadge}</div>
+                <div class="text-muted" style="font-size: 0.65rem;">${t.timestamp}</div>
+              </td>
+              <td>${t.items.map(i => `<div style="font-size:0.7rem;">• ${i.name} x${i.qty}</div>`).join('')}</td>
+              <td class="text-end fw-bold ${totalStyle}">Rp ${tTotal.toLocaleString()}</td>
+              <td class="text-end">
+                <div class="fw-bold ${profitClass}" style="font-size: 0.8rem;">Rp ${tProfit.toLocaleString()}</div>
+                <div class="${profitClass} opacity-75" style="font-size: 0.65rem;">${tMargin}% Margin</div>
+              </td>
+              <td class="text-center"><span class="badge bg-light text-dark border" style="font-size:0.6rem;">${cashierDisplayName}</span></td>
+              <td class="text-center pe-4">
+                <div class="btn-group shadow-sm rounded-pill border overflow-hidden">
+                  <button class="btn btn-light btn-sm border-end" onclick="toggleTransactionStatus('${t.orderId}', '${t.status}', this)" title="Ubah Status">
+                    <i class="fas ${isKomplimen ? 'fa-undo text-success' : 'fa-exchange-alt text-warning'}" style="font-size:0.7rem;"></i>
+                  </button>
+                  <button class="btn btn-light btn-sm" onclick="confirmDeleteTransaction('${t.orderId}', this)" title="Hapus">
+                    <i class="fas fa-trash text-danger" style="font-size:0.7rem;"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>`;
+          }).join('');
+        }
+
+        const profitKotor = totalRev - totalHPP;
+        document.getElementById('dashTotalRevenue').innerText = `Rp ${totalRev.toLocaleString()}`;
+        document.getElementById('dashTotalHPP').innerText = `Rp ${totalHPP.toLocaleString()}`;
+        document.getElementById('dashNetProfit').innerText = `Rp ${profitKotor.toLocaleString()}`;
+        document.getElementById('dashTotalOrders').innerText = validOrders;
+
+        const getWinners = (dataObj, isProduct = false) => {
+          const keys = Object.keys(dataObj);
+          if (keys.length === 0) return { display: "-", count: 0 };
+          const maxVal = Math.max(...Object.values(dataObj));
+          const winners = keys.filter(key => dataObj[key] === maxVal);
+          const displayText = winners.map(name => isProduct ? `${name} (${maxVal})` : name).join(', ');
+          return { display: displayText, count: winners.length };
+        };
+
+        document.getElementById('dashTopCashier').innerText = getWinners(cashierCount).display;
+        CURRENT_PRODUCT_COUNT = productCount;
+        
+        const chartDataNormal = filteredData.filter(t => t.status !== 'Komplimen');
+        updateSalesChart(chartDataNormal);
+
+        // --- SIMPAN CALCULATED FILTER KE VARIABEL GLOBAL ---
+        window.CURRENT_FILTERED_REVENUE = totalRev;
+        window.CURRENT_FILTERED_PROFIT = profitKotor;
+
+        // Picu pembaruan kalkulasi Operational Cost & Pajak agar sesuai dengan filter yang aktif
+        if (!IS_OPCOST_LOADED) {
+            loadOpCosts();
+        } else {
+            renderOpCostsUI();
+            const netProfitContainer = document.getElementById('netProfitContainer');
+            if (netProfitContainer && (ACTIVE_CASHIER === 'Owner' || IS_MULTI_OWNER)) {
+                netProfitContainer.classList.remove('d-none');
+            }
+        }
       }
-      
+
       // ==========================================
       // FUNGSI FILTER KALENDER (FLATPICKR)
       // ==========================================
