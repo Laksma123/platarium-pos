@@ -8107,7 +8107,7 @@
              t.items.forEach(i => {
                 if (!itemAgg[i.id]) {
                    let cat = 'Lainnya';
-                   // Cocokkan dengan master PRODUCTS untuk mendapatkan Kategori
+                   // Cocokkan dengan master PRODUCTS
                    const prod = PRODUCTS.find(p => String(p.id) === String(i.id));
                    if (prod && prod.category) cat = prod.category;
                    
@@ -8129,12 +8129,10 @@
           let mostOrdered = [];
           let leastOrdered = [];
 
-          // Kelompokkan dalam Map Kategori
           Object.values(itemAgg).forEach(item => {
              if (!catMap[item.category]) catMap[item.category] = [];
              catMap[item.category].push(item);
              
-             // Cari rekor penjualan terbanyak dan terdikit
              if (item.qty > maxQty) maxQty = item.qty;
              if (item.qty < minQty) minQty = item.qty;
           });
@@ -8158,8 +8156,18 @@
              let leftStr = String(left);
              let rightStr = String(right);
              let spaceLen = maxLen - leftStr.length - rightStr.length;
-             if (spaceLen < 1) spaceLen = 1; // Minimal ada 1 spasi pemisah
+             if (spaceLen < 1) spaceLen = 1; 
              return leftStr + ' '.repeat(spaceLen) + rightStr;
+          };
+
+          // --- FUNGSI PERINTAH PRINTER THERMAL (JANGAN DIHAPUS) ---
+          const cmd = {
+             init: [0x1B, 0x40],
+             alignCenter: [0x1B, 0x61, 1],
+             alignLeft: [0x1B, 0x61, 0],
+             boldOn: [0x1B, 0x45, 1],
+             boldOff: [0x1B, 0x45, 0],
+             cut: [0x1D, 0x56, 0x41, 0x00]
           };
 
           bytes.push(...cmd.init);
@@ -8184,10 +8192,8 @@
           bytes.push(...cmd.boldOff);
           bytes.push(...cmd.alignLeft);
           
-          // 1. Tampilkan List ID Orderan Komplimen (Jika Ada)
           if (komplimenList.length > 0) {
              let kompStr = "Komplimen: " + komplimenList.join(', ');
-             // Word Wrap khusus ESC/POS untuk memecah teks panjang
              let words = kompStr.split(' ');
              let line = '';
              words.forEach(w => {
@@ -8202,7 +8208,6 @@
              pushTxt('-'.repeat(maxChars));
           }
 
-          // 2. Tampilkan Menu Berdasarkan Kategori
           const catKeys = Object.keys(catMap).sort();
           
           if (catKeys.length > 0) {
@@ -8211,18 +8216,16 @@
                 pushTxt(`Kategori : ${cat}`);
                 bytes.push(...cmd.boldOff);
                 
-                // Urutkan item dari yang terbanyak terjual
                 catMap[cat].sort((a,b) => b.qty - a.qty).forEach(item => {
                    let nameQty = `${item.name} x${item.qty}`;
                    let priceStr = `Rp ${item.total.toLocaleString('id-ID')}`;
                    
-                   // Potong nama item jika kepanjangan agar harga tetap pas di ujung kanan
                    if (nameQty.length > maxChars - priceStr.length - 1) {
                       nameQty = nameQty.substring(0, maxChars - priceStr.length - 2) + "..";
                    }
                    pushTxt(padText(nameQty, priceStr, maxChars));
                 });
-                pushTxt(''); // Baris kosong antar kategori untuk kerapian
+                pushTxt(''); // Baris kosong antar kategori
              });
           } else {
              pushTxt("Belum ada penjualan menu.");
@@ -8231,15 +8234,12 @@
 
           pushTxt('-'.repeat(maxChars));
 
-          // 3. Tampilkan Note Rekomendasi Dinamis
           if (mostOrdered.length > 0 && minQty !== Infinity) {
-             // Batasi penampilan jika yang seri terlalu banyak
              let mostOrderedStr = mostOrdered.slice(0, 3).join(', ') + (mostOrdered.length > 3 ? ' dll' : '');
              let leastOrderedStr = leastOrdered.slice(0, 3).join(', ') + (leastOrdered.length > 3 ? ' dll' : '');
              
              let notes = `Paling sering di order pada ${filterDisplay} ${mostOrderedStr}, Paling sedikit di order pada ${filterDisplay} ${leastOrderedStr}.`;
              
-             // Word Wrap khusus ESC/POS
              let words = notes.split(' ');
              let line = '';
              words.forEach(w => {
@@ -8259,12 +8259,20 @@
           pushTxt('\n\n\n');
           bytes.push(...cmd.cut);
 
-          // Panggil Engine Print (Bluetooth/QZ Tray)
+          // === MODE SIMULASI (TIDAK PRINT SUNGGUHAN) ===
+          console.log("===== SIMULASI PRINT LAPORAN =====");
+          console.log(textSimulasi);
+          alert("Berhasil Simulasi! Cek Console (Tekan F12) untuk melihat hasilnya dengan rapi dan lurus.\n\nKlik OK untuk melihat bentuk mentahnya.");
+          alert(textSimulasi);
+
+          /* --- KODE PRINT ASLI (SEDANG DIMATIKAN UNTUK SIMULASI) ---
           if (connType === 'bluetooth') {
              await executeBluetoothPrint(bytes);
           } else {
              await executeQZPrint(bytes);
           }
+          */
+          
         } catch(e) {
           console.warn("Gagal cetak rekap thermal", e);
           alert("Gagal mencetak: " + e.message);
@@ -8273,7 +8281,7 @@
           btn.disabled = false;
         }
       }
-
+      
       function broadcastLaporan() {
         const btn = document.getElementById('btnBroadcastLaporan');
         const ogHtml = btn.innerHTML;
