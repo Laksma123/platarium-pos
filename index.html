@@ -5788,7 +5788,7 @@
 
         if (CART.length === 0) {
           IS_ADDON_SELECTION_MODE = false;
-          window.CUSTOM_CART_SUBTOTAL = null; // Reset kustom subtotal saat keranjang dikosongkan
+          window.CUSTOM_CART_SUBTOTAL = null; // Reset kustom subtotal saat keranjang kosong
           const btnAddon = document.getElementById('btnToggleAddonMode');
           if(btnAddon) btnAddon.classList.remove('active');
           
@@ -5849,7 +5849,7 @@
           `;
         }).join('');
 
-        // Simpan subtotal asli hasil akumulasi item
+        // Simpan subtotal asli hasil akumulasi item sebelum di-override
         let originalComputedSubtotal = subtotal;
 
         // Timpa nilai subtotal jika terdapat input kustom "Ganti Sub Total" global
@@ -5893,12 +5893,24 @@
         }
         CURRENT_TOTAL = finalTotal;
 
-        // Buat elemen row Subtotal interaktif (bisa diklik) secara dinamis
+        // === LOGIKA ANIMASI GOYANG, BORDER PUTUS-PUTUS & KLIK PADA BARIS SUB TOTAL ===
         const subtotalTextEl = document.getElementById('txtSubtotal');
         if (subtotalTextEl && subtotalTextEl.parentElement) {
-          subtotalTextEl.parentElement.style.cursor = 'pointer';
-          subtotalTextEl.parentElement.title = 'Klik untuk ganti Sub Total';
-          subtotalTextEl.parentElement.setAttribute('onclick', 'changeCartSubtotalPrompt()');
+          const subtotalRow = subtotalTextEl.parentElement; // Merujuk ke baris/container Sub Total
+
+          if (IS_ADDON_SELECTION_MODE) {
+            // Pasang animasi goyang, border putus-putus, dan fungsi klik hanya saat mode Add-On aktif
+            subtotalRow.classList.add('cart-item-selectable', 'addon-mode-active');
+            subtotalRow.style.cursor = 'pointer';
+            subtotalRow.title = 'Klik untuk ganti Sub Total';
+            subtotalRow.setAttribute('onclick', 'changeCartSubtotalPrompt()');
+          } else {
+            // Bersihkan style dan matikan fungsi klik saat mode Add-On dimatikan
+            subtotalRow.classList.remove('cart-item-selectable', 'addon-mode-active');
+            subtotalRow.style.cursor = 'default';
+            subtotalRow.title = '';
+            subtotalRow.removeAttribute('onclick');
+          }
         }
 
         posSyncChannel.postMessage({ type: 'UPDATE_CART', cart: CART, total: finalTotal, taxActive: (typeof IS_TAX_ACTIVE !== 'undefined' ? IS_TAX_ACTIVE : false), taxPercent: (typeof TAX_PERCENTAGE !== 'undefined' ? TAX_PERCENTAGE : 0), taxAmount: activeTaxAmount });
