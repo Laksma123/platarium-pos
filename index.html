@@ -1197,6 +1197,12 @@
             </h3>
             
             <div class="d-flex flex-wrap gap-2 ms-auto">
+              <button class="btn btn-info rounded-pill fw-bold shadow-sm px-3 text-white d-flex align-items-center" id="btnBroadcastLaporan" onclick="broadcastLaporan()" style="height: 38px; font-size: 0.85rem;" title="Kirim Laporan ke Telegram Owner">
+                <i class="fab fa-telegram-plane me-2"></i>Kirim Telegram
+              </button>
+              <button class="btn btn-dark rounded-pill fw-bold shadow-sm px-3 d-flex align-items-center" id="btnPrintLaporan" onclick="printLaporanThermal()" style="height: 38px; font-size: 0.85rem;" title="Cetak Thermal Laporan Panjang">
+                <i class="fas fa-print me-2"></i>Print Thermal
+              </button>
               <select id="methodFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill shadow-sm" style="cursor:pointer; height: 38px;" onchange="renderFinanceUI()">
                 <option value="all" selected>Semua Metode</option>
                 <option value="CASH">CASH</option>
@@ -2340,7 +2346,7 @@
               }));
           });
       }
-      
+
       function executeBatchSaveSchedule() {
           const btn = document.getElementById('btnSaveBatchSchedule');
           const originalHtml = btn.innerHTML;
@@ -3580,7 +3586,7 @@
       // ==========================================
       // FUNGSI TAB SETTING (TELEGRAM)
       // ==========================================
-      let TELEGRAM_CONFIG = { active: false, token: '', chatAudit: '', chatTrans: '' };
+      let TELEGRAM_CONFIG = { active: false, token: '', chatAudit: '', chatTrans: '', chatSchedule: '', chatOwner: '' };
 
       function loadSettingConfig() {
         const btn = document.getElementById('btnSaveSetting');
@@ -3601,6 +3607,7 @@
           if(document.getElementById('tgChatAudit')) document.getElementById('tgChatAudit').value = res.chatAudit || '';
           if(document.getElementById('tgChatTrans')) document.getElementById('tgChatTrans').value = res.chatTrans || '';
           if(document.getElementById('tgChatSchedule')) document.getElementById('tgChatSchedule').value = res.chatSchedule || '';
+          if(document.getElementById('tgChatOwner')) document.getElementById('tgChatOwner').value = res.chatOwner || '';
           
           if(document.getElementById('dualPosVideoUrl')) {
               document.getElementById('dualPosVideoUrl').value = res.ytLink || '';
@@ -3690,6 +3697,7 @@
         if (document.getElementById('tgChatAudit')) TELEGRAM_CONFIG.chatAudit = document.getElementById('tgChatAudit').value.trim();
         if (document.getElementById('tgChatTrans')) TELEGRAM_CONFIG.chatTrans = document.getElementById('tgChatTrans').value.trim();
         if (document.getElementById('tgChatSchedule')) TELEGRAM_CONFIG.chatSchedule = document.getElementById('tgChatSchedule').value.trim();
+        if (document.getElementById('tgChatOwner')) TELEGRAM_CONFIG.chatOwner = document.getElementById('tgChatOwner').value.trim();
         
         google.script.run.withSuccessHandler(() => {
           console.log("Telegram setting auto-saved in background");
@@ -3741,6 +3749,7 @@
           chatAudit: document.getElementById('tgChatAudit') ? document.getElementById('tgChatAudit').value.trim() : '',
           chatTrans: document.getElementById('tgChatTrans') ? document.getElementById('tgChatTrans').value.trim() : '',
           chatSchedule: document.getElementById('tgChatSchedule') ? document.getElementById('tgChatSchedule').value.trim() : '',
+          chatOwner: document.getElementById('tgChatOwner') ? document.getElementById('tgChatOwner').value.trim() : '',
           ytLink: document.getElementById('dualPosVideoUrl') ? document.getElementById('dualPosVideoUrl').value.trim() : '',
           multiOwner: document.getElementById('multiOwnerToggle') ? document.getElementById('multiOwnerToggle').checked : false,
           taxActive: document.getElementById('taxToggle') ? document.getElementById('taxToggle').checked : false,
@@ -3770,7 +3779,6 @@
           if(res.status !== 'success') {
               alert("Gagal menyimpan: " + res.message);
           } else {
-              // Jika simpan sukses dan modal telegram sedang aktif, otomatis tutup
               const tgModal = document.getElementById('modalTelegramSetting');
               if (tgModal && !tgModal.classList.contains('d-none')) {
                   closeTelegramModal();
@@ -8003,6 +8011,178 @@
         }
       }
 
+      async function printLaporanThermal() {
+          const paperSize = parseInt(localStorage.getItem('pos_printer_size')) || 58;
+          const maxChars = paperSize === 80 ? 48 : 32;
+          const connType = localStorage.getItem('pos_printer_type') || 'bluetooth';
+
+          if (localStorage.getItem('pos_printer_active') !== 'true') {
+              alert("Printer Thermal belum diaktifkan di Pengaturan Invoice!");
+              return;
+          }
+
+          const btn = document.getElementById('btnPrintLaporan');
+          const ogHtml = btn.innerHTML;
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>...';
+
+          try {
+              const filterType = document.getElementById('revFilter').value;
+              const filterText = document.getElementById('revFilter').options[document.getElementById('revFilter').selectedIndex].text;
+              const customDate = document.getElementById('customDateText').innerText;
+              let periodStr = filterType === 'custom' ? customDate : filterText;
+              
+              const totalRev = document.getElementById('dashTotalRevenue').innerText;
+              const totalHPP = document.getElementById('dashTotalHPP').innerText;
+              const netProfit = document.getElementById('dashNetProfit').innerText;
+              const totalOrders = document.getElementById('dashTotalOrders').innerText;
+              
+              const tbody = document.getElementById('financeTableBody');
+              const rows = tbody.querySelectorAll('tr');
+              let transactions = [];
+              rows.forEach(r => {
+                  if(r.cells.length > 3) {
+                      let text1 = r.cells[0].innerText.replace(/\n/g, ' ').trim();
+                      let textTotal = r.cells[2].innerText.trim();
+                      transactions.push({ idWaktu: text1, total: textTotal });
+                  }
+              });
+
+              let bytes = [];
+              const encoder = new TextEncoder();
+              const pushTxt = (str) => bytes.push(...encoder.encode(str + '\n'));
+              const cmd = {
+                init: [0x1B, 0x40],
+                alignCenter: [0x1B, 0x61, 1],
+                alignLeft: [0x1B, 0x61, 0],
+                boldOn: [0x1B, 0x45, 1],
+                boldOff: [0x1B, 0x45, 0],
+                cut: [0x1D, 0x56, 0x41, 0x00]
+              };
+
+              bytes.push(...cmd.init);
+              bytes.push(...cmd.alignCenter);
+              bytes.push(...cmd.boldOn);
+              pushTxt("REKAP LAPORAN KEUANGAN");
+              bytes.push(...cmd.boldOff);
+              pushTxt(`Periode: ${periodStr}`);
+              pushTxt(`Dicetak: ${new Date().toLocaleString('id-ID')}`);
+              pushTxt('-'.repeat(maxChars));
+              
+              bytes.push(...cmd.alignLeft);
+              pushTxt(padText("Pendapatan:", totalRev, maxChars));
+              pushTxt(padText("Total HPP:", totalHPP, maxChars));
+              pushTxt(padText("Profit Kotor:", netProfit, maxChars));
+              pushTxt(padText("Total Pesanan:", totalOrders, maxChars));
+              pushTxt('-'.repeat(maxChars));
+              
+              bytes.push(...cmd.alignCenter);
+              bytes.push(...cmd.boldOn);
+              pushTxt("RINCIAN TRANSAKSI");
+              bytes.push(...cmd.boldOff);
+              bytes.push(...cmd.alignLeft);
+              
+              if (transactions.length > 0) {
+                  transactions.forEach(t => {
+                      let idText = t.idWaktu;
+                      if(idText.length > maxChars - t.total.length - 1) {
+                         idText = idText.substring(0, maxChars - t.total.length - 2) + "..";
+                      }
+                      pushTxt(padText(idText, t.total, maxChars));
+                  });
+              } else {
+                  pushTxt("Belum ada transaksi.");
+              }
+              
+              pushTxt('-'.repeat(maxChars));
+              bytes.push(...cmd.alignCenter);
+              pushTxt("Akhir dari Laporan");
+              pushTxt('\n\n\n');
+              bytes.push(...cmd.cut);
+
+              if (connType === 'bluetooth') {
+                await executeBluetoothPrint(bytes);
+              } else {
+                await executeQZPrint(bytes);
+              }
+          } catch(e) {
+              console.warn("Gagal cetak rekap thermal", e);
+              alert("Gagal mencetak: " + e.message);
+          } finally {
+              btn.innerHTML = ogHtml;
+              btn.disabled = false;
+          }
+      }
+
+      function broadcastLaporan() {
+          const btn = document.getElementById('btnBroadcastLaporan');
+          const ogHtml = btn.innerHTML;
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
+
+          // Isi data text HTML rendering
+          const filterType = document.getElementById('revFilter').value;
+          const filterText = document.getElementById('revFilter').options[document.getElementById('revFilter').selectedIndex].text;
+          const customDate = document.getElementById('customDateText').innerText;
+          let periodStr = filterType === 'custom' ? customDate : filterText;
+          
+          document.getElementById('lapCapPeriode').innerText = 'Periode: ' + periodStr;
+          document.getElementById('lapCapTime').innerText = new Date().toLocaleString('id-ID');
+          
+          document.getElementById('lapCapRev').innerText = document.getElementById('dashTotalRevenue').innerText;
+          document.getElementById('lapCapHPP').innerText = document.getElementById('dashTotalHPP').innerText;
+          document.getElementById('lapCapProfit').innerText = document.getElementById('dashNetProfit').innerText;
+          document.getElementById('lapCapOrders').innerText = document.getElementById('dashTotalOrders').innerText;
+          document.getElementById('lapCapTopProd').innerText = document.getElementById('dashTopProduct').innerText.replace('Lihat List', '').trim();
+          document.getElementById('lapCapTopKasir').innerText = document.getElementById('dashTopCashier').innerText;
+
+          // Clone Table baris per baris dengan membuang kolom button Aksi
+          const originalTbody = document.getElementById('financeTableBody');
+          const captureTbody = document.getElementById('lapCapTableBody');
+          let clonedRows = '';
+          const rows = originalTbody.querySelectorAll('tr');
+          rows.forEach(row => {
+              if(row.cells.length > 1) { 
+                  clonedRows += '<tr>';
+                  for(let i=0; i < row.cells.length - 1; i++) { 
+                      let text = row.cells[i].innerHTML;
+                      if(i === 0) text = text.replace(/<div class="small text-muted">/g, ' <div>').replace(/<br>/g, ' ');
+                      clonedRows += `<td ${row.cells[i].className.includes('text-end') ? 'class="text-end"' : (row.cells[i].className.includes('text-center') ? 'class="text-center"' : '')}>${text}</td>`;
+                  }
+                  clonedRows += '</tr>';
+              } else {
+                   clonedRows += `<tr><td colspan="5" class="text-center text-muted">Belum ada transaksi</td></tr>`;
+              }
+          });
+          captureTbody.innerHTML = clonedRows || `<tr><td colspan="5" class="text-center text-muted">Belum ada transaksi</td></tr>`;
+
+          const capDiv = document.getElementById('laporanGridToCapture');
+          
+          html2canvas(capDiv, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+              const base64Data = canvas.toDataURL('image/jpeg', 0.85);
+              const captionMsg = `📊 <b>Rekap Laporan Keuangan</b>\n` + 
+                                 `<b>Periode:</b> ${periodStr}\n` + 
+                                 `<b>Total Pendapatan:</b> ${document.getElementById('dashTotalRevenue').innerText}\n` +
+                                 `<b>Profit Kotor:</b> ${document.getElementById('dashNetProfit').innerText}\n\n` + 
+                                 `<i>Detail terlampir pada gambar.</i>`;
+
+              google.script.run.withSuccessHandler(res => {
+                  btn.innerHTML = ogHtml;
+                  btn.disabled = false;
+                  if(res.status === 'success') {
+                      alert("Berhasil mengirim rekap laporan ke Telegram Owner!");
+                  } else {
+                      alert("Gagal: " + res.message);
+                  }
+              }).sendLaporanToTelegram(base64Data, captionMsg);
+              
+          }).catch(err => {
+              btn.innerHTML = ogHtml;
+              btn.disabled = false;
+              alert("Gagal memproses screenshot: " + err);
+          });
+      }
+      
       // ==========================================
       // DUAL POS MONITOR (CUSTOMER DISPLAY) ENGINE
       // ==========================================
@@ -8683,6 +8863,11 @@
             <input type="text" id="tgChatSchedule" class="form-control border-2 fw-bold text-success" placeholder="Contoh: -10011223344">
             <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Hasil tangkapan gambar jadwal (Broadcast) akan terkirim ke Grup ini secara spesifik.</small>
           </div>
+          <div class="mb-4 mt-3">
+            <label class="small fw-bold text-muted mb-1">CHAT ID (GRUP LAPORAN OWNER)</label>
+            <input type="text" id="tgChatOwner" class="form-control border-2 fw-bold text-info" placeholder="Contoh: -10011223344">
+            <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height: 1.2;">Laporan rekap digital akan dikirim ke Grup ini secara spesifik.</small>
+          </div>
         </div>
 
         <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-sm" id="btnSaveSetting" onclick="saveSettingConfig()">
@@ -8904,6 +9089,66 @@
 
         <button class="btn btn-dark w-100 py-3 rounded-pill fw-bold" onclick="closeDoneTicketDetail()">TUTUP TIKET</button>
       </div>
+    </div>
+
+    <div id="laporanGridToCapture" class="bg-white p-4" style="position: absolute; left: -9999px; top: -9999px; width: 800px; color: #333; z-index: -1;">
+      <div class="text-center mb-4">
+         <h2 class="fw-bold mb-1">LAPORAN KEUANGAN PLATARIUM POS</h2>
+         <h5 class="text-muted" id="lapCapPeriode">Periode: -</h5>
+         <p class="small text-muted mb-0">Dicetak: <span id="lapCapTime"></span></p>
+      </div>
+      <div class="row g-3 mb-4">
+         <div class="col-4">
+           <div class="p-3 bg-light rounded border text-center">
+             <div class="small text-muted fw-bold">TOTAL REVENUE</div>
+             <div class="fs-4 fw-bold text-dark" id="lapCapRev">Rp 0</div>
+           </div>
+         </div>
+         <div class="col-4">
+           <div class="p-3 bg-light rounded border text-center">
+             <div class="small text-muted fw-bold">TOTAL HPP</div>
+             <div class="fs-4 fw-bold text-danger" id="lapCapHPP">Rp 0</div>
+           </div>
+         </div>
+         <div class="col-4">
+           <div class="p-3 bg-light rounded border text-center">
+             <div class="small text-muted fw-bold">PROFIT KOTOR</div>
+             <div class="fs-4 fw-bold text-success" id="lapCapProfit">Rp 0</div>
+           </div>
+         </div>
+         <div class="col-4">
+           <div class="p-3 bg-light rounded border text-center">
+             <div class="small text-muted fw-bold">TOTAL PESANAN</div>
+             <div class="fs-5 fw-bold text-dark" id="lapCapOrders">0</div>
+           </div>
+         </div>
+         <div class="col-4">
+           <div class="p-3 bg-light rounded border text-center">
+             <div class="small text-muted fw-bold">TOP PRODUK</div>
+             <div class="fs-5 fw-bold text-primary" id="lapCapTopProd">-</div>
+           </div>
+         </div>
+         <div class="col-4">
+           <div class="p-3 bg-light rounded border text-center">
+             <div class="small text-muted fw-bold">TOP KASIR</div>
+             <div class="fs-5 fw-bold text-info" id="lapCapTopKasir">-</div>
+           </div>
+         </div>
+      </div>
+      <h5 class="fw-bold border-bottom pb-2 mb-3">Rincian Transaksi</h5>
+      <table class="table table-bordered table-sm" style="font-size: 0.85rem;">
+        <thead class="table-dark">
+           <tr>
+             <th>ID & Waktu</th>
+             <th>Item</th>
+             <th class="text-end">Total</th>
+             <th class="text-end">Profit Kotor</th>
+             <th class="text-center">Kasir</th>
+           </tr>
+        </thead>
+        <tbody id="lapCapTableBody">
+        </tbody>
+      </table>
     </div>
   </body>
 </html>
