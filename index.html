@@ -8134,72 +8134,123 @@
       }
 
       function broadcastLaporan() {
-          const btn = document.getElementById('btnBroadcastLaporan');
-          const ogHtml = btn.innerHTML;
-          btn.disabled = true;
-          btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
+        const btn = document.getElementById('btnBroadcastLaporan');
+        const ogHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
 
-          // Isi data text HTML rendering
-          const filterType = document.getElementById('revFilter').value;
-          const filterText = document.getElementById('revFilter').options[document.getElementById('revFilter').selectedIndex].text;
-          const customDate = document.getElementById('customDateText').innerText;
-          let periodStr = filterType === 'custom' ? customDate : filterText;
+        // Isi data text HTML rendering
+        const filterType = document.getElementById('revFilter').value;
+        const filterText = document.getElementById('revFilter').options[document.getElementById('revFilter').selectedIndex].text;
+        const customDate = document.getElementById('customDateText').innerText;
+        let periodStr = filterType === 'custom' ? customDate : filterText;
+
+        document.getElementById('lapCapPeriode').innerText = 'Periode: ' + periodStr;
+        document.getElementById('lapCapTime').innerText = new Date().toLocaleString('id-ID');
+        document.getElementById('lapCapRev').innerText = document.getElementById('dashTotalRevenue').innerText;
+        document.getElementById('lapCapHPP').innerText = document.getElementById('dashTotalHPP').innerText;
+        document.getElementById('lapCapProfit').innerText = document.getElementById('dashNetProfit').innerText;
+        document.getElementById('lapCapOrders').innerText = document.getElementById('dashTotalOrders').innerText;
+        document.getElementById('lapCapTopProd').innerText = document.getElementById('dashTopProduct').innerText.replace('Lihat List', '').trim();
+        document.getElementById('lapCapTopKasir').innerText = document.getElementById('dashTopCashier').innerText;
+
+        // Clone Table baris per baris dengan membuang kolom button Aksi
+        const originalTbody = document.getElementById('financeTableBody');
+        const captureTbody = document.getElementById('lapCapTableBody');
+        let clonedRows = '';
+        const rows = originalTbody.querySelectorAll('tr');
+        rows.forEach(row => {
+          if(row.cells.length > 1) {
+            clonedRows += '<tr>';
+            for(let i=0; i < row.cells.length - 1; i++) {
+              let text = row.cells[i].innerHTML;
+              if(i === 0) text = text.replace(/<div class="small text-muted">/g, ' <div>').replace(/<br>/g, ' ');
+              clonedRows += `<td ${row.cells[i].className.includes('text-end') ? 'class="text-end"' : (row.cells[i].className.includes('text-center') ? 'class="text-center"' : '')}>${text}</td>`;
+            }
+            clonedRows += '</tr>';
+          } else {
+            clonedRows += `<tr><td colspan="5" class="text-center text-muted">Belum ada transaksi</td></tr>`;
+          }
+        });
+        captureTbody.innerHTML = clonedRows || `<tr><td colspan="5" class="text-center text-muted">Belum ada transaksi</td></tr>`;
+
+        const capDiv = document.getElementById('laporanGridToCapture');
+        html2canvas(capDiv, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+          const base64Data = canvas.toDataURL('image/jpeg', 0.85);
+
+          // === KALKULASI COST & NET PROFIT (Identik dengan renderOpCostsUI) ===
+          let totalCost = TOTAL_SALARY_COST || 0;
+          let rincianCost = `   - Gaji Karyawan: Rp ${totalCost.toLocaleString('id-ID')}\n`;
           
-          document.getElementById('lapCapPeriode').innerText = 'Periode: ' + periodStr;
-          document.getElementById('lapCapTime').innerText = new Date().toLocaleString('id-ID');
-          
-          document.getElementById('lapCapRev').innerText = document.getElementById('dashTotalRevenue').innerText;
-          document.getElementById('lapCapHPP').innerText = document.getElementById('dashTotalHPP').innerText;
-          document.getElementById('lapCapProfit').innerText = document.getElementById('dashNetProfit').innerText;
-          document.getElementById('lapCapOrders').innerText = document.getElementById('dashTotalOrders').innerText;
-          document.getElementById('lapCapTopProd').innerText = document.getElementById('dashTopProduct').innerText.replace('Lihat List', '').trim();
-          document.getElementById('lapCapTopKasir').innerText = document.getElementById('dashTopCashier').innerText;
-
-          // Clone Table baris per baris dengan membuang kolom button Aksi
-          const originalTbody = document.getElementById('financeTableBody');
-          const captureTbody = document.getElementById('lapCapTableBody');
-          let clonedRows = '';
-          const rows = originalTbody.querySelectorAll('tr');
-          rows.forEach(row => {
-              if(row.cells.length > 1) { 
-                  clonedRows += '<tr>';
-                  for(let i=0; i < row.cells.length - 1; i++) { 
-                      let text = row.cells[i].innerHTML;
-                      if(i === 0) text = text.replace(/<div class="small text-muted">/g, ' <div>').replace(/<br>/g, ' ');
-                      clonedRows += `<td ${row.cells[i].className.includes('text-end') ? 'class="text-end"' : (row.cells[i].className.includes('text-center') ? 'class="text-center"' : '')}>${text}</td>`;
-                  }
-                  clonedRows += '</tr>';
-              } else {
-                   clonedRows += `<tr><td colspan="5" class="text-center text-muted">Belum ada transaksi</td></tr>`;
-              }
-          });
-          captureTbody.innerHTML = clonedRows || `<tr><td colspan="5" class="text-center text-muted">Belum ada transaksi</td></tr>`;
-
-          const capDiv = document.getElementById('laporanGridToCapture');
-          
-          html2canvas(capDiv, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
-              const base64Data = canvas.toDataURL('image/jpeg', 0.85);
-              const captionMsg = `📊 <b>Rekap Laporan Keuangan</b>\n` + 
-                                 `<b>Periode:</b> ${periodStr}\n` + 
-                                 `<b>Total Pendapatan:</b> ${document.getElementById('dashTotalRevenue').innerText}\n` +
-                                 `<b>Profit Kotor:</b> ${document.getElementById('dashNetProfit').innerText}\n\n` + 
-                                 `<i>Detail terlampir pada gambar.</i>`;
-
-              google.script.run.withSuccessHandler(res => {
-                  btn.innerHTML = ogHtml;
-                  btn.disabled = false;
-                  if(res.status === 'success') {
-                      alert("Berhasil mengirim rekap laporan ke Telegram Owner!");
-                  } else {
-                      alert("Gagal: " + res.message);
-                  }
-              }).sendLaporanToTelegram(base64Data, captionMsg);
+          let totalTaxCollected = 0;
+          if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
+              let totalRevenueFromTransactions = window.CURRENT_FILTERED_REVENUE !== undefined ? window.CURRENT_FILTERED_REVENUE : 0;
               
-          }).catch(err => {
-              btn.innerHTML = ogHtml;
-              btn.disabled = false;
-              alert("Gagal memproses screenshot: " + err);
-          });
+              if (window.CURRENT_FILTERED_REVENUE === undefined && TRANSACTIONS_DATA) {
+                  TRANSACTIONS_DATA.forEach(t => {
+                      if (t.status !== 'Komplimen') {
+                          totalRevenueFromTransactions += Number(t.total) || 0;
+                      }
+                  });
+              }
+              
+              let calculatedSubtotal = totalRevenueFromTransactions / (1 + (TAX_PERCENTAGE / 100));
+              totalTaxCollected = totalRevenueFromTransactions - calculatedSubtotal;
+              
+              if (totalTaxCollected > 0) {
+                  totalCost += totalTaxCollected;
+                  rincianCost += `   - PPN (${TAX_PERCENTAGE}%): Rp ${totalTaxCollected.toLocaleString('id-ID', {maximumFractionDigits:0})}\n`;
+              }
+          }
+
+          if (typeof OP_COSTS_DATA !== 'undefined' && OP_COSTS_DATA && OP_COSTS_DATA.length > 0) {
+              OP_COSTS_DATA.forEach(cost => {
+                  totalCost += cost.amount;
+                  rincianCost += `   - ${cost.name}: Rp ${cost.amount.toLocaleString('id-ID')}\n`;
+              });
+          }
+
+          const profitBersih = window.CURRENT_FILTERED_PROFIT !== undefined ? window.CURRENT_FILTERED_PROFIT : getPureProfitBersih(); 
+          const netProfit = profitBersih - totalCost; 
+          
+          let formatNetProfit = netProfit >= 0 ? `Rp ${netProfit.toLocaleString('id-ID', {maximumFractionDigits:0})}` : `- Rp ${Math.abs(netProfit).toLocaleString('id-ID', {maximumFractionDigits:0})}`;
+
+          // === FORMATTING PESAN TELEGRAM ===
+          let captionMsg = `📊 <b>Rekap Laporan Keuangan</b>\n` +
+            `<b>Periode:</b> ${periodStr}\n` +
+            `<b>Total Pendapatan:</b> ${document.getElementById('dashTotalRevenue').innerText}\n` +
+            `<b>Profit Kotor:</b> ${document.getElementById('dashNetProfit').innerText}\n\n` +
+            `<b>Rincian Operational Cost:</b>\n${rincianCost}` +
+            `<b>Total Cost:</b> Rp ${totalCost.toLocaleString('id-ID', {maximumFractionDigits:0})}\n\n` +
+            `<b>Net Profit :</b> ${formatNetProfit}\n`;
+
+          // Cek Mode Saham
+          if (typeof IS_MULTI_OWNER !== 'undefined' && IS_MULTI_OWNER && typeof ADMIN_SHARES_DATA !== 'undefined' && ADMIN_SHARES_DATA.length > 0 && typeof ACTIVE_CASHIER !== 'undefined' && ACTIVE_CASHIER) {
+            let myShare = ADMIN_SHARES_DATA.find(a => a.name === ACTIVE_CASHIER);
+            if (myShare) {
+              let myProfit = (netProfit > 0) ? (netProfit * (myShare.percentage / 100)) : 0;
+              captionMsg += `<b>Pembagian Saham Anda (${myShare.percentage}%):</b> Rp ${myProfit.toLocaleString('id-ID', {maximumFractionDigits:0})}\n`;
+            }
+          }
+
+          captionMsg += `\n<i>Detail terlampir pada gambar.</i>`;
+
+          // Eksekusi kirim
+          google.script.run.withSuccessHandler(res => {
+            btn.innerHTML = ogHtml;
+            btn.disabled = false;
+            if(res.status === 'success') {
+              alert("Berhasil mengirim rekap laporan ke Telegram Owner!");
+            } else {
+              alert("Gagal: " + res.message);
+            }
+          }).sendLaporanToTelegram(base64Data, captionMsg);
+
+        }).catch(err => {
+          btn.innerHTML = ogHtml;
+          btn.disabled = false;
+          alert("Gagal memproses screenshot: " + err);
+        });
       }
 
       // ==========================================
