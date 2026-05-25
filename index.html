@@ -8031,16 +8031,15 @@
           console.log(textSimulasi);
           
           // 2. Tampilkan langsung sebagai Pop-up Alert di layar
-          alert("HASIL SIMULASI PRINT:\n\n" + textSimulasi);
+          // alert("HASIL SIMULASI PRINT:\n\n" + textSimulasi);
 
-          /* MATIKAN SEMENTARA KODE PRINT ASLI DI BAWAH INI
           // Panggil Engine Print (Bluetooth/QZ Tray)
           if (connType === 'bluetooth') {
              await executeBluetoothPrint(bytes);
           } else {
              await executeQZPrint(bytes);
           }
-          */
+          
         } catch (e) {
           console.warn("Proses cetak terhenti: ", e);
         }
