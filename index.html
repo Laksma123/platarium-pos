@@ -5788,6 +5788,7 @@
 
         if (CART.length === 0) {
           IS_ADDON_SELECTION_MODE = false;
+          window.CUSTOM_CART_SUBTOTAL = null; // Reset kustom subtotal saat keranjang dikosongkan
           const btnAddon = document.getElementById('btnToggleAddonMode');
           if(btnAddon) btnAddon.classList.remove('active');
           
@@ -5809,7 +5810,6 @@
         }
 
         if (mobileTrigger) mobileTrigger.style.display = 'flex';
-        
         container.innerHTML = CART.map(item => {
           // Gunakan harga kustom kosmetik jika sudah diatur, jika tidak pakai price asli
           let itemPriceDisplay = item.customPrice !== undefined ? item.customPrice : item.price;
@@ -5839,6 +5839,7 @@
               <div class="text-muted small">Rp ${(itemPriceDisplay * item.qty).toLocaleString()}</div>
               ${addonBadgeHtml}
             </div>
+        
             <div class="qty-control" onclick="if(IS_ADDON_SELECTION_MODE) event.stopPropagation();">
               <button class="btn-qty" onclick="updateCart('${item.id}', -1)"><i class="fas fa-minus"></i></button>
               <span class="fw-bold small">${item.qty}</span>
@@ -5847,6 +5848,14 @@
           </div>
           `;
         }).join('');
+
+        // Simpan subtotal asli hasil akumulasi item
+        let originalComputedSubtotal = subtotal;
+
+        // Timpa nilai subtotal jika terdapat input kustom "Ganti Sub Total" global
+        if (window.CUSTOM_CART_SUBTOTAL !== undefined && window.CUSTOM_CART_SUBTOTAL !== null) {
+          subtotal = window.CUSTOM_CART_SUBTOTAL;
+        }
 
         let finalTotal = subtotal;
         let activeTaxAmount = 0;
@@ -5858,6 +5867,7 @@
           taxNote.style.fontSize = '0.65rem';
           document.getElementById('txtTotal').parentNode.parentNode.appendChild(taxNote);
         }
+
         if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
           activeTaxAmount = subtotal * (TAX_PERCENTAGE / 100);
           finalTotal = subtotal + activeTaxAmount;
@@ -5866,7 +5876,14 @@
         } else {
           taxNote.classList.add('d-none');
         }
-        document.getElementById('txtSubtotal').innerText = 'Rp ' + subtotal.toLocaleString();
+
+        // Render teks Subtotal dengan efek strikethrough jika nilai di-override
+        if (window.CUSTOM_CART_SUBTOTAL !== undefined && window.CUSTOM_CART_SUBTOTAL !== null) {
+          document.getElementById('txtSubtotal').innerHTML = `<s style="font-size: 0.8rem; color: #a0a0a0;">Rp ${originalComputedSubtotal.toLocaleString()}</s> <span class="text-danger fw-bold">Rp ${subtotal.toLocaleString()}</span>`;
+        } else {
+          document.getElementById('txtSubtotal').innerText = 'Rp ' + subtotal.toLocaleString();
+        }
+
         document.getElementById('txtTotal').innerText = 'Rp ' + finalTotal.toLocaleString(undefined, {maximumFractionDigits:0});
         const mobTotalEl = document.getElementById('mobTotal');
         const mobCountEl = document.getElementById('mobItemCount');
@@ -5875,7 +5892,38 @@
           mobCountEl.innerText = count.toString();
         }
         CURRENT_TOTAL = finalTotal;
+
+        // Buat elemen row Subtotal interaktif (bisa diklik) secara dinamis
+        const subtotalTextEl = document.getElementById('txtSubtotal');
+        if (subtotalTextEl && subtotalTextEl.parentElement) {
+          subtotalTextEl.parentElement.style.cursor = 'pointer';
+          subtotalTextEl.parentElement.title = 'Klik untuk ganti Sub Total';
+          subtotalTextEl.parentElement.setAttribute('onclick', 'changeCartSubtotalPrompt()');
+        }
+
         posSyncChannel.postMessage({ type: 'UPDATE_CART', cart: CART, total: finalTotal, taxActive: (typeof IS_TAX_ACTIVE !== 'undefined' ? IS_TAX_ACTIVE : false), taxPercent: (typeof TAX_PERCENTAGE !== 'undefined' ? TAX_PERCENTAGE : 0), taxAmount: activeTaxAmount });
+      }
+
+      function changeCartSubtotalPrompt() {
+        if (CART.length === 0) return;
+        // Hitung akumulasi subtotal dari kondisi cart saat ini
+        let computedSub = CART.reduce((sum, item) => sum + ((item.customPrice !== undefined ? item.customPrice : item.price) * item.qty), 0);
+        let currentDefault = window.CUSTOM_CART_SUBTOTAL !== undefined && window.CUSTOM_CART_SUBTOTAL !== null ? window.CUSTOM_CART_SUBTOTAL : computedSub;
+        
+        let newSubInput = prompt("Masukkan Ganti Sub Total Baru (Rp):", currentDefault);
+        if (newSubInput !== null) {
+          if (newSubInput.trim() === "") {
+            window.CUSTOM_CART_SUBTOTAL = null; // Kembalikan ke normal jika input dikosongkan
+          } else {
+            let val = parseFloat(newSubInput);
+            if (!isNaN(val) && val >= 0) {
+              window.CUSTOM_CART_SUBTOTAL = val;
+            } else {
+              alert("Mohon masukkan nilai nominal angka yang valid!");
+            }
+          }
+          updateCartUI();
+        }
       }
 
       // --- FUNGSI UTAMA MANAGEMENT STATE MODAL & ANIMASI ADD-ON ---
@@ -6022,7 +6070,6 @@
         const method = document.querySelector('input[name="payMethod"]:checked').value;
         const cashInput = document.getElementById('inputCashAmount');
         const cash = parseInt(cashInput.value) || 0;
-        
         if (method === 'CASH' && cash < CURRENT_TOTAL) {
           alert("UANG PEMBAYARAN KURANG!");
           cashInput.focus();
@@ -6034,8 +6081,6 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Memproses...';
 
         let finalCashierName = getFinalCashierName();
-        
-        // Perekaman Pintar Multi-Admin (Owner) Sebelum Shift Kasir Dimulai
         if (USER_ROLE === 'ADMIN') {
           let savedShift = localStorage.getItem('pos_shift_data');
           if (!savedShift) {
@@ -6050,7 +6095,6 @@
               namesArr.push(finalCashierName);
             }
             localStorage.setItem('pos_preshift_admin_names', JSON.stringify(namesArr));
-
             // Hanya tambahkan ke total laci jika metodenya CASH
             if (method === 'CASH') {
               let preShiftCash = parseInt(localStorage.getItem('pos_preshift_admin_cash')) || 0;
@@ -6059,13 +6103,30 @@
           }
         }
 
+        // --- ANALISIS STRUKTUR PRICE ADJUSTMENT NOTES ---
+        let priceNotesArr = [];
+        CART.forEach(item => {
+          if (item.customPrice !== undefined && item.customPrice !== item.price) {
+            let oldItemTotal = item.price * item.qty;
+            let newItemTotal = item.customPrice * item.qty;
+            priceNotesArr.push(`Menu [${item.name}] x${item.qty}: Harga diganti dari Rp ${item.price.toLocaleString()} ke Rp ${item.customPrice.toLocaleString()} (Total dari Rp ${oldItemTotal.toLocaleString()} menjadi Rp ${newItemTotal.toLocaleString()})`);
+          }
+        });
+
+        if (window.CUSTOM_CART_SUBTOTAL !== undefined && window.CUSTOM_CART_SUBTOTAL !== null) {
+          let computedSubtotalWithItems = CART.reduce((sum, item) => sum + ((item.customPrice !== undefined ? item.customPrice : item.price) * item.qty), 0);
+          priceNotesArr.push(`Sub Total Overridden: Dari Rp ${computedSubtotalWithItems.toLocaleString()} diganti menjadi Rp ${window.CUSTOM_CART_SUBTOTAL.toLocaleString()}`);
+        }
+        let finalPriceNotes = priceNotesArr.join(' | ');
+
         const transactionData = {
           total: CURRENT_TOTAL, 
           method: method,
           cash: method === 'CASH' ? cash : CURRENT_TOTAL,
           change: method === 'CASH' ? (cash - CURRENT_TOTAL) : 0,
           items: CART,
-          cashier: finalCashierName
+          cashier: finalCashierName,
+          priceNotes: finalPriceNotes // Masukkan ke payload objek
         };
 
         google.script.run.withSuccessHandler(res => {
@@ -6073,11 +6134,15 @@
           btn.innerText = 'BAYAR SEKARANG';
           if(res.status === 'success') {
             const itemDetails = CART.map(i => `${i.name} (x${i.qty})`).join(', ');
-            triggerAuditLog("TRANSAKSI", `Menyimpan transaksi POS Utama senilai Rp ${CURRENT_TOTAL.toLocaleString()} dengan item: [ ${itemDetails} ]`);
+            let auditLogMessage = `Menyimpan transaksi POS Utama senilai Rp ${CURRENT_TOTAL.toLocaleString()} dengan item: [ ${itemDetails} ]`;
+            if (finalPriceNotes) {
+              auditLogMessage += ` | Catatan Harga: ${finalPriceNotes}`;
+            }
+            triggerAuditLog("TRANSAKSI", auditLogMessage);
 
             showSummary(transactionData);
             
-            // [PERBAIKAN] Langsung fetch data terbaru agar orderan masuk ke Monitor dengan instan
+            // Langsung fetch data terbaru agar orderan masuk ke Monitor dengan instan
             fetchInitialData(false);
           } else {
             alert("Gagal: " + res.message);
@@ -6107,6 +6172,7 @@
 
       function resetAfterPayment() {
         CART = [];
+        window.CUSTOM_CART_SUBTOTAL = null; // Hapus state memori kustom subtotal global
         updateCartUI();
         document.getElementById('modalSummary').style.display = 'none';
         toggleMobileCart(false);
@@ -6652,7 +6718,7 @@
         let validOrders = 0;
         let cashierCount = {};
         let productCount = {};
-
+        
         // Proses Filter Skala Global
         const filteredData = TRANSACTIONS_DATA.filter(t => {
           const tDate = t.timestamp.split(' ')[0];
@@ -6701,10 +6767,23 @@
             let tMargin = tTotal > 0 ? ((tProfit / tTotal) * 100).toFixed(1) : 0;
             let profitClass = tProfit >= 0 ? 'text-success' : 'text-danger';
             
-            const rowStyle = isKomplimen ? 'opacity: 0.6; background-color: #fff5f5;' : '';
+            // --- LOGIKA HIGHLIGHT ORANGE & BADGE DETAIL NOTE ---
+            let hasAdjustment = t.priceNotes && t.priceNotes.trim() !== "";
+            let rowStyle = isKomplimen ? 'opacity: 0.6; background-color: #fff5f5;' : '';
+            if (!isKomplimen && hasAdjustment) {
+              rowStyle = 'background-color: #fff3cd;'; // Highlight Oranye/Kuning Lembut khas alert warning
+            }
+            
             const totalStyle = isKomplimen ? 'text-decoration: line-through; color: #ff7675;' : 'text-success';
             const statusBadge = isKomplimen ? `<span class="badge bg-danger ms-2" style="font-size:0.6rem;">KOMPLIMEN</span>` : '';
             
+            let noteBadge = '';
+            if (hasAdjustment) {
+              // Melakukan sanitasi string agar aman dilempar ke event handler browser alert
+              let safeNotes = t.priceNotes.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/ \| /g, "\\n");
+              noteBadge = `<span class="badge bg-warning text-dark ms-2" style="cursor: pointer; font-size: 0.65rem;" onclick="alert('Rincian Perubahan Harga:\\n\\n${safeNotes}')"><i class="fas fa-info-circle me-1"></i>Detail Note</span>`;
+            }
+
             let cashierDisplayName = t.cashier;
             if (t.cashier.includes('(Pengganti)')) {
               cashierDisplayName = `<span class="text-danger fw-bold">${t.cashier}</span>`;
@@ -6717,7 +6796,7 @@
             return `
             <tr class="border-bottom" style="${rowStyle}">
               <td class="ps-4 py-3">
-                <div class="fw-bold text-dark" style="font-size: 0.75rem;">${t.orderId} ${statusBadge}</div>
+                <div class="fw-bold text-dark" style="font-size: 0.75rem;">${t.orderId} ${statusBadge}${noteBadge}</div>
                 <div class="text-muted" style="font-size: 0.65rem;">${t.timestamp}</div>
               </td>
               <td>${t.items.map(i => `<div style="font-size:0.7rem;">• ${i.name} x${i.qty}</div>`).join('')}</td>
@@ -6755,13 +6834,12 @@
           const displayText = winners.map(name => isProduct ? `${name} (${maxVal})` : name).join(', ');
           return { display: displayText, count: winners.length };
         };
-
         document.getElementById('dashTopCashier').innerText = getWinners(cashierCount).display;
         CURRENT_PRODUCT_COUNT = productCount;
         
         const chartDataNormal = filteredData.filter(t => t.status !== 'Komplimen');
         updateSalesChart(chartDataNormal);
-
+        
         // --- SIMPAN CALCULATED FILTER KE VARIABEL GLOBAL ---
         window.CURRENT_FILTERED_REVENUE = totalRev;
         window.CURRENT_FILTERED_PROFIT = profitKotor;
