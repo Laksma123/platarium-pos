@@ -695,6 +695,61 @@
       .shift-dropzone.bg-highlight {
         background-color: #f1f8ff !important;
       }
+
+      /* ========================================= */
+      /* ADD-ON FEATURE COSMETIC STYLES            */
+      /* ========================================= */
+      .btn-addon-pill {
+        background: #f1f2f6;
+        color: #5c2c0b;
+        border: 1px solid rgba(197, 160, 89, 0.3);
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 4px 14px;
+        border-radius: 20px;
+        transition: all 0.2s ease;
+      }
+      .btn-addon-pill:hover {
+        background: var(--primary-gold);
+        color: white;
+      }
+      .btn-addon-pill.active {
+        background: #d35400;
+        color: white;
+        border-color: #d35400;
+        animation: pulse-addon 1.5s infinite;
+      }
+      @keyframes pulse-addon {
+        0% { box-shadow: 0 0 0 0 rgba(211, 84, 0, 0.4); }
+        70% { box-shadow: 0 0 0 8px rgba(211, 84, 0, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(211, 84, 0, 0); }
+      }
+
+      /* Animasi Lucu Getar Saat Mode Add-On Aktif */
+      .cart-item-selectable {
+        transition: all 0.2s ease;
+        cursor: pointer !important;
+      }
+      .cart-item-selectable.addon-mode-active {
+        border: 2px dashed #d35400 !important;
+        background: #fffdf5 !important;
+        animation: shake-addon 0.25s infinite alternate;
+      }
+      @keyframes shake-addon {
+        from { transform: rotate(-1deg); }
+        to { transform: rotate(1deg); }
+      }
+
+      .addon-badge-text {
+        font-size: 0.68rem;
+        background: rgba(211, 84, 0, 0.08);
+        color: #d35400;
+        padding: 1px 6px;
+        border-radius: 4px;
+        display: inline-block;
+        margin-top: 2px;
+        font-weight: 600;
+      }
     </style>
   </head>
   <body>
@@ -844,6 +899,12 @@
             <div class="flex-fill overflow-auto p-3" id="cartItems"></div>
             
             <div class="p-4 bg-white border-top">
+              <div class="text-center mb-3">
+                <button type="button" id="btnToggleAddonMode" onclick="toggleAddonSelectionMode()" class="btn btn-addon-pill shadow-sm">
+                  <i class="fas fa-plus-circle me-1"></i> Add-On
+                </button>
+              </div>
+              
               <div class="d-flex justify-content-between mb-2 text-muted"><span>Subtotal</span><span id="txtSubtotal">Rp 0</span></div>
               <div class="d-flex justify-content-between mb-3 fs-4 fw-bold"><span>Total</span><span id="txtTotal" class="text-warning">Rp 0</span></div>
               <button onclick="processCheckout()" class="btn btn-luxury w-100 py-3 rounded-4 fw-bold fs-5">BAYAR SEKARANG</button>
@@ -1588,6 +1649,32 @@
           </div>
         </div>
 
+        <div id="modalCartAddonCosmetic" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10600; opacity: 1 !important;">
+          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 90%; max-width: 350px; animation: slideUp 0.3s ease-out;">
+            <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="fas fa-cookie-bite text-warning me-2"></i> Pengaturan Add-On</h5>
+            <input type="hidden" id="addonTargetPid">
+            <div class="mb-2">
+              <label class="small fw-bold text-muted">ITEM</label>
+              <div class="fw-bold text-dark" id="addonTargetName">Nama Menu</div>
+            </div>
+            <div class="mb-3">
+              <label class="small fw-bold text-muted">NOTE / KETERANGAN</label>
+              <input type="text" id="addonNoteValue" class="form-control fw-bold border-2" placeholder="Contoh: Ekstra es, Manis, dll">
+            </div>
+            <div class="mb-4">
+              <label class="small fw-bold text-muted">GANTI HARGA ITEM (Rp)</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-2 border-end-0">Rp</span>
+                <input type="number" id="addonPriceValue" class="form-control fw-bold border-2 border-start-0 ps-0" placeholder="0">
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-light w-100 rounded-pill fw-bold" onclick="closeCartAddonModal()">Batal</button>
+              <button class="btn btn-warning w-100 rounded-pill fw-bold shadow-sm text-dark" onclick="saveCartAddonCosmetic()">Simpan</button>
+            </div>
+          </div>
+        </div>
+        
         <div id="modalCrop" class="login-overlay d-none" style="display:none; flex-direction: column; justify-content: center; align-items: center; z-index: 20000;">
           <div class="bg-white p-4 rounded-4" style="width: 95%; max-width: 450px;">
             <h5 class="fw-bold mb-4 text-center">Atur Posisi Gambar</h5>
@@ -5691,99 +5778,155 @@
         updateCartUI();
       }
 
+      let IS_ADDON_SELECTION_MODE = false;
+
       function updateCartUI() {
         const container = document.getElementById('cartItems');
-        const mobileTrigger = document.getElementById('mobileCartTrigger'); // Panggil Elemen Grey Bar Mobile
+        const mobileTrigger = document.getElementById('mobileCartTrigger');
         let subtotal = 0;
         let count = 0;
 
         if (CART.length === 0) {
+          IS_ADDON_SELECTION_MODE = false;
+          const btnAddon = document.getElementById('btnToggleAddonMode');
+          if(btnAddon) btnAddon.classList.remove('active');
+          
           container.innerHTML = `<div class="text-center mt-5 text-muted"><i class="fas fa-shopping-cart fa-3x mb-3 opacity-25"></i><p>Belum ada pesanan</p></div>`;
           document.getElementById('txtSubtotal').innerText = 'Rp 0';
           document.getElementById('txtTotal').innerText = 'Rp 0';
-          
           let taxNote = document.getElementById('taxNoteInfo');
           if (taxNote) taxNote.classList.add('d-none');
-          
           const mobTotalEl = document.getElementById('mobTotal');
           const mobCountEl = document.getElementById('mobItemCount');
           if (mobTotalEl && mobCountEl) {
-              mobTotalEl.innerText = 'Rp 0';
-              mobCountEl.innerText = '0';
+            mobTotalEl.innerText = 'Rp 0';
+            mobCountEl.innerText = '0';
           }
-          
-          if (mobileTrigger) mobileTrigger.style.display = 'none'; // Sembunyikan bar cart saat data kosong
-          
+          if (mobileTrigger) mobileTrigger.style.display = 'none';
           CURRENT_TOTAL = 0;
-          
-          // Sinkronisasi Dual Monitor saat keranjang kosong
           posSyncChannel.postMessage({ type: 'UPDATE_CART', cart: CART, total: CURRENT_TOTAL, taxActive: false, taxAmount: 0 });
           return;
         }
 
-        if (mobileTrigger) mobileTrigger.style.display = 'flex'; // Munculkan bar grey saat keranjang mulai terisi
-
+        if (mobileTrigger) mobileTrigger.style.display = 'flex';
+        
         container.innerHTML = CART.map(item => {
-          subtotal += item.price * item.qty;
+          // Gunakan harga kustom kosmetik jika sudah diatur, jika tidak pakai price asli
+          let itemPriceDisplay = item.customPrice !== undefined ? item.customPrice : item.price;
+          subtotal += itemPriceDisplay * item.qty;
           count += item.qty;
+
+          // Siapkan label note kosmetik jika ada
+          let addonBadgeHtml = "";
+          if (item.customNote || item.customPrice !== undefined) {
+            let labelParts = [];
+            if (item.customNote) labelParts.push(`"${item.customNote}"`);
+            if (item.customPrice !== undefined) labelParts.push(`Custom Price`);
+            addonBadgeHtml = `<div class="addon-badge-text"><i class="fas fa-pen small me-1"></i> ${labelParts.join(' | ')}</div>`;
+          }
+
+          // Bangun kelas pengetuk reorder animasi lucu secara dinamis
+          let cardClasses = ["d-flex", "align-items-center", "mb-3", "p-2", "bg-light", "rounded-3", "cart-item-selectable"];
+          if (IS_ADDON_SELECTION_MODE) cardClasses.push("addon-mode-active");
+
+          // Jika mode addon aktif, klik card akan memicu window kustom input kosmetik
+          let clickActionHtml = IS_ADDON_SELECTION_MODE ? `onclick="openCartAddonModal('${item.id}')"` : "";
+
           return `
-            <div class="d-flex align-items-center mb-3 p-2 bg-light rounded-3">
-              <div class="flex-fill">
-                <div class="fw-bold small">${item.name}</div>
-                <div class="text-muted small">Rp ${(item.price * item.qty).toLocaleString()}</div>
-              </div>
-              <div class="qty-control">
-                <button class="btn-qty" onclick="updateCart('${item.id}', -1)"><i class="fas fa-minus"></i></button>
-                <span class="fw-bold small">${item.qty}</span>
-                <button class="btn-qty" onclick="updateCart('${item.id}', 1)"><i class="fas fa-plus"></i></button>
-              </div>
+          <div class="${cardClasses.join(' ')}" ${clickActionHtml}>
+            <div class="flex-fill">
+              <div class="fw-bold small">${item.name}</div>
+              <div class="text-muted small">Rp ${(itemPriceDisplay * item.qty).toLocaleString()}</div>
+              ${addonBadgeHtml}
             </div>
+            <div class="qty-control" onclick="if(IS_ADDON_SELECTION_MODE) event.stopPropagation();">
+              <button class="btn-qty" onclick="updateCart('${item.id}', -1)"><i class="fas fa-minus"></i></button>
+              <span class="fw-bold small">${item.qty}</span>
+              <button class="btn-qty" onclick="updateCart('${item.id}', 1)"><i class="fas fa-plus"></i></button>
+            </div>
+          </div>
           `;
         }).join('');
 
         let finalTotal = subtotal;
-        let activeTaxAmount = 0; 
-        
+        let activeTaxAmount = 0;
         let taxNote = document.getElementById('taxNoteInfo');
         if (!taxNote) {
-            taxNote = document.createElement('div');
-            taxNote.id = 'taxNoteInfo';
-            taxNote.className = 'text-danger small fw-bold text-end mt-1';
-            taxNote.style.fontSize = '0.65rem';
-            document.getElementById('txtTotal').parentNode.parentNode.appendChild(taxNote);
+          taxNote = document.createElement('div');
+          taxNote.id = 'taxNoteInfo';
+          taxNote.className = 'text-danger small fw-bold text-end mt-1';
+          taxNote.style.fontSize = '0.65rem';
+          document.getElementById('txtTotal').parentNode.parentNode.appendChild(taxNote);
         }
-        
         if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
-            activeTaxAmount = subtotal * (TAX_PERCENTAGE / 100);
-            finalTotal = subtotal + activeTaxAmount;
-            
-            taxNote.innerText = `*Sudah termasuk PPN ${TAX_PERCENTAGE}% (Rp ${activeTaxAmount.toLocaleString(undefined, {maximumFractionDigits:0})})`;
-            taxNote.classList.remove('d-none');
+          activeTaxAmount = subtotal * (TAX_PERCENTAGE / 100);
+          finalTotal = subtotal + activeTaxAmount;
+          taxNote.innerText = `*Sudah termasuk PPN ${TAX_PERCENTAGE}% (Rp ${activeTaxAmount.toLocaleString(undefined, {maximumFractionDigits:0})})`;
+          taxNote.classList.remove('d-none');
         } else {
-            taxNote.classList.add('d-none');
+          taxNote.classList.add('d-none');
         }
-
         document.getElementById('txtSubtotal').innerText = 'Rp ' + subtotal.toLocaleString();
         document.getElementById('txtTotal').innerText = 'Rp ' + finalTotal.toLocaleString(undefined, {maximumFractionDigits:0});
-        
         const mobTotalEl = document.getElementById('mobTotal');
         const mobCountEl = document.getElementById('mobItemCount');
         if (mobTotalEl && mobCountEl) {
-            mobTotalEl.innerText = 'Rp ' + finalTotal.toLocaleString(undefined, {maximumFractionDigits:0});
-            mobCountEl.innerText = count.toString();
+          mobTotalEl.innerText = 'Rp ' + finalTotal.toLocaleString(undefined, {maximumFractionDigits:0});
+          mobCountEl.innerText = count.toString();
         }
-        
         CURRENT_TOTAL = finalTotal;
+        posSyncChannel.postMessage({ type: 'UPDATE_CART', cart: CART, total: finalTotal, taxActive: (typeof IS_TAX_ACTIVE !== 'undefined' ? IS_TAX_ACTIVE : false), taxPercent: (typeof TAX_PERCENTAGE !== 'undefined' ? TAX_PERCENTAGE : 0), taxAmount: activeTaxAmount });
+      }
+
+      // --- FUNGSI UTAMA MANAGEMENT STATE MODAL & ANIMASI ADD-ON ---
+      function toggleAddonSelectionMode() {
+        if (CART.length === 0) return;
+        IS_ADDON_SELECTION_MODE = !IS_ADDON_SELECTION_MODE;
+        const btn = document.getElementById('btnToggleAddonMode');
+        if (IS_ADDON_SELECTION_MODE) {
+          btn.classList.add('active');
+          btn.innerHTML = `<i class="fas fa-check-circle me-1"></i> Selesai`;
+        } else {
+          btn.classList.remove('active');
+          btn.innerHTML = `<i class="fas fa-plus-circle me-1"></i> Add-On`;
+        }
+        updateCartUI(); // Segarkan untuk memasang atau melepas kelas animasi getar
+      }
+
+      function openCartAddonModal(pid) {
+        const item = CART.find(x => x.id === pid);
+        if (!item) return;
+
+        document.getElementById('addonTargetPid').value = pid;
+        document.getElementById('addonTargetName').innerText = item.name;
+        document.getElementById('addonNoteValue').value = item.customNote || "";
+        document.getElementById('addonPriceValue').value = item.customPrice !== undefined ? item.customPrice : item.price;
         
-        // MENGIRIM PAYLOAD PAJAK KE CUSTOMER DISPLAY
-        posSyncChannel.postMessage({ 
-          type: 'UPDATE_CART', 
-          cart: CART, 
-          total: finalTotal, 
-          taxActive: (typeof IS_TAX_ACTIVE !== 'undefined' ? IS_TAX_ACTIVE : false),
-          taxPercent: (typeof TAX_PERCENTAGE !== 'undefined' ? TAX_PERCENTAGE : 0),
-          taxAmount: activeTaxAmount 
-        });
+        document.getElementById('modalCartAddonCosmetic').classList.remove('d-none');
+      }
+
+      function closeCartAddonModal() {
+        document.getElementById('modalCartAddonCosmetic').classList.add('d-none');
+      }
+
+      function saveCartAddonCosmetic() {
+        const pid = document.getElementById('addonTargetPid').value;
+        const note = document.getElementById('addonNoteValue').value.trim();
+        const price = parseFloat(document.getElementById('addonPriceValue').value);
+
+        const item = CART.find(x => x.id === pid);
+        if (item) {
+          item.customNote = note;
+          // Jika harga diubah dari harga normalnya, simpan sebagai customPrice kustom kosmetik
+          if (!isNaN(price) && price >= 0) {
+            item.customPrice = price;
+          } else {
+            delete item.customPrice;
+          }
+        }
+
+        closeCartAddonModal();
+        toggleAddonSelectionMode(); // Otomatis matikan mode seleksi getar setelah disimpan
       }
 
       function toggleMobileCart(show) {
