@@ -647,6 +647,51 @@
         to { transform: rotate(1deg); }
       }
 
+      /* Ticket Sequence Numbers */
+      .ticket-seq-number {
+        position: absolute;
+        top: -12px;
+        left: -12px;
+        width: 32px;
+        height: 32px;
+        background: #fffdf5;
+        color: #2c3e50;
+        border: 2px solid #bdc3c7;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 0.95rem;
+        z-index: 10;
+        font-family: 'Outfit', 'Inter', sans-serif;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+      }
+      .ticket-seq-number span {
+        position: relative;
+        z-index: 2;
+      }
+      .ticket-seq-number .red-handwrite-circle {
+        display: none;
+        position: absolute;
+        top: -6px;
+        left: -6px;
+        width: 44px;
+        height: 44px;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .ticket-seq-number.has-red-circle {
+        border-color: transparent !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        color: #e74c3c !important;
+      }
+      .ticket-seq-number.has-red-circle .red-handwrite-circle {
+        display: block !important;
+      }
+
       /* Thermal Printer & Nota Design Styles */
       .receipt-textarea:focus { outline: 1px dashed var(--primary-gold); background: #fffcf5; }
       .group-hover-edit { position: relative; border-radius: 8px; transition: 0.2s; padding: 5px; }
@@ -4383,6 +4428,13 @@
           }
         });
 
+        kTicketsData.forEach((item, index) => {
+          item.chronoIndex = index + 1;
+        });
+        bTicketsData.forEach((item, index) => {
+          item.chronoIndex = index + 1;
+        });
+
         const savedKOrder = JSON.parse(localStorage.getItem('monitor_kitchen_order') || '[]');
         if (savedKOrder.length > 0) {
           kTicketsData.sort((a, b) => {
@@ -4405,8 +4457,16 @@
           });
         }
 
-        let kHtml = kTicketsData.map(data => generateTicketHTML(data.t, data.items, data.type, data.status)).join('');
-        let bHtml = bTicketsData.map(data => generateTicketHTML(data.t, data.items, data.type, data.status)).join('');
+        let kHtml = kTicketsData.map((data, index) => {
+          const visualIndex = index + 1;
+          const isReordered = data.chronoIndex !== visualIndex;
+          return generateTicketHTML(data.t, data.items, data.type, data.status, data.chronoIndex, isReordered);
+        }).join('');
+        let bHtml = bTicketsData.map((data, index) => {
+          const visualIndex = index + 1;
+          const isReordered = data.chronoIndex !== visualIndex;
+          return generateTicketHTML(data.t, data.items, data.type, data.status, data.chronoIndex, isReordered);
+        }).join('');
 
         kArea.innerHTML = kHtml || '<div class="text-muted mt-5 w-100 text-center fw-bold" style="position:absolute; left:0;"><br>Tidak ada antrian Kitchen</div>';
         bArea.innerHTML = bHtml || '<div class="text-muted mt-5 w-100 text-center fw-bold" style="position:absolute; left:0;"><br>Tidak ada antrian Bar</div>';
@@ -4424,6 +4484,7 @@
           onEnd: function(evt) {
             const newOrder = Array.from(kArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_kitchen_order', JSON.stringify(newOrder));
+            renderMonitorUI();
           }
         });
 
@@ -4436,6 +4497,7 @@
           onEnd: function(evt) {
             const newOrder = Array.from(bArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_bar_order', JSON.stringify(newOrder));
+            renderMonitorUI();
           }
         });
       }
@@ -4456,7 +4518,7 @@
         renderMonitorUI();
       }
 
-      function generateTicketHTML(t, items, type, status) {
+      function generateTicketHTML(t, items, type, status, chronoIndex, isReordered) {
         const isProcess = status === 'PROCESS';
         const statusBadge = isProcess ? 'bg-warning text-dark' : 'bg-secondary text-white';
         const statusText = isProcess ? '<i class="fas fa-fire me-1"></i>DIPROSES' : 'MENUNGGU';
@@ -4489,8 +4551,20 @@
           `;
         }
 
+        const hasCircleClass = isReordered ? 'has-red-circle' : '';
+        const seqNumberHtml = chronoIndex ? `
+          <div class="ticket-seq-number ${hasCircleClass}">
+              <span>${chronoIndex}</span>
+              <svg viewBox="0 0 100 100" class="red-handwrite-circle">
+                  <path d="M55,10 C35,8 15,22 10,45 C5,68 20,88 45,92 C70,96 92,80 92,55 C92,30 75,12 50,12 C40,12 30,17 25,22" 
+                        fill="none" stroke="#e74c3c" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+          </div>
+        ` : '';
+
         return `
             <div class="ticket-paper ${reorderClass} ${attentionClass}" data-id="${t.orderId}">
+                ${seqNumberHtml}
                 <div class="ticket-header">
                     <div class="fw-bold fs-5">${t.orderId}</div>
                     <div class="ticket-time">${t.timestamp}</div>
