@@ -1666,7 +1666,7 @@
             </div>
 
             <div class="d-flex justify-content-between align-items-center mb-4 px-2">
-              <h6 class="fw-bold m-0">TOTAL ESTIMASI</h6>
+              <h6 class="fw-bold m-0">TOTAL NILAI</h6>
               <h4 class="fw-bold m-0 text-danger" id="manTotalText">Rp 0</h4>
             </div>
 
@@ -3200,7 +3200,7 @@
             if (myShare) {
               let myProfit = (netProfit > 0) ? (netProfit * (myShare.percentage / 100)) : 0;
               profitHtml += `<div class="mt-2 text-end text-muted small fw-bold" style="border-top: 1px dashed #ccc; padding-top: 5px;">
-                              Estimasi Bagi Hasil (${myShare.percentage}%): <span class="text-primary fs-6">Rp ${myProfit.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+                              Nilai Bagi Hasil (${myShare.percentage}%): <span class="text-primary fs-6">Rp ${myProfit.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
                             </div>`;
             }
           }
@@ -8222,7 +8222,7 @@
               });
               if (line.trim().length > 0) pushTxt(line.trim());
               
-              pushTxt(padText("Estimasi :", `Rp ${k.total.toLocaleString('id-ID', {maximumFractionDigits:0})}`, maxChars));
+              pushTxt(padText("Total Nilai :", `Rp ${k.total.toLocaleString('id-ID', {maximumFractionDigits:0})}`, maxChars));
               pushTxt(''); // Baris kosong pembatas
             });
             pushTxt('-'.repeat(maxChars));
