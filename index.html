@@ -8146,15 +8146,20 @@
 
           // --- MULAI MENYUSUN STRUK ESC/POS ---
           let bytes = [];
+          let textSimulasi = ""; 
           const encoder = new TextEncoder();
-          const pushTxt = (str) => bytes.push(...encoder.encode(str + '\n'));
-          const cmd = {
-             init: [0x1B, 0x40],
-             alignCenter: [0x1B, 0x61, 1],
-             alignLeft: [0x1B, 0x61, 0],
-             boldOn: [0x1B, 0x45, 1],
-             boldOff: [0x1B, 0x45, 0],
-             cut: [0x1D, 0x56, 0x41, 0x00]
+          const pushTxt = (str) => {
+             bytes.push(...encoder.encode(str + '\n'));
+             textSimulasi += str + '\n'; 
+          };
+
+          // --- FUNGSI BANTUAN RATA KIRI-KANAN ---
+          const padText = (left, right, maxLen) => {
+             let leftStr = String(left);
+             let rightStr = String(right);
+             let spaceLen = maxLen - leftStr.length - rightStr.length;
+             if (spaceLen < 1) spaceLen = 1; // Minimal ada 1 spasi pemisah
+             return leftStr + ' '.repeat(spaceLen) + rightStr;
           };
 
           bytes.push(...cmd.init);
