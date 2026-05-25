@@ -5790,7 +5790,20 @@
           IS_ADDON_SELECTION_MODE = false;
           window.CUSTOM_CART_SUBTOTAL = null; // Reset kustom subtotal saat keranjang kosong
           const btnAddon = document.getElementById('btnToggleAddonMode');
-          if(btnAddon) btnAddon.classList.remove('active');
+          if (btnAddon) {
+            btnAddon.classList.remove('active');
+            btnAddon.innerHTML = `<i class="fas fa-plus-circle me-1"></i> Add-On`;
+          }
+          
+          // Bersihkan style dan matikan fungsi klik pada subtotal row saat keranjang kosong
+          const subtotalTextEl = document.getElementById('txtSubtotal');
+          if (subtotalTextEl && subtotalTextEl.parentElement) {
+            const subtotalRow = subtotalTextEl.parentElement;
+            subtotalRow.classList.remove('cart-item-selectable', 'addon-mode-active');
+            subtotalRow.style.cursor = 'default';
+            subtotalRow.title = '';
+            subtotalRow.removeAttribute('onclick');
+          }
           
           container.innerHTML = `<div class="text-center mt-5 text-muted"><i class="fas fa-shopping-cart fa-3x mb-3 opacity-25"></i><p>Belum ada pesanan</p></div>`;
           document.getElementById('txtSubtotal').innerText = 'Rp 0';
@@ -6007,7 +6020,15 @@
 
       // --- FUNGSI UTAMA MANAGEMENT STATE MODAL & ANIMASI ADD-ON ---
       function toggleAddonSelectionMode() {
-        if (CART.length === 0) return;
+        if (CART.length === 0) {
+          IS_ADDON_SELECTION_MODE = false;
+          const btn = document.getElementById('btnToggleAddonMode');
+          if (btn) {
+            btn.classList.remove('active');
+            btn.innerHTML = `<i class="fas fa-plus-circle me-1"></i> Add-On`;
+          }
+          return;
+        }
         IS_ADDON_SELECTION_MODE = !IS_ADDON_SELECTION_MODE;
         const btn = document.getElementById('btnToggleAddonMode');
         if (IS_ADDON_SELECTION_MODE) {
