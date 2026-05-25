@@ -750,6 +750,11 @@
         margin-top: 2px;
         font-weight: 600;
       }
+      .ticket-paper.ticket-attention {
+        background: #fff9db !important;
+        border: 1px solid #ffe066 !important;
+        box-shadow: 0 8px 24px rgba(245, 159, 0, 0.2) !important;
+      }
     </style>
   </head>
   <body>
@@ -4469,12 +4474,28 @@
         // Membaca status untuk memicu visual css getar dan border
         const reorderClass = IS_MONITOR_REORDER ? 'reorder-mode' : '';
 
+        let attentionClass = "";
+        let noteBannerHtml = "";
+        if (t.addonNotes) {
+          attentionClass = "ticket-attention";
+          noteBannerHtml = `
+            <div class="alert alert-warning p-2 mb-2 text-dark border-0 rounded-3 shadow-sm d-flex align-items-center" style="font-size: 0.72rem; background: #fff3bf; color: #856404; line-height: 1.3;">
+              <i class="fas fa-exclamation-triangle me-1 text-warning" style="font-size: 0.8rem;"></i>
+              <div style="flex: 1;">
+                <strong class="d-block" style="font-size: 0.65rem; letter-spacing: 0.3px;">Special Note Attention:</strong>
+                <span>${t.addonNotes}</span>
+              </div>
+            </div>
+          `;
+        }
+
         return `
-            <div class="ticket-paper ${reorderClass}" data-id="${t.orderId}">
+            <div class="ticket-paper ${reorderClass} ${attentionClass}" data-id="${t.orderId}">
                 <div class="ticket-header">
                     <div class="fw-bold fs-5">${t.orderId}</div>
                     <div class="ticket-time">${t.timestamp}</div>
                 </div>
+                ${noteBannerHtml}
                 <div class="flex-fill">
                     ${itemsHtml}
                 </div>
@@ -4488,7 +4509,64 @@
         `;
       }
 
+      function showNoteConfirmationModal(orderId, type, nextStatus, note, onConfirm) {
+        let modal = document.getElementById('modalNoteConfirmation');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'modalNoteConfirmation';
+          modal.className = 'fixed-top w-100 h-100 d-flex justify-content-center align-items-center';
+          modal.style.background = 'rgba(0, 0, 0, 0.6)';
+          modal.style.backdropFilter = 'blur(4px)';
+          modal.style.zIndex = '10600';
+          document.body.appendChild(modal);
+        }
+        
+        modal.innerHTML = `
+          <div class="bg-white rounded-4 shadow-lg p-4 position-relative" style="width: 90%; max-width: 400px; border-top: 5px solid #f1c40f; animation: zoomIn 0.3s ease-out;">
+            <div class="text-center mb-3">
+              <div class="d-inline-flex justify-content-center align-items-center bg-warning bg-opacity-10 rounded-circle p-3 mb-3 text-warning">
+                <i class="fas fa-exclamation-triangle fa-2x"></i>
+              </div>
+              <h5 class="fw-bold text-dark">Special Note Attention</h5>
+            </div>
+            
+            <p class="text-muted text-center small mb-3">
+              Konfirmasi anda paham note ini sebelum memproses order:
+            </p>
+            
+            <div class="bg-light p-3 rounded-3 mb-4 text-center fw-bold text-danger border border-warning" style="font-size: 1rem; white-space: pre-wrap;">
+              "${note}"
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-light w-100 fw-bold py-2 border rounded-pill" onclick="document.getElementById('modalNoteConfirmation').style.setProperty('display', 'none', 'important')">Batal</button>
+              <button type="button" class="btn btn-warning w-100 fw-bold py-2 text-dark rounded-pill shadow-sm" id="btnConfirmNoteAck">Saya Paham & Proses</button>
+            </div>
+          </div>
+        `;
+        
+        modal.style.setProperty('display', 'flex', 'important');
+        document.getElementById('btnConfirmNoteAck').onclick = function() {
+          modal.style.setProperty('display', 'none', 'important');
+          onConfirm();
+        };
+      }
+
       function changeTicketStatus(orderId, type, newStatus) {
+        const targetIdx = TRANSACTIONS_DATA.findIndex(t => t.orderId === orderId);
+        if (targetIdx > -1) {
+          const t = TRANSACTIONS_DATA[targetIdx];
+          if (newStatus === 'PROCESS' && t.addonNotes) {
+            showNoteConfirmationModal(orderId, type, newStatus, t.addonNotes, () => {
+              proceedWithTicketStatusChange(orderId, type, newStatus);
+            });
+            return;
+          }
+        }
+        proceedWithTicketStatusChange(orderId, type, newStatus);
+      }
+
+      function proceedWithTicketStatusChange(orderId, type, newStatus) {
         // Manipulasi array lokal untuk efisiensi visual (Optimistic Update)
         const targetIdx = TRANSACTIONS_DATA.findIndex(t => t.orderId === orderId);
         if(targetIdx > -1) {
@@ -6219,6 +6297,15 @@
         }
         let finalPriceNotes = priceNotesArr.join(' | ');
 
+        // --- ANALISIS STRUKTUR ADD-ON NOTES ---
+        let addonNotesArr = [];
+        CART.forEach(item => {
+          if (item.customNote) {
+            addonNotesArr.push(`Menu [${item.name}] x${item.qty}: "${item.customNote}"`);
+          }
+        });
+        let finalAddonNotes = addonNotesArr.join(' | ');
+
         const transactionData = {
           total: CURRENT_TOTAL, 
           method: method,
@@ -6226,7 +6313,8 @@
           change: method === 'CASH' ? (cash - CURRENT_TOTAL) : 0,
           items: CART,
           cashier: finalCashierName,
-          priceNotes: finalPriceNotes // Masukkan ke payload objek
+          priceNotes: finalPriceNotes, // Masukkan ke payload objek
+          addonNotes: finalAddonNotes   // [BARU] Masukkan addonNotes ke payload objek
         };
 
         google.script.run.withSuccessHandler(res => {
@@ -8887,12 +8975,29 @@
         document.getElementById('doneTicketId').innerText = t.orderId;
         document.getElementById('doneTicketTime').innerText = t.timestamp;
 
-        const itemsHtml = t.items.map(i => `
+        let itemsHtml = t.items.map(i => `
             <div class="ticket-item-row">
                 <span style="flex:1;">${i.name}</span>
                 <span class="ticket-qty">x${i.qty}</span>
             </div>
         `).join('');
+
+        const doneTicketEl = document.querySelector('#modalDoneTicketDetail .ticket-paper');
+
+        if (t.addonNotes) {
+          itemsHtml += `
+            <div class="alert alert-warning p-2 mt-3 mb-0 text-dark border-0 rounded-3 shadow-sm d-flex align-items-center" style="font-size: 0.72rem; background: #fff3bf; color: #856404; line-height: 1.3;">
+              <i class="fas fa-exclamation-triangle me-1 text-warning" style="font-size: 0.8rem;"></i>
+              <div style="flex: 1;">
+                <strong class="d-block" style="font-size: 0.65rem; letter-spacing: 0.3px;">Special Note Attention:</strong>
+                <span>${t.addonNotes}</span>
+              </div>
+            </div>
+          `;
+          if (doneTicketEl) doneTicketEl.classList.add('ticket-attention');
+        } else {
+          if (doneTicketEl) doneTicketEl.classList.remove('ticket-attention');
+        }
 
         document.getElementById('doneTicketItems').innerHTML = itemsHtml;
         document.getElementById('modalDoneTicketDetail').classList.remove('d-none');
