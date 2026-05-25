@@ -1197,7 +1197,7 @@
             </h3>
             
             <div class="d-flex flex-wrap gap-2 ms-auto">
-              <button class="btn btn-info rounded-pill fw-bold shadow-sm px-3 text-white d-flex align-items-center" id="btnBroadcastLaporan" onclick="broadcastLaporan()" style="height: 38px; font-size: 0.85rem;" title="Kirim Laporan ke Telegram Owner">
+              <button class="btn btn-success rounded-pill fw-bold shadow-sm px-3 text-white d-flex align-items-center" id="btnBroadcastLaporan" onclick="broadcastLaporan()" style="height: 38px; font-size: 0.85rem;" title="Kirim Laporan ke Telegram Owner">
                 <i class="fab fa-telegram-plane me-2"></i>Kirim Telegram
               </button>
               <button class="btn btn-dark rounded-pill fw-bold shadow-sm px-3 d-flex align-items-center" id="btnPrintLaporan" onclick="printLaporanThermal()" style="height: 38px; font-size: 0.85rem;" title="Cetak Thermal Laporan Panjang">
@@ -8019,27 +8019,18 @@
 
         // [PERBAIKAN] 2. Cek apakah Sub-Fitur Thermal Printer Aktif
         if (localStorage.getItem('pos_printer_active') !== 'true') return;
-        
+
         const connType = localStorage.getItem('pos_printer_type') || 'bluetooth';
-        
+
         try {
           const bytes = await buildEscPosBytes(transactionData);
-          // === MODE SIMULASI (TIDAK PRINT SUNGGUHAN) ===
           
-          // 1. Tampilkan di Console Browser (Tekan F12 di browser lalu ke tab Console untuk melihatnya lebih rapi)
-          console.log("===== SIMULASI PRINT LAPORAN =====");
-          console.log(textSimulasi);
-          
-          // 2. Tampilkan langsung sebagai Pop-up Alert di layar
-          // alert("HASIL SIMULASI PRINT:\n\n" + textSimulasi);
-
-          // Panggil Engine Print (Bluetooth/QZ Tray)
+          // --- KODE PRINT ASLI ---
           if (connType === 'bluetooth') {
-             await executeBluetoothPrint(bytes);
+            await executeBluetoothPrint(bytes);
           } else {
-             await executeQZPrint(bytes);
+            await executeQZPrint(bytes);
           }
-          
         } catch (e) {
           console.warn("Proses cetak terhenti: ", e);
         }
@@ -8065,9 +8056,10 @@
           const filterType = document.getElementById('revFilter').value;
           const filterText = document.getElementById('revFilter').options[document.getElementById('revFilter').selectedIndex].text;
           const customDate = document.getElementById('customDateText').innerText;
+
           let periodStr = filterType === 'custom' ? customDate : filterText;
           let filterDisplay = filterType === 'custom' ? `Tanggal ${customDate}` : filterText;
-
+          
           const totalRev = document.getElementById('dashTotalRevenue').innerText;
           const totalHPP = document.getElementById('dashTotalHPP').innerText;
           const netProfit = document.getElementById('dashNetProfit').innerText;
@@ -8075,6 +8067,7 @@
 
           // --- FILTER DATA TRANSAKSI ---
           const mFilter = document.getElementById('methodFilter') ? document.getElementById('methodFilter').value : 'all';
+          
           const now = new Date();
           const todayStr = Utilities_formatDateIndo(now);
           const monthStr = (now.getMonth() + 1).toString().padStart(2, '0') + '/' + now.getFullYear();
@@ -8091,7 +8084,7 @@
 
             let methodMatch = true;
             if (mFilter !== 'all') {
-              methodMatch = (t.method === mFilter);
+                methodMatch = (t.method === mFilter);
             }
             return timeMatch && methodMatch;
           });
@@ -8105,28 +8098,29 @@
 
           filteredData.forEach(t => {
             if (t.status === 'Komplimen') {
-              // Kalkulasi ulang harga komplimen inklusif tax jika ada
-              let originalTotal = t.items.reduce((sum, item) => sum + (item.qty * item.price), 0);
-              let finalTotal = originalTotal * taxMultiplier;
-              
-              komplimenList.push({
+                // Kalkulasi ulang harga komplimen inklusif tax jika ada
+                let originalTotal = t.items.reduce((sum, item) => sum + (item.qty * item.price), 0);
+                let finalTotal = originalTotal * taxMultiplier;
+                
+                komplimenList.push({
                   id: t.orderId,
                   items: t.items.map(i => `${i.name} x${i.qty}`).join(', '),
                   total: finalTotal
-              });
-              return; // Abaikan item komplimen dari rekap total penjualan bawah
+                });
+                return; // Abaikan item komplimen dari rekap total penjualan bawah
             }
-            
+
             t.items.forEach(i => {
               if (!itemAgg[i.id]) {
-                let cat = 'Lainnya'; // Cocokkan dengan master PRODUCTS
+                let cat = 'Lainnya';
+                // Cocokkan dengan master PRODUCTS
                 const prod = PRODUCTS.find(p => String(p.id) === String(i.id));
                 if (prod && prod.category) cat = prod.category;
                 itemAgg[i.id] = { name: i.name, category: cat, qty: 0, total: 0 };
               }
               itemAgg[i.id].qty += Number(i.qty);
               // Kalikan dengan taxMultiplier agar harga di thermal sama dengan header dashboard
-              itemAgg[i.id].total += (Number(i.qty) * Number(i.price)) * taxMultiplier; 
+              itemAgg[i.id].total += (Number(i.qty) * Number(i.price)) * taxMultiplier;
             });
           });
 
@@ -8150,12 +8144,9 @@
 
           // --- MULAI MENYUSUN STRUK ESC/POS ---
           let bytes = [];
-          let textSimulasi = "";
           const encoder = new TextEncoder();
-
           const pushTxt = (str) => {
             bytes.push(...encoder.encode(str + '\n'));
-            textSimulasi += str + '\n';
           };
 
           // --- FUNGSI BANTUAN RATA KIRI-KANAN ---
@@ -8184,7 +8175,7 @@
           pushTxt(`Periode: ${periodStr}`);
           pushTxt(`Dicetak: ${new Date().toLocaleString('id-ID')}`);
           pushTxt('-'.repeat(maxChars));
-
+          
           bytes.push(...cmd.alignLeft);
           pushTxt(padText("Pendapatan:", totalRev, maxChars));
           pushTxt(padText("Total HPP:", totalHPP, maxChars));
@@ -8196,9 +8187,8 @@
           bytes.push(...cmd.boldOn);
           pushTxt("RINCIAN TRANSAKSI");
           bytes.push(...cmd.boldOff);
-
           bytes.push(...cmd.alignLeft);
-          
+
           // FORMAT KOMPLIMEN BARU (MENDUKUNG MULTI-BARIS AGAR TIDAK TERPOTONG)
           if (komplimenList.length > 0) {
             bytes.push(...cmd.boldOn);
@@ -8210,11 +8200,11 @@
               
               // Membungkus teks rincian jika melebihi batas kertas
               let words = k.items.split(' ');
-              let line = 'Rincian  : ';
+              let line = 'Rincian : ';
               words.forEach(w => {
                 if ((line + w).length > maxChars) {
                   pushTxt(line.trim());
-                  line = '           ' + w + ' ';
+                  line = ' ' + w + ' ';
                 } else {
                   line += w + ' ';
                 }
@@ -8229,67 +8219,63 @@
 
           const catKeys = Object.keys(catMap).sort();
           if (catKeys.length > 0) {
-            catKeys.forEach(cat => {
-              bytes.push(...cmd.boldOn);
-              pushTxt(`Kategori : ${cat}`);
-              bytes.push(...cmd.boldOff);
-              catMap[cat].sort((a,b) => b.qty - a.qty).forEach(item => {
-                let nameQty = `${item.name} x${item.qty}`;
-                let priceStr = `Rp ${item.total.toLocaleString('id-ID', {maximumFractionDigits:0})}`;
-                if (nameQty.length > maxChars - priceStr.length - 1) {
-                  nameQty = nameQty.substring(0, maxChars - priceStr.length - 2) + "..";
-                }
-                pushTxt(padText(nameQty, priceStr, maxChars));
+              catKeys.forEach(cat => {
+                bytes.push(...cmd.boldOn);
+                pushTxt(`Kategori : ${cat}`);
+                bytes.push(...cmd.boldOff);
+                
+                catMap[cat].sort((a,b) => b.qty - a.qty).forEach(item => {
+                  let nameQty = `${item.name} x${item.qty}`;
+                  let priceStr = `Rp ${item.total.toLocaleString('id-ID', {maximumFractionDigits:0})}`;
+                  
+                  if (nameQty.length > maxChars - priceStr.length - 1) {
+                    nameQty = nameQty.substring(0, maxChars - priceStr.length - 2) + "..";
+                  }
+                  pushTxt(padText(nameQty, priceStr, maxChars));
+                });
+                pushTxt(''); // Baris kosong antar kategori
               });
-              pushTxt(''); // Baris kosong antar kategori
-            });
           } else {
-            pushTxt("Belum ada penjualan menu.");
-            pushTxt('');
+              pushTxt("Belum ada penjualan menu.");
+              pushTxt('');
           }
-
+          
           pushTxt('-'.repeat(maxChars));
 
           // PERBAIKAN LOGIKA TERBANYAK & TERSEDIKIT
           if (mostOrdered.length > 0 && minQty !== Infinity) {
-            // Join semuanya tanpa ada pemotongan slice(0,3)
-            let mostOrderedStr = mostOrdered.join(', ');
-            let leastOrderedStr = leastOrdered.join(', ');
-            
-            let notes = `Paling sering di order pada ${filterDisplay}: ${mostOrderedStr} (${maxQty}x). Paling sedikit di order: ${leastOrderedStr} (${minQty}x).`;
-            
-            let words = notes.split(' ');
-            let line = '';
-            words.forEach(w => {
-              if ((line + w).length > maxChars) {
-                pushTxt(line.trim());
-                line = w + ' ';
-              } else {
-                line += w + ' ';
-              }
-            });
-            if (line.trim().length > 0) pushTxt(line.trim());
+              // Join semuanya tanpa ada pemotongan slice(0,3)
+              let mostOrderedStr = mostOrdered.join(', ');
+              let leastOrderedStr = leastOrdered.join(', ');
+              
+              let notes = `Paling sering di order pada ${filterDisplay}: ${mostOrderedStr} (${maxQty}x). Paling sedikit di order: ${leastOrderedStr} (${minQty}x).`;
+              
+              let words = notes.split(' ');
+              let line = '';
+              words.forEach(w => {
+                if ((line + w).length > maxChars) {
+                    pushTxt(line.trim());
+                    line = w + ' ';
+                } else {
+                    line += w + ' ';
+                }
+              });
+              if (line.trim().length > 0) pushTxt(line.trim());
           }
-
+          
           pushTxt('-'.repeat(maxChars));
           bytes.push(...cmd.alignCenter);
           pushTxt("Akhir dari Laporan");
           pushTxt('\n\n\n');
           bytes.push(...cmd.cut);
 
-          // === MODE SIMULASI (TIDAK PRINT SUNGGUHAN) ===
-          console.log("===== SIMULASI PRINT LAPORAN =====");
-          console.log(textSimulasi);
-          alert("Berhasil Simulasi! Cek Console (Tekan F12) untuk melihat hasilnya dengan rapi dan lurus.\n\nKlik OK untuk melihat bentuk mentahnya.");
-          alert(textSimulasi);
-
-          /* --- KODE PRINT ASLI (SEDANG DIMATIKAN UNTUK SIMULASI) ---
+          // --- KODE PRINT ASLI ---
           if (connType === 'bluetooth') {
             await executeBluetoothPrint(bytes);
           } else {
             await executeQZPrint(bytes);
           }
-          */
+
         } catch(e) {
           console.warn("Gagal cetak rekap thermal", e);
           alert("Gagal mencetak: " + e.message);
