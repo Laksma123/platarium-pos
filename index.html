@@ -2507,21 +2507,8 @@
            return orderA - orderB;
         });
 
-        let html = `
-        <div class="col-12">
-          <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-            <div class="table-responsive">
-              <table class="table table-hover align-middle m-0">
-                <thead class="bg-dark text-white">
-                  <tr>
-                    <th class="ps-4 py-3">Nama & Role</th>
-                    <th class="text-center">Status</th>
-                    <th class="text-center">Gaji / Persentase</th>
-                    <th class="text-center pe-4" style="width: 250px;">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody class="bg-white">
-        `;
+        // Menggunakan desain List Group yang dirampingkan 
+        let html = '<div class="col-12"><div class="list-group shadow-sm rounded-4 border-0">';
 
         sortedStaff.forEach(staff => {
           let photoUrl = faces[staff.name] || 'https://via.placeholder.com/150';
@@ -2534,49 +2521,52 @@
             salaryValue = `${staff.salary}%`;
           }
 
+          let roleBadgeBg = staff.role === 'ADMIN' ? 'bg-danger' : (staff.role === 'KITCHEN' ? 'bg-warning text-dark' : 'bg-primary');
+
           html += `
-            <tr class="${!isActive ? 'opacity-75 bg-light' : ''}" id="staff-card-${staff.id}">
-              <td class="ps-4 py-3">
-                <div class="d-flex align-items-center gap-3">
-                  <div class="rounded-circle overflow-hidden shadow-sm border border-2 border-white" style="width: 50px; height: 50px; flex-shrink: 0;">
-                    <img src="${photoUrl}" style="width:100%; height:100%; object-fit:cover;">
-                  </div>
-                  <div>
-                    <h6 class="fw-bold m-0 text-dark">${staff.name}</h6>
-                    <span class="badge ${staff.role === 'ADMIN' ? 'bg-danger' : (staff.role === 'KITCHEN' ? 'bg-warning text-dark' : 'bg-primary')} mt-1" style="font-size:0.65rem;">${staff.role}</span>
-                  </div>
+            <div class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-md-center p-3 ${!isActive ? 'opacity-75 bg-light' : ''}" id="staff-card-${staff.id}">
+              
+              <div class="d-flex align-items-center mb-3 mb-md-0" style="min-width: 220px;">
+                <img src="${photoUrl}" class="rounded-circle shadow-sm border border-2 border-white me-3" style="width: 48px; height: 48px; object-fit: cover;">
+                <div>
+                  <h6 class="fw-bold m-0 text-dark" style="font-size: 0.95rem;">${staff.name}</h6>
+                  <span class="badge ${roleBadgeBg} mt-1" style="font-size: 0.65rem;">${staff.role}</span>
                 </div>
-              </td>
-              <td class="text-center">
-                <span class="badge ${isActive ? 'bg-success' : 'bg-danger'} shadow-sm" 
-                      style="cursor: pointer; padding: 6px 12px;" 
-                      id="status-badge-${staff.id}" 
-                      onclick="toggleStaffStatus('${staff.id}', '${staff.status}')">
-                  ${staff.status} <i class="fas fa-caret-down ms-1"></i>
-                </span>
-              </td>
-              <td class="text-center">
-                <div class="fw-bold text-success" style="font-size: 0.95rem;">${salaryValue}</div>
-                <div class="text-muted" style="font-size: 0.7rem;">${salaryLabel}</div>
-              </td>
-              <td class="text-center pe-4">
-                <div class="btn-group border rounded-pill shadow-sm overflow-hidden w-100">
-                  <button class="btn btn-light btn-sm border-end" onclick="openStaffModal('${staff.id}')" title="Edit Staff">
-                    <i class="fas fa-pencil-alt text-primary px-1"></i>
-                  </button>
-                  <button class="btn btn-luxury btn-sm fw-bold border-end px-3 text-white" onclick="openStaffAbsensiModal('${staff.name}')" title="Cek Absensi" style="font-size: 0.75rem;">
-                    <i class="fas fa-user-clock me-1"></i> Cek Absensi
-                  </button>
-                  <button class="btn btn-light btn-sm text-danger" onclick="deleteStaffUI('${staff.id}', '${staff.name}')" title="Hapus Staff">
-                    <i class="fas fa-trash px-1"></i>
-                  </button>
+              </div>
+
+              <div class="d-flex align-items-center justify-content-between flex-grow-1 mx-md-4 mb-3 mb-md-0">
+                <div class="text-start text-md-center">
+                  <div class="fw-bold text-success" style="font-size: 0.9rem;">${salaryValue}</div>
+                  <div class="text-muted" style="font-size: 0.7rem;">${salaryLabel}</div>
                 </div>
-              </td>
-            </tr>
+                
+                <div class="text-end text-md-center">
+                  <span class="badge ${isActive ? 'bg-success' : 'bg-danger'} shadow-sm" 
+                        style="cursor: pointer; padding: 6px 12px; transition: 0.2s;" 
+                        id="status-badge-${staff.id}" 
+                        onclick="toggleStaffStatus('${staff.id}', '${staff.status}')">
+                    ${staff.status} <i class="fas fa-caret-down ms-1"></i>
+                  </span>
+                </div>
+              </div>
+
+              <div class="d-flex gap-2 justify-content-end">
+                <button class="btn btn-light btn-sm rounded-circle shadow-sm border d-flex align-items-center justify-content-center" onclick="openStaffModal('${staff.id}')" title="Edit Staff" style="width: 36px; height: 36px;">
+                  <i class="fas fa-pencil-alt text-primary"></i>
+                </button>
+                <button class="btn btn-light btn-sm rounded-circle shadow-sm border d-flex align-items-center justify-content-center" onclick="openStaffAbsensiModal('${staff.name}')" title="Cek Absensi" style="width: 36px; height: 36px;">
+                  <i class="fas fa-user-clock text-warning"></i>
+                </button>
+                <button class="btn btn-light btn-sm rounded-circle shadow-sm border d-flex align-items-center justify-content-center" onclick="deleteStaffUI('${staff.id}', '${staff.name}')" title="Hapus Staff" style="width: 36px; height: 36px;">
+                  <i class="fas fa-trash text-danger"></i>
+                </button>
+              </div>
+
+            </div>
           `;
         });
 
-        html += `</tbody></table></div></div></div>`;
+        html += `</div></div>`;
         container.innerHTML = html;
       }
 
@@ -2776,7 +2766,8 @@
           if (card) {
               card.style.opacity = '0.5';
               card.style.pointerEvents = 'none';
-              card.innerHTML = '<td colspan="4" class="text-center p-4"><i class="fas fa-spinner fa-spin fa-2x text-danger"></i></td>';
+              // Penyesuaian ke div, bukan td
+              card.innerHTML = '<div class="w-100 text-center p-4"><i class="fas fa-spinner fa-spin fa-2x text-danger"></i></div>';
           }
           google.script.run.withSuccessHandler(res => {
             if (res.status === 'success') {
@@ -2784,7 +2775,7 @@
               if (card) card.remove();
               if (res.cashiers) {
                   CONFIG.Cashiers = res.cashiers;
-                  renderCashierButtons();
+                  if (typeof renderCashierButtons === 'function') renderCashierButtons();
               }
             } else {
               alert("Gagal menghapus: " + res.message);
@@ -8182,7 +8173,7 @@
               alert("Gagal memproses screenshot: " + err);
           });
       }
-      
+
       // ==========================================
       // DUAL POS MONITOR (CUSTOMER DISPLAY) ENGINE
       // ==========================================
