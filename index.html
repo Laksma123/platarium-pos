@@ -7870,8 +7870,12 @@
       // 4. Kompilasi Data Transaksi Menjadi Array Bytes ESC/POS
       async function buildEscPosBytes(transactionData) {
         let bytes = [];
+        let textSimulasi = ""; // Variabel baru penampung teks
         const encoder = new TextEncoder();
-        const pushTxt = (str) => bytes.push(...encoder.encode(str + '\n'));
+        const pushTxt = (str) => {
+            bytes.push(...encoder.encode(str + '\n'));
+            textSimulasi += str + '\n'; // Simpan juga ke variabel simulasi
+        };
         
         const cmd = {
           init: [0x1B, 0x40],
@@ -8020,11 +8024,23 @@
         
         try {
           const bytes = await buildEscPosBytes(transactionData);
+          // === MODE SIMULASI (TIDAK PRINT SUNGGUHAN) ===
+          
+          // 1. Tampilkan di Console Browser (Tekan F12 di browser lalu ke tab Console untuk melihatnya lebih rapi)
+          console.log("===== SIMULASI PRINT LAPORAN =====");
+          console.log(textSimulasi);
+          
+          // 2. Tampilkan langsung sebagai Pop-up Alert di layar
+          alert("HASIL SIMULASI PRINT:\n\n" + textSimulasi);
+
+          /* MATIKAN SEMENTARA KODE PRINT ASLI DI BAWAH INI
+          // Panggil Engine Print (Bluetooth/QZ Tray)
           if (connType === 'bluetooth') {
-            await executeBluetoothPrint(bytes);
+             await executeBluetoothPrint(bytes);
           } else {
-            await executeQZPrint(bytes);
+             await executeQZPrint(bytes);
           }
+          */
         } catch (e) {
           console.warn("Proses cetak terhenti: ", e);
         }
@@ -8252,7 +8268,7 @@
           btn.disabled = false;
         }
       }
-      
+
       function broadcastLaporan() {
         const btn = document.getElementById('btnBroadcastLaporan');
         const ogHtml = btn.innerHTML;
