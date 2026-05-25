@@ -5918,24 +5918,91 @@
 
       function changeCartSubtotalPrompt() {
         if (CART.length === 0) return;
-        // Hitung akumulasi subtotal dari kondisi cart saat ini
+
+        // Hitung subtotal default akumulasi item saat ini
         let computedSub = CART.reduce((sum, item) => sum + ((item.customPrice !== undefined ? item.customPrice : item.price) * item.qty), 0);
-        let currentDefault = window.CUSTOM_CART_SUBTOTAL !== undefined && window.CUSTOM_CART_SUBTOTAL !== null ? window.CUSTOM_CART_SUBTOTAL : computedSub;
         
-        let newSubInput = prompt("Masukkan Ganti Sub Total Baru (Rp):", currentDefault);
-        if (newSubInput !== null) {
-          if (newSubInput.trim() === "") {
-            window.CUSTOM_CART_SUBTOTAL = null; // Kembalikan ke normal jika input dikosongkan
-          } else {
-            let val = parseFloat(newSubInput);
-            if (!isNaN(val) && val >= 0) {
-              window.CUSTOM_CART_SUBTOTAL = val;
-            } else {
-              alert("Mohon masukkan nilai nominal angka yang valid!");
-            }
-          }
-          updateCartUI();
+        // Ambil nilai kustom yang sedang aktif (jika ada), jika tidak ada gunakan subtotal asli
+        let currentDefault = window.CUSTOM_CART_SUBTOTAL !== undefined && window.CUSTOM_CART_SUBTOTAL !== null ? window.CUSTOM_CART_SUBTOTAL : computedSub;
+
+        // Cek apakah elemen modal kustom sudah ada di DOM, jika belum ada kita bangun secara dinamis
+        let modal = document.getElementById('modalCustomSubtotal');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'modalCustomSubtotal';
+          // Menggunakan standar overlay fixed-top dengan style backdrop gelap transparan
+          modal.className = 'fixed-top w-100 h-100 d-none justify-content-center align-items-center';
+          modal.style.background = 'rgba(0, 0, 0, 0.5)';
+          modal.style.zIndex = '1060'; // Memastikan berada di atas panel cart utama
+          modal.style.display = 'flex'; 
+
+          modal.innerHTML = `
+            <div class="bg-white rounded-3 shadow p-4 position-relative" style="width: 90%; max-width: 400px; border-top: 5px solid var(--primary-gold, #ffc107);">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0 text-dark">
+                  <i class="fas fa-edit me-2 text-warning"></i>Ganti Sub Total
+                </h5>
+                <button type="button" class="btn-close" onclick="closeSubtotalModal()"></button>
+              </div>
+              
+              <p class="text-muted style-normal mb-4" style="font-size: 0.8rem; line-height: 1.4;">
+                Silakan masukkan nominal subtotal global baru yang diinginkan. Perubahan ini akan otomatis dikalkulasi ulang dengan PPN (Tax) secara realtime.
+              </p>
+              
+              <div class="mb-4">
+                <label class="form-label small fw-bold text-secondary">Nominal Baru (Rp)</label>
+                <div class="input-group input-group-lg">
+                  <span class="input-group-text bg-light fw-bold text-muted" style="font-size: 1rem;">Rp</span>
+                  <input type="number" id="inputCustomSubtotalValue" class="form-control fw-bold text-danger" placeholder="0" min="0" style="font-size: 1.25rem;">
+                </div>
+                <div class="form-text text-muted small mt-2" style="font-size: 0.7rem;">
+                  <i class="fas fa-info-circle me-1"></i> Kosongkan nilai input lalu klik simpan untuk mengembalikan ke harga normal.
+                </div>
+              </div>
+
+              <div class="d-flex gap-2 justify-content-end">
+                <button type="button" class="btn btn-light btn-sm fw-bold px-3 border" onclick="closeSubtotalModal()">Batal</button>
+                <button type="button" class="btn btn-warning btn-sm fw-bold px-3 text-dark shadow-sm" onclick="saveSubtotalModal()">Simpan Perubahan</button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(modal);
         }
+
+        // Isi form input modal dengan nilai kustom saat ini (jika ada)
+        const inputEl = document.getElementById('inputCustomSubtotalValue');
+        inputEl.value = window.CUSTOM_CART_SUBTOTAL !== undefined && window.CUSTOM_CART_SUBTOTAL !== null ? window.CUSTOM_CART_SUBTOTAL : "";
+        
+        // Tampilkan modal ke layar
+        modal.classList.remove('d-none');
+        
+        // Berikan sedikit delay fokus agar proses transisi render DOM selesai
+        setTimeout(() => inputEl.focus(), 100);
+      }
+
+      function closeSubtotalModal() {
+        const modal = document.getElementById('modalCustomSubtotal');
+        if (modal) modal.classList.add('d-none');
+      }
+
+      function saveSubtotalModal() {
+        const inputEl = document.getElementById('inputCustomSubtotalValue');
+        const inputValueStr = inputEl.value.trim();
+
+        if (inputValueStr === "") {
+          window.CUSTOM_CART_SUBTOTAL = null; // Kembalikan ke setelan normal jika input sengaja dikosongkan
+        } else {
+          let val = parseFloat(inputValueStr);
+          if (!isNaN(val) && val >= 0) {
+            window.CUSTOM_CART_SUBTOTAL = val;
+          } else {
+            alert("Mohon masukkan nilai nominal subtotal angka yang valid!");
+            return;
+          }
+        }
+
+        closeSubtotalModal();
+        updateCartUI(); // Segarkan UI cart, efek getar animasi, dan PPN secara instan 
       }
 
       // --- FUNGSI UTAMA MANAGEMENT STATE MODAL & ANIMASI ADD-ON ---
