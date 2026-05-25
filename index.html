@@ -328,8 +328,8 @@
         .pos-cart { 
           width: 350px;
           border-left: 1px solid #eee; display: flex !important; flex-direction: column;
-          /* Fix: Gunakan 100% agar otomatis menyesuaikan batas bawah nav, bukan 100vh */
-          height: calc(100% - 70px - env(safe-area-inset-bottom)); 
+          /* Fix: Gunakan variabel --bottom-nav-height agar otomatis menyesuaikan batas bawah nav mode mobile/desktop */
+          height: calc(100% - var(--bottom-nav-height) - env(safe-area-inset-bottom)); 
           position: sticky;
           top: 0; background: white; z-index: 50;
         }
@@ -2200,7 +2200,8 @@
           const source = document.getElementById('staffPillsSource');
           if (source) {
             const activeStaff = STAFF_DATA.filter(s => s.status === 'Active');
-            const roleOrder = { 'ADMIN': 1, 'CASHIER': 2, 'KASIR': 2, 'BARISTA': 3, 'KITCHEN': 4 };
+            // FIX SORTING: Urutannya disamakan dengan tabel staff
+            const roleOrder = { 'ADMIN': 1, 'CASHIER': 2, 'KASIR': 2, 'KITCHEN': 3, 'BARISTA': 4 };
             activeStaff.sort((a, b) => {
                const orderA = roleOrder[a.role.toUpperCase()] || 99;
                const orderB = roleOrder[b.role.toUpperCase()] || 99;
@@ -2339,7 +2340,7 @@
               }));
           });
       }
-
+      
       function executeBatchSaveSchedule() {
           const btn = document.getElementById('btnSaveBatchSchedule');
           const originalHtml = btn.innerHTML;
@@ -2492,6 +2493,14 @@
           return;
         }
 
+        // --- SORTING LOGIC: Admin -> Cashier -> Kitchen -> Barista ---
+        const roleOrder = { 'ADMIN': 1, 'CASHIER': 2, 'KASIR': 2, 'KITCHEN': 3, 'BARISTA': 4 };
+        let sortedStaff = [...STAFF_DATA].sort((a, b) => {
+           const orderA = roleOrder[a.role.toUpperCase()] || 99;
+           const orderB = roleOrder[b.role.toUpperCase()] || 99;
+           return orderA - orderB;
+        });
+
         let html = `
         <div class="col-12">
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
@@ -2508,7 +2517,7 @@
                 <tbody class="bg-white">
         `;
 
-        STAFF_DATA.forEach(staff => {
+        sortedStaff.forEach(staff => {
           let photoUrl = faces[staff.name] || 'https://via.placeholder.com/150';
           const isActive = staff.status === 'Active';
           let salaryLabel = "Gaji Pokok";
