@@ -800,9 +800,169 @@
         border: 1px solid #ffe066 !important;
         box-shadow: 0 8px 24px rgba(245, 159, 0, 0.2) !important;
       }
+
+      /* ========================================= */
+      /* PORTRAIT VIEW BLOCKER OVERLAY             */
+      /* ========================================= */
+      .portrait-warning-overlay {
+        display: none;
+      }
+
+      @media (orientation: portrait) {
+        .portrait-warning-overlay {
+          display: flex !important;
+          position: fixed;
+          inset: 0;
+          width: 100vw;
+          height: 100vh;
+          height: 100dvh;
+          background: #050505;
+          color: #ffffff;
+          z-index: 10000000; /* Indeks tumpukan tertinggi untuk memblokir semua interaksi */
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          text-align: center;
+          padding: 30px;
+          box-sizing: border-box;
+          font-family: 'Poppins', sans-serif;
+        }
+
+        /* Mencegah scrolling latar belakang saat terkunci */
+        body {
+          overflow: hidden !important;
+        }
+      }
+
+      .portrait-warning-content {
+        max-width: 480px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        animation: fadeInOverlay 0.5s ease-out;
+      }
+
+      .warning-title {
+        font-size: clamp(1.1rem, 5vw, 1.6rem);
+        font-weight: 700;
+        color: var(--primary-gold, #c5a059);
+        margin: 0;
+        line-height: 1.4;
+        letter-spacing: 0.5px;
+        text-shadow: 0 0 10px rgba(197, 160, 89, 0.2);
+        word-wrap: break-word;
+      }
+
+      .warning-subtitle {
+        font-size: clamp(0.8rem, 3.2vw, 0.95rem);
+        font-weight: 400;
+        color: #a4b0be;
+        margin: 0;
+        line-height: 1.6;
+        max-width: 90%;
+      }
+
+      /* Animasi Putar Ponsel SVG */
+      .rotate-phone-icon-wrapper {
+        width: 100px;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(197, 160, 89, 0.05);
+        border: 1.5px solid rgba(197, 160, 89, 0.15);
+        border-radius: 50%;
+        margin-bottom: 5px;
+        box-shadow: 0 0 30px rgba(197, 160, 89, 0.05);
+      }
+
+      .rotate-phone-svg {
+        width: 50px;
+        height: 50px;
+        color: var(--primary-gold, #c5a059);
+      }
+
+      .rotate-phone-svg .phone-body {
+        animation: rotateDevice 2.5s infinite ease-in-out;
+        transform-origin: center;
+      }
+
+      .rotate-phone-svg .phone-button,
+      .rotate-phone-svg .phone-speaker {
+        animation: rotateDeviceParts 2.5s infinite ease-in-out;
+        transform-origin: center;
+      }
+
+      .rotate-phone-svg .rotate-arrow-1,
+      .rotate-phone-svg .rotate-arrow-head {
+        animation: arrowPulse 2.5s infinite ease-in-out;
+      }
+
+      @keyframes rotateDevice {
+        0%, 100% {
+          transform: rotate(0deg);
+        }
+        45%, 55% {
+          transform: rotate(-90deg);
+        }
+      }
+
+      @keyframes rotateDeviceParts {
+        0%, 100% {
+          opacity: 1;
+          transform: rotate(0deg);
+        }
+        45%, 55% {
+          opacity: 0.7;
+          transform: rotate(-90deg);
+        }
+      }
+
+      @keyframes arrowPulse {
+        0%, 100% {
+          opacity: 0.3;
+          transform: scale(0.95);
+        }
+        45%, 55% {
+          opacity: 1;
+          transform: scale(1.05);
+          color: #ffffff;
+        }
+      }
+
+      @keyframes fadeInOverlay {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
     </style>
   </head>
   <body>
+
+    <!-- Overlay Pemblokir Layar Portrait Dinamis (Orientation Blocker) -->
+    <div id="portraitWarningOverlay" class="portrait-warning-overlay">
+      <div class="portrait-warning-content">
+        <div class="rotate-phone-icon-wrapper">
+          <svg class="rotate-phone-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="2" width="12" height="20" rx="2" ry="2" class="phone-body" />
+            <path d="M12 18h.01" class="phone-button" stroke-width="2" />
+            <path d="M14 3h-4" class="phone-speaker" />
+            <path d="M17 7a5 5 0 0 1 3.5 3.5" class="rotate-arrow-1" />
+            <path d="M21 11l-2.5-2m2.5 2l-2-2.5" class="rotate-arrow-head" />
+          </svg>
+        </div>
+        <h1 class="warning-title">Rotate layar ke Landscape terlebih dahulu...</h1>
+        <p class="warning-subtitle">Aplikasi ini membutuhkan tampilan layar lebar (Landscape) agar berfungsi secara optimal.</p>
+      </div>
+    </div>
 
     <div id="initialSystemLoader" style="position: fixed; inset: 0; background: #ffffff; z-index: 999999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease;">
       <div class="spinner-border text-warning" style="width: 3.5rem; height: 3.5rem; border-width: 0.3rem;" role="status"></div>
