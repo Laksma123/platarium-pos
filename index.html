@@ -2507,10 +2507,10 @@
            return orderA - orderB;
         });
 
-        // Menggunakan desain List Group yang dirampingkan 
-        let html = '<div class="col-12"><div class="list-group shadow-sm rounded-4 border-0">';
+        // Menggunakan desain list murni (tanpa list-group-item/card per staf) agar sangat ramping
+        let html = '<div class="col-12"><div class="bg-white rounded-4 shadow-sm border px-3 py-1">';
 
-        sortedStaff.forEach(staff => {
+        sortedStaff.forEach((staff, index) => {
           let photoUrl = faces[staff.name] || 'https://via.placeholder.com/150';
           const isActive = staff.status === 'Active';
           let salaryLabel = "Gaji Pokok";
@@ -2521,44 +2521,48 @@
             salaryValue = `${staff.salary}%`;
           }
 
-          let roleBadgeBg = staff.role === 'ADMIN' ? 'bg-danger' : (staff.role === 'KITCHEN' ? 'bg-warning text-dark' : 'bg-primary');
+          let roleBadgeBg = staff.role === 'ADMIN' ? 'bg-danger text-white' : (staff.role === 'KITCHEN' ? 'bg-warning text-dark' : 'bg-primary text-white');
+          let borderClass = index === sortedStaff.length - 1 ? '' : 'border-bottom'; // Hapus garis di list terakhir
 
           html += `
-            <div class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-md-center p-3 ${!isActive ? 'opacity-75 bg-light' : ''}" id="staff-card-${staff.id}">
+            <div class="d-flex align-items-center py-2 ${borderClass} ${!isActive ? 'opacity-50' : ''}" id="staff-card-${staff.id}">
               
-              <div class="d-flex align-items-center mb-3 mb-md-0" style="min-width: 220px;">
-                <img src="${photoUrl}" class="rounded-circle shadow-sm border border-2 border-white me-3" style="width: 48px; height: 48px; object-fit: cover;">
-                <div>
-                  <h6 class="fw-bold m-0 text-dark" style="font-size: 0.95rem;">${staff.name}</h6>
-                  <span class="badge ${roleBadgeBg} mt-1" style="font-size: 0.65rem;">${staff.role}</span>
-                </div>
-              </div>
-
-              <div class="d-flex align-items-center justify-content-between flex-grow-1 mx-md-4 mb-3 mb-md-0">
-                <div class="text-start text-md-center">
-                  <div class="fw-bold text-success" style="font-size: 0.9rem;">${salaryValue}</div>
-                  <div class="text-muted" style="font-size: 0.7rem;">${salaryLabel}</div>
-                </div>
+              <img src="${photoUrl}" class="rounded-circle border me-2" style="width: 36px; height: 36px; object-fit: cover;">
+              
+              <div class="flex-grow-1 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center overflow-hidden pe-2">
                 
-                <div class="text-end text-md-center">
-                  <span class="badge ${isActive ? 'bg-success' : 'bg-danger'} shadow-sm" 
-                        style="cursor: pointer; padding: 6px 12px; transition: 0.2s;" 
-                        id="status-badge-${staff.id}" 
-                        onclick="toggleStaffStatus('${staff.id}', '${staff.status}')">
-                    ${staff.status} <i class="fas fa-caret-down ms-1"></i>
-                  </span>
+                <div class="text-truncate">
+                  <h6 class="fw-bold m-0 text-dark" style="font-size: 0.85rem;">${staff.name}</h6>
+                  <span class="badge ${roleBadgeBg}" style="font-size: 0.55rem; padding: 2px 5px;">${staff.role}</span>
                 </div>
+
+                <div class="d-flex align-items-center mt-1 mt-sm-0 w-100 justify-content-between justify-content-sm-end gap-2 gap-sm-4">
+                  <div class="text-start text-sm-end">
+                    <div class="fw-bold text-success lh-1" style="font-size: 0.8rem;">${salaryValue}</div>
+                    <div class="text-muted mt-1" style="font-size: 0.6rem;">${salaryLabel}</div>
+                  </div>
+                  
+                  <div>
+                    <span class="badge ${isActive ? 'text-success bg-success-subtle' : 'text-danger bg-danger-subtle'} border" 
+                          style="cursor: pointer; padding: 4px 8px; font-size: 0.65rem;" 
+                          id="status-badge-${staff.id}" 
+                          onclick="toggleStaffStatus('${staff.id}', '${staff.status}')" title="Klik untuk ubah status">
+                      ${staff.status}
+                    </span>
+                  </div>
+                </div>
+
               </div>
 
-              <div class="d-flex gap-2 justify-content-end">
-                <button class="btn btn-light btn-sm rounded-circle shadow-sm border d-flex align-items-center justify-content-center" onclick="openStaffModal('${staff.id}')" title="Edit Staff" style="width: 36px; height: 36px;">
-                  <i class="fas fa-pencil-alt text-primary"></i>
+              <div class="d-flex gap-1 flex-shrink-0">
+                <button class="btn btn-light btn-sm rounded-circle border d-flex align-items-center justify-content-center" onclick="openStaffModal('${staff.id}')" title="Edit Staff" style="width: 30px; height: 30px; padding: 0;">
+                  <i class="fas fa-pencil-alt text-primary" style="font-size: 0.7rem;"></i>
                 </button>
-                <button class="btn btn-light btn-sm rounded-circle shadow-sm border d-flex align-items-center justify-content-center" onclick="openStaffAbsensiModal('${staff.name}')" title="Cek Absensi" style="width: 36px; height: 36px;">
-                  <i class="fas fa-user-clock text-warning"></i>
+                <button class="btn btn-light btn-sm rounded-circle border d-flex align-items-center justify-content-center" onclick="openStaffAbsensiModal('${staff.name}')" title="Cek Absensi" style="width: 30px; height: 30px; padding: 0;">
+                  <i class="fas fa-user-clock text-warning" style="font-size: 0.7rem;"></i>
                 </button>
-                <button class="btn btn-light btn-sm rounded-circle shadow-sm border d-flex align-items-center justify-content-center" onclick="deleteStaffUI('${staff.id}', '${staff.name}')" title="Hapus Staff" style="width: 36px; height: 36px;">
-                  <i class="fas fa-trash text-danger"></i>
+                <button class="btn btn-light btn-sm rounded-circle border d-flex align-items-center justify-content-center" onclick="deleteStaffUI('${staff.id}', '${staff.name}')" title="Hapus Staff" style="width: 30px; height: 30px; padding: 0;">
+                  <i class="fas fa-trash text-danger" style="font-size: 0.7rem;"></i>
                 </button>
               </div>
 
