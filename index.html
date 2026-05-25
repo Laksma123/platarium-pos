@@ -4361,6 +4361,35 @@
         }).getSystemConfigsAndHPP();
       }
 
+      function getLongestIncreasingSubsequence(arr) {
+        if (arr.length === 0) return [];
+        const dp = Array(arr.length).fill(1);
+        const parent = Array(arr.length).fill(-1);
+        let maxLen = 0;
+        let maxIdx = -1;
+        
+        for (let i = 0; i < arr.length; i++) {
+          for (let j = 0; j < i; j++) {
+            if (arr[j] < arr[i] && dp[j] + 1 > dp[i]) {
+              dp[i] = dp[j] + 1;
+              parent[i] = j;
+            }
+          }
+          if (dp[i] > maxLen) {
+            maxLen = dp[i];
+            maxIdx = i;
+          }
+        }
+        
+        const lisValues = [];
+        let curr = maxIdx;
+        while (curr !== -1) {
+          lisValues.push(arr[curr]);
+          curr = parent[curr];
+        }
+        return lisValues.reverse();
+      }
+
       function renderMonitorUI() {
         const kArea = document.getElementById('kitchenTicketsArea');
         const bArea = document.getElementById('barTicketsArea');
@@ -4457,32 +4486,20 @@
           });
         }
 
-        // Ambil daftar orderId yang dipindah secara eksplisit dari localStorage
-        const explicitKMoved = JSON.parse(localStorage.getItem('monitor_kitchen_explicitly_moved') || '[]');
-        const explicitBMoved = JSON.parse(localStorage.getItem('monitor_bar_explicitly_moved') || '[]');
+        // Cari Longest Increasing Subsequence (LIS) untuk menyaring elemen kronologis yang tidak digeser
+        const kChronoIndices = kTicketsData.map(d => d.chronoIndex);
+        const kLis = getLongestIncreasingSubsequence(kChronoIndices);
 
-        // Bersihkan data lama yang sudah selesai agar tidak menumpuk di memori (self-healing)
-        const activeKIds = kTicketsData.map(d => d.t.orderId);
-        const cleanedKMoved = explicitKMoved.filter(id => activeKIds.includes(id));
-        localStorage.setItem('monitor_kitchen_explicitly_moved', JSON.stringify(cleanedKMoved));
-
-        const activeBIds = bTicketsData.map(d => d.t.orderId);
-        const cleanedBMoved = explicitBMoved.filter(id => activeBIds.includes(id));
-        localStorage.setItem('monitor_bar_explicitly_moved', JSON.stringify(cleanedBMoved));
+        const bChronoIndices = bTicketsData.map(d => d.chronoIndex);
+        const bLis = getLongestIncreasingSubsequence(bChronoIndices);
 
         let kHtml = kTicketsData.map((data, index) => {
-          const visualIndex = index + 1;
-          const isShifted = data.chronoIndex !== visualIndex;
-          const isExplicitlyMoved = cleanedKMoved.includes(data.t.orderId);
-          const isReordered = isShifted && isExplicitlyMoved;
+          const isReordered = !kLis.includes(data.chronoIndex);
           return generateTicketHTML(data.t, data.items, data.type, data.status, data.chronoIndex, isReordered);
         }).join('');
 
         let bHtml = bTicketsData.map((data, index) => {
-          const visualIndex = index + 1;
-          const isShifted = data.chronoIndex !== visualIndex;
-          const isExplicitlyMoved = cleanedBMoved.includes(data.t.orderId);
-          const isReordered = isShifted && isExplicitlyMoved;
+          const isReordered = !bLis.includes(data.chronoIndex);
           return generateTicketHTML(data.t, data.items, data.type, data.status, data.chronoIndex, isReordered);
         }).join('');
 
@@ -4502,15 +4519,6 @@
           onEnd: function(evt) {
             const newOrder = Array.from(kArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_kitchen_order', JSON.stringify(newOrder));
-            
-            if (evt.oldIndex !== evt.newIndex) {
-              const draggedId = evt.item.dataset.id;
-              const explicitlyMoved = JSON.parse(localStorage.getItem('monitor_kitchen_explicitly_moved') || '[]');
-              if (!explicitlyMoved.includes(draggedId)) {
-                explicitlyMoved.push(draggedId);
-                localStorage.setItem('monitor_kitchen_explicitly_moved', JSON.stringify(explicitlyMoved));
-              }
-            }
             renderMonitorUI();
           }
         });
@@ -4524,15 +4532,6 @@
           onEnd: function(evt) {
             const newOrder = Array.from(bArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_bar_order', JSON.stringify(newOrder));
-            
-            if (evt.oldIndex !== evt.newIndex) {
-              const draggedId = evt.item.dataset.id;
-              const explicitlyMoved = JSON.parse(localStorage.getItem('monitor_bar_explicitly_moved') || '[]');
-              if (!explicitlyMoved.includes(draggedId)) {
-                explicitlyMoved.push(draggedId);
-                localStorage.setItem('monitor_bar_explicitly_moved', JSON.stringify(explicitlyMoved));
-              }
-            }
             renderMonitorUI();
           }
         });
