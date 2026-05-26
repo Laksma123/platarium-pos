@@ -2763,6 +2763,23 @@
 
       function handleSortableEndZoomCorrection(evt) {
           activeDrag = null;
+          // Bersihkan sisa elemen fallback yang mungkin tersangkut pasca drag selesai
+          cleanupOrphanedFallbacks();
+      }
+
+      // Safety net global untuk membersihkan bangkai elemen fallback drag yang tersangkut di layar
+      window.addEventListener('touchend', cleanupOrphanedFallbacks);
+      window.addEventListener('mouseup', cleanupOrphanedFallbacks);
+
+      function cleanupOrphanedFallbacks() {
+          activeDrag = null;
+          setTimeout(() => {
+              if (!activeDrag) {
+                  document.querySelectorAll('.sortable-fallback').forEach(el => {
+                      el.remove();
+                  });
+              }
+          }, 150);
       }
 
       // Pasang listener global untuk menimpa posisi fallback element saat drag berlangsung
