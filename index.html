@@ -1941,13 +1941,13 @@
               <div class="tab-pane fade show active h-100" id="content-kitchen" role="tabpanel">
                 <div class="monitor-rope-container h-100">
                   <div class="rope-line"></div>
-                  <div id="kitchenTicketsArea" class="d-inline-flex gap-2 align-items-start h-100" style="padding-left: 10px; padding-bottom: 10px; padding-top: 20px;"></div>
+                  <div id="kitchenTicketsArea" class="d-inline-flex gap-3 align-items-start h-100" style="padding-left: 20px; padding-bottom: 10px; padding-top: 20px;"></div>
                 </div>
               </div>
               <div class="tab-pane fade h-100" id="content-bar" role="tabpanel">
                 <div class="monitor-rope-container h-100">
                   <div class="rope-line"></div>
-                  <div id="barTicketsArea" class="d-inline-flex gap-2 align-items-start h-100" style="padding-left: 10px; padding-bottom: 10px; padding-top: 20px;"></div>
+                  <div id="barTicketsArea" class="d-inline-flex gap-3 align-items-start h-100" style="padding-left: 20px; padding-bottom: 10px; padding-top: 20px;"></div>
                 </div>
               </div>
             </div>
@@ -4862,14 +4862,30 @@
         
         for (let i = 0; i < arr.length; i++) {
           for (let j = 0; j < i; j++) {
-            if (arr[j] < arr[i] && dp[j] + 1 > dp[i]) {
-              dp[i] = dp[j] + 1;
-              parent[i] = j;
+            if (arr[j] < arr[i]) {
+              if (dp[j] + 1 > dp[i]) {
+                dp[i] = dp[j] + 1;
+                parent[i] = j;
+              } else if (dp[j] + 1 === dp[i]) {
+                // Tie-breaker: Jika panjang subsequence sama, kita lebih mengutamakan predecessor
+                // dengan nilai chronoIndex yang lebih kecil (tiket yang lebih lama/kronologis asli).
+                // Ini memastikan tiket lama tetap stabil, sehingga tiket baru yang menyerobot antrean
+                // (chronoIndex lebih besar) yang akan tersaring keluar dan mendapatkan lingkaran merah.
+                if (parent[i] !== -1 && arr[j] < arr[parent[i]]) {
+                  parent[i] = j;
+                }
+              }
             }
           }
           if (dp[i] > maxLen) {
             maxLen = dp[i];
             maxIdx = i;
+          } else if (dp[i] === maxLen) {
+            // Tie-breaker untuk maxIdx: Jika ada beberapa elemen akhir dengan panjang subsequence maksimal yang sama,
+            // kita lebih memilih elemen dengan nilai chronoIndex yang lebih kecil.
+            if (maxIdx !== -1 && arr[i] < arr[maxIdx]) {
+              maxIdx = i;
+            }
           }
         }
         
