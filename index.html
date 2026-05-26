@@ -616,6 +616,13 @@
         width: 100% !important;
       }
 
+      .tab-pane {
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+      }
+
       /* ========================================= */
       /* PERBAIKAN UI MONITOR (TAB & TICKET EDIT)  */
       /* ========================================= */
@@ -1892,7 +1899,7 @@
           </div>
         </div>
 
-        <div id="view-monitor" class="app-view p-3 p-md-4" style="display:none; background: #f8f9fa; flex: 1; width: 100%; max-width: 100vw; overflow-x: hidden; flex-direction: column !important;">
+        <div id="view-monitor" class="app-view p-3 p-md-4" style="display:none; background: #f8f9fa; flex: 1; width: 100%; overflow-x: hidden; flex-direction: column !important;">
           <div class="d-flex flex-column h-100 w-100">
             
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3 w-100">
