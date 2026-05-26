@@ -2748,15 +2748,18 @@
               }
           }
           
-          // Konversi posisi sentuh awal ke koordinat CSS
-          // dan hitung offset antara posisi sentuh dengan pojok kiri-atas elemen
+          // Konversi posisi sentuh awal dan batas elemen ke koordinat CSS.
+          // rect.left dan rect.top di WebView melaporkan koordinat viewport fisik (device-independent),
+          // sehingga keduanya harus dibagi dengan zoom agar berada di ruang koordinat CSS yang sama.
           const cssTouchX = startX / zoom;
           const cssTouchY = startY / zoom;
+          const cssRectLeft = rect.left / zoom;
+          const cssRectTop = rect.top / zoom;
           
           activeDrag = {
               // Offset jari dari pojok kiri-atas pill (dalam ruang CSS)
-              offsetX: cssTouchX - rect.left,
-              offsetY: cssTouchY - rect.top,
+              offsetX: cssTouchX - cssRectLeft,
+              offsetY: cssTouchY - cssRectTop,
               zoom: zoom
           };
       }
@@ -2776,7 +2779,9 @@
           if (!fallback) return;
           
           const zoom = activeDrag.zoom;
-          if (zoom === 1) return; // Tidak perlu koreksi jika zoom 100%
+          // Jangan return early saat zoom === 1 (100%) karena .sortable-fallback memiliki rule
+          // transform: none !important di CSS, yang menonaktifkan translate3d bawaan SortableJS.
+          // Kita harus selalu memposisikan fallback element secara manual menggunakan left & top di semua zoom level.
           
           let physicalX = 0;
           let physicalY = 0;
