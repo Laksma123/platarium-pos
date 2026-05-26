@@ -575,6 +575,10 @@
         transform-origin: top right; /* Animasi berpusat di jepitan */
         animation: ticketSlideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         cursor: grab;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
       }
       .ticket-paper:active { cursor: grabbing; }
       .ticket-paper::before {
@@ -692,25 +696,6 @@
       .ticket-seq-number span {
         position: relative;
         z-index: 2;
-      }
-      .ticket-seq-number .red-handwrite-circle {
-        display: none;
-        position: absolute;
-        top: -6px;
-        left: -6px;
-        width: 44px;
-        height: 44px;
-        pointer-events: none;
-        z-index: 1;
-      }
-      .ticket-seq-number.has-red-circle {
-        border-color: transparent !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        color: #e74c3c !important;
-      }
-      .ticket-seq-number.has-red-circle .red-handwrite-circle {
-        display: block !important;
       }
 
       /* Thermal Printer & Nota Design Styles */
@@ -1930,6 +1915,9 @@
               <div class="d-flex gap-2 ms-auto justify-content-end">
                 <button id="btnMonitorReorder" class="btn btn-white rounded-pill fw-bold shadow-sm px-3 px-md-4 border flex-shrink-0" onclick="toggleMonitorReorder()">
                   <i class="fas fa-sort text-muted me-2"></i>Atur Urutan
+                </button>
+                <button class="btn btn-white rounded-pill fw-bold shadow-sm px-3 px-md-4 border flex-shrink-0" onclick="resetMonitorOrder()" title="Reset Urutan Tiket">
+                  <i class="fas fa-sync-alt text-warning me-2"></i>Reset
                 </button>
                 <button class="btn btn-warning rounded-pill fw-bold shadow-sm px-3 px-md-4 flex-shrink-0" onclick="showDoneOrders()">
                   <i class="fas fa-check-circle me-2"></i>Selesai
@@ -4853,50 +4841,7 @@
         }).getSystemConfigsAndHPP();
       }
 
-      function getLongestIncreasingSubsequence(arr) {
-        if (arr.length === 0) return [];
-        const dp = Array(arr.length).fill(1);
-        const parent = Array(arr.length).fill(-1);
-        let maxLen = 0;
-        let maxIdx = -1;
-        
-        for (let i = 0; i < arr.length; i++) {
-          for (let j = 0; j < i; j++) {
-            if (arr[j] < arr[i]) {
-              if (dp[j] + 1 > dp[i]) {
-                dp[i] = dp[j] + 1;
-                parent[i] = j;
-              } else if (dp[j] + 1 === dp[i]) {
-                // Tie-breaker: Jika panjang subsequence sama, kita lebih mengutamakan predecessor
-                // dengan nilai chronoIndex yang lebih kecil (tiket yang lebih lama/kronologis asli).
-                // Ini memastikan tiket lama tetap stabil, sehingga tiket baru yang menyerobot antrean
-                // (chronoIndex lebih besar) yang akan tersaring keluar dan mendapatkan lingkaran merah.
-                if (parent[i] !== -1 && arr[j] < arr[parent[i]]) {
-                  parent[i] = j;
-                }
-              }
-            }
-          }
-          if (dp[i] > maxLen) {
-            maxLen = dp[i];
-            maxIdx = i;
-          } else if (dp[i] === maxLen) {
-            // Tie-breaker untuk maxIdx: Jika ada beberapa elemen akhir dengan panjang subsequence maksimal yang sama,
-            // kita lebih memilih elemen dengan nilai chronoIndex yang lebih kecil.
-            if (maxIdx !== -1 && arr[i] < arr[maxIdx]) {
-              maxIdx = i;
-            }
-          }
-        }
-        
-        const lisValues = [];
-        let curr = maxIdx;
-        while (curr !== -1) {
-          lisValues.push(arr[curr]);
-          curr = parent[curr];
-        }
-        return lisValues.reverse();
-      }
+
 
       function renderMonitorUI() {
         const kArea = document.getElementById('kitchenTicketsArea');
@@ -5008,19 +4953,11 @@
         localStorage.setItem('monitor_bar_explicitly_moved', JSON.stringify(cleanedBMoved));
 
         let kHtml = kTicketsData.map((data, index) => {
-          const visualIndex = index + 1;
-          const isShifted = data.chronoIndex !== visualIndex;
-          const isExplicitlyMoved = cleanedKMoved.includes(data.t.orderId);
-          const isReordered = isShifted && isExplicitlyMoved;
-          return generateTicketHTML(data.t, data.items, data.type, data.status, data.chronoIndex, isReordered);
+          return generateTicketHTML(data.t, data.items, data.type, data.status, data.chronoIndex);
         }).join('');
 
         let bHtml = bTicketsData.map((data, index) => {
-          const visualIndex = index + 1;
-          const isShifted = data.chronoIndex !== visualIndex;
-          const isExplicitlyMoved = cleanedBMoved.includes(data.t.orderId);
-          const isReordered = isShifted && isExplicitlyMoved;
-          return generateTicketHTML(data.t, data.items, data.type, data.status, data.chronoIndex, isReordered);
+          return generateTicketHTML(data.t, data.items, data.type, data.status, data.chronoIndex);
         }).join('');
 
         kArea.innerHTML = kHtml || '<div class="text-muted mt-5 w-100 text-center fw-bold" style="position:absolute; left:0;"><br>Tidak ada antrian Kitchen</div>';
@@ -5091,7 +5028,17 @@
         renderMonitorUI();
       }
 
-      function generateTicketHTML(t, items, type, status, chronoIndex, isReordered) {
+      function resetMonitorOrder() {
+        if (confirm("Kembalikan urutan tiket ke default (kronologis)?")) {
+          localStorage.removeItem('monitor_kitchen_order');
+          localStorage.removeItem('monitor_kitchen_explicitly_moved');
+          localStorage.removeItem('monitor_bar_order');
+          localStorage.removeItem('monitor_bar_explicitly_moved');
+          renderMonitorUI();
+        }
+      }
+
+      function generateTicketHTML(t, items, type, status, chronoIndex) {
         const isProcess = status === 'PROCESS';
         const statusBadge = isProcess ? 'bg-warning text-dark' : 'bg-secondary text-white';
         const statusText = isProcess ? '<i class="fas fa-fire me-1"></i>DIPROSES' : 'MENUNGGU';
@@ -5124,14 +5071,9 @@
           `;
         }
 
-        const hasCircleClass = isReordered ? 'has-red-circle' : '';
         const seqNumberHtml = chronoIndex ? `
-          <div class="ticket-seq-number ${hasCircleClass}">
+          <div class="ticket-seq-number">
               <span>${chronoIndex}</span>
-              <svg viewBox="0 0 100 100" class="red-handwrite-circle">
-                  <path d="M55,10 C35,8 15,22 10,45 C5,68 20,88 45,92 C70,96 92,80 92,55 C92,30 75,12 50,12 C40,12 30,17 25,22" 
-                        fill="none" stroke="#e74c3c" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
           </div>
         ` : '';
 
