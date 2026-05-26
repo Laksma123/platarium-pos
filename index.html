@@ -635,6 +635,15 @@
         transition: none !important;
         transform: none !important;
       }
+      /* Efek melayang premium saat kertas order di-drag */
+      .ticket-paper.sortable-fallback {
+        transform: scale(0.9) rotate(-2deg) !important;
+        opacity: 0.95 !important;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
+        border: 2px solid var(--primary-gold, #c5a059) !important;
+        z-index: 10000 !important;
+      }
+
 
       /* ========================================= */
       /* PERBAIKAN UI MONITOR (TAB & TICKET EDIT)  */
@@ -4970,10 +4979,16 @@
         KITCHEN_SORTABLE = new Sortable(kArea, {
           animation: 150,
           ghostClass: 'opacity-50',
+          dragClass: 'sortable-drag',
           disabled: !IS_MONITOR_REORDER,
           delay: 150,
           delayOnTouchOnly: true,
+          forceFallback: true,
+          fallbackTolerance: 3,
+          fallbackOnBody: true,
+          onStart: handleSortableStartZoomCorrection,
           onEnd: function(evt) {
+            handleSortableEndZoomCorrection(evt);
             const newOrder = Array.from(kArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_kitchen_order', JSON.stringify(newOrder));
             
@@ -4992,10 +5007,16 @@
         BAR_SORTABLE = new Sortable(bArea, {
           animation: 150,
           ghostClass: 'opacity-50',
+          dragClass: 'sortable-drag',
           disabled: !IS_MONITOR_REORDER,
           delay: 150,
           delayOnTouchOnly: true,
+          forceFallback: true,
+          fallbackTolerance: 3,
+          fallbackOnBody: true,
+          onStart: handleSortableStartZoomCorrection,
           onEnd: function(evt) {
+            handleSortableEndZoomCorrection(evt);
             const newOrder = Array.from(bArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_bar_order', JSON.stringify(newOrder));
             
