@@ -1035,6 +1035,17 @@
         color: var(--primary-gold);
         text-shadow: none;
       }
+      /* FIX: Saat APK zoom aktif, main-container harus fixed agar tidak tertarik ke pojok kiri atas.
+         Elemen position:fixed (login overlay, bottom nav) tidak terpengaruh oleh CSS zoom pada <html>
+         karena mereka diposisikan relatif terhadap viewport. #main-container yang sebelumnya 
+         menggunakan normal flow (height:100dvh, width:100vw) menyusut saat zoom < 100%.
+         Dengan position:fixed dan inset:0, container mengisi viewport penuh seperti elemen lain. */
+      .apk-zoom-active #main-container {
+        position: fixed !important;
+        inset: 0 !important;
+        width: auto !important;
+        height: auto !important;
+      }
     </style>
   </head>
   <body>
@@ -1101,7 +1112,7 @@
       })();
 
       let _apkZoomLevel = 100; // Persentase zoom saat ini
-      const APK_ZOOM_STEP = 10;
+      const APK_ZOOM_STEP = 5;
       const APK_ZOOM_MIN = 30;
       const APK_ZOOM_MAX = 150;
       const APK_ZOOM_DEFAULT = 50; // Default zoom untuk APK
@@ -1109,8 +1120,10 @@
       function apkApplyZoom(level) {
         _apkZoomLevel = Math.max(APK_ZOOM_MIN, Math.min(APK_ZOOM_MAX, level));
         // Gunakan CSS zoom (bukan transform: scale) agar layout menyesuaikan
-        // dan TIDAK menarik UI ke pojok kiri atas
         document.documentElement.style.zoom = (_apkZoomLevel / 100);
+        // Tandai <html> agar CSS rule khusus APK aktif (position:fixed pada #main-container)
+        // Ini mencegah UI tertarik ke pojok kiri atas saat zoom < 100%
+        document.documentElement.classList.add('apk-zoom-active');
         // Update label persentase di kedua tempat
         const pctLogin = document.getElementById('apkZoomPctLogin');
         const pctTitle = document.getElementById('apkZoomPctTitlebar');
