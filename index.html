@@ -1341,7 +1341,9 @@
         
         <div id="view-products" class="app-view p-4" style="display:none; background: #f8f9fa;">
           <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pt-3 gap-3">
-              <h3 class="fw-bold m-0"><i class="fas fa-boxes me-2 text-warning"></i>Daftar Menu</h3>
+              <div>
+                <p class="text-muted small m-0 ms-2" style="transform: translateY(-4px);">Manajemen Menu dan Resep.</p>
+              </div>
               
               <div class="d-flex flex-wrap gap-2 align-items-center">
                 
@@ -1373,7 +1375,7 @@
               </div>
           </div>
 
-          <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+          <div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; padding-bottom: 1000px; margin-bottom: -900px; min-height: 100vh;">
             <div class="table-responsive">
               <table class="table table-hover align-middle m-0">
                 <thead class="bg-dark text-white">
@@ -2616,6 +2618,8 @@
       let MATERIALS_DATA = []; // Global storage untuk data stok
       let STOCK_LIMIT = 50; // Limit rendering stok awal
       let CURRENT_RENDERED_STOCK = []; // Menyimpan data stok yang sedang aktif dirender
+      let PRODUCT_LIMIT = 50; // Limit rendering produk awal
+      let CURRENT_RENDERED_PRODUCTS = []; // Menyimpan data produk yang sedang aktif dirender
       let POS_SORTABLE = null;
       let IS_SORTABLE_INIT = false;
       let IS_REORDER_MODE = false;
@@ -5322,6 +5326,7 @@
 
       // Di file index.html
       function loadProductsTable() {
+        PRODUCT_LIMIT = 50;
         const tbody = document.getElementById('productTableBody');
         // Ubah colspan menjadi 7 agar memakan seluruh lebar tabel
         tbody.innerHTML = `
@@ -5796,7 +5801,12 @@
           }
         });
 
-        tbody.innerHTML = displayData.map(p => `
+        CURRENT_RENDERED_PRODUCTS = displayData; // Simpan data terurut yang aktif dirender ke global
+
+        // Iris data berdasarkan batas rendering dinamis saat ini (PRODUCT_LIMIT)
+        const slicedData = displayData.slice(0, PRODUCT_LIMIT);
+
+        tbody.innerHTML = slicedData.map(p => `
           <tr>
             <td class="ps-4 py-3">
               <div class="fw-bold text-dark text-truncate" style="max-width: 180px;" title="${p.name}">${p.name}</div>
@@ -5920,11 +5930,13 @@
 
       // Fungsi Pembantu Filter
       function updateSort(criteria) {
+        PRODUCT_LIMIT = 50; // Reset limit
         SORT_CRITERIA = criteria;
         renderProductTable();
       }
 
       function toggleSortDirection() {
+        PRODUCT_LIMIT = 50; // Reset limit
         SORT_ASC = !SORT_ASC;
         const btn = document.getElementById('btnToggleSort');
         btn.innerHTML = SORT_ASC ? '<i class="fas fa-sort-amount-down-alt"></i>' : '<i class="fas fa-sort-amount-up"></i>';
@@ -6298,6 +6310,7 @@
       }
 
       function filterTable() {
+        PRODUCT_LIMIT = 50; // Reset limit
         const keyword = document.getElementById('searchTable').value.toLowerCase();
         const filtered = PRODUCTS.filter(p => 
           p.name.toLowerCase().includes(keyword) || 
@@ -8858,16 +8871,27 @@
           document.getElementById('dualPosVideoUrl').value = localStorage.getItem('pos_dual_monitor_video_url');
         }
 
-        // --- INFINITE SCROLL INTEGRATION UNTUK TAB STOK ---
+        // --- INFINITE SCROLL INTEGRATION UNTUK TAB STOK & PRODUK ---
         const contentArea = document.querySelector('.content-area');
         if (contentArea) {
           contentArea.addEventListener('scroll', () => {
+            // Tab Stok
             const viewStock = document.getElementById('view-stock');
             if (viewStock && viewStock.style.display !== 'none') {
               if (contentArea.scrollTop + contentArea.clientHeight >= contentArea.scrollHeight - 250) {
                 if (STOCK_LIMIT < CURRENT_RENDERED_STOCK.length) {
                   STOCK_LIMIT += 50;
                   renderStockUI(CURRENT_RENDERED_STOCK);
+                }
+              }
+            }
+            // Tab Produk
+            const viewProducts = document.getElementById('view-products');
+            if (viewProducts && viewProducts.style.display !== 'none') {
+              if (contentArea.scrollTop + contentArea.clientHeight >= contentArea.scrollHeight - 250) {
+                if (PRODUCT_LIMIT < CURRENT_RENDERED_PRODUCTS.length) {
+                  PRODUCT_LIMIT += 50;
+                  renderProductTable(CURRENT_RENDERED_PRODUCTS);
                 }
               }
             }
