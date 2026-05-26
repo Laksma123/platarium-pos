@@ -4994,20 +4994,32 @@
           });
         }
 
-        // Cari Longest Increasing Subsequence (LIS) untuk menyaring elemen kronologis yang tidak digeser
-        const kChronoIndices = kTicketsData.map(d => d.chronoIndex);
-        const kLis = getLongestIncreasingSubsequence(kChronoIndices);
+        // Ambil daftar orderId yang dipindah secara eksplisit dari localStorage
+        const explicitKMoved = JSON.parse(localStorage.getItem('monitor_kitchen_explicitly_moved') || '[]');
+        const explicitBMoved = JSON.parse(localStorage.getItem('monitor_bar_explicitly_moved') || '[]');
 
-        const bChronoIndices = bTicketsData.map(d => d.chronoIndex);
-        const bLis = getLongestIncreasingSubsequence(bChronoIndices);
+        // Bersihkan data lama yang sudah selesai agar tidak menumpuk di memori (self-healing)
+        const activeKIds = kTicketsData.map(d => d.t.orderId);
+        const cleanedKMoved = explicitKMoved.filter(id => activeKIds.includes(id));
+        localStorage.setItem('monitor_kitchen_explicitly_moved', JSON.stringify(cleanedKMoved));
+
+        const activeBIds = bTicketsData.map(d => d.t.orderId);
+        const cleanedBMoved = explicitBMoved.filter(id => activeBIds.includes(id));
+        localStorage.setItem('monitor_bar_explicitly_moved', JSON.stringify(cleanedBMoved));
 
         let kHtml = kTicketsData.map((data, index) => {
-          const isReordered = !kLis.includes(data.chronoIndex);
+          const visualIndex = index + 1;
+          const isShifted = data.chronoIndex !== visualIndex;
+          const isExplicitlyMoved = cleanedKMoved.includes(data.t.orderId);
+          const isReordered = isShifted && isExplicitlyMoved;
           return generateTicketHTML(data.t, data.items, data.type, data.status, data.chronoIndex, isReordered);
         }).join('');
 
         let bHtml = bTicketsData.map((data, index) => {
-          const isReordered = !bLis.includes(data.chronoIndex);
+          const visualIndex = index + 1;
+          const isShifted = data.chronoIndex !== visualIndex;
+          const isExplicitlyMoved = cleanedBMoved.includes(data.t.orderId);
+          const isReordered = isShifted && isExplicitlyMoved;
           return generateTicketHTML(data.t, data.items, data.type, data.status, data.chronoIndex, isReordered);
         }).join('');
 
@@ -5027,6 +5039,15 @@
           onEnd: function(evt) {
             const newOrder = Array.from(kArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_kitchen_order', JSON.stringify(newOrder));
+            
+            if (evt.oldIndex !== evt.newIndex) {
+              const draggedId = evt.item.dataset.id;
+              const explicitlyMoved = JSON.parse(localStorage.getItem('monitor_kitchen_explicitly_moved') || '[]');
+              if (!explicitlyMoved.includes(draggedId)) {
+                explicitlyMoved.push(draggedId);
+                localStorage.setItem('monitor_kitchen_explicitly_moved', JSON.stringify(explicitlyMoved));
+              }
+            }
             renderMonitorUI();
           }
         });
@@ -5040,6 +5061,15 @@
           onEnd: function(evt) {
             const newOrder = Array.from(bArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_bar_order', JSON.stringify(newOrder));
+            
+            if (evt.oldIndex !== evt.newIndex) {
+              const draggedId = evt.item.dataset.id;
+              const explicitlyMoved = JSON.parse(localStorage.getItem('monitor_bar_explicitly_moved') || '[]');
+              if (!explicitlyMoved.includes(draggedId)) {
+                explicitlyMoved.push(draggedId);
+                localStorage.setItem('monitor_bar_explicitly_moved', JSON.stringify(explicitlyMoved));
+              }
+            }
             renderMonitorUI();
           }
         });
