@@ -1941,13 +1941,13 @@
               <div class="tab-pane fade show active h-100" id="content-kitchen" role="tabpanel">
                 <div class="monitor-rope-container h-100">
                   <div class="rope-line"></div>
-                  <div id="kitchenTicketsArea" class="d-inline-flex gap-2 align-items-start h-100" style="padding-left: 10px; padding-bottom: 10px;"></div>
+                  <div id="kitchenTicketsArea" class="d-inline-flex gap-2 align-items-start h-100" style="padding-left: 10px; padding-bottom: 10px; padding-top: 20px;"></div>
                 </div>
               </div>
               <div class="tab-pane fade h-100" id="content-bar" role="tabpanel">
                 <div class="monitor-rope-container h-100">
                   <div class="rope-line"></div>
-                  <div id="barTicketsArea" class="d-inline-flex gap-2 align-items-start h-100" style="padding-left: 10px; padding-bottom: 10px;"></div>
+                  <div id="barTicketsArea" class="d-inline-flex gap-2 align-items-start h-100" style="padding-left: 10px; padding-bottom: 10px; padding-top: 20px;"></div>
                 </div>
               </div>
             </div>
@@ -5008,12 +5008,7 @@
           disabled: !IS_MONITOR_REORDER,
           delay: 150,
           delayOnTouchOnly: true,
-          forceFallback: true,
-          fallbackTolerance: 3,
-          fallbackOnBody: true,
-          onStart: handleSortableStartZoomCorrection,
           onEnd: function(evt) {
-            handleSortableEndZoomCorrection(evt);
             const newOrder = Array.from(kArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_kitchen_order', JSON.stringify(newOrder));
             renderMonitorUI();
@@ -5026,12 +5021,7 @@
           disabled: !IS_MONITOR_REORDER,
           delay: 150,
           delayOnTouchOnly: true,
-          forceFallback: true,
-          fallbackTolerance: 3,
-          fallbackOnBody: true,
-          onStart: handleSortableStartZoomCorrection,
           onEnd: function(evt) {
-            handleSortableEndZoomCorrection(evt);
             const newOrder = Array.from(bArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_bar_order', JSON.stringify(newOrder));
             renderMonitorUI();
