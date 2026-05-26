@@ -1684,9 +1684,9 @@
         <div id="view-finance" class="app-view p-4" style="display:none; background: #f8f9fa;">
           
           <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 pt-2 gap-3">
-            <h3 class="fw-bold m-0 text-dark" style="white-space: nowrap; flex-shrink: 0;">
-              <i class="fas fa-chart-line me-2 text-warning"></i>Dashboard Laporan
-            </h3>
+            <div>
+              <p class="text-muted small m-0 ms-2" style="transform: translateY(-4px);">Dashboard Laporan</p>
+            </div>
             
             <div class="d-flex flex-wrap gap-2 ms-auto">
               <button class="btn btn-success rounded-pill fw-bold shadow-sm px-3 text-white d-flex align-items-center" id="btnBroadcastLaporan" onclick="broadcastLaporan()" style="height: 38px; font-size: 0.85rem;" title="Kirim Laporan ke Telegram Owner">
@@ -1695,7 +1695,7 @@
               <button class="btn btn-dark rounded-pill fw-bold shadow-sm px-3 d-flex align-items-center" id="btnPrintLaporan" onclick="printLaporanThermal()" style="height: 38px; font-size: 0.85rem;" title="Cetak Thermal Laporan Panjang">
                 <i class="fas fa-print me-2"></i>Print Thermal
               </button>
-              <select id="methodFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill shadow-sm" style="cursor:pointer; height: 38px;" onchange="renderFinanceUI()">
+              <select id="methodFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill shadow-sm" style="cursor:pointer; height: 38px;" onchange="resetFinanceLimitAndRender()">
                 <option value="all" selected>Semua Metode</option>
                 <option value="CASH">CASH</option>
                 <option value="QRIS">QRIS</option>
@@ -1800,7 +1800,7 @@
 
           <div class="row mb-4 d-none" id="netProfitContainer">
             <div class="col-12">
-              <div class="card border-0 shadow-sm rounded-4 p-4">
+              <div class="card border-0 shadow-sm rounded-4 p-4" style="padding-bottom: 30px !important;">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                   <span class="fw-bold text-muted small"><i class="fas fa-wallet me-1"></i> Progress Profit vs Cost</span>
                   <button class="btn btn-sm btn-outline-success rounded-pill fw-bold" onclick="openOpCostModal()">+ Tambah Cost</button>
@@ -1817,7 +1817,7 @@
                   <div class="text-end mt-1 fw-bold fs-6" id="opNetProfitFinal">Net Profit: Rp 0</div>
                 </div>
 
-                <div class="table-responsive" style="max-height: 250px; overflow-y: auto; scrollbar-width: thin;">
+                <div class="table-responsive">
                   <table class="table table-hover align-middle m-0 small">
                     <thead class="bg-light sticky-top" style="z-index: 5;">
                       <tr><th>Keterangan Cost</th><th class="text-end">Nominal (Rp)</th><th class="text-center" style="width: 80px;">Aksi</th></tr>
@@ -1833,7 +1833,7 @@
 
           <div class="row g-4 mb-4">
             <div class="col-12">
-              <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+              <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100" style="border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; padding-bottom: 1000px; margin-bottom: -900px; min-height: 100vh;">
                 <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white flex-wrap gap-3">
                   <h6 class="fw-bold m-0 text-muted">List Penjualan</h6>
                   
@@ -2620,6 +2620,8 @@
       let CURRENT_RENDERED_STOCK = []; // Menyimpan data stok yang sedang aktif dirender
       let PRODUCT_LIMIT = 50; // Limit rendering produk awal
       let CURRENT_RENDERED_PRODUCTS = []; // Menyimpan data produk yang sedang aktif dirender
+      let FINANCE_LIMIT = 100; // Limit rendering transaksi awal
+      let CURRENT_RENDERED_FINANCE = []; // Menyimpan data transaksi yang sedang aktif dirender
       let POS_SORTABLE = null;
       let IS_SORTABLE_INIT = false;
       let IS_REORDER_MODE = false;
@@ -7530,9 +7532,15 @@
         if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center p-5"><div class="spinner-border text-warning spinner-border-sm"></div> Memproses Dashboard...</td></tr>';
         
         google.script.run.withSuccessHandler(data => {
+          FINANCE_LIMIT = 100; // Reset limit
           TRANSACTIONS_DATA = data; // <--- SANGAT PENTING: Update memori lokal
           renderFinanceUI();        // Render UI menggunakan data terbaru
         }).getAllTransactionData();
+      }
+
+      function resetFinanceLimitAndRender() {
+        FINANCE_LIMIT = 100;
+        renderFinanceUI();
       }
 
       function renderFinanceUI() {
@@ -7570,31 +7578,44 @@
           return timeMatch && methodMatch;
         });
 
+        // Hitung statistik menggunakan seluruh data terfilter (filteredData)
+        filteredData.forEach(t => {
+          const isKomplimen = t.status === 'Komplimen';
+          if (isKomplimen) {
+            totalKomplimen += Number(t.total) || 0;
+          } else {
+            totalRev += Number(t.total) || 0;
+            validOrders++;
+            const isOwnerOrAdmin = t.cashier === 'Owner' || String(t.cashier).includes('(Admin)');
+            if (!isOwnerOrAdmin) {
+              cashierCount[t.cashier] = (cashierCount[t.cashier] || 0) + 1;
+            }
+          }
+
+          t.items.forEach(i => {
+            let itemHPP = PRODUCT_HPP_MAP[i.id] || 0;
+            if (!isKomplimen) {
+              productCount[i.name] = (productCount[i.name] || 0) + i.qty;
+              totalHPP += (itemHPP * i.qty);
+            }
+          });
+        });
+
+        CURRENT_RENDERED_FINANCE = filteredData; // Simpan data terfilter yang aktif ke global
+
         if (filteredData.length === 0) {
           tbody.innerHTML = '<tr><td colspan="6" class="text-center p-5 text-muted">Tidak ada transaksi pada periode ini.</td></tr>';
         } else {
-          tbody.innerHTML = filteredData.map(t => {
+          // Iris data berdasarkan batas rendering dinamis saat ini (FINANCE_LIMIT)
+          const slicedData = filteredData.slice(0, FINANCE_LIMIT);
+          
+          tbody.innerHTML = slicedData.map(t => {
             const isKomplimen = t.status === 'Komplimen';
             let transHpp = 0;
             
-            if (isKomplimen) {
-              totalKomplimen += Number(t.total) || 0;
-            } else {
-              totalRev += Number(t.total) || 0;
-              validOrders++;
-              const isOwnerOrAdmin = t.cashier === 'Owner' || String(t.cashier).includes('(Admin)');
-              if (!isOwnerOrAdmin) {
-                cashierCount[t.cashier] = (cashierCount[t.cashier] || 0) + 1;
-              }
-            }
-
             t.items.forEach(i => {
               let itemHPP = PRODUCT_HPP_MAP[i.id] || 0;
               transHpp += (itemHPP * i.qty);
-              if (!isKomplimen) {
-                productCount[i.name] = (productCount[i.name] || 0) + i.qty;
-                totalHPP += (itemHPP * i.qty);
-              }
             });
 
             let tTotal = Number(t.total) || 0;
@@ -7709,14 +7730,14 @@
                   document.getElementById('customDateText').innerText = dateStr;
                   document.getElementById('customDateLabel').classList.remove('d-none');
                   document.getElementById('customDateLabel').classList.add('d-flex');
-                  renderFinanceUI();
+                  resetFinanceLimitAndRender();
                 }
               },
               onClose: function(selectedDates, dateStr) {
                 // Jika panel ditutup tapi belum ada tanggal yang dipilih, kembalikan ke default
                 if (!dateStr && !SELECTED_CUSTOM_DATE) {
                    document.getElementById('revFilter').value = 'month';
-                   renderFinanceUI();
+                   resetFinanceLimitAndRender();
                 }
               }
             });
@@ -7727,7 +7748,7 @@
           document.getElementById('customDateLabel').classList.remove('d-flex');
           document.getElementById('customDateLabel').classList.add('d-none');
           SELECTED_CUSTOM_DATE = "";
-          renderFinanceUI();
+          resetFinanceLimitAndRender();
         }
       }
 
@@ -8871,7 +8892,7 @@
           document.getElementById('dualPosVideoUrl').value = localStorage.getItem('pos_dual_monitor_video_url');
         }
 
-        // --- INFINITE SCROLL INTEGRATION UNTUK TAB STOK & PRODUK ---
+        // --- INFINITE SCROLL INTEGRATION UNTUK TAB STOK, PRODUK, & LAPORAN ---
         const contentArea = document.querySelector('.content-area');
         if (contentArea) {
           contentArea.addEventListener('scroll', () => {
@@ -8892,6 +8913,16 @@
                 if (PRODUCT_LIMIT < CURRENT_RENDERED_PRODUCTS.length) {
                   PRODUCT_LIMIT += 50;
                   renderProductTable(CURRENT_RENDERED_PRODUCTS);
+                }
+              }
+            }
+            // Tab Laporan (Transaksi)
+            const viewFinance = document.getElementById('view-finance');
+            if (viewFinance && viewFinance.style.display !== 'none') {
+              if (contentArea.scrollTop + contentArea.clientHeight >= contentArea.scrollHeight - 250) {
+                if (FINANCE_LIMIT < CURRENT_RENDERED_FINANCE.length) {
+                  FINANCE_LIMIT += 100;
+                  renderFinanceUI();
                 }
               }
             }
