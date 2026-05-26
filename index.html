@@ -625,7 +625,7 @@
 
       /* Fix posisi/koordinat fallback element saat di-drag pada browser ter-zoom (APK) */
       .sortable-drag {
-        zoom: var(--apk-reciprocal-zoom, 1) !important;
+        transition: none !important;
       }
 
       /* ========================================= */
@@ -1138,10 +1138,6 @@
         _apkZoomLevel = Math.max(APK_ZOOM_MIN, Math.min(APK_ZOOM_MAX, level));
         // Gunakan CSS zoom (bukan transform: scale) agar layout menyesuaikan
         document.documentElement.style.zoom = (_apkZoomLevel / 100);
-        
-        // Atur reciprocal zoom untuk menyeragamkan koordinat drag-and-drop fallback
-        document.documentElement.style.setProperty('--apk-reciprocal-zoom', 100 / _apkZoomLevel);
-        
         // Tandai <html> agar CSS rule khusus APK aktif (position:fixed pada #main-container)
         // Ini mencegah UI tertarik ke pojok kiri atas saat zoom < 100%
         document.documentElement.classList.add('apk-zoom-active');
@@ -1485,7 +1481,13 @@
                 <p class="text-muted small m-0">Atur jadwal shift operasional staff dengan drag & drop.</p>
               </div>
               <div class="d-flex gap-2 mt-2 mt-md-0 flex-wrap justify-content-end">
-                
+                <button class="btn btn-primary rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnSaveBatchSchedule" onclick="executeBatchSaveSchedule()">
+                    <i class="fas fa-save me-2"></i>Save Schedule
+                </button>
+                <button class="btn btn-success rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnBroadcastSchedule" onclick="broadcastSchedule()">
+                    <i class="fab fa-telegram-plane me-2"></i>Kirim Telegram
+                </button>
+
                 <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
                   <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-calendar-day me-1"></i>Mulai</span>
                   <input type="date" id="schedStartDate" class="form-control border-0 shadow-none bg-white px-2" style="font-size: 0.85rem;" onchange="renderWeeklyScheduleGrid()">
@@ -1509,27 +1511,21 @@
                     <option value="3">3 Shift</option>
                   </select>
                 </div>
-                <button class="btn btn-primary rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnSaveBatchSchedule" onclick="executeBatchSaveSchedule()">
-                    <i class="fas fa-save me-2"></i>Save Schedule
-                </button>
-                <button class="btn btn-success rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnBroadcastSchedule" onclick="broadcastSchedule()">
-                    <i class="fab fa-telegram-plane me-2"></i>Kirim Telegram
-                </button>
               </div>
             </div>
 
             <div class="row g-4">
-              <div class="col-3 col-lg-2" style="position: sticky; top: 15px; align-self: start; z-index: 10;">
+              <div class="col-2" style="position: sticky; top: 15px; align-self: start; z-index: 10;">
                 <div class="bg-light p-3 rounded-4 border shadow-sm d-flex flex-column" style="min-height: 200px;">
-                  <h6 class="fw-bold mb-1"><i class="fas fa-users text-primary me-1"></i> Daftar Staff</h6>
-                  <p class="text-muted mb-3" style="font-size: 11px;">Tarik (Drag) staff ke tabel jadwal.</p>
+                  <h6 class="fw-bold mb-1 small"><i class="fas fa-users text-primary me-1"></i> Staff</h6>
+                  <p class="text-muted mb-3" style="font-size: 9px; line-height: 1.2;">Tarik staff ke tabel.</p>
                   
                   <div id="staffPillsSource" class="d-flex flex-column align-items-center gap-2 p-2 border border-dashed rounded bg-white flex-fill shadow-sm" style="min-height: 120px;">
                   </div>
                 </div>
               </div>
 
-              <div class="col-9 col-lg-10">
+              <div class="col-10">
                 <div id="scheduleGridToCapture" class="table-responsive bg-white p-0 rounded-4 border shadow-sm overflow-hidden" style="scrollbar-width: thin;">
                   <div class="text-center p-3 border-bottom bg-light">
                     <h5 class="fw-bold m-0" style="letter-spacing: 1px;">JADWAL OPERASIONAL STAFF</h5>
@@ -2759,7 +2755,8 @@
                 group: { name: 'shared-schedule', pull: 'clone', put: false },
                 animation: 150, sort: false, ghostClass: 'bg-secondary',
                 forceFallback: true,
-                fallbackTolerance: 3
+                fallbackTolerance: 3,
+                fallbackOnBody: true
             }));
           }
 
@@ -2877,6 +2874,7 @@
                   ghostClass: 'bg-secondary',
                   forceFallback: true,
                   fallbackTolerance: 3,
+                  fallbackOnBody: true,
                   onAdd: function(evt) {
                       const itemEl = evt.item;
                       if (!itemEl.querySelector('.btn-delete-pill')) {
@@ -3065,7 +3063,7 @@
         });
 
         // Menggunakan desain list murni (tanpa list-group-item/card per staf) agar sangat ramping
-        let html = '<div class="col-12"><div class="bg-white rounded-4 shadow-sm border px-3 py-1">';
+        let html = '<div class="row w-100"><div class="col-2 d-none d-lg-block text-muted small px-3">Daftar Staff</div><div class="col-12 col-lg-10"><div class="bg-white rounded-4 shadow-sm border px-3 py-1">';
 
         sortedStaff.forEach((staff, index) => {
           let photoUrl = faces[staff.name] || 'https://via.placeholder.com/150';
@@ -3134,7 +3132,7 @@
           `;
         });
 
-        html += `</div></div>`;
+        html += `</div></div></div>`;
         container.innerHTML = html;
       }
 
@@ -4922,6 +4920,7 @@
           delayOnTouchOnly: true,
           forceFallback: true,
           fallbackTolerance: 3,
+          fallbackOnBody: true,
           onEnd: function(evt) {
             const newOrder = Array.from(kArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_kitchen_order', JSON.stringify(newOrder));
@@ -4937,6 +4936,7 @@
           delayOnTouchOnly: true,
           forceFallback: true,
           fallbackTolerance: 3,
+          fallbackOnBody: true,
           onEnd: function(evt) {
             const newOrder = Array.from(bArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_bar_order', JSON.stringify(newOrder));
@@ -6265,6 +6265,7 @@
           POS_SORTABLE = new Sortable(grid, {
             animation: 150,
             ghostClass: 'opacity-50',
+            dragClass: 'sortable-drag',
             disabled: !IS_REORDER_MODE, 
             delay: 200, 
             delayOnTouchOnly: true,
@@ -6273,7 +6274,8 @@
             scrollSpeed: 25, 
             bubbleScroll: true,
             forceFallback: true, 
-
+            fallbackTolerance: 3,
+            fallbackOnBody: true,
             onEnd: function(evt) {
               const currentOrder = JSON.parse(localStorage.getItem('pos_grid_order') || '[]');
               if (currentOrder.length === 0) {
