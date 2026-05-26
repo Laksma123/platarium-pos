@@ -2311,7 +2311,7 @@
 
       function applyZoom(zoomLevel) {
         currentZoom = Math.min(Math.max(zoomLevel, 20), 200); // Batasi jangkauan zoom dari 20% s.d. 200%
-        document.body.style.zoom = currentZoom + '%';
+        document.documentElement.style.zoom = currentZoom + '%';
         
         // Sinkronisasi teks label di kedua tempat kontrol
         const loginLabel = document.getElementById('zoomValLogin');
