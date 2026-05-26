@@ -43,12 +43,12 @@
       /* LAYOUT BARU (MOBILE APP STYLE)            */
       /* ========================================= */
       
+      /* Container Utama: Selalu Column (Atas ke Bawah) */
       #main-container {
         display: flex;
         flex-direction: column;
-        height: 100%; /* Diperbaiki dari dvh agar layout zoom APK berfungsi */
-        min-height: 100dvh; 
-        width: 100%; /* Diperbaiki dari vw agar zoom bekerja */
+        height: 100dvh; /* Fix: 100dvh lebih responsif terhadap address bar browser mobile */
+        width: 100vw;
         overflow: hidden;
       }
 
@@ -970,23 +970,6 @@
     </div>
 
     <div id="loginOverlay" class="login-overlay">
-      <!-- Zoom Control untuk Halaman Login (Hanya Tampil di APK) -->
-      <div id="loginZoomContainer" style="position: absolute; top: 20px; left: 20px; z-index: 10000; display: none; flex-direction: column; align-items: flex-start; gap: 4px; font-family: 'Poppins', sans-serif;">
-        <div style="display: flex; align-items: center; gap: 10px; background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 8px 16px; border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.25); box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
-          <button type="button" onclick="changeZoom(-5)" class="btn p-0 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.15); border: none; color: #ffffff; transition: all 0.2s; cursor: pointer;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'" title="Zoom Out">
-            <i class="fas fa-minus" style="font-size: 0.75rem;"></i>
-          </button>
-          <span id="zoomValLogin" style="font-size: 0.85rem; color: #ffffff; font-weight: 700; min-width: 42px; text-align: center; font-variant-numeric: tabular-nums;">50%</span>
-          <button type="button" onclick="changeZoom(5)" class="btn p-0 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.15); border: none; color: #ffffff; transition: all 0.2s; cursor: pointer;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'" title="Zoom In">
-            <i class="fas fa-plus" style="font-size: 0.75rem;"></i>
-          </button>
-        </div>
-        <div style="display: flex; justify-content: space-between; width: 100%; padding: 0 8px;">
-          <span style="font-size: 0.55rem; color: rgba(255,255,255,0.7); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Zoom Out</span>
-          <span style="font-size: 0.55rem; color: rgba(255,255,255,0.7); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Zoom In</span>
-        </div>
-      </div>
-
       <button type="button" class="btn btn-dark rounded-circle shadow d-flex justify-content-center align-items-center" style="position: absolute; top: 20px; right: 20px; z-index: 10000; width: 45px; height: 45px; opacity: 0.8; border: 2px solid rgba(255,255,255,0.5);"
         onclick="openWallpaperManager()" title="Edit Wallpaper">
         <i class="fas fa-image" style="color: white; font-size: 1.2rem;"></i>
@@ -1047,18 +1030,6 @@
         </div>
         
         <div class="d-flex align-items-center gap-2 ms-auto">
-          
-          <!-- Zoom Control untuk Header POS Utama (Hanya Tampil di APK & Setelah Login) -->
-          <div id="headerZoomContainer" style="display: none; align-items: center; gap: 8px; background: rgba(0, 0, 0, 0.05); padding: 4px 12px; border-radius: 25px; border: 1px solid rgba(0,0,0,0.1); margin-right: 12px; font-family: 'Poppins', sans-serif;">
-            <span style="font-size: 0.65rem; color: #555; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 2px;">Zoom</span>
-            <button type="button" onclick="changeZoom(-5)" class="btn p-0 d-flex align-items-center justify-content-center text-dark" style="width: 24px; height: 24px; border-radius: 50%; background: #ffffff; border: 1px solid #ccc; transition: all 0.2s; cursor: pointer;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='#ffffff'" title="Zoom Out">
-              <i class="fas fa-minus" style="font-size: 0.65rem;"></i>
-            </button>
-            <span id="zoomValHeader" style="font-size: 0.8rem; color: #2d3436; font-weight: 700; min-width: 38px; text-align: center; font-variant-numeric: tabular-nums;">50%</span>
-            <button type="button" onclick="changeZoom(5)" class="btn p-0 d-flex align-items-center justify-content-center text-dark" style="width: 24px; height: 24px; border-radius: 50%; background: #ffffff; border: 1px solid #ccc; transition: all 0.2s; cursor: pointer;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='#ffffff'" title="Zoom In">
-              <i class="fas fa-plus" style="font-size: 0.65rem;"></i>
-            </button>
-          </div>
           
           <div class="d-none d-md-flex align-items-center px-2" style="min-width: 130px; font-variant-numeric: tabular-nums;">
              <i class="far fa-calendar-alt text-warning me-2" style="font-size: 1.1rem;"></i>
@@ -2290,87 +2261,6 @@
     <script>
       // URL Web App GAS kamu yang BARU (Nanti diganti setelah di-deploy ulang)
       const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxFU_z7PDvjM4ZurXgGNuALwqxMk_RZE2bIfCuNV1vlBTeG4reGDBJ2QWcdhGk-hy28/exec";
-
-      // ==========================================
-      // ZOOM CONTROLS & APK DETECTION
-      // ==========================================
-      let currentZoom = 100;
-
-      function isRunningInAPK() {
-        const ua = navigator.userAgent;
-        // Deteksi pola WebView standar di Android
-        const isAndroid = /Android/i.test(ua);
-        const isWebView = /wv/i.test(ua) || /Version\/[0-9.]+/i.test(ua);
-        
-        // Custom URL Query Parameter untuk pengujian (e.g. ?apk=true)
-        const urlParams = new URLSearchParams(window.location.search);
-        const hasApkParam = urlParams.has('apk') || urlParams.get('mode') === 'apk';
-        
-        return (isAndroid && isWebView) || hasApkParam;
-      }
-
-      function applyZoom(zoomLevel) {
-        currentZoom = Math.min(Math.max(zoomLevel, 20), 200); // Batasi jangkauan zoom dari 20% s.d. 200%
-        document.documentElement.style.zoom = currentZoom + '%';
-        
-        // PERBAIKAN: Ekspansi width dan min-height document.body 
-        // berbanding terbalik dengan zoom agar layout memenuhi layar di APK
-        if (isRunningInAPK()) {
-           const scaleInv = 10000 / currentZoom;
-           document.body.style.width = scaleInv + '%';
-           document.body.style.minHeight = scaleInv + '%';
-           document.body.style.overflowX = 'hidden';
-        } else {
-           document.body.style.width = '100%';
-           document.body.style.minHeight = '100%';
-        }
-        
-        // Sinkronisasi teks label di kedua tempat kontrol
-        const loginLabel = document.getElementById('zoomValLogin');
-        const headerLabel = document.getElementById('zoomValHeader');
-        if (loginLabel) loginLabel.innerText = currentZoom + '%';
-        if (headerLabel) headerLabel.innerText = currentZoom + '%';
-        
-        localStorage.setItem('apk_zoom_level', currentZoom);
-      }
-
-      function changeZoom(delta) {
-        applyZoom(currentZoom + delta);
-      }
-
-      function updateZoomControlsVisibility() {
-        const isAPK = isRunningInAPK();
-        const loginZoom = document.getElementById('loginZoomContainer');
-        const headerZoom = document.getElementById('headerZoomContainer');
-        
-        if (!isAPK) {
-          if (loginZoom) loginZoom.style.setProperty('display', 'none', 'important');
-          if (headerZoom) headerZoom.style.setProperty('display', 'none', 'important');
-          return;
-        }
-        
-        // Jika berjalan di dalam APK
-        const loginOverlay = document.getElementById('loginOverlay');
-        const isLoginActive = loginOverlay && !loginOverlay.classList.contains('d-none');
-        
-        if (isLoginActive) {
-          if (loginZoom) loginZoom.style.setProperty('display', 'flex', 'important');
-          if (headerZoom) headerZoom.style.setProperty('display', 'none', 'important');
-        } else {
-          if (loginZoom) loginZoom.style.setProperty('display', 'none', 'important');
-          if (headerZoom) headerZoom.style.setProperty('display', 'flex', 'important');
-        }
-      }
-
-      function initApkZoom() {
-        if (isRunningInAPK()) {
-          const savedZoom = localStorage.getItem('apk_zoom_level');
-          // Default zoom 50% sesuai permintaan jika belum ada konfigurasi tersimpan
-          const defaultZoom = savedZoom ? parseInt(savedZoom) : 50;
-          applyZoom(defaultZoom);
-        }
-        updateZoomControlsVisibility();
-      }
 
       // MOCK PROXY: Menggantikan google.script.run tanpa perlu mengubah logika UI original
       const google = {
@@ -4242,7 +4132,6 @@
       function proceedToMainUI(res) {
         document.getElementById('loginOverlay').classList.add('d-none');
         document.getElementById('main-container').classList.remove('d-none');
-        updateZoomControlsVisibility();
         document.getElementById('uiStoreName').innerText = res.config.StoreName;
         document.getElementById('roleLabel').innerText = res.role;
         
@@ -4329,7 +4218,6 @@
         document.getElementById('passInput').value = '';
         document.getElementById('loginStatus').innerText = '';
         document.getElementById('loginOverlay').classList.remove('d-none');
-        updateZoomControlsVisibility();
       }
 
       function promptLogout() {
@@ -5700,30 +5588,32 @@
         const reader = new FileReader();
         reader.onload = function(e) {
           const imageElement = document.getElementById('imageToCrop');
-          const modal = document.getElementById('modalCrop');
+          imageElement.src = e.target.result;
           
+          const modal = document.getElementById('modalCrop');
           document.body.appendChild(modal); 
           modal.classList.remove('d-none');
           modal.style.display = "flex";
 
           if (CROPPER) { CROPPER.destroy(); }
 
-          imageElement.onload = function() {
-            // Logika Ratio & Border Radius berdasarkan target
-            let aspectR = 1/1;
-            const cropContainer = imageElement.parentElement;
-            
-            if(CURRENT_UPLOAD_ID === 'LOGO') {
-              aspectR = 1/1;
-              cropContainer.classList.add('cropper-circle'); 
-            } else if (CURRENT_UPLOAD_ID === 'WALLPAPER') {
-              aspectR = window.innerWidth / window.innerHeight; 
-              cropContainer.classList.remove('cropper-circle');
-            } else {
-              aspectR = 1/1; 
-              cropContainer.classList.remove('cropper-circle');
-            }
+          // Logika Ratio & Border Radius berdasarkan target
+          let aspectR = 1/1;
+          const cropContainer = imageElement.parentElement;
+          
+          if(CURRENT_UPLOAD_ID === 'LOGO') {
+            aspectR = 1/1;
+            cropContainer.classList.add('cropper-circle'); 
+          } else if (CURRENT_UPLOAD_ID === 'WALLPAPER') {
+            // [PERBAIKAN] Rasio mengikuti dimensi layar device secara dinamis (portrait/landscape otomatis)
+            aspectR = window.innerWidth / window.innerHeight; 
+            cropContainer.classList.remove('cropper-circle');
+          } else {
+            aspectR = 1/1; 
+            cropContainer.classList.remove('cropper-circle');
+          }
 
+          setTimeout(() => {
             CROPPER = new Cropper(imageElement, {
               aspectRatio: aspectR,
               viewMode: 1, 
@@ -5740,12 +5630,10 @@
                 initZoomSlider();
               }
             });
-          };
-          
-          // Set src setelah menetapkan handler onload
-          imageElement.src = e.target.result;
+          }, 150);
         };
         reader.readAsDataURL(file);
+        fileInput.value = ''; 
       }
 
       // 2. Fungsi dipanggil saat tombol "Batal" di modal crop diklik
@@ -8567,7 +8455,6 @@
 
       // Saat halaman dimuat, panggil konfigurasi yang tersimpan
       window.addEventListener('DOMContentLoaded', () => {
-        initApkZoom();
         if (localStorage.getItem('pos_printer_active') === 'true') {
           document.getElementById('thermalToggle').checked = true;
           document.getElementById('btnThermalSetting').classList.remove('d-none');
