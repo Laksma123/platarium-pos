@@ -1326,20 +1326,19 @@
           <div id="cartPanel" class="pos-cart shadow-lg">
             <div class="p-3 bg-white border-bottom d-flex justify-content-between align-items-center">
               <h5 class="fw-bold m-0"><i class="fas fa-shopping-bag me-2 text-warning"></i>Pesanan</h5>
-              <button class="btn btn-light btn-sm d-lg-none" onclick="toggleMobileCart(false)"><i class="fas fa-times"></i></button>
+              <div class="d-flex align-items-center gap-2">
+                <button type="button" id="btnToggleAddonMode" onclick="toggleAddonSelectionMode()" class="btn btn-addon-pill shadow-sm">
+                  <i class="fas fa-plus-circle me-1"></i> Add-On
+                </button>
+                <button class="btn btn-light btn-sm d-lg-none" onclick="toggleMobileCart(false)"><i class="fas fa-times"></i></button>
+              </div>
             </div>
             
             <div class="flex-fill overflow-auto p-3" id="cartItems"></div>
             
-            <div class="p-4 bg-white border-top">
-              <div class="text-center mb-3">
-                <button type="button" id="btnToggleAddonMode" onclick="toggleAddonSelectionMode()" class="btn btn-addon-pill shadow-sm">
-                  <i class="fas fa-plus-circle me-1"></i> Add-On
-                </button>
-              </div>
-              
-              <div class="d-flex justify-content-between mb-2 text-muted"><span>Subtotal</span><span id="txtSubtotal">Rp 0</span></div>
-              <div class="d-flex justify-content-between mb-3 fs-4 fw-bold"><span>Total</span><span id="txtTotal" class="text-warning">Rp 0</span></div>
+            <div class="p-4 pt-3 bg-white border-top">
+              <div class="d-flex justify-content-between mb-1 text-muted" style="font-size: 0.9rem;"><span>Subtotal</span><span id="txtSubtotal">Rp 0</span></div>
+              <div class="d-flex justify-content-between mb-2 fs-5 fw-bold"><span>Total</span><span id="txtTotal" class="text-warning">Rp 0</span></div>
               <button onclick="processCheckout()" class="btn btn-luxury w-100 py-3 rounded-4 fw-bold fs-5">BAYAR SEKARANG</button>
             </div>
           </div>
@@ -5264,7 +5263,7 @@
       }
 
       function applyNavMode() {
-         const mode = localStorage.getItem('pos_nav_mode') || 'Desktop';
+         const mode = localStorage.getItem('pos_nav_mode') || 'Mobile';
          const mobileMenu = document.getElementById('mobileMenu');
          const btnMobileNav = document.getElementById('btnMobileNav');
          const navModeSelect = document.getElementById('navModeSelect');
@@ -6531,7 +6530,7 @@
           }
 
           // Bangun kelas pengetuk reorder animasi lucu secara dinamis
-          let cardClasses = ["d-flex", "align-items-center", "mb-3", "p-2", "bg-light", "rounded-3", "cart-item-selectable"];
+          let cardClasses = ["d-flex", "align-items-center", "mb-2", "p-2", "bg-light", "rounded-3", "cart-item-selectable"];
           if (IS_ADDON_SELECTION_MODE) cardClasses.push("addon-mode-active");
 
           // Jika mode addon aktif, klik card akan memicu window kustom input kosmetik
