@@ -623,6 +623,11 @@
         scrollbar-width: thin;
       }
 
+      /* Fix posisi/koordinat fallback element saat di-drag pada browser ter-zoom (APK) */
+      .sortable-drag {
+        zoom: var(--apk-reciprocal-zoom, 1) !important;
+      }
+
       /* ========================================= */
       /* PERBAIKAN UI MONITOR (TAB & TICKET EDIT)  */
       /* ========================================= */
@@ -1133,6 +1138,10 @@
         _apkZoomLevel = Math.max(APK_ZOOM_MIN, Math.min(APK_ZOOM_MAX, level));
         // Gunakan CSS zoom (bukan transform: scale) agar layout menyesuaikan
         document.documentElement.style.zoom = (_apkZoomLevel / 100);
+        
+        // Atur reciprocal zoom untuk menyeragamkan koordinat drag-and-drop fallback
+        document.documentElement.style.setProperty('--apk-reciprocal-zoom', 100 / _apkZoomLevel);
+        
         // Tandai <html> agar CSS rule khusus APK aktif (position:fixed pada #main-container)
         // Ini mencegah UI tertarik ke pojok kiri atas saat zoom < 100%
         document.documentElement.classList.add('apk-zoom-active');
@@ -1510,17 +1519,17 @@
             </div>
 
             <div class="row g-4">
-              <div class="col-4 col-lg-3" style="position: sticky; top: 15px; align-self: start; z-index: 10;">
+              <div class="col-3 col-lg-2" style="position: sticky; top: 15px; align-self: start; z-index: 10;">
                 <div class="bg-light p-3 rounded-4 border shadow-sm d-flex flex-column" style="min-height: 200px;">
                   <h6 class="fw-bold mb-1"><i class="fas fa-users text-primary me-1"></i> Daftar Staff</h6>
                   <p class="text-muted mb-3" style="font-size: 11px;">Tarik (Drag) staff ke tabel jadwal.</p>
                   
-                  <div id="staffPillsSource" class="d-flex flex-wrap align-content-start gap-2 p-2 border border-dashed rounded bg-white flex-fill shadow-sm" style="min-height: 120px;">
+                  <div id="staffPillsSource" class="d-flex flex-column align-items-center gap-2 p-2 border border-dashed rounded bg-white flex-fill shadow-sm" style="min-height: 120px;">
                   </div>
                 </div>
               </div>
 
-              <div class="col-8 col-lg-9">
+              <div class="col-9 col-lg-10">
                 <div id="scheduleGridToCapture" class="table-responsive bg-white p-0 rounded-4 border shadow-sm overflow-hidden" style="scrollbar-width: thin;">
                   <div class="text-center p-3 border-bottom bg-light">
                     <h5 class="fw-bold m-0" style="letter-spacing: 1px;">JADWAL OPERASIONAL STAFF</h5>
