@@ -624,7 +624,7 @@
       }
 
       /* Fix posisi/koordinat fallback element saat di-drag pada browser ter-zoom (APK) */
-      .sortable-drag, .sortable-fallback {
+      .sortable-drag {
         transition: none !important;
       }
 
@@ -2720,18 +2720,73 @@
           renderWeeklyScheduleGrid();
       }
 
-      // Fungsi penolong global untuk memperbaiki koordinat elemen fallback SortableJS saat zoom aktif
+      // Sistem Koreksi Drag Dinamis untuk Browser Ter-Zoom (APK)
+      let activeDrag = null;
+
       function handleSortableStartZoomCorrection(evt) {
+          const item = evt.item;
+          const rect = item.getBoundingClientRect();
+          const zoom = (typeof _apkZoomLevel !== 'undefined') ? (_apkZoomLevel / 100) : 1;
+          
+          let startX = 0;
+          let startY = 0;
+          const orig = evt.originalEvent;
+          if (orig) {
+              if (orig.touches && orig.touches.length > 0) {
+                  startX = orig.touches[0].clientX;
+                  startY = orig.touches[0].clientY;
+              } else {
+                  startX = orig.clientX;
+                  startY = orig.clientY;
+              }
+          }
+          
+          activeDrag = {
+              startX: startX,
+              startY: startY,
+              rectLeft: rect.left,
+              rectTop: rect.top,
+              zoom: zoom
+          };
+          
           const fallback = document.querySelector('.sortable-fallback');
           if (fallback) {
-              fallback.style.transition = 'none';
-              const zoom = (typeof _apkZoomLevel !== 'undefined') ? (_apkZoomLevel / 100) : 1;
-              if (zoom !== 1) {
-                  const rect = evt.item.getBoundingClientRect();
-                  const deltaX = rect.left * (1 / zoom - 1);
-                  const deltaY = rect.top * (1 / zoom - 1);
-                  fallback.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
-              }
+              fallback.style.transition = 'none'; // Matikan transisi hanya selama drag berlangsung
+          }
+      }
+
+      function handleSortableEndZoomCorrection(evt) {
+          activeDrag = null;
+      }
+
+      // Pasang listener global di fase bubble untuk menimpa posisi setelah SortableJS memproses koordinat
+      window.addEventListener('touchmove', handleGlobalDragMove, { passive: false });
+      window.addEventListener('mousemove', handleGlobalDragMove);
+
+      function handleGlobalDragMove(e) {
+          if (!activeDrag) return;
+          
+          const fallback = document.querySelector('.sortable-fallback');
+          if (!fallback) return;
+          
+          let currentX = 0;
+          let currentY = 0;
+          if (e.touches && e.touches.length > 0) {
+              currentX = e.touches[0].clientX;
+              currentY = e.touches[0].clientY;
+          } else {
+              currentX = e.clientX;
+              currentY = e.clientY;
+          }
+          
+          const zoom = activeDrag.zoom;
+          if (zoom !== 1) {
+              // Koreksi matematis menyeimbangkan piksel CSS ke koordinat fisik fixed viewport
+              const newLeft = (currentX - activeDrag.startX + activeDrag.rectLeft) * zoom;
+              const newTop = (currentY - activeDrag.startY + activeDrag.rectTop) * zoom;
+              
+              fallback.style.left = newLeft + 'px';
+              fallback.style.top = newTop + 'px';
           }
       }
 
@@ -2772,7 +2827,8 @@
                 forceFallback: true,
                 fallbackTolerance: 3,
                 fallbackOnBody: true,
-                onStart: handleSortableStartZoomCorrection
+                onStart: handleSortableStartZoomCorrection,
+                onEnd: handleSortableEndZoomCorrection
             }));
           }
 
@@ -2892,6 +2948,7 @@
                   fallbackTolerance: 3,
                   fallbackOnBody: true,
                   onStart: handleSortableStartZoomCorrection,
+                  onEnd: handleSortableEndZoomCorrection,
                   onAdd: function(evt) {
                       const itemEl = evt.item;
                       if (!itemEl.querySelector('.btn-delete-pill')) {
@@ -4940,6 +4997,7 @@
           fallbackOnBody: true,
           onStart: handleSortableStartZoomCorrection,
           onEnd: function(evt) {
+            handleSortableEndZoomCorrection(evt);
             const newOrder = Array.from(kArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_kitchen_order', JSON.stringify(newOrder));
             renderMonitorUI();
@@ -4957,6 +5015,7 @@
           fallbackOnBody: true,
           onStart: handleSortableStartZoomCorrection,
           onEnd: function(evt) {
+            handleSortableEndZoomCorrection(evt);
             const newOrder = Array.from(bArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_bar_order', JSON.stringify(newOrder));
             renderMonitorUI();
@@ -6297,6 +6356,7 @@
             fallbackOnBody: true,
             onStart: handleSortableStartZoomCorrection,
             onEnd: function(evt) {
+              handleSortableEndZoomCorrection(evt);
               const currentOrder = JSON.parse(localStorage.getItem('pos_grid_order') || '[]');
               if (currentOrder.length === 0) {
                 PRODUCTS.forEach(p => currentOrder.push(p.id));
