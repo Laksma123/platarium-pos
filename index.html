@@ -638,6 +638,7 @@
       /* Efek melayang premium saat kertas order di-drag */
       .ticket-paper.sortable-fallback {
         transform: scale(0.9) rotate(-2deg) !important;
+        transform-origin: top left !important;
         opacity: 0.95 !important;
         box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
         border: 2px solid var(--primary-gold, #c5a059) !important;
@@ -2794,8 +2795,15 @@
           const cssX = physicalX / zoom;
           const cssY = physicalY / zoom;
           
-          const newLeft = cssX - activeDrag.offsetX;
-          const newTop = cssY - activeDrag.offsetY;
+          // Sesuaikan offset dengan scale factor 0.9 jika elemen adalah ticket-paper
+          // dan memiliki transform-origin: top left
+          let scaleFactor = 1;
+          if (fallback.classList.contains('ticket-paper')) {
+              scaleFactor = 0.9;
+          }
+          
+          const newLeft = cssX - activeDrag.offsetX * scaleFactor;
+          const newTop = cssY - activeDrag.offsetY * scaleFactor;
           
           fallback.style.position = 'fixed';
           fallback.style.left = newLeft + 'px';
@@ -4981,8 +4989,7 @@
           ghostClass: 'opacity-50',
           dragClass: 'sortable-drag',
           disabled: !IS_MONITOR_REORDER,
-          delay: 150,
-          delayOnTouchOnly: true,
+          delay: 0,
           forceFallback: true,
           fallbackTolerance: 3,
           fallbackOnBody: true,
@@ -5009,8 +5016,7 @@
           ghostClass: 'opacity-50',
           dragClass: 'sortable-drag',
           disabled: !IS_MONITOR_REORDER,
-          delay: 150,
-          delayOnTouchOnly: true,
+          delay: 0,
           forceFallback: true,
           fallbackTolerance: 3,
           fallbackOnBody: true,
