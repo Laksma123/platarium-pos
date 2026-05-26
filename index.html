@@ -552,7 +552,7 @@
         position: absolute;
         top: 25px;
         left: -50px;
-        right: -100vw; /* Membentang ekstrem ke kanan tanpa batas pasti agar tidak putus */
+        right: -10000px; /* Membentang ekstrem ke kanan tanpa batas pasti agar tidak putus */
         height: 3px;
         background: #bdc3c7;
         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
@@ -1115,7 +1115,7 @@
       const APK_ZOOM_STEP = 5;
       const APK_ZOOM_MIN = 30;
       const APK_ZOOM_MAX = 150;
-      const APK_ZOOM_DEFAULT = 50; // Default zoom untuk APK
+      const APK_ZOOM_DEFAULT = 75; // Default zoom untuk APK
 
       function apkApplyZoom(level) {
         _apkZoomLevel = Math.max(APK_ZOOM_MIN, Math.min(APK_ZOOM_MAX, level));
@@ -1164,7 +1164,11 @@
         const loginCtrl = document.getElementById('apkZoomLogin');
         const titleCtrl = document.getElementById('apkZoomTitlebar');
         if (loginCtrl) loginCtrl.classList.remove('visible');
-        if (titleCtrl) titleCtrl.classList.add('visible');
+        if (titleCtrl) {
+          titleCtrl.classList.add('visible');
+          const pctTitle = document.getElementById('apkZoomPctTitlebar');
+          if (pctTitle) pctTitle.textContent = _apkZoomLevel + '%';
+        }
       }
 
       // Dipanggil saat logout → kembalikan tombol ke login page
@@ -1884,7 +1888,7 @@
         </div>
 
         <div id="view-monitor" class="app-view p-3 p-md-4" style="display:none; background: #f8f9fa; flex: 1; width: 100%; max-width: 100vw; overflow-x: hidden;">
-          <div class="d-flex flex-column h-100">
+          <div class="d-flex flex-column h-100 w-100">
             
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3 w-100">
               
