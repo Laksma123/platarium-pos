@@ -624,7 +624,7 @@
       }
 
       /* Fix posisi/koordinat fallback element saat di-drag pada browser ter-zoom (APK) */
-      .sortable-drag {
+      .sortable-drag, .sortable-fallback {
         transition: none !important;
       }
 
@@ -1476,11 +1476,11 @@
             </div>
           <div id="view-schedule-grid" class="container-fluid mt-5 border-top pt-4 pb-5">
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-              <div>
+              <div class="mb-3 mb-lg-0">
                 <h4 class="fw-bold m-0"><i class="fas fa-calendar-alt text-success me-2"></i>Pengaturan Jadwal Dinamis</h4>
                 <p class="text-muted small m-0">Atur jadwal shift operasional staff dengan drag & drop.</p>
               </div>
-              <div class="d-flex gap-2 mt-2 mt-md-0 flex-wrap justify-content-end">
+              <div class="d-flex gap-2 mt-2 mt-lg-0 flex-wrap justify-content-end">
                 <button class="btn btn-primary rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnSaveBatchSchedule" onclick="executeBatchSaveSchedule()">
                     <i class="fas fa-save me-2"></i>Save Schedule
                 </button>
@@ -2720,6 +2720,21 @@
           renderWeeklyScheduleGrid();
       }
 
+      // Fungsi penolong global untuk memperbaiki koordinat elemen fallback SortableJS saat zoom aktif
+      function handleSortableStartZoomCorrection(evt) {
+          const fallback = document.querySelector('.sortable-fallback');
+          if (fallback) {
+              fallback.style.transition = 'none';
+              const zoom = (typeof _apkZoomLevel !== 'undefined') ? (_apkZoomLevel / 100) : 1;
+              if (zoom !== 1) {
+                  const rect = evt.item.getBoundingClientRect();
+                  const deltaX = rect.left * (1 / zoom - 1);
+                  const deltaY = rect.top * (1 / zoom - 1);
+                  fallback.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
+              }
+          }
+      }
+
       let SCHEDULE_SORTABLES = []; // Menampung instance memori Sortable
 
       function renderWeeklyScheduleGrid() {
@@ -2756,7 +2771,8 @@
                 animation: 150, sort: false, ghostClass: 'bg-secondary',
                 forceFallback: true,
                 fallbackTolerance: 3,
-                fallbackOnBody: true
+                fallbackOnBody: true,
+                onStart: handleSortableStartZoomCorrection
             }));
           }
 
@@ -2875,6 +2891,7 @@
                   forceFallback: true,
                   fallbackTolerance: 3,
                   fallbackOnBody: true,
+                  onStart: handleSortableStartZoomCorrection,
                   onAdd: function(evt) {
                       const itemEl = evt.item;
                       if (!itemEl.querySelector('.btn-delete-pill')) {
@@ -3063,7 +3080,7 @@
         });
 
         // Menggunakan desain list murni (tanpa list-group-item/card per staf) agar sangat ramping
-        let html = '<div class="row w-100"><div class="col-2 d-none d-lg-block text-muted small px-3">Daftar Staff</div><div class="col-12 col-lg-10"><div class="bg-white rounded-4 shadow-sm border px-3 py-1">';
+        let html = '<div class="col-2 d-none d-lg-block text-muted small px-3 pt-2">Daftar Staff</div><div class="col-12 col-lg-10"><div class="bg-white rounded-4 shadow-sm border px-3 py-1">';
 
         sortedStaff.forEach((staff, index) => {
           let photoUrl = faces[staff.name] || 'https://via.placeholder.com/150';
@@ -3132,7 +3149,7 @@
           `;
         });
 
-        html += `</div></div></div>`;
+        html += `</div></div>`;
         container.innerHTML = html;
       }
 
@@ -4921,6 +4938,7 @@
           forceFallback: true,
           fallbackTolerance: 3,
           fallbackOnBody: true,
+          onStart: handleSortableStartZoomCorrection,
           onEnd: function(evt) {
             const newOrder = Array.from(kArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_kitchen_order', JSON.stringify(newOrder));
@@ -4937,6 +4955,7 @@
           forceFallback: true,
           fallbackTolerance: 3,
           fallbackOnBody: true,
+          onStart: handleSortableStartZoomCorrection,
           onEnd: function(evt) {
             const newOrder = Array.from(bArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_bar_order', JSON.stringify(newOrder));
@@ -6276,6 +6295,7 @@
             forceFallback: true, 
             fallbackTolerance: 3,
             fallbackOnBody: true,
+            onStart: handleSortableStartZoomCorrection,
             onEnd: function(evt) {
               const currentOrder = JSON.parse(localStorage.getItem('pos_grid_order') || '[]');
               if (currentOrder.length === 0) {
