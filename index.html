@@ -627,6 +627,10 @@
       .sortable-drag {
         transition: none !important;
       }
+      .sortable-fallback {
+        transition: none !important;
+        transform: none !important;
+      }
 
       /* ========================================= */
       /* PERBAIKAN UI MONITOR (TAB & TICKET EDIT)  */
@@ -2721,6 +2725,9 @@
       }
 
       // Sistem Koreksi Drag Dinamis untuk Browser Ter-Zoom (APK)
+      // Catatan: CSS `zoom` membuat touch clientX/Y melaporkan koordinat fisik viewport,
+      // sedangkan getBoundingClientRect() dan position:fixed left/top bekerja di ruang CSS (ter-zoom).
+      // Solusi: konversi koordinat sentuh fisik → CSS dengan membagi zoom.
       let activeDrag = null;
 
       function handleSortableStartZoomCorrection(evt) {
@@ -2741,25 +2748,24 @@
               }
           }
           
+          // Konversi posisi sentuh awal ke koordinat CSS
+          // dan hitung offset antara posisi sentuh dengan pojok kiri-atas elemen
+          const cssTouchX = startX / zoom;
+          const cssTouchY = startY / zoom;
+          
           activeDrag = {
-              startX: startX,
-              startY: startY,
-              rectLeft: rect.left,
-              rectTop: rect.top,
+              // Offset jari dari pojok kiri-atas pill (dalam ruang CSS)
+              offsetX: cssTouchX - rect.left,
+              offsetY: cssTouchY - rect.top,
               zoom: zoom
           };
-          
-          const fallback = document.querySelector('.sortable-fallback');
-          if (fallback) {
-              fallback.style.transition = 'none'; // Matikan transisi hanya selama drag berlangsung
-          }
       }
 
       function handleSortableEndZoomCorrection(evt) {
           activeDrag = null;
       }
 
-      // Pasang listener global di fase bubble untuk menimpa posisi setelah SortableJS memproses koordinat
+      // Pasang listener global untuk menimpa posisi fallback element saat drag berlangsung
       window.addEventListener('touchmove', handleGlobalDragMove, { passive: false });
       window.addEventListener('mousemove', handleGlobalDragMove);
 
@@ -2769,25 +2775,31 @@
           const fallback = document.querySelector('.sortable-fallback');
           if (!fallback) return;
           
-          let currentX = 0;
-          let currentY = 0;
+          const zoom = activeDrag.zoom;
+          if (zoom === 1) return; // Tidak perlu koreksi jika zoom 100%
+          
+          let physicalX = 0;
+          let physicalY = 0;
           if (e.touches && e.touches.length > 0) {
-              currentX = e.touches[0].clientX;
-              currentY = e.touches[0].clientY;
+              physicalX = e.touches[0].clientX;
+              physicalY = e.touches[0].clientY;
           } else {
-              currentX = e.clientX;
-              currentY = e.clientY;
+              physicalX = e.clientX;
+              physicalY = e.clientY;
           }
           
-          const zoom = activeDrag.zoom;
-          if (zoom !== 1) {
-              // Koreksi matematis menyeimbangkan piksel CSS ke koordinat fisik fixed viewport
-              const newLeft = (currentX - activeDrag.startX + activeDrag.rectLeft) * zoom;
-              const newTop = (currentY - activeDrag.startY + activeDrag.rectTop) * zoom;
-              
-              fallback.style.left = newLeft + 'px';
-              fallback.style.top = newTop + 'px';
-          }
+          // Konversi koordinat sentuh fisik → CSS, lalu kurangi offset awal
+          // agar pill tetap menempel di posisi jari yang sama
+          const cssX = physicalX / zoom;
+          const cssY = physicalY / zoom;
+          
+          const newLeft = cssX - activeDrag.offsetX;
+          const newTop = cssY - activeDrag.offsetY;
+          
+          fallback.style.position = 'fixed';
+          fallback.style.left = newLeft + 'px';
+          fallback.style.top = newTop + 'px';
+          fallback.style.transition = 'none';
       }
 
       let SCHEDULE_SORTABLES = []; // Menampung instance memori Sortable
