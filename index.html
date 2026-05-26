@@ -943,6 +943,98 @@
           transform: scale(1);
         }
       }
+
+      /* ========================================= */
+      /* APK ZOOM CONTROLS                         */
+      /* ========================================= */
+      .apk-zoom-controls {
+        display: none; /* Default tersembunyi, akan ditampilkan via JS hanya untuk APK */
+        align-items: center;
+        gap: 6px;
+        z-index: 10001;
+        user-select: none;
+      }
+      .apk-zoom-controls.visible {
+        display: flex !important;
+      }
+      /* Posisi di Login Page: pojok kiri atas */
+      .apk-zoom-login {
+        position: absolute;
+        top: 18px;
+        left: 18px;
+      }
+      /* Posisi di Title Bar: inline, di kiri jam */
+      .apk-zoom-titlebar {
+        margin-right: 6px;
+        flex-shrink: 0;
+      }
+      .apk-zoom-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        border: 1.5px solid rgba(255,255,255,0.25);
+        background: rgba(0,0,0,0.55);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        color: #ffffff;
+        font-size: 0.85rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        padding: 0;
+        line-height: 1;
+      }
+      .apk-zoom-btn:hover {
+        background: rgba(0,0,0,0.7);
+        transform: scale(1.08);
+      }
+      .apk-zoom-btn:active {
+        transform: scale(0.92);
+        background: rgba(0,0,0,0.85);
+      }
+      /* Versi title bar: lebih terang untuk latar putih */
+      .apk-zoom-titlebar .apk-zoom-btn {
+        background: #f0f2f5;
+        border: 1.5px solid #dfe6e9;
+        color: #2d3436;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      }
+      .apk-zoom-titlebar .apk-zoom-btn:hover {
+        background: #dfe6e9;
+      }
+      .apk-zoom-titlebar .apk-zoom-btn:active {
+        background: #b2bec3;
+      }
+      .apk-zoom-label {
+        font-size: 0.55rem;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        color: rgba(255,255,255,0.7);
+        text-transform: uppercase;
+        white-space: nowrap;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      }
+      .apk-zoom-titlebar .apk-zoom-label {
+        color: #636e72;
+        text-shadow: none;
+        font-size: 0.5rem;
+      }
+      .apk-zoom-pct {
+        font-size: 0.6rem;
+        font-weight: 800;
+        color: rgba(255,255,255,0.9);
+        min-width: 28px;
+        text-align: center;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      }
+      .apk-zoom-titlebar .apk-zoom-pct {
+        color: var(--primary-gold);
+        text-shadow: none;
+      }
     </style>
   </head>
   <body>
@@ -970,6 +1062,16 @@
     </div>
 
     <div id="loginOverlay" class="login-overlay">
+      <!-- APK Zoom Controls - Login Page (pojok kiri atas) -->
+      <div id="apkZoomLogin" class="apk-zoom-controls apk-zoom-login">
+        <button type="button" class="apk-zoom-btn" onclick="apkZoomOut()" title="Zoom Out"><i class="fas fa-minus" style="font-size:0.65rem;"></i></button>
+        <div class="d-flex flex-column align-items-center" style="gap:1px;">
+          <span class="apk-zoom-label">Zoom</span>
+          <span id="apkZoomPctLogin" class="apk-zoom-pct">100%</span>
+        </div>
+        <button type="button" class="apk-zoom-btn" onclick="apkZoomIn()" title="Zoom In"><i class="fas fa-plus" style="font-size:0.65rem;"></i></button>
+      </div>
+
       <button type="button" class="btn btn-dark rounded-circle shadow d-flex justify-content-center align-items-center" style="position: absolute; top: 20px; right: 20px; z-index: 10000; width: 45px; height: 45px; opacity: 0.8; border: 2px solid rgba(255,255,255,0.5);"
         onclick="openWallpaperManager()" title="Edit Wallpaper">
         <i class="fas fa-image" style="color: white; font-size: 1.2rem;"></i>
@@ -988,6 +1090,79 @@
     </div>
 
     <script>
+      /* ========================================= */
+      /* APK ZOOM SYSTEM (Deteksi WebView Android) */
+      /* ========================================= */
+      const IS_APK_WEBVIEW = (function() {
+        const ua = navigator.userAgent || '';
+        // Android WebView menyertakan '; wv)' di User Agent string-nya
+        // Ini TIDAK ada di Chrome, Firefox, Samsung Internet, dll.
+        return /; wv\)/.test(ua) && /Android/.test(ua);
+      })();
+
+      let _apkZoomLevel = 100; // Persentase zoom saat ini
+      const APK_ZOOM_STEP = 10;
+      const APK_ZOOM_MIN = 30;
+      const APK_ZOOM_MAX = 150;
+      const APK_ZOOM_DEFAULT = 50; // Default zoom untuk APK
+
+      function apkApplyZoom(level) {
+        _apkZoomLevel = Math.max(APK_ZOOM_MIN, Math.min(APK_ZOOM_MAX, level));
+        // Gunakan CSS zoom (bukan transform: scale) agar layout menyesuaikan
+        // dan TIDAK menarik UI ke pojok kiri atas
+        document.documentElement.style.zoom = (_apkZoomLevel / 100);
+        // Update label persentase di kedua tempat
+        const pctLogin = document.getElementById('apkZoomPctLogin');
+        const pctTitle = document.getElementById('apkZoomPctTitlebar');
+        if (pctLogin) pctLogin.textContent = _apkZoomLevel + '%';
+        if (pctTitle) pctTitle.textContent = _apkZoomLevel + '%';
+        // Simpan preferensi zoom di localStorage
+        try { localStorage.setItem('apk_zoom_level', _apkZoomLevel); } catch(e) {}
+      }
+
+      function apkZoomIn() {
+        apkApplyZoom(_apkZoomLevel + APK_ZOOM_STEP);
+      }
+
+      function apkZoomOut() {
+        apkApplyZoom(_apkZoomLevel - APK_ZOOM_STEP);
+      }
+
+      // Inisialisasi: Tampilkan tombol zoom HANYA jika diakses dari APK
+      (function initApkZoom() {
+        if (!IS_APK_WEBVIEW) return; // Bukan APK → sembunyikan semua, tidak perlu init
+
+        // Tampilkan tombol zoom di login page
+        const loginCtrl = document.getElementById('apkZoomLogin');
+        if (loginCtrl) loginCtrl.classList.add('visible');
+
+        // Muat zoom level tersimpan atau gunakan default 50%
+        let savedZoom = APK_ZOOM_DEFAULT;
+        try {
+          const stored = localStorage.getItem('apk_zoom_level');
+          if (stored) savedZoom = parseInt(stored, 10) || APK_ZOOM_DEFAULT;
+        } catch(e) {}
+        apkApplyZoom(savedZoom);
+      })();
+
+      // Dipanggil setelah berhasil login → sembunyikan tombol login, tampilkan di title bar
+      function apkSwitchZoomToTitlebar() {
+        if (!IS_APK_WEBVIEW) return;
+        const loginCtrl = document.getElementById('apkZoomLogin');
+        const titleCtrl = document.getElementById('apkZoomTitlebar');
+        if (loginCtrl) loginCtrl.classList.remove('visible');
+        if (titleCtrl) titleCtrl.classList.add('visible');
+      }
+
+      // Dipanggil saat logout → kembalikan tombol ke login page
+      function apkSwitchZoomToLogin() {
+        if (!IS_APK_WEBVIEW) return;
+        const loginCtrl = document.getElementById('apkZoomLogin');
+        const titleCtrl = document.getElementById('apkZoomTitlebar');
+        if (titleCtrl) titleCtrl.classList.remove('visible');
+        if (loginCtrl) loginCtrl.classList.add('visible');
+      }
+
       let isConfigChecked = false;
       let isCustomBgLoading = false;
 
@@ -1031,6 +1206,16 @@
         
         <div class="d-flex align-items-center gap-2 ms-auto">
           
+          <!-- APK Zoom Controls - Title Bar (kiri jam) -->
+          <div id="apkZoomTitlebar" class="apk-zoom-controls apk-zoom-titlebar">
+            <button type="button" class="apk-zoom-btn" onclick="apkZoomOut()" title="Zoom Out"><i class="fas fa-minus" style="font-size:0.6rem;"></i></button>
+            <div class="d-flex flex-column align-items-center" style="gap:0px;">
+              <span class="apk-zoom-label">Zoom</span>
+              <span id="apkZoomPctTitlebar" class="apk-zoom-pct">100%</span>
+            </div>
+            <button type="button" class="apk-zoom-btn" onclick="apkZoomIn()" title="Zoom In"><i class="fas fa-plus" style="font-size:0.6rem;"></i></button>
+          </div>
+
           <div class="d-none d-md-flex align-items-center px-2" style="min-width: 130px; font-variant-numeric: tabular-nums;">
              <i class="far fa-calendar-alt text-warning me-2" style="font-size: 1.1rem;"></i>
              <div class="d-flex flex-column justify-content-center lh-1">
@@ -4132,6 +4317,7 @@
       function proceedToMainUI(res) {
         document.getElementById('loginOverlay').classList.add('d-none');
         document.getElementById('main-container').classList.remove('d-none');
+        apkSwitchZoomToTitlebar(); // Pindahkan tombol zoom APK dari login page ke title bar
         document.getElementById('uiStoreName').innerText = res.config.StoreName;
         document.getElementById('roleLabel').innerText = res.role;
         
