@@ -2624,6 +2624,7 @@
       let TAX_PERCENTAGE = 0;
       let IS_STAFF_LOADED = false;
       let IS_OPCOST_LOADED = false;
+      let CURRENT_SHIFT_COUNT = 2;
 
       // =========================================
       // SETTING SHIFT DINAMIS
@@ -2696,6 +2697,8 @@
              CURRENT_SHIFT_COUNT = parseInt(savedCount);
              let sel = document.getElementById('shiftCountSelector');
              if (sel) sel.value = CURRENT_SHIFT_COUNT;
+          } else {
+             CURRENT_SHIFT_COUNT = 2;
           }
 
           const source = document.getElementById('staffPillsSource');
