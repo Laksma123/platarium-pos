@@ -765,6 +765,188 @@
         --apk-zoom: 1;
       }
 
+      /* Wrapper Modal untuk menampung tombol di luar modal */
+      .modal-wrapper {
+        position: relative;
+        max-width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      /* Tombol kecil melingkar di luar modal */
+      .modal-outside-buttons {
+        position: absolute;
+        top: calc(15px / var(--apk-zoom, 1));
+        right: calc(-65px / var(--apk-zoom, 1));
+        display: flex;
+        flex-direction: column;
+        gap: calc(12px / var(--apk-zoom, 1));
+        z-index: 10700;
+      }
+
+      @media (max-width: 680px) {
+        .modal-outside-buttons {
+          right: calc(15px / var(--apk-zoom, 1));
+          top: calc(-65px / var(--apk-zoom, 1));
+          flex-direction: row;
+        }
+      }
+
+      .btn-outside-circle {
+        width: calc(50px / var(--apk-zoom, 1));
+        height: calc(50px / var(--apk-zoom, 1));
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 calc(8px / var(--apk-zoom, 1)) calc(24px / var(--apk-zoom, 1)) rgba(0, 0, 0, 0.25);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-outside-circle:hover {
+        transform: scale(1.1) translateY(-2px);
+        box-shadow: 0 calc(12px / var(--apk-zoom, 1)) calc(30px / var(--apk-zoom, 1)) rgba(0, 0, 0, 0.35);
+      }
+
+      .btn-outside-circle:active {
+        transform: scale(0.95);
+      }
+
+      .btn-outside-circle.btn-batal {
+        background: linear-gradient(135deg, #ef4444, #b91c1c);
+        color: white;
+      }
+
+      .btn-outside-circle.btn-simpan {
+        background: linear-gradient(135deg, #1e3a8a, #0f172a);
+        color: white;
+      }
+
+      .btn-outside-circle .icon-wrapper {
+        position: relative;
+        width: calc(24px / var(--apk-zoom, 1));
+        height: calc(24px / var(--apk-zoom, 1));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .btn-outside-circle .icon-primary,
+      .btn-outside-circle .icon-secondary {
+        position: absolute;
+        font-size: calc(1.25rem / var(--apk-zoom, 1));
+        transition: all 0.4s ease-in-out;
+      }
+
+      /* Animasi untuk tombol Batal (X ke panah berputar) */
+      @keyframes batal-morph-rotate {
+        0%, 30% {
+          opacity: 1;
+          transform: scale(1) rotate(0deg);
+        }
+        40% {
+          opacity: 0;
+          transform: scale(0.5) rotate(90deg);
+        }
+        80% {
+          opacity: 0;
+          transform: scale(0.5) rotate(90deg);
+        }
+        90%, 100% {
+          opacity: 1;
+          transform: scale(1) rotate(0deg);
+        }
+      }
+
+      @keyframes batal-arrow-rotate {
+        0%, 30% {
+          opacity: 0;
+          transform: scale(0.5) rotate(-180deg);
+        }
+        40% {
+          opacity: 1;
+          transform: scale(1) rotate(-180deg);
+        }
+        70% {
+          opacity: 1;
+          transform: scale(1) rotate(180deg);
+        }
+        80% {
+          opacity: 0;
+          transform: scale(0.5) rotate(270deg);
+        }
+        90%, 100% {
+          opacity: 0;
+          transform: scale(0.5) rotate(270deg);
+        }
+      }
+
+      .btn-batal .icon-primary {
+        animation: batal-morph-rotate 2.5s infinite ease-in-out;
+      }
+
+      .btn-batal .icon-secondary {
+        opacity: 0;
+        animation: batal-arrow-rotate 2.5s infinite ease-in-out;
+      }
+
+      /* Animasi untuk tombol Simpan (Disket ke garis berputar) */
+      @keyframes simpan-morph-rotate {
+        0%, 30% {
+          opacity: 1;
+          transform: scale(1) rotate(0deg);
+        }
+        40% {
+          opacity: 0;
+          transform: scale(0.5) rotate(90deg);
+        }
+        80% {
+          opacity: 0;
+          transform: scale(0.5) rotate(90deg);
+        }
+        90%, 100% {
+          opacity: 1;
+          transform: scale(1) rotate(0deg);
+        }
+      }
+
+      @keyframes simpan-notch-rotate {
+        0%, 30% {
+          opacity: 0;
+          transform: scale(0.5) rotate(-180deg);
+        }
+        40% {
+          opacity: 1;
+          transform: scale(1) rotate(-180deg);
+        }
+        70% {
+          opacity: 1;
+          transform: scale(1) rotate(180deg);
+        }
+        80% {
+          opacity: 0;
+          transform: scale(0.5) rotate(270deg);
+        }
+        90%, 100% {
+          opacity: 0;
+          transform: scale(0.5) rotate(270deg);
+        }
+      }
+
+      .btn-simpan .icon-primary {
+        animation: simpan-morph-rotate 2.5s infinite ease-in-out;
+      }
+
+      .btn-simpan .icon-secondary {
+        opacity: 0;
+        animation: simpan-notch-rotate 2.5s infinite ease-in-out;
+      }
+
       /* Container Modal Addon & Resep dengan Skala Zoom */
       .modal-addon-container {
         width: 95% !important;
@@ -2182,52 +2364,65 @@
         </div>
 
         <div id="modalCartAddonCosmetic" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10600; opacity: 1 !important;">
-          <div class="bg-white rounded-5 shadow-lg d-flex flex-column modal-addon-container">
-            <h5 class="fw-bold mb-4 border-bottom pb-3 text-dark text-center"><i class="fas fa-cookie-bite text-warning me-2"></i> Pengaturan Add-On</h5>
-            <input type="hidden" id="addonTargetPid">
-            
-            <div class="row g-4 text-start mb-4">
-              <!-- Kolom Kiri: Resep Bahan & Toggle "Tidak rubah bahan" -->
-              <div class="col-12 col-md-6 border-end">
-                <div class="mb-3">
-                  <label class="small fw-bold text-muted">ITEM</label>
-                  <div class="fw-bold text-dark fs-5" id="addonTargetName">Nama Menu</div>
+          <div class="modal-wrapper">
+            <div class="bg-white rounded-5 shadow-lg d-flex flex-column modal-addon-container">
+              <h5 class="fw-bold mb-4 border-bottom pb-3 text-dark text-center"><i class="fas fa-cookie-bite text-warning me-2"></i> Pengaturan Add-On</h5>
+              <input type="hidden" id="addonTargetPid">
+              
+              <div class="row g-4 text-start mb-4">
+                <!-- Kolom Kiri: Resep Bahan & Toggle "Tidak rubah bahan" -->
+                <div class="col-12 col-md-6 border-end">
+                  <div class="mb-3">
+                    <label class="small fw-bold text-muted">ITEM</label>
+                    <div class="fw-bold text-dark fs-5" id="addonTargetName">Nama Menu</div>
+                  </div>
+                  
+                  <div class="d-flex justify-content-between align-items-center mb-3 bg-light p-2 rounded-3 border">
+                    <span class="small fw-bold text-muted"><i class="fas fa-seedling me-1 text-success"></i> Tidak rubah bahan</span>
+                    <div class="form-check form-switch m-0">
+                      <input class="form-check-input" type="checkbox" role="switch" id="addonNoRecipeChangeToggle" style="width: 40px; height: 20px; cursor:pointer;">
+                    </div>
+                  </div>
+
+                  <label class="small fw-bold text-muted d-block mb-2">KOMPOSISI RESEP BAHAN</label>
+                  <div id="addonRecipeContainer" class="border rounded-4 p-3 bg-light overflow-auto" style="max-height: 400px; min-height: 330px;">
+                    <div id="addonRecipeList" class="d-flex flex-column gap-2">
+                      <div class="text-center p-3 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Memuat bahan resep...</div>
+                    </div>
+                  </div>
                 </div>
                 
-                <div class="d-flex justify-content-between align-items-center mb-3 bg-light p-2 rounded-3 border">
-                  <span class="small fw-bold text-muted"><i class="fas fa-seedling me-1 text-success"></i> Tidak rubah bahan</span>
-                  <div class="form-check form-switch m-0">
-                    <input class="form-check-input" type="checkbox" role="switch" id="addonNoRecipeChangeToggle" style="width: 40px; height: 20px; cursor:pointer;">
+                <!-- Kolom Kanan: Note & Ganti Harga -->
+                <div class="col-12 col-md-6">
+                  <div class="mb-3">
+                    <label class="small fw-bold text-muted">NOTE / KETERANGAN</label>
+                    <input type="text" id="addonNoteValue" class="form-control fw-bold border-2" placeholder="Contoh: Ekstra es, Manis, dll">
                   </div>
-                </div>
-
-                <label class="small fw-bold text-muted d-block mb-2">KOMPOSISI RESEP BAHAN</label>
-                <div id="addonRecipeContainer" class="border rounded-4 p-3 bg-light overflow-auto" style="max-height: 400px; min-height: 330px;">
-                  <div id="addonRecipeList" class="d-flex flex-column gap-2">
-                    <div class="text-center p-3 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Memuat bahan resep...</div>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Kolom Kanan: Note & Ganti Harga -->
-              <div class="col-12 col-md-6">
-                <div class="mb-3">
-                  <label class="small fw-bold text-muted">NOTE / KETERANGAN</label>
-                  <input type="text" id="addonNoteValue" class="form-control fw-bold border-2" placeholder="Contoh: Ekstra es, Manis, dll">
-                </div>
-                <div class="mb-4">
-                  <label class="small fw-bold text-muted">GANTI HARGA ITEM (Rp)</label>
-                  <div class="input-group">
-                    <span class="input-group-text bg-white border-2 border-end-0">Rp</span>
-                    <input type="number" id="addonPriceValue" class="form-control fw-bold border-2 border-start-0 ps-0" placeholder="0">
+                  <div class="mb-4">
+                    <label class="small fw-bold text-muted">GANTI HARGA ITEM (Rp)</label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-white border-2 border-end-0">Rp</span>
+                      <input type="number" id="addonPriceValue" class="form-control fw-bold border-2 border-start-0 ps-0" placeholder="0">
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <div class="d-flex gap-2 pt-3 border-top">
-              <button class="btn btn-light w-100 py-3 fw-bold rounded-pill" onclick="closeCartAddonModal()">Batal</button>
-              <button class="btn btn-warning w-100 py-3 fw-bold rounded-pill shadow-sm text-dark" onclick="saveCartAddonCosmetic()">Simpan</button>
+
+            <!-- Tombol Batal & Simpan di luar modal (Lingkaran) -->
+            <div class="modal-outside-buttons">
+              <button class="btn-outside-circle btn-batal" onclick="closeCartAddonModal()" title="Batal">
+                <div class="icon-wrapper">
+                  <span class="icon-primary fw-bold" style="font-family: sans-serif; font-size: 1.25rem;">X</span>
+                  <i class="fas fa-redo icon-secondary"></i>
+                </div>
+              </button>
+              <button class="btn-outside-circle btn-simpan" onclick="saveCartAddonCosmetic()" title="Simpan">
+                <div class="icon-wrapper">
+                  <i class="fas fa-save icon-primary"></i>
+                  <i class="fas fa-circle-notch icon-secondary"></i>
+                </div>
+              </button>
             </div>
           </div>
         </div>
@@ -2474,54 +2669,66 @@
         </div>
 
         <div id="modalRecipeSettings" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10500; opacity: 1 !important;">
-          <div class="bg-white rounded-5 shadow-lg d-flex flex-column modal-recipe-container">
-            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
-              <div>
-                <h5 class="fw-bold m-0"><i class="fas fa-mortar-pestle text-warning me-2"></i>Komposisi Resep</h5>
-                <small class="text-muted fw-bold" id="recipeTargetName">Menu: ...</small>
+          <div class="modal-wrapper">
+            <div class="bg-white rounded-5 shadow-lg d-flex flex-column modal-recipe-container">
+              <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+                <div>
+                  <h5 class="fw-bold m-0"><i class="fas fa-mortar-pestle text-warning me-2"></i>Komposisi Resep</h5>
+                  <small class="text-muted fw-bold" id="recipeTargetName">Menu: ...</small>
+                </div>
               </div>
-              <button class="btn-close shadow-none" onclick="closeRecipeSettings()"></button>
-            </div>
-            
-            <div class="bg-light p-3 rounded-4 mb-3 border">
-              <label class="small fw-bold text-muted mb-2">TAMBAH BAHAN</label>
               
-              <select id="recipeMaterialSelect" class="form-select fw-bold mb-2 border-2" onchange="handleMaterialSelectChange()">
-                <option value="" selected disabled>Pilih bahan baku...</option>
-                <option value="NEW_MATERIAL" class="text-primary fw-bold">[+] Buat Bahan Baku Baru...</option>
+              <div class="bg-light p-3 rounded-4 mb-3 border">
+                <label class="small fw-bold text-muted mb-2">TAMBAH BAHAN</label>
+                
+                <select id="recipeMaterialSelect" class="form-select fw-bold mb-2 border-2" onchange="handleMaterialSelectChange()">
+                  <option value="" selected disabled>Pilih bahan baku...</option>
+                  <option value="NEW_MATERIAL" class="text-primary fw-bold">[+] Buat Bahan Baku Baru...</option>
                 </select>
 
-              <input type="text" id="recipeNewMaterialName" class="form-control fw-bold mb-2 border-2 d-none" placeholder="Ketik nama bahan baru...">
+                <input type="text" id="recipeNewMaterialName" class="form-control fw-bold mb-2 border-2 d-none" placeholder="Ketik nama bahan baru...">
 
-              <div class="d-flex gap-2">
-                <div class="input-group">
-                  <input type="number" id="recipeQty" class="form-control fw-bold border-2" placeholder="Jumlah" step="0.1">
-                  <select id="recipeUnit" class="form-select border-2" style="max-width: 90px; font-weight: 600;">
-                    <option value="gr">gr</option>
-                    <option value="ml">ml</option>
-                    <option value="pcs">pcs</option>
-                    <option value="shot">shot</option>
-                    <option value="sachet">sachet</option>
-                  </select>
+                <div class="d-flex gap-2">
+                  <div class="input-group">
+                    <input type="number" id="recipeQty" class="form-control fw-bold border-2" placeholder="Jumlah" step="0.1">
+                    <select id="recipeUnit" class="form-select border-2" style="max-width: 90px; font-weight: 600;">
+                      <option value="gr">gr</option>
+                      <option value="ml">ml</option>
+                      <option value="pcs">pcs</option>
+                      <option value="shot">shot</option>
+                      <option value="sachet">sachet</option>
+                    </select>
+                  </div>
+                  <button class="btn btn-dark px-3 rounded-3" onclick="addMaterialToTempBasket()"><i class="fas fa-plus"></i></button>
                 </div>
-                <button class="btn btn-dark px-3 rounded-3" onclick="addMaterialToTempBasket()"><i class="fas fa-plus"></i></button>
+              </div>
+
+              <div class="border rounded-4 mb-3 bg-white recipe-scrollable-container" style="max-height: 370px; overflow-y: auto;">
+                <table class="table table-hover align-middle m-0 small">
+                  <thead class="bg-light sticky-top">
+                    <tr><th class="ps-3">Nama Bahan</th><th class="text-center">Takaran</th><th class="text-center">#</th></tr>
+                  </thead>
+                  <tbody id="recipeBasketBody">
+                    <tr><td colspan="3" class="text-center p-4 text-muted">Belum ada bahan</td></tr>
+                  </tbody>
+                </table>
               </div>
             </div>
-
-            <div class="border rounded-4 mb-3 bg-white recipe-scrollable-container" style="max-height: 370px; overflow-y: auto;">
-              <table class="table table-hover align-middle m-0 small">
-                <thead class="bg-light sticky-top">
-                  <tr><th class="ps-3">Nama Bahan</th><th class="text-center">Takaran</th><th class="text-center">#</th></tr>
-                </thead>
-                <tbody id="recipeBasketBody">
-                  <tr><td colspan="3" class="text-center p-4 text-muted">Belum ada bahan</td></tr>
-                </tbody>
-              </table>
+            
+            <div class="modal-outside-buttons">
+              <button class="btn-outside-circle btn-batal" onclick="closeRecipeSettings()" title="Batal">
+                <div class="icon-wrapper">
+                  <span class="icon-primary fw-bold" style="font-family: sans-serif; font-size: 1.25rem;">X</span>
+                  <i class="fas fa-redo icon-secondary"></i>
+                </div>
+              </button>
+              <button class="btn-outside-circle btn-simpan" id="btnSaveRecipeSession" onclick="saveRecipeSession()" title="Simpan">
+                <div class="icon-wrapper">
+                  <i class="fas fa-save icon-primary"></i>
+                  <i class="fas fa-circle-notch icon-secondary"></i>
+                </div>
+              </button>
             </div>
-
-            <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="saveRecipeSession()">
-              <i class="fas fa-save me-2"></i> SIMPAN & KEMBALI
-            </button>
           </div>
         </div>
 
@@ -5707,8 +5914,20 @@
       }
 
       function saveRecipeSession() {
+        const btn = document.getElementById('btnSaveRecipeSession') || (window.event ? window.event.currentTarget : null);
+        let originalHTML = '';
+        if (btn) {
+          originalHTML = btn.innerHTML;
+          btn.innerHTML = '<div class="icon-wrapper"><i class="fas fa-spinner fa-spin icon-primary"></i></div>';
+          btn.disabled = true;
+        }
+
         if (CURRENT_EDITING_RECIPE_ID === 'NEW') {
           closeRecipeSettings();
+          if (btn) {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+          }
           const statusText = document.getElementById('newRecipeStatus');
           if (TEMP_RECIPE_BASKET.length > 0) {
             statusText.innerHTML = `<span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i> ${TEMP_RECIPE_BASKET.length} bahan tersimpan</span>`;
@@ -5717,14 +5936,11 @@
           }
         } else {
           // Simpan resep produk yang sudah ada ke backend
-          const btn = event.currentTarget;
-          const originalHTML = btn.innerHTML;
-          btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> MENYIMPAN...';
-          btn.disabled = true;
-
           google.script.run.withSuccessHandler(res => {
-            btn.innerHTML = originalHTML;
-            btn.disabled = false;
+            if (btn) {
+              btn.innerHTML = originalHTML;
+              btn.disabled = false;
+            }
             if(res.status === 'success') {
               const menuName = document.getElementById('recipeTargetName').innerText.replace('Menu: ', '').trim();
               triggerAuditLog("UPDATE RESEP", `Memperbarui komposisi resep untuk menu: ${menuName}.`);
@@ -5734,6 +5950,12 @@
             } else {
               alert("Gagal menyimpan resep: " + res.message);
             }
+          }).withFailureHandler(err => {
+            if (btn) {
+              btn.innerHTML = originalHTML;
+              btn.disabled = false;
+            }
+            alert("Gagal menyimpan resep: " + err.message);
           }).updateProductRecipe(CURRENT_EDITING_RECIPE_ID, TEMP_RECIPE_BASKET);
         }
       }
