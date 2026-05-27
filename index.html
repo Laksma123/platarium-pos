@@ -769,7 +769,7 @@
       .modal-addon-container {
         width: 95% !important;
         max-width: calc(530px / var(--apk-zoom, 1)) !important;
-        max-height: 85vh !important;
+        max-height: calc(85vh + 50px) !important;
         overflow-y: auto !important;
         padding: calc(24px / var(--apk-zoom, 1)) !important;
         animation: slideUp 0.3s ease-out;
@@ -783,7 +783,7 @@
       .modal-recipe-container {
         width: 95% !important;
         max-width: calc(340px / var(--apk-zoom, 1)) !important;
-        max-height: 85vh !important;
+        max-height: calc(85vh + 50px) !important;
         overflow-y: auto !important;
         padding: calc(24px / var(--apk-zoom, 1)) !important;
         animation: slideUp 0.3s ease-out;
@@ -793,23 +793,50 @@
         flex-shrink: 0 !important;
       }
 
-      /* Custom Scrollbar for Add-on and Recipe Modals */
+      /* Custom Scrollbar for Main Modals (Window Utama) */
+      /* Visual scroll dibuat masuk ke dalam (border-right) dan dipotong atas/bawah 10px agar serasi dengan round edge */
       .modal-addon-container::-webkit-scrollbar,
-      .modal-recipe-container::-webkit-scrollbar,
+      .modal-recipe-container::-webkit-scrollbar {
+        width: 14px;
+        height: 14px;
+      }
+      .modal-addon-container::-webkit-scrollbar-track,
+      .modal-recipe-container::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.03);
+        border-radius: 10px;
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
+        border-right: 4px solid transparent;
+        border-left: 2px solid transparent;
+        background-clip: padding-box;
+      }
+      .modal-addon-container::-webkit-scrollbar-thumb,
+      .modal-recipe-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
+        border-right: 4px solid transparent;
+        border-left: 2px solid transparent;
+        background-clip: padding-box;
+      }
+      .modal-addon-container::-webkit-scrollbar-thumb:hover,
+      .modal-recipe-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+        background-clip: padding-box;
+      }
+
+      /* Custom Scrollbar for Inner Containers (Daftar Bahan/Resep) */
       #addonRecipeContainer::-webkit-scrollbar,
       .recipe-scrollable-container::-webkit-scrollbar {
         width: 8px;
         height: 8px;
       }
-      .modal-addon-container::-webkit-scrollbar-track,
-      .modal-recipe-container::-webkit-scrollbar-track,
       #addonRecipeContainer::-webkit-scrollbar-track,
       .recipe-scrollable-container::-webkit-scrollbar-track {
         background: rgba(0, 0, 0, 0.03);
         border-radius: 10px;
       }
-      .modal-addon-container::-webkit-scrollbar-thumb,
-      .modal-recipe-container::-webkit-scrollbar-thumb,
       #addonRecipeContainer::-webkit-scrollbar-thumb,
       .recipe-scrollable-container::-webkit-scrollbar-thumb {
         background: #cbd5e1;
@@ -817,13 +844,12 @@
         border: 1px solid transparent;
         background-clip: padding-box;
       }
-      .modal-addon-container::-webkit-scrollbar-thumb:hover,
-      .modal-recipe-container::-webkit-scrollbar-thumb:hover,
       #addonRecipeContainer::-webkit-scrollbar-thumb:hover,
       .recipe-scrollable-container::-webkit-scrollbar-thumb:hover {
         background: #94a3b8;
         background-clip: padding-box;
       }
+
       .btn-addon-pill {
         background: #f1f2f6;
         color: #5c2c0b;
@@ -2175,7 +2201,7 @@
                 </div>
 
                 <label class="small fw-bold text-muted d-block mb-2">KOMPOSISI RESEP BAHAN</label>
-                <div id="addonRecipeContainer" class="border rounded-4 p-3 bg-light overflow-auto" style="max-height: 250px; min-height: 180px;">
+                <div id="addonRecipeContainer" class="border rounded-4 p-3 bg-light overflow-auto" style="max-height: 300px; min-height: 230px;">
                   <div id="addonRecipeList" class="d-flex flex-column gap-2">
                     <div class="text-center p-3 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Memuat bahan resep...</div>
                   </div>
@@ -2481,7 +2507,7 @@
               </div>
             </div>
 
-            <div class="border rounded-4 mb-3 bg-white recipe-scrollable-container" style="max-height: 220px; overflow-y: auto;">
+            <div class="border rounded-4 mb-3 bg-white recipe-scrollable-container" style="max-height: 270px; overflow-y: auto;">
               <table class="table table-hover align-middle m-0 small">
                 <thead class="bg-light sticky-top">
                   <tr><th class="ps-3">Nama Bahan</th><th class="text-center">Takaran</th><th class="text-center">#</th></tr>
