@@ -6662,16 +6662,7 @@
         filterPOS();              // Terapkan ke grid produk
       }
 
-      // Handler ketika kasir dipilih dari Top Header Dropdown
-      function handleTopCashierChange(index) {
-        const name = CONFIG.Cashiers[index];
-        if(name) {
-          // Buka modal PIN
-          openPinPad(name, index);
-          // Set sementara ke kosong sampai PIN tervalidasi dengan benar
-          document.getElementById('topCashierSelect').value = "";
-        }
-      }
+
 
       // --- LOGIKA PENCARIAN & RENDER ---
 
@@ -7596,91 +7587,11 @@
       }
 
       function renderCashierButtons() {
-        const select = document.getElementById('topCashierSelect');
-        if (!select) return;
-
-        if (!CONFIG.Cashiers || CONFIG.Cashiers.length === 0) {
-          select.innerHTML = '<option disabled>Data Kasir Kosong (Cek Sheet Config)</option>';
-          return;
-        }
-
-        let html = '<option value="" disabled selected>Pilih Kasir...</option>';
-        CONFIG.Cashiers.forEach((name, index) => {
-          html += `<option value="${index}">${name}</option>`;
-        });
-        select.innerHTML = html;
+        // Dropdown kasir tidak digunakan lagi karena login menggunakan auto-detect PIN langsung di login page utama.
       }
-
-      function openPinPad(name, index) {
-        TEMP_CASHIER = { name, index };
-        CURRENT_PIN = "";
-        document.getElementById('pinSubtitle').innerText = "Kasir: " + name;
-        updatePinDots();
-        document.getElementById('modalPin').style.display = 'flex';
-      }
-
-      function pressPin(num) {
-        if (CURRENT_PIN.length < 4) {
-          CURRENT_PIN += num;
-          updatePinDots();
-          if (CURRENT_PIN.length === 4) verifyPin();
-        }
-      }
-
-      function updatePinDots() {
-        const dots = document.querySelectorAll('#pinDots .dot');
-        dots.forEach((dot, i) => {
-          dot.classList.toggle('filled', i < CURRENT_PIN.length);
-        });
-      }
-
-      function verifyPin() {
-        const dots = document.getElementById('pinDots');
-        const subtitle = document.getElementById('pinSubtitle');
-        const originalSubtitle = subtitle.innerText;
-
-        subtitle.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
-        google.script.run.withSuccessHandler(res => {
-          if (res.status === 'success') {
-            SELECTED_CASHIER = TEMP_CASHIER.name;
-            
-            // Set UI Select agar menahan nama Kasir yang sudah berhasil login
-            const topSelect = document.getElementById('topCashierSelect');
-            if(topSelect) topSelect.value = TEMP_CASHIER.index;
-            
-            closePin();
-          } else {
-            subtitle.innerHTML = '<span class="text-danger">PIN SALAH!</span>';
-            dots.classList.add('text-danger'); 
-            setTimeout(() => {
-              subtitle.innerText = originalSubtitle;
-              dots.classList.remove('text-danger');
-              clearPin();
-            }, 1000);
-          }
-        }).verifyCashierPIN(TEMP_CASHIER.name, CURRENT_PIN);
-      }
-
-      function clearPin() { CURRENT_PIN = ""; updatePinDots(); }
-      function closePin() { document.getElementById('modalPin').style.display = 'none'; }
 
       // [2026-01-18] Event Listener Keyboard Global (Root Level)
       window.addEventListener('keydown', function(e) {
-        // 1. Logika saat Modal PIN Terbuka
-        const modalPin = document.getElementById('modalPin');
-        if (modalPin && modalPin.style.display === 'flex') {
-          if (e.key >= '0' && e.key <= '9') {
-            pressPin(e.key);
-          } else if (e.key === 'Backspace') {
-            clearPin();
-          } else if (e.key === 'Enter') {
-            // Hanya verifikasi jika PIN sudah 4 digit
-            if (CURRENT_PIN.length === 4) verifyPin();
-          } else if (e.key === 'Escape') {
-            closePin();
-          }
-          return; // Berhenti di sini jika modal PIN aktif
-        }
 
         // 2. Logika saat Modal Summary Terbuka (Enter untuk Selesai)
         const modalSum = document.getElementById('modalSummary');
@@ -10497,31 +10408,7 @@
       </div>
     </div>
 
-    <div id="modalPin" class="pin-overlay">
-      <div class="pin-box">
-        <h5 class="fw-bold mb-1" id="pinTitle">Verifikasi PIN</h5>
-        <p class="text-muted small mb-4" id="pinSubtitle">Kasir: Nama</p>
-        
-        <div class="pin-dots" id="pinDots">
-          <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
-        </div>
 
-        <div class="numpad-grid">
-          <button class="btn-num" onclick="pressPin(1)">1</button>
-          <button class="btn-num" onclick="pressPin(2)">2</button>
-          <button class="btn-num" onclick="pressPin(3)">3</button>
-          <button class="btn-num" onclick="pressPin(4)">4</button>
-          <button class="btn-num" onclick="pressPin(5)">5</button>
-          <button class="btn-num" onclick="pressPin(6)">6</button>
-          <button class="btn-num" onclick="pressPin(7)">7</button>
-          <button class="btn-num" onclick="pressPin(8)">8</button>
-          <button class="btn-num" onclick="pressPin(9)">9</button>
-          <button class="btn-num text-danger" onclick="clearPin()"><i class="fas fa-times"></i></button>
-          <button class="btn-num" onclick="pressPin(0)">0</button>
-          <button class="btn-num text-warning" onclick="closePin()"><i class="fas fa-chevron-down"></i></button>
-        </div>
-      </div>
-    </div>
 
     <div id="modalRegisterFace" class="payment-overlay" style="z-index: 11000;">
       <div class="bg-white p-4 rounded-5 shadow-lg text-center" style="width: 90%; max-width: 400px;">
