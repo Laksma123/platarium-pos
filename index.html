@@ -761,23 +761,55 @@
       /* ========================================= */
       /* ADD-ON FEATURE COSMETIC STYLES            */
       /* ========================================= */
+      :root {
+        --apk-zoom: 1;
+      }
+
+      /* Container Modal Addon & Resep dengan Skala Zoom */
+      .modal-addon-container {
+        width: 95% !important;
+        max-width: calc(530px / var(--apk-zoom, 1)) !important;
+        max-height: 85vh !important;
+        overflow-y: auto !important;
+        padding: calc(24px / var(--apk-zoom, 1)) !important;
+        animation: slideUp 0.3s ease-out;
+      }
+      .modal-addon-container > h5,
+      .modal-addon-container > .row,
+      .modal-addon-container > .d-flex {
+        flex-shrink: 0 !important;
+      }
+
+      .modal-recipe-container {
+        width: 95% !important;
+        max-width: calc(340px / var(--apk-zoom, 1)) !important;
+        max-height: 85vh !important;
+        overflow-y: auto !important;
+        padding: calc(24px / var(--apk-zoom, 1)) !important;
+        animation: slideUp 0.3s ease-out;
+      }
+      .modal-recipe-container > div,
+      .modal-recipe-container > button {
+        flex-shrink: 0 !important;
+      }
+
       /* Custom Scrollbar for Add-on and Recipe Modals */
-      #modalCartAddonCosmetic::-webkit-scrollbar,
-      #modalRecipeSettings::-webkit-scrollbar,
+      .modal-addon-container::-webkit-scrollbar,
+      .modal-recipe-container::-webkit-scrollbar,
       #addonRecipeContainer::-webkit-scrollbar,
       .recipe-scrollable-container::-webkit-scrollbar {
         width: 8px;
         height: 8px;
       }
-      #modalCartAddonCosmetic::-webkit-scrollbar-track,
-      #modalRecipeSettings::-webkit-scrollbar-track,
+      .modal-addon-container::-webkit-scrollbar-track,
+      .modal-recipe-container::-webkit-scrollbar-track,
       #addonRecipeContainer::-webkit-scrollbar-track,
       .recipe-scrollable-container::-webkit-scrollbar-track {
         background: rgba(0, 0, 0, 0.03);
         border-radius: 10px;
       }
-      #modalCartAddonCosmetic::-webkit-scrollbar-thumb,
-      #modalRecipeSettings::-webkit-scrollbar-thumb,
+      .modal-addon-container::-webkit-scrollbar-thumb,
+      .modal-recipe-container::-webkit-scrollbar-thumb,
       #addonRecipeContainer::-webkit-scrollbar-thumb,
       .recipe-scrollable-container::-webkit-scrollbar-thumb {
         background: #cbd5e1;
@@ -785,8 +817,8 @@
         border: 1px solid transparent;
         background-clip: padding-box;
       }
-      #modalCartAddonCosmetic::-webkit-scrollbar-thumb:hover,
-      #modalRecipeSettings::-webkit-scrollbar-thumb:hover,
+      .modal-addon-container::-webkit-scrollbar-thumb:hover,
+      .modal-recipe-container::-webkit-scrollbar-thumb:hover,
       #addonRecipeContainer::-webkit-scrollbar-thumb:hover,
       .recipe-scrollable-container::-webkit-scrollbar-thumb:hover {
         background: #94a3b8;
@@ -1169,6 +1201,8 @@
         _apkZoomLevel = Math.max(APK_ZOOM_MIN, Math.min(APK_ZOOM_MAX, level));
         // Gunakan CSS zoom (bukan transform: scale) agar layout menyesuaikan
         document.documentElement.style.zoom = (_apkZoomLevel / 100);
+        // Set CSS custom property untuk perbandingan skala di modal addon dan resep
+        document.documentElement.style.setProperty('--apk-zoom', _apkZoomLevel / 100);
         // Tandai <html> agar CSS rule khusus APK aktif (position:fixed pada #main-container)
         // Ini mencegah UI tertarik ke pojok kiri atas saat zoom < 100%
         document.documentElement.classList.add('apk-zoom-active');
@@ -2121,7 +2155,7 @@
         </div>
 
         <div id="modalCartAddonCosmetic" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10600; opacity: 1 !important;">
-          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s ease-out;">
+          <div class="bg-white rounded-5 shadow-lg d-flex flex-column modal-addon-container">
             <h5 class="fw-bold mb-4 border-bottom pb-3 text-dark text-center"><i class="fas fa-cookie-bite text-warning me-2"></i> Pengaturan Add-On</h5>
             <input type="hidden" id="addonTargetPid">
             
@@ -2413,7 +2447,7 @@
         </div>
 
         <div id="modalRecipeSettings" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10500; opacity: 1 !important;">
-          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 500px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s ease-out;">
+          <div class="bg-white rounded-5 shadow-lg d-flex flex-column modal-recipe-container">
             <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
               <div>
                 <h5 class="fw-bold m-0"><i class="fas fa-mortar-pestle text-warning me-2"></i>Komposisi Resep</h5>
