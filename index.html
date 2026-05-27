@@ -2390,6 +2390,12 @@
                     <div class="fw-bold text-dark fs-5" id="addonTargetName">Nama Menu</div>
                   </div>
                   
+                  <!-- Pill buttons for individual index or all -->
+                  <div id="addonQtyPillsContainer" class="mb-3 d-none">
+                    <label class="small fw-bold text-muted d-block mb-2">PILIH ITEM KELIPATAN</label>
+                    <div id="addonQtyPillsList" class="d-flex flex-wrap gap-2"></div>
+                  </div>
+
                   <div class="d-flex justify-content-between align-items-center mb-3 bg-light p-2 rounded-3 border">
                     <span class="small fw-bold text-muted"><i class="fas fa-seedling me-1 text-success"></i> Tidak rubah bahan</span>
                     <div class="form-check form-switch m-0">
@@ -2415,7 +2421,7 @@
                     <label class="small fw-bold text-muted">GANTI HARGA ITEM (Rp)</label>
                     <div class="input-group">
                       <span class="input-group-text bg-white border-2 border-end-0">Rp</span>
-                      <input type="number" id="addonPriceValue" class="form-control fw-bold border-2 border-start-0 ps-0" placeholder="0">
+                      <input type="number" id="addonPriceValue" class="form-control fw-bold border-2 border-start-0 ps-0" placeholder="0" oninput="updateAddonUIState()">
                     </div>
                   </div>
                 </div>
@@ -6860,12 +6866,45 @@
         }
       }
 
+      function getCartItemTotalPrice(item) {
+        if (item.individualAddons && item.individualAddons.length === item.qty) {
+          return item.individualAddons.reduce((sum, addon) => {
+            const p = addon.customPrice !== undefined ? addon.customPrice : item.price;
+            return sum + p;
+          }, 0);
+        } else {
+          const p = item.customPrice !== undefined ? item.customPrice : item.price;
+          return p * item.qty;
+        }
+      }
+
       function updateCart(pid, delta) {
         const product = PRODUCTS.find(x => x.id === pid);
         const cartItem = CART.find(x => x.id === pid);
         if (cartItem) {
           cartItem.qty += delta;
-          if (cartItem.qty <= 0) { CART = CART.filter(x => x.id !== pid); }
+          if (cartItem.qty <= 0) {
+            CART = CART.filter(x => x.id !== pid);
+          } else {
+            // Sesuaikan array individualAddons jika ada
+            if (cartItem.individualAddons) {
+              if (delta > 0) {
+                for (let i = 0; i < delta; i++) {
+                  cartItem.individualAddons.push({
+                    customNote: "",
+                    customPrice: undefined,
+                    customRecipe: null,
+                    originalRecipe: null,
+                    noRecipeChangeChecked: false
+                  });
+                }
+              } else if (delta < 0) {
+                for (let i = 0; i < -delta; i++) {
+                  cartItem.individualAddons.pop();
+                }
+              }
+            }
+          }
         } else if (delta > 0) {
           CART.push({ ...product, qty: 1 });
         }
@@ -6918,14 +6957,27 @@
 
         if (mobileTrigger) mobileTrigger.style.display = 'flex';
         container.innerHTML = CART.map(item => {
-          // Gunakan harga kustom kosmetik jika sudah diatur, jika tidak pakai price asli
-          let itemPriceDisplay = item.customPrice !== undefined ? item.customPrice : item.price;
-          subtotal += itemPriceDisplay * item.qty;
+          let itemTotalPrice = getCartItemTotalPrice(item);
+          subtotal += itemTotalPrice;
           count += item.qty;
 
           // Siapkan label note kosmetik jika ada
           let addonBadgeHtml = "";
-          if (item.customNote || item.customPrice !== undefined) {
+          if (item.individualAddons && item.individualAddons.length === item.qty) {
+            let labelParts = [];
+            item.individualAddons.forEach((addon, idx) => {
+              if (hasChangesForConfig(addon, item.price)) {
+                let parts = [];
+                if (addon.customNote) parts.push(`"${addon.customNote}"`);
+                if (addon.customPrice !== undefined) parts.push(`Custom Price`);
+                if (parts.length === 0 && addon.customRecipe) parts.push(`Custom Recipe`);
+                labelParts.push(`#${idx + 1}: ${parts.join(' | ')}`);
+              }
+            });
+            if (labelParts.length > 0) {
+              addonBadgeHtml = `<div class="addon-badge-text" style="font-size: 0.72rem; color: #27ae60; font-weight: bold; background: rgba(39, 174, 96, 0.08); padding: 4px 8px; border-radius: 6px; margin-top: 4px;"><i class="fas fa-pen small me-1"></i> ${labelParts.join(' ; ')}</div>`;
+            }
+          } else if (item.customNote || item.customPrice !== undefined) {
             let labelParts = [];
             if (item.customNote) labelParts.push(`"${item.customNote}"`);
             if (item.customPrice !== undefined) labelParts.push(`Custom Price`);
@@ -6943,7 +6995,7 @@
           <div class="${cardClasses.join(' ')}" ${clickActionHtml}>
             <div class="flex-fill">
               <div class="fw-bold small">${item.name}</div>
-              <div class="text-muted small">Rp ${(itemPriceDisplay * item.qty).toLocaleString()}</div>
+              <div class="text-muted small">Rp ${itemTotalPrice.toLocaleString()}</div>
               ${addonBadgeHtml}
             </div>
         
@@ -7027,7 +7079,7 @@
         if (CART.length === 0) return;
 
         // Hitung subtotal default akumulasi item saat ini
-        let computedSub = CART.reduce((sum, item) => sum + ((item.customPrice !== undefined ? item.customPrice : item.price) * item.qty), 0);
+        let computedSub = CART.reduce((sum, item) => sum + getCartItemTotalPrice(item), 0);
         
         // Ambil nilai kustom yang sedang aktif (jika ada), jika tidak ada gunakan subtotal asli
         let currentDefault = window.CUSTOM_CART_SUBTOTAL !== undefined && window.CUSTOM_CART_SUBTOTAL !== null ? window.CUSTOM_CART_SUBTOTAL : computedSub;
@@ -7135,15 +7187,269 @@
         updateCartUI(); // Segarkan untuk memasang atau melepas kelas animasi getar
       }
 
+      // --- HELPER DAN STATE MANAGEMENT UNTUK ADD-ON MULTI-QUANTITY ---
+      function hasChangesForConfig(cfg, originalPrice) {
+        if (!cfg) return false;
+        if (cfg.customNote && cfg.customNote.trim() !== "") return true;
+        if (cfg.customPrice !== undefined && cfg.customPrice !== null && cfg.customPrice !== originalPrice) return true;
+        if (cfg.customRecipe && cfg.originalRecipe) {
+          for (let i = 0; i < cfg.customRecipe.length; i++) {
+            const cur = cfg.customRecipe[i];
+            const orig = cfg.originalRecipe.find(x => x.id === cur.id);
+            if (orig && cur.qty !== orig.qty) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      function renderAddonQtyPills() {
+        const container = document.getElementById('addonQtyPillsContainer');
+        const listEl = document.getElementById('addonQtyPillsList');
+        if (!container || !listEl) return;
+
+        const state = window.ADDON_MODAL_STATE;
+        if (!state || state.qty <= 1) {
+          container.classList.add('d-none');
+          return;
+        }
+
+        container.classList.remove('d-none');
+
+        const item = CART.find(x => x.id === state.pid);
+        const originalPrice = item ? item.price : 0;
+        
+        const hasIndividualChanges = state.individualConfigs.some(cfg => hasChangesForConfig(cfg, originalPrice));
+
+        let html = "";
+        for (let i = 0; i < state.qty; i++) {
+          const isCurrentActive = state.activeIndex === i;
+          const cfg = state.individualConfigs[i];
+          const hasChanges = hasChangesForConfig(cfg, originalPrice);
+
+          let btnClass = "btn btn-sm rounded-pill fw-bold px-3 py-2 border-2 ";
+          let style = "transition: all 0.2s;";
+
+          if (isCurrentActive) {
+            if (hasChanges) {
+              btnClass += "btn-success border-success text-white";
+            } else {
+              btnClass += "btn-dark border-dark text-white";
+            }
+          } else {
+            if (hasChanges) {
+              btnClass += "btn-outline-success border-success bg-success bg-opacity-10 text-success";
+            } else {
+              btnClass += "btn-outline-secondary border-secondary text-muted bg-white";
+            }
+          }
+
+          const isDisabled = state.activeIndex === "all";
+          if (isDisabled) {
+            btnClass = "btn btn-sm rounded-pill fw-bold px-3 py-2 border-2 btn-outline-secondary text-muted bg-light border-light";
+            style += " opacity: 0.5; cursor: not-allowed;";
+          }
+
+          html += `<button type="button" class="${btnClass}" style="${style}" onclick="switchAddonPill(${i})" ${isDisabled ? 'disabled' : ''}>${i + 1}</button>`;
+        }
+
+        const isSemuaActive = state.activeIndex === "all";
+        const isSemuaDisabled = hasIndividualChanges;
+
+        let semuaClass = "btn btn-sm rounded-pill fw-bold px-4 py-2 border-2 ms-auto ";
+        let semuaStyle = "transition: all 0.2s;";
+
+        if (isSemuaActive) {
+          semuaClass += "btn-primary border-primary text-white";
+        } else {
+          if (isSemuaDisabled) {
+            semuaClass += "btn-outline-secondary text-muted bg-light border-light";
+            semuaStyle += " opacity: 0.4; cursor: not-allowed;";
+          } else {
+            semuaClass += "btn-outline-primary border-primary text-primary bg-white";
+          }
+        }
+
+        html += `<button type="button" class="${semuaClass}" style="${semuaStyle}" onclick="switchAddonPill('all')" ${isSemuaDisabled ? 'disabled' : ''}>Semua</button>`;
+
+        listEl.innerHTML = html;
+      }
+
+      function switchAddonPill(targetIndex) {
+        const state = window.ADDON_MODAL_STATE;
+        if (!state) return;
+
+        saveCurrentAddonUIStateToConfig();
+
+        if (targetIndex === 'all') {
+          const item = CART.find(x => x.id === state.pid);
+          const originalPrice = item ? item.price : 0;
+          const hasIndividualChanges = state.individualConfigs.some(cfg => hasChangesForConfig(cfg, originalPrice));
+          if (hasIndividualChanges) return; // Cannot click Semua if there are individual changes
+        }
+
+        state.activeIndex = targetIndex;
+        loadAddonConfigToUI();
+      }
+
+      function saveCurrentAddonUIStateToConfig() {
+        const state = window.ADDON_MODAL_STATE;
+        if (!state) return;
+
+        const noteVal = document.getElementById('addonNoteValue').value.trim();
+        const priceVal = parseFloat(document.getElementById('addonPriceValue').value);
+
+        let activeCfg;
+        if (state.activeIndex === 'all') {
+          activeCfg = state.allConfig;
+        } else {
+          activeCfg = state.individualConfigs[state.activeIndex];
+        }
+
+        if (!activeCfg) return;
+
+        activeCfg.customNote = noteVal;
+
+        const item = CART.find(x => x.id === state.pid);
+        const originalPrice = item ? item.price : 0;
+
+        if (!isNaN(priceVal) && priceVal >= 0 && priceVal !== originalPrice) {
+          activeCfg.customPrice = priceVal;
+        } else {
+          activeCfg.customPrice = undefined;
+        }
+
+        activeCfg.noRecipeChangeChecked = document.getElementById('addonNoRecipeChangeToggle').checked;
+
+        // Check if recipe has changes
+        if (window.CURRENT_ADDON_RECIPE && window.ORIGINAL_ADDON_RECIPE) {
+          let recipeHasChanges = false;
+          window.CURRENT_ADDON_RECIPE.forEach(m => {
+            const orig = window.ORIGINAL_ADDON_RECIPE.find(x => x.id === m.id);
+            if (orig && m.qty !== orig.qty) {
+              recipeHasChanges = true;
+            }
+          });
+
+          if (recipeHasChanges) {
+            activeCfg.customRecipe = JSON.parse(JSON.stringify(window.CURRENT_ADDON_RECIPE));
+            activeCfg.originalRecipe = JSON.parse(JSON.stringify(window.ORIGINAL_ADDON_RECIPE));
+          } else {
+            activeCfg.customRecipe = null;
+            activeCfg.originalRecipe = null;
+          }
+        } else {
+          activeCfg.customRecipe = null;
+          activeCfg.originalRecipe = null;
+        }
+      }
+
+      function loadAddonConfigToUI() {
+        const state = window.ADDON_MODAL_STATE;
+        if (!state) return;
+
+        const item = CART.find(x => x.id === state.pid);
+        if (!item) return;
+
+        let activeCfg;
+        if (state.activeIndex === 'all') {
+          activeCfg = state.allConfig;
+        } else {
+          activeCfg = state.individualConfigs[state.activeIndex];
+        }
+
+        if (!activeCfg) return;
+
+        // Set note
+        document.getElementById('addonNoteValue').value = activeCfg.customNote || "";
+
+        // Set price
+        document.getElementById('addonPriceValue').value = activeCfg.customPrice !== undefined ? activeCfg.customPrice : item.price;
+
+        // Set toggle
+        const toggleEl = document.getElementById('addonNoRecipeChangeToggle');
+        toggleEl.checked = activeCfg.noRecipeChangeChecked || false;
+
+        const hasRecipeChanges = activeCfg.customRecipe && activeCfg.customRecipe.length > 0;
+        if (hasRecipeChanges) {
+          window.ORIGINAL_ADDON_RECIPE = JSON.parse(JSON.stringify(activeCfg.originalRecipe));
+          window.CURRENT_ADDON_RECIPE = JSON.parse(JSON.stringify(activeCfg.customRecipe));
+          
+          toggleEl.checked = false;
+          toggleEl.disabled = true;
+          renderAddonRecipeList();
+        } else {
+          toggleEl.disabled = false;
+          
+          if (window.PRODUCT_STANDARD_RECIPE) {
+            window.ORIGINAL_ADDON_RECIPE = JSON.parse(JSON.stringify(window.PRODUCT_STANDARD_RECIPE));
+            window.CURRENT_ADDON_RECIPE = JSON.parse(JSON.stringify(window.PRODUCT_STANDARD_RECIPE));
+            renderAddonRecipeList();
+          } else {
+            window.ORIGINAL_ADDON_RECIPE = [];
+            window.CURRENT_ADDON_RECIPE = [];
+            renderAddonRecipeList();
+          }
+        }
+
+        // Refresh the pills UI to update states
+        renderAddonQtyPills();
+      }
+
+      function initializeAddonModalState(item) {
+        window.ADDON_MODAL_STATE = {
+          pid: item.id,
+          qty: item.qty,
+          activeIndex: "all",
+          allConfig: {
+            customNote: item.customNote || "",
+            customPrice: item.customPrice !== undefined ? item.customPrice : item.price,
+            customRecipe: item.customRecipe ? JSON.parse(JSON.stringify(item.customRecipe)) : null,
+            originalRecipe: item.originalRecipe ? JSON.parse(JSON.stringify(item.originalRecipe)) : null,
+            noRecipeChangeChecked: item.customNote && (!item.customRecipe || item.customRecipe.length === 0) ? true : false
+          },
+          individualConfigs: []
+        };
+
+        if (item.individualAddons && item.individualAddons.length === item.qty) {
+          window.ADDON_MODAL_STATE.individualConfigs = JSON.parse(JSON.stringify(item.individualAddons));
+          window.ADDON_MODAL_STATE.individualConfigs.forEach(cfg => {
+            if (cfg.noRecipeChangeChecked === undefined) {
+              cfg.noRecipeChangeChecked = cfg.customNote && (!cfg.customRecipe || cfg.customRecipe.length === 0) ? true : false;
+            }
+          });
+          
+          const hasIndividualChanges = window.ADDON_MODAL_STATE.individualConfigs.some(cfg => hasChangesForConfig(cfg, item.price));
+          if (hasIndividualChanges) {
+            window.ADDON_MODAL_STATE.activeIndex = 0; // default to pill 1
+          } else {
+            window.ADDON_MODAL_STATE.activeIndex = "all";
+          }
+        } else {
+          window.ADDON_MODAL_STATE.individualConfigs = [];
+          for (let i = 0; i < item.qty; i++) {
+            window.ADDON_MODAL_STATE.individualConfigs.push({
+              customNote: "",
+              customPrice: undefined,
+              customRecipe: null,
+              originalRecipe: null,
+              noRecipeChangeChecked: false
+            });
+          }
+          window.ADDON_MODAL_STATE.activeIndex = "all";
+        }
+
+        loadAddonConfigToUI();
+      }
+
       function openCartAddonModal(pid) {
         const item = CART.find(x => x.id === pid);
         if (!item) return;
 
         document.getElementById('addonTargetPid').value = pid;
         document.getElementById('addonTargetName').innerText = item.name;
-        document.getElementById('addonNoteValue').value = item.customNote || "";
-        document.getElementById('addonPriceValue').value = item.customPrice !== undefined ? item.customPrice : item.price;
-        
+
         // Reset toggle "Tidak rubah bahan" ke default selalu OFF setiap dibuka
         const toggleEl = document.getElementById('addonNoRecipeChangeToggle');
         toggleEl.checked = false;
@@ -7156,25 +7462,12 @@
         document.getElementById('modalCartAddonCosmetic').classList.remove('d-none');
 
         const handleLoadedRecipe = (recipe) => {
-          if (!recipe || recipe.length === 0) {
-            window.ORIGINAL_ADDON_RECIPE = [];
-            window.CURRENT_ADDON_RECIPE = [];
-            listEl.innerHTML = '<div class="text-center p-3 text-muted small"><i class="fas fa-info-circle me-1 text-secondary"></i> Menu ini tidak memiliki bahan resep.</div>';
-            updateAddonUIState();
-            return;
-          }
-          
-          window.ORIGINAL_ADDON_RECIPE = JSON.parse(JSON.stringify(recipe));
-          window.CURRENT_ADDON_RECIPE = JSON.parse(JSON.stringify(recipe));
-          
-          renderAddonRecipeList();
+          window.PRODUCT_STANDARD_RECIPE = recipe || [];
+          initializeAddonModalState(item);
         };
 
-        if (item.customRecipe && item.customRecipe.length > 0) {
-          const orig = item.originalRecipe || item.customRecipe;
-          window.ORIGINAL_ADDON_RECIPE = JSON.parse(JSON.stringify(orig));
-          window.CURRENT_ADDON_RECIPE = JSON.parse(JSON.stringify(item.customRecipe));
-          renderAddonRecipeList();
+        if (item.originalRecipe || (item.customRecipe && item.customRecipe.length > 0)) {
+          handleLoadedRecipe(item.originalRecipe || item.customRecipe);
         } else {
           google.script.run.withSuccessHandler(recipe => {
             handleLoadedRecipe(recipe);
@@ -7332,6 +7625,12 @@
             toggleContainer.style.opacity = '';
           }
         }
+
+        // Pemicu pembaruan real-time visual pill status
+        if (window.ADDON_MODAL_STATE) {
+          saveCurrentAddonUIStateToConfig();
+          renderAddonQtyPills();
+        }
       }
 
       function closeCartAddonModal() {
@@ -7344,31 +7643,59 @@
 
         setTimeout(() => {
           const pid = document.getElementById('addonTargetPid').value;
-          const note = document.getElementById('addonNoteValue').value.trim();
-          const price = parseFloat(document.getElementById('addonPriceValue').value);
-
           const item = CART.find(x => x.id === pid);
           if (item) {
-            item.customNote = note;
-            if (!isNaN(price) && price >= 0 && price !== item.price) {
-              item.customPrice = price;
-            } else {
-              delete item.customPrice;
-            }
+            // Simpan status tampilan aktif saat ini terlebih dahulu
+            saveCurrentAddonUIStateToConfig();
 
-            if (window.HAS_ACTIVE_CHANGES) {
-              item.customRecipe = window.CURRENT_ADDON_RECIPE;
-              item.originalRecipe = window.ORIGINAL_ADDON_RECIPE;
-            } else {
+            const state = window.ADDON_MODAL_STATE;
+            const originalPrice = item.price;
+            
+            // Periksa apakah ada konfigurasi individual yang memiliki perubahan nyata
+            const hasIndividualChanges = state.individualConfigs.some(cfg => hasChangesForConfig(cfg, originalPrice));
+
+            if (hasIndividualChanges) {
+              item.individualAddons = JSON.parse(JSON.stringify(state.individualConfigs));
+              
+              // Hapus field bulk mode agar tidak kontradiktif
+              delete item.customNote;
+              delete item.customPrice;
               delete item.customRecipe;
               delete item.originalRecipe;
+            } else {
+              delete item.individualAddons;
+
+              const allCfg = state.allConfig;
+              if (hasChangesForConfig(allCfg, originalPrice)) {
+                item.customNote = allCfg.customNote;
+                if (allCfg.customPrice !== undefined && allCfg.customPrice !== originalPrice) {
+                  item.customPrice = allCfg.customPrice;
+                } else {
+                  delete item.customPrice;
+                }
+                
+                if (allCfg.customRecipe && allCfg.customRecipe.length > 0) {
+                  item.customRecipe = allCfg.customRecipe;
+                  item.originalRecipe = allCfg.originalRecipe;
+                } else {
+                  delete item.customRecipe;
+                  delete item.originalRecipe;
+                }
+              } else {
+                // Bersihkan semua jika tidak ada perubahan sama sekali
+                delete item.customNote;
+                delete item.customPrice;
+                delete item.customRecipe;
+                delete item.originalRecipe;
+              }
             }
           }
 
           if (btn) btn.classList.remove('saving-active');
           closeCartAddonModal();
-          toggleAddonSelectionMode(); 
-        }, 500); 
+          toggleAddonSelectionMode();
+          updateCartUI(); // Segarkan cart secara instan
+        }, 500);
       }
 
       function toggleMobileCart(show) {
@@ -7500,7 +7827,13 @@
         // --- ANALISIS STRUKTUR PRICE ADJUSTMENT NOTES ---
         let priceNotesArr = [];
         CART.forEach(item => {
-          if (item.customPrice !== undefined && item.customPrice !== item.price) {
+          if (item.individualAddons && item.individualAddons.length === item.qty) {
+            item.individualAddons.forEach((addon, idx) => {
+              if (addon.customPrice !== undefined && addon.customPrice !== item.price) {
+                priceNotesArr.push(`Menu [${item.name}] #${idx + 1}: Harga diganti dari Rp ${item.price.toLocaleString()} ke Rp ${addon.customPrice.toLocaleString()}`);
+              }
+            });
+          } else if (item.customPrice !== undefined && item.customPrice !== item.price) {
             let oldItemTotal = item.price * item.qty;
             let newItemTotal = item.customPrice * item.qty;
             priceNotesArr.push(`Menu [${item.name}] x${item.qty}: Harga diganti dari Rp ${item.price.toLocaleString()} ke Rp ${item.customPrice.toLocaleString()} (Total dari Rp ${oldItemTotal.toLocaleString()} menjadi Rp ${newItemTotal.toLocaleString()})`);
@@ -7508,7 +7841,7 @@
         });
 
         if (window.CUSTOM_CART_SUBTOTAL !== undefined && window.CUSTOM_CART_SUBTOTAL !== null) {
-          let computedSubtotalWithItems = CART.reduce((sum, item) => sum + ((item.customPrice !== undefined ? item.customPrice : item.price) * item.qty), 0);
+          let computedSubtotalWithItems = CART.reduce((sum, item) => sum + getCartItemTotalPrice(item), 0);
           priceNotesArr.push(`Sub Total Overridden: Dari Rp ${computedSubtotalWithItems.toLocaleString()} diganti menjadi Rp ${window.CUSTOM_CART_SUBTOTAL.toLocaleString()}`);
         }
         let finalPriceNotes = priceNotesArr.join(' | ');
@@ -7516,7 +7849,20 @@
         // --- ANALISIS STRUKTUR ADD-ON NOTES ---
         let addonNotesArr = [];
         CART.forEach(item => {
-          if (item.customNote) {
+          if (item.individualAddons && item.individualAddons.length === item.qty) {
+            item.individualAddons.forEach((addon, idx) => {
+              if (hasChangesForConfig(addon, item.price)) {
+                let parts = [];
+                if (addon.customNote) parts.push(`"${addon.customNote}"`);
+                if (addon.customPrice !== undefined) parts.push(`Custom Price`);
+                const isRecipeChange = addon.customRecipe && addon.customRecipe.length > 0;
+                if (parts.length === 0 && isRecipeChange) parts.push(`Custom Recipe`);
+                
+                const typeLabel = isRecipeChange ? 'BAHAN' : 'NOTE';
+                addonNotesArr.push(`[${typeLabel}] Menu [${item.name}] #${idx + 1}: ${parts.join(' | ')}`);
+              }
+            });
+          } else if (item.customNote) {
             const isRecipeChange = item.customRecipe && item.customRecipe.length > 0;
             if (isRecipeChange) {
               addonNotesArr.push(`[BAHAN] Menu [${item.name}] x${item.qty}: "${item.customNote}"`);
@@ -7527,12 +7873,34 @@
         });
         let finalAddonNotes = addonNotesArr.join(' | ');
 
+        // --- PECAH ITEM INDIVIDUAL UNTUK SAVING & STOCK DEDUCTION ---
+        const processedItems = [];
+        CART.forEach(item => {
+          if (item.individualAddons && item.individualAddons.length === item.qty) {
+            item.individualAddons.forEach((addon, idx) => {
+              const individualItem = {
+                ...item,
+                name: `${item.name} #${idx + 1}`,
+                qty: 1,
+                customNote: addon.customNote || "",
+                customPrice: addon.customPrice !== undefined ? addon.customPrice : undefined,
+                customRecipe: addon.customRecipe || undefined,
+                originalRecipe: addon.originalRecipe || undefined
+              };
+              delete individualItem.individualAddons;
+              processedItems.push(individualItem);
+            });
+          } else {
+            processedItems.push(item);
+          }
+        });
+
         const transactionData = {
           total: CURRENT_TOTAL, 
           method: method,
           cash: method === 'CASH' ? cash : CURRENT_TOTAL,
           change: method === 'CASH' ? (cash - CURRENT_TOTAL) : 0,
-          items: CART,
+          items: processedItems,
           cashier: finalCashierName,
           priceNotes: finalPriceNotes, // Masukkan ke payload objek
           addonNotes: finalAddonNotes   // [BARU] Masukkan addonNotes ke payload objek
@@ -7552,7 +7920,12 @@
             }
             triggerAuditLog("TRANSAKSI", auditLogMessage);
 
-            showSummary(transactionData);
+            // Tampilkan summary dengan data transaksi asli (menjaga cart asli di summary/cetak)
+            const summaryData = {
+              ...transactionData,
+              items: CART
+            };
+            showSummary(summaryData);
             
             // Langsung fetch data terbaru agar orderan masuk ke Monitor dengan instan
             fetchInitialData(false);
