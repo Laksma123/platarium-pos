@@ -309,8 +309,9 @@
       
       /* --- TABLE RESPONSIVE --- */
       .table-responsive { border-bottom: none !important; overflow-y: auto; scrollbar-width: thin; }
-      #view-products .table-responsive { max-height: calc(100vh - 200px) !important; }
-      #view-finance .table-responsive { max-height: calc(100vh - 150px) !important; padding-bottom: 90px; }
+      #view-stock .table-responsive { max-height: none !important; overflow-y: visible !important; }
+      #view-products .table-responsive { max-height: none !important; overflow-y: visible !important; }
+      #view-finance .table-responsive { max-height: none !important; overflow-y: visible !important; }
       thead.bg-dark { position: sticky; top: 0; z-index: 10; }
 
       /* ========================================= */
@@ -1817,7 +1818,7 @@
                   <div class="text-end mt-1 fw-bold fs-6" id="opNetProfitFinal">Net Profit: Rp 0</div>
                 </div>
 
-                <div class="table-responsive">
+                <div class="table-responsive" style="padding-bottom: 10px !important;">
                   <table class="table table-hover align-middle m-0 small">
                     <thead class="bg-light sticky-top" style="z-index: 5;">
                       <tr><th>Keterangan Cost</th><th class="text-end">Nominal (Rp)</th><th class="text-center" style="width: 80px;">Aksi</th></tr>
