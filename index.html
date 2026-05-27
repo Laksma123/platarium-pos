@@ -7920,12 +7920,8 @@
             }
             triggerAuditLog("TRANSAKSI", auditLogMessage);
 
-            // Tampilkan summary dengan data transaksi asli (menjaga cart asli di summary/cetak)
-            const summaryData = {
-              ...transactionData,
-              items: CART
-            };
-            showSummary(summaryData);
+            // Tampilkan summary & cetak nota dengan data transaksi yang sudah terpecah secara presisi
+            showSummary(transactionData);
             
             // Langsung fetch data terbaru agar orderan masuk ke Monitor dengan instan
             fetchInitialData(false);
@@ -9920,9 +9916,13 @@
         transactionData.items.forEach(i => {
           let itemName = i.name.substring(0, maxChars - 12); 
           pushTxt(itemName);
-          const qtyPrice = `x${i.qty} @${(i.price).toLocaleString('id-ID')}`;
-          const subtotal = (i.qty * i.price).toLocaleString('id-ID');
+          const itemPrice = i.customPrice !== undefined ? i.customPrice : i.price;
+          const qtyPrice = `x${i.qty} @${(itemPrice).toLocaleString('id-ID')}`;
+          const subtotal = (i.qty * itemPrice).toLocaleString('id-ID');
           pushTxt(padText(qtyPrice, subtotal, maxChars));
+          if (i.customNote && i.customNote.trim() !== "") {
+            pushTxt(`  * "${i.customNote}"`);
+          }
         });
 
         pushTxt('-'.repeat(maxChars));
