@@ -2090,27 +2090,52 @@
         </div>
 
         <div id="modalCartAddonCosmetic" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10600; opacity: 1 !important;">
-          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 90%; max-width: 350px; animation: slideUp 0.3s ease-out;">
-            <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="fas fa-cookie-bite text-warning me-2"></i> Pengaturan Add-On</h5>
+          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 800px; animation: slideUp 0.3s ease-out;">
+            <h5 class="fw-bold mb-4 border-bottom pb-3 text-dark text-center"><i class="fas fa-cookie-bite text-warning me-2"></i> Pengaturan Add-On</h5>
             <input type="hidden" id="addonTargetPid">
-            <div class="mb-2">
-              <label class="small fw-bold text-muted">ITEM</label>
-              <div class="fw-bold text-dark" id="addonTargetName">Nama Menu</div>
-            </div>
-            <div class="mb-3">
-              <label class="small fw-bold text-muted">NOTE / KETERANGAN</label>
-              <input type="text" id="addonNoteValue" class="form-control fw-bold border-2" placeholder="Contoh: Ekstra es, Manis, dll">
-            </div>
-            <div class="mb-4">
-              <label class="small fw-bold text-muted">GANTI HARGA ITEM (Rp)</label>
-              <div class="input-group">
-                <span class="input-group-text bg-white border-2 border-end-0">Rp</span>
-                <input type="number" id="addonPriceValue" class="form-control fw-bold border-2 border-start-0 ps-0" placeholder="0">
+            
+            <div class="row g-4 text-start mb-4">
+              <!-- Kolom Kiri: Resep Bahan & Toggle "Tidak rubah bahan" -->
+              <div class="col-12 col-md-6 border-end">
+                <div class="mb-3">
+                  <label class="small fw-bold text-muted">ITEM</label>
+                  <div class="fw-bold text-dark fs-5" id="addonTargetName">Nama Menu</div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-3 bg-light p-2 rounded-3 border">
+                  <span class="small fw-bold text-muted"><i class="fas fa-seedling me-1 text-success"></i> Tidak rubah bahan</span>
+                  <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" role="switch" id="addonNoRecipeChangeToggle" style="width: 40px; height: 20px; cursor:pointer;">
+                  </div>
+                </div>
+
+                <label class="small fw-bold text-muted d-block mb-2">KOMPOSISI RESEP BAHAN</label>
+                <div id="addonRecipeContainer" class="border rounded-4 p-3 bg-light overflow-auto" style="max-height: 250px; min-height: 180px;">
+                  <div id="addonRecipeList" class="d-flex flex-column gap-2">
+                    <div class="text-center p-3 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Memuat bahan resep...</div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Kolom Kanan: Note & Ganti Harga -->
+              <div class="col-12 col-md-6">
+                <div class="mb-3">
+                  <label class="small fw-bold text-muted">NOTE / KETERANGAN</label>
+                  <input type="text" id="addonNoteValue" class="form-control fw-bold border-2" placeholder="Contoh: Ekstra es, Manis, dll">
+                </div>
+                <div class="mb-4">
+                  <label class="small fw-bold text-muted">GANTI HARGA ITEM (Rp)</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-white border-2 border-end-0">Rp</span>
+                    <input type="number" id="addonPriceValue" class="form-control fw-bold border-2 border-start-0 ps-0" placeholder="0">
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="d-flex gap-2">
-              <button class="btn btn-light w-100 rounded-pill fw-bold" onclick="closeCartAddonModal()">Batal</button>
-              <button class="btn btn-warning w-100 rounded-pill fw-bold shadow-sm text-dark" onclick="saveCartAddonCosmetic()">Simpan</button>
+            
+            <div class="d-flex gap-2 pt-3 border-top">
+              <button class="btn btn-light w-100 py-3 fw-bold rounded-pill" onclick="closeCartAddonModal()">Batal</button>
+              <button class="btn btn-warning w-100 py-3 fw-bold rounded-pill shadow-sm text-dark" onclick="saveCartAddonCosmetic()">Simpan</button>
             </div>
           </div>
         </div>
@@ -6783,7 +6808,37 @@
         document.getElementById('addonNoteValue').value = item.customNote || "";
         document.getElementById('addonPriceValue').value = item.customPrice !== undefined ? item.customPrice : item.price;
         
+        // Reset toggle "Tidak rubah bahan" ke default aktif
+        document.getElementById('addonNoRecipeChangeToggle').checked = true;
+
+        // Pemuatan resep dinamis
+        const listEl = document.getElementById('addonRecipeList');
+        listEl.innerHTML = '<div class="text-center p-3 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Memuat bahan resep...</div>';
+        
         document.getElementById('modalCartAddonCosmetic').classList.remove('d-none');
+
+        google.script.run.withSuccessHandler(recipe => {
+          if (!recipe || recipe.length === 0) {
+            listEl.innerHTML = '<div class="text-center p-3 text-muted small"><i class="fas fa-info-circle me-1 text-secondary"></i> Menu ini tidak memiliki bahan resep.</div>';
+            return;
+          }
+          
+          listEl.innerHTML = recipe.map((m, index) => `
+            <div class="d-flex justify-content-between align-items-center bg-white p-2 rounded-3 shadow-sm border border-light" style="transition: all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+              <div class="d-flex flex-column text-start overflow-hidden me-2">
+                <span class="fw-bold text-dark text-truncate" style="font-size: 0.85rem;" title="${m.name}">${m.name}</span>
+                <span class="small text-muted" style="font-size: 0.72rem;">Takaran: <b class="text-danger">${m.qty} ${m.unit}</b></span>
+              </div>
+              <div class="d-flex gap-1 flex-shrink-0">
+                <button type="button" class="btn btn-outline-secondary btn-sm fw-bold px-2 rounded-circle" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">-</button>
+                <button type="button" class="btn btn-outline-success btn-sm fw-bold px-2 rounded-circle" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">+</button>
+                <button type="button" class="btn btn-outline-danger btn-sm fw-bold px-2 rounded-circle" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">✕</button>
+              </div>
+            </div>
+          `).join('');
+        }).withFailureHandler(err => {
+          listEl.innerHTML = '<div class="text-center p-3 text-danger small"><i class="fas fa-exclamation-circle me-1"></i> Gagal memuat bahan resep.</div>';
+        }).getProductRecipe(item.id);
       }
 
       function closeCartAddonModal() {
