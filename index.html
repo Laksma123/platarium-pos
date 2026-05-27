@@ -1478,41 +1478,44 @@
           <div class="row g-4" id="staffCardsContainer">
             </div>
           <div id="view-schedule-grid" class="container-fluid mt-5 border-top pt-4 pb-5">
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-              <div class="mb-3 mb-lg-0">
-                <h4 class="fw-bold m-0"><i class="fas fa-calendar-alt text-success me-2"></i>Pengaturan Jadwal Dinamis</h4>
-                <p class="text-muted small m-0">Atur jadwal shift operasional staff dengan drag & drop.</p>
-              </div>
-              <div class="d-flex gap-2 mt-2 mt-lg-0 flex-wrap justify-content-end">
-                <button class="btn btn-primary rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnSaveBatchSchedule" onclick="executeBatchSaveSchedule()">
-                    <i class="fas fa-save me-2"></i>Save Schedule
-                </button>
-                <button class="btn btn-success rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnBroadcastSchedule" onclick="broadcastSchedule()">
-                    <i class="fab fa-telegram-plane me-2"></i>Kirim Telegram
-                </button>
-
-                <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
-                  <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-calendar-day me-1"></i>Mulai</span>
-                  <input type="date" id="schedStartDate" class="form-control border-0 shadow-none bg-white px-2" style="font-size: 0.85rem;" onchange="renderWeeklyScheduleGrid()">
+            <div class="row mb-4">
+              <div class="col-2 d-none d-lg-block"></div>
+              <div class="col-12 col-lg-10 d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div class="mb-3 mb-lg-0">
+                  <h4 class="fw-bold m-0 ms-2">Pengaturan Jadwal Dinamis</h4>
+                  <p class="text-muted small m-0 ms-2" style="margin-top: 4px !important;">Atur jadwal shift operasional staff dengan drag & drop.</p>
                 </div>
-                <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
-                  <span class="input-group-text bg-light border-0 fw-bold small text-muted">Rentang</span>
-                  <button type="button" class="btn btn-light border-0 px-2 fw-bold" onclick="adjustSchedDayCount(-1)" style="font-size: 0.85rem; background: transparent; color: #636e72;" title="Kurangi Hari"><i class="fas fa-minus" style="font-size: 0.7rem;"></i></button>
-                  <input type="text" id="schedDayCount" class="form-control border-0 shadow-none bg-white px-1 text-center fw-bold" style="font-size: 0.85rem; width: 35px; pointer-events: none;" value="7" readonly>
-                  <button type="button" class="btn btn-light border-0 px-2 fw-bold" onclick="adjustSchedDayCount(1)" style="font-size: 0.85rem; background: transparent; color: #636e72;" title="Tambah Hari"><i class="fas fa-plus" style="font-size: 0.7rem;"></i></button>
-                  <span class="input-group-text bg-light border-0 fw-bold small text-muted">Hari</span>
-                </div>
+                <div class="d-flex gap-2 mt-2 mt-lg-0 flex-wrap justify-content-end">
+                  <button class="btn btn-primary rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnSaveBatchSchedule" onclick="executeBatchSaveSchedule()">
+                      <i class="fas fa-save me-2"></i>Save Schedule
+                  </button>
+                  <button class="btn btn-success rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnBroadcastSchedule" onclick="broadcastSchedule()">
+                      <i class="fab fa-telegram-plane me-2"></i>Kirim Telegram
+                  </button>
 
-                <button class="btn btn-light rounded-pill border fw-bold shadow-sm d-flex align-items-center" onclick="openShiftTimeModal()">
-                    <i class="fas fa-clock text-warning me-2"></i>Waktu Shift
-                </button>
-                <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
-                  <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-layer-group me-1"></i>Shift/Hari</span>
-                  <select id="shiftCountSelector" class="form-select border-0 shadow-none fw-bold bg-white px-3" style="font-size: 0.85rem; cursor:pointer; padding-right: 2.5rem !important;" onchange="changeShiftCount(this.value)">
-                    <option value="1">1 Shift</option>
-                    <option value="2" selected>2 Shift</option>
-                    <option value="3">3 Shift</option>
-                  </select>
+                  <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
+                    <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-calendar-day me-1"></i>Mulai</span>
+                    <input type="date" id="schedStartDate" class="form-control border-0 shadow-none bg-white px-2" style="font-size: 0.85rem;" onchange="renderWeeklyScheduleGrid()">
+                  </div>
+                  <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
+                    <span class="input-group-text bg-light border-0 fw-bold small text-muted">Rentang</span>
+                    <button type="button" class="btn btn-light border-0 px-2 fw-bold" onclick="adjustSchedDayCount(-1)" style="font-size: 0.85rem; background: transparent; color: #636e72;" title="Kurangi Hari"><i class="fas fa-minus" style="font-size: 0.7rem;"></i></button>
+                    <input type="text" id="schedDayCount" class="form-control border-0 shadow-none bg-white px-1 text-center fw-bold" style="font-size: 0.85rem; width: 35px; pointer-events: none;" value="7" readonly>
+                    <button type="button" class="btn btn-light border-0 px-2 fw-bold" onclick="adjustSchedDayCount(1)" style="font-size: 0.85rem; background: transparent; color: #636e72;" title="Tambah Hari"><i class="fas fa-plus" style="font-size: 0.7rem;"></i></button>
+                    <span class="input-group-text bg-light border-0 fw-bold small text-muted">Hari</span>
+                  </div>
+
+                  <button class="btn btn-light rounded-pill border fw-bold shadow-sm d-flex align-items-center" onclick="openShiftTimeModal()">
+                      <i class="fas fa-clock text-warning me-2"></i>Waktu Shift
+                  </button>
+                  <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
+                    <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-layer-group me-1"></i>Shift/Hari</span>
+                    <select id="shiftCountSelector" class="form-select border-0 shadow-none fw-bold bg-white px-3" style="font-size: 0.85rem; cursor:pointer; padding-right: 2.5rem !important;" onchange="changeShiftCount(this.value)">
+                      <option value="1">1 Shift</option>
+                      <option value="2" selected>2 Shift</option>
+                      <option value="3">3 Shift</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
