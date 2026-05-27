@@ -5792,10 +5792,26 @@
           targetNameEl.innerHTML = `Menu: ${productName} <i class="fas fa-spinner fa-spin ms-2 text-primary"></i>`;
           document.getElementById('modalRecipeSettings').classList.remove('d-none');
 
+          const saveBtn = document.getElementById('btnSaveRecipeSession');
+          if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.style.opacity = '0.5';
+          }
+
           google.script.run.withSuccessHandler(data => {
              TEMP_RECIPE_BASKET = data;
              targetNameEl.innerText = `Menu: ${productName}`;
              renderRecipeBasket();
+             if (saveBtn) {
+               saveBtn.disabled = false;
+               saveBtn.style.opacity = '1';
+             }
+          }).withFailureHandler(err => {
+             targetNameEl.innerText = `Menu: ${productName} (Gagal memuat)`;
+             if (saveBtn) {
+               saveBtn.disabled = false;
+               saveBtn.style.opacity = '1';
+             }
           }).getProductRecipe(pid);
         }
       }
@@ -7187,7 +7203,7 @@
           if (item) {
             item.customNote = note;
             // Jika harga diubah dari harga normalnya, simpan sebagai customPrice kustom kosmetik
-            if (!isNaN(price) && price >= 0) {
+            if (!isNaN(price) && price >= 0 && price !== item.price) {
               item.customPrice = price;
             } else {
               delete item.customPrice;
