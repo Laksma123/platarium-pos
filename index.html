@@ -866,11 +866,11 @@
 
       /* Animasi untuk tombol Batal (X ke panah berputar) - Loop 6s */
       @keyframes batal-morph-rotate {
-        0%, 75% {
+        0%, 61% {
           opacity: 1;
           transform: scale(1) rotate(0deg);
         }
-        79% {
+        65% {
           opacity: 0;
           transform: scale(0.5) rotate(90deg);
         }
@@ -885,25 +885,21 @@
       }
 
       @keyframes batal-arrow-rotate {
-        0%, 75% {
+        0%, 61% {
           opacity: 0;
           transform: scale(0.5) rotate(-180deg);
         }
-        79% {
+        65% {
           opacity: 1;
           transform: scale(1) rotate(-180deg);
         }
-        87% {
-          opacity: 1;
-          transform: scale(1) rotate(180deg);
-        }
         91% {
-          opacity: 0;
-          transform: scale(0.5) rotate(270deg);
+          opacity: 1;
+          transform: scale(1) rotate(540deg); /* 2x berputar lambat (-180deg ke 540deg = 720deg) */
         }
         95%, 100% {
           opacity: 0;
-          transform: scale(0.5) rotate(270deg);
+          transform: scale(0.5) rotate(630deg);
         }
       }
 
@@ -918,11 +914,11 @@
 
       /* Animasi untuk tombol Simpan (Disket ke panah berputar) - Loop 6s */
       @keyframes simpan-morph-rotate {
-        0%, 75% {
+        0%, 61% {
           opacity: 1;
           transform: scale(1) rotate(0deg);
         }
-        79% {
+        65% {
           opacity: 0;
           transform: scale(0.5) rotate(90deg);
         }
@@ -937,25 +933,21 @@
       }
 
       @keyframes simpan-arrow-rotate {
-        0%, 75% {
+        0%, 61% {
           opacity: 0;
           transform: scale(0.5) rotate(-180deg);
         }
-        79% {
+        65% {
           opacity: 1;
           transform: scale(1) rotate(-180deg);
         }
-        87% {
-          opacity: 1;
-          transform: scale(1) rotate(180deg);
-        }
         91% {
-          opacity: 0;
-          transform: scale(0.5) rotate(270deg);
+          opacity: 1;
+          transform: scale(1) rotate(540deg); /* 2x berputar lambat (-180deg ke 540deg = 720deg) */
         }
         95%, 100% {
           opacity: 0;
-          transform: scale(0.5) rotate(270deg);
+          transform: scale(0.5) rotate(630deg);
         }
       }
 
