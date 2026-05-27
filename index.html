@@ -761,6 +761,37 @@
       /* ========================================= */
       /* ADD-ON FEATURE COSMETIC STYLES            */
       /* ========================================= */
+      /* Custom Scrollbar for Add-on and Recipe Modals */
+      #modalCartAddonCosmetic::-webkit-scrollbar,
+      #modalRecipeSettings::-webkit-scrollbar,
+      #addonRecipeContainer::-webkit-scrollbar,
+      .recipe-scrollable-container::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      #modalCartAddonCosmetic::-webkit-scrollbar-track,
+      #modalRecipeSettings::-webkit-scrollbar-track,
+      #addonRecipeContainer::-webkit-scrollbar-track,
+      .recipe-scrollable-container::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.03);
+        border-radius: 10px;
+      }
+      #modalCartAddonCosmetic::-webkit-scrollbar-thumb,
+      #modalRecipeSettings::-webkit-scrollbar-thumb,
+      #addonRecipeContainer::-webkit-scrollbar-thumb,
+      .recipe-scrollable-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+        border: 1px solid transparent;
+        background-clip: padding-box;
+      }
+      #modalCartAddonCosmetic::-webkit-scrollbar-thumb:hover,
+      #modalRecipeSettings::-webkit-scrollbar-thumb:hover,
+      #addonRecipeContainer::-webkit-scrollbar-thumb:hover,
+      .recipe-scrollable-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+        background-clip: padding-box;
+      }
       .btn-addon-pill {
         background: #f1f2f6;
         color: #5c2c0b;
@@ -2416,7 +2447,7 @@
               </div>
             </div>
 
-            <div class="flex-fill overflow-auto border rounded-4 mb-3 bg-white">
+            <div class="border rounded-4 mb-3 bg-white recipe-scrollable-container" style="max-height: 220px; overflow-y: auto;">
               <table class="table table-hover align-middle m-0 small">
                 <thead class="bg-light sticky-top">
                   <tr><th class="ps-3">Nama Bahan</th><th class="text-center">Takaran</th><th class="text-center">#</th></tr>
