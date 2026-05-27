@@ -7517,7 +7517,12 @@
         let addonNotesArr = [];
         CART.forEach(item => {
           if (item.customNote) {
-            addonNotesArr.push(`Menu [${item.name}] x${item.qty}: "${item.customNote}"`);
+            const isRecipeChange = item.customRecipe && item.customRecipe.length > 0;
+            if (isRecipeChange) {
+              addonNotesArr.push(`[BAHAN] Menu [${item.name}] x${item.qty}: "${item.customNote}"`);
+            } else {
+              addonNotesArr.push(`[NOTE] Menu [${item.name}] x${item.qty}: "${item.customNote}"`);
+            }
           }
         });
         let finalAddonNotes = addonNotesArr.join(' | ');
@@ -8115,7 +8120,17 @@
             
             // --- LOGIKA HIGHLIGHT ORANGE & BADGE DETAIL NOTE ---
             let hasPriceAdjustment = t.priceNotes && t.priceNotes.trim() !== "";
-            let hasAddonAdjustment = t.addonNotes && t.addonNotes.trim() !== "";
+            let hasAddonAdjustment = false;
+            if (t.addonNotes && t.addonNotes.trim() !== "") {
+              const notes = t.addonNotes.split(' | ');
+              hasAddonAdjustment = notes.some(note => {
+                if (note.includes('[BAHAN]')) return true;
+                if (note.includes('[NOTE]')) return false;
+                // Fallback data lama (legacy): cek tanda perubahan bahan
+                const lower = note.toLowerCase();
+                return lower.includes('+') || lower.includes('-') || lower.includes('tanpa');
+              });
+            }
             let hasAdjustment = hasPriceAdjustment || hasAddonAdjustment;
             let rowStyle = isKomplimen ? 'opacity: 0.6; background-color: #fff5f5;' : '';
             if (!isKomplimen && hasAdjustment) {
@@ -9702,6 +9717,7 @@
 
           // --- EKSTRAK DATA KOMPLIMEN & KATEGORI PRODUK ---
           let komplimenList = [];
+          let adjustmentList = [];
           let itemAgg = {};
           
           // Perhitungan Tax (Pajak)
@@ -9719,6 +9735,26 @@
                   total: finalTotal
                 });
                 return; // Abaikan item komplimen dari rekap total penjualan bawah
+            }
+
+            // Check if there is an addon adjustment / recipe changes or price changes
+            let hasPriceAdj = t.priceNotes && t.priceNotes.trim() !== "";
+            let hasAddonAdj = false;
+            if (t.addonNotes && t.addonNotes.trim() !== "") {
+              const notes = t.addonNotes.split(' | ');
+              hasAddonAdj = notes.some(note => {
+                if (note.includes('[BAHAN]')) return true;
+                if (note.includes('[NOTE]')) return false;
+                const lower = note.toLowerCase();
+                return lower.includes('+') || lower.includes('-') || lower.includes('tanpa');
+              });
+            }
+            if (hasPriceAdj || hasAddonAdj) {
+              adjustmentList.push({
+                id: t.orderId,
+                priceNotes: t.priceNotes || "",
+                addonNotes: t.addonNotes || ""
+              });
             }
 
             t.items.forEach(i => {
@@ -9828,6 +9864,54 @@
             pushTxt('-'.repeat(maxChars));
           }
 
+          // FORMAT ADJUSTMENT PERUBAHAN HARGA/BAHAN BARU
+          if (adjustmentList.length > 0) {
+            bytes.push(...cmd.boldOn);
+            pushTxt("DAFTAR PERUBAHAN HARGA/BAHAN:");
+            bytes.push(...cmd.boldOff);
+            
+            adjustmentList.forEach((adj, idx) => {
+              pushTxt(`ID Order : ${adj.id}`);
+              
+              if (adj.priceNotes && adj.priceNotes.trim() !== "") {
+                let cleanPrice = adj.priceNotes.replace(/\[BAHAN\] /g, '').replace(/\[NOTE\] /g, '');
+                let words = `Harga   : ${cleanPrice}`.split(' ');
+                let line = '  ';
+                words.forEach(w => {
+                  if ((line + w).length > maxChars) {
+                    pushTxt(line.trimEnd());
+                    line = '  ' + w + ' ';
+                  } else {
+                    line += w + ' ';
+                  }
+                });
+                if (line.trim().length > 0) pushTxt(line.trimEnd());
+              }
+              
+              if (adj.addonNotes && adj.addonNotes.trim() !== "") {
+                let cleanAddon = adj.addonNotes.replace(/\[BAHAN\] /g, '').replace(/\[NOTE\] /g, '');
+                let words = `Bahan   : ${cleanAddon}`.split(' ');
+                let line = '  ';
+                words.forEach(w => {
+                  if ((line + w).length > maxChars) {
+                    pushTxt(line.trimEnd());
+                    line = '  ' + w + ' ';
+                  } else {
+                    line += w + ' ';
+                  }
+                });
+                if (line.trim().length > 0) pushTxt(line.trimEnd());
+              }
+              
+              if (idx < adjustmentList.length - 1) {
+                pushTxt('. '.repeat(maxChars / 2));
+              } else {
+                pushTxt(''); // Baris kosong pembatas akhir
+              }
+            });
+            pushTxt('-'.repeat(maxChars));
+          }
+
           const catKeys = Object.keys(catMap).sort();
           if (catKeys.length > 0) {
               catKeys.forEach(cat => {
@@ -9917,65 +10001,187 @@
         document.getElementById('lapCapTopProd').innerText = document.getElementById('dashTopProduct').innerText.replace('Lihat List', '').trim();
         document.getElementById('lapCapTopKasir').innerText = document.getElementById('dashTopCashier').innerText;
 
-        // Clone Table baris per baris dengan membuang kolom button Aksi
+        // === KALKULASI COST & NET PROFIT (DIPINDAHKAN KE ATAS AGAR TER-CAPTURE OLEH HTML2CANVAS) ===
+        let totalCost = TOTAL_SALARY_COST || 0;
+        let rincianCost = `   - Gaji Karyawan: Rp ${totalCost.toLocaleString('id-ID')}\n`;
+        
+        let totalTaxCollected = 0;
+        if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
+            let totalRevenueFromTransactions = window.CURRENT_FILTERED_REVENUE !== undefined ? window.CURRENT_FILTERED_REVENUE : 0;
+            
+            if (window.CURRENT_FILTERED_REVENUE === undefined && TRANSACTIONS_DATA) {
+                TRANSACTIONS_DATA.forEach(t => {
+                    if (t.status !== 'Komplimen') {
+                        totalRevenueFromTransactions += Number(t.total) || 0;
+                    }
+                });
+            }
+            
+            let calculatedSubtotal = totalRevenueFromTransactions / (1 + (TAX_PERCENTAGE / 100));
+            totalTaxCollected = totalRevenueFromTransactions - calculatedSubtotal;
+            
+            if (totalTaxCollected > 0) {
+                totalCost += totalTaxCollected;
+                rincianCost += `   - PPN (${TAX_PERCENTAGE}%): Rp ${totalTaxCollected.toLocaleString('id-ID', {maximumFractionDigits:0})}\n`;
+            }
+        }
+
+        if (typeof OP_COSTS_DATA !== 'undefined' && OP_COSTS_DATA && OP_COSTS_DATA.length > 0) {
+            OP_COSTS_DATA.forEach(cost => {
+                totalCost += cost.amount;
+                rincianCost += `   - ${cost.name}: Rp ${cost.amount.toLocaleString('id-ID')}\n`;
+            });
+        }
+
+        const profitBersih = window.CURRENT_FILTERED_PROFIT !== undefined ? window.CURRENT_FILTERED_PROFIT : getPureProfitBersih(); 
+        const netProfit = profitBersih - totalCost; 
+
+        // Populate Operational Cost UI in Capture
+        let capOpCostHtml = '';
+        capOpCostHtml += `
+          <tr>
+            <td class="fw-bold"><i class="fas fa-users text-primary me-2"></i>Gaji Karyawan (Otomatis)</td>
+            <td class="text-end fw-bold text-danger">Rp ${(TOTAL_SALARY_COST || 0).toLocaleString('id-ID')}</td>
+          </tr>
+        `;
+        if (totalTaxCollected > 0) {
+          capOpCostHtml += `
+            <tr>
+              <td class="fw-bold"><i class="fas fa-percent text-danger me-2"></i>Pengurangan Tax (PPN ${TAX_PERCENTAGE}%)</td>
+              <td class="text-end fw-bold text-danger">Rp ${totalTaxCollected.toLocaleString('id-ID', {maximumFractionDigits:0})}</td>
+            </tr>
+          `;
+        }
+        if (typeof OP_COSTS_DATA !== 'undefined' && OP_COSTS_DATA && OP_COSTS_DATA.length > 0) {
+          OP_COSTS_DATA.forEach(cost => {
+            capOpCostHtml += `
+              <tr>
+                <td class="fw-bold"><i class="fas fa-file-invoice-dollar text-secondary me-2"></i>${cost.name}</td>
+                <td class="text-end fw-bold text-danger">Rp ${cost.amount.toLocaleString('id-ID')}</td>
+              </tr>
+            `;
+          });
+        }
+        document.getElementById('lapCapOpCostTableBody').innerHTML = capOpCostHtml;
+        document.getElementById('lapCapOpTotalCost').innerText = 'Rp ' + totalCost.toLocaleString('id-ID', {maximumFractionDigits:0});
+        
+        const capNetProfitEl = document.getElementById('lapCapOpNetProfit');
+        if (netProfit >= 0) {
+          capNetProfitEl.innerText = 'Rp ' + netProfit.toLocaleString('id-ID', {maximumFractionDigits:0});
+          capNetProfitEl.className = 'fs-4 fw-bold text-success';
+          capNetProfitEl.style.color = '#198754';
+        } else {
+          capNetProfitEl.innerText = '- Rp ' + Math.abs(netProfit).toLocaleString('id-ID', {maximumFractionDigits:0});
+          capNetProfitEl.className = 'fs-4 fw-bold text-danger';
+          capNetProfitEl.style.color = '#dc3545';
+        }
+
+        const capBar = document.getElementById('lapCapOpProfitBar');
+        let capPercentage = totalCost > 0 ? (profitBersih / totalCost) * 100 : 100;
+        if (capPercentage < 0) capPercentage = 0;
+        if (capPercentage > 100) capPercentage = 100;
+        capBar.style.width = capPercentage + '%';
+        capBar.innerText = capPercentage.toFixed(1) + '%';
+        if (capPercentage < 50) {
+          capBar.className = 'progress-bar progress-bar-striped bg-danger';
+          capBar.style.backgroundColor = '#dc3545';
+        } else if (capPercentage < 80) {
+          capBar.className = 'progress-bar progress-bar-striped bg-warning text-dark';
+          capBar.style.backgroundColor = '#ffc107';
+          capBar.style.color = '#212529';
+        } else {
+          capBar.className = 'progress-bar progress-bar-striped bg-success';
+          capBar.style.backgroundColor = '#198754';
+        }
+        document.getElementById('lapCapOpCostSection').classList.remove('d-none');
+
+        // Clone Table baris per baris dengan memisahkan Transaksi Khusus vs Normal
         const originalTbody = document.getElementById('financeTableBody');
         const captureTbody = document.getElementById('lapCapTableBody');
-        let clonedRows = '';
         const rows = originalTbody.querySelectorAll('tr');
+        
+        let adjustedRowsHtml = '';
+        let normalRowsHtml = '';
+        let emptyRowHtml = '';
+
         rows.forEach(row => {
           if(row.cells.length > 1) {
-            clonedRows += '<tr>';
+            // Extract order ID
+            const orderIdEl = row.querySelector('.fw-bold.text-dark');
+            let orderId = '';
+            if (orderIdEl) {
+              orderId = orderIdEl.textContent.trim().split(' ')[0];
+            }
+            
+            // Find transaction in TRANSACTIONS_DATA
+            const t = TRANSACTIONS_DATA.find(x => x.orderId === orderId);
+            let hasPriceAdj = t ? (t.priceNotes && t.priceNotes.trim() !== "") : false;
+            let hasAddonAdj = false;
+            if (t && t.addonNotes && t.addonNotes.trim() !== "") {
+              const notes = t.addonNotes.split(' | ');
+              hasAddonAdj = notes.some(note => {
+                if (note.includes('[BAHAN]')) return true;
+                if (note.includes('[NOTE]')) return false;
+                const lower = note.toLowerCase();
+                return lower.includes('+') || lower.includes('-') || lower.includes('tanpa');
+              });
+            }
+            let hasAdjustment = hasPriceAdj || hasAddonAdj;
+
+            let rowHtml = '';
+            let rowStyle = row.getAttribute('style') || '';
+            rowHtml += `<tr style="${rowStyle}">`;
             for(let i=0; i < row.cells.length - 1; i++) {
               let text = row.cells[i].innerHTML;
               if(i === 0) text = text.replace(/<div class="small text-muted">/g, ' <div>').replace(/<br>/g, ' ');
-              clonedRows += `<td ${row.cells[i].className.includes('text-end') ? 'class="text-end"' : (row.cells[i].className.includes('text-center') ? 'class="text-center"' : '')}>${text}</td>`;
+              rowHtml += `<td ${row.cells[i].className.includes('text-end') ? 'class="text-end"' : (row.cells[i].className.includes('text-center') ? 'class="text-center"' : '')}>${text}</td>`;
             }
-            clonedRows += '</tr>';
+            rowHtml += '</tr>';
+
+            if (t && hasAdjustment) {
+              // Add Detail Note details sub-row
+              let details = '';
+              if (t.priceNotes && t.priceNotes.trim() !== "") {
+                details += `<div style="color: #dc3545 !important; font-weight: bold; margin-bottom: 2px; text-align: left !important;"><i class="fas fa-tag me-1"></i> Perubahan Harga:</div>`;
+                details += t.priceNotes.split(' | ').map(p => `<div style="padding-left: 15px; color: #dc3545 !important; text-align: left !important;">• ${p}</div>`).join('');
+              }
+              if (t.addonNotes && t.addonNotes.trim() !== "") {
+                let cleanNotes = t.addonNotes.split(' | ').map(a => {
+                  let clean = a.replace('[BAHAN] ', '').replace('[NOTE] ', '');
+                  return `• ${clean}`;
+                }).join('<br>');
+                details += `<div style="color: #198754 !important; font-weight: bold; margin-top: 5px; margin-bottom: 2px; text-align: left !important;"><i class="fas fa-cookie-bite me-1"></i> Perubahan Bahan (Add-on):</div>`;
+                details += `<div style="padding-left: 15px; color: #198754 !important; text-align: left !important;">${cleanNotes}</div>`;
+              }
+
+              rowHtml += `
+                <tr style="background-color: #fffdeb !important;">
+                  <td colspan="5" class="ps-4 py-2 border-bottom small" style="line-height: 1.4; border-top: none; text-align: left !important; background-color: #fffdeb !important; color: #666 !important;">
+                    ${details}
+                  </td>
+                </tr>
+              `;
+              adjustedRowsHtml += rowHtml;
+            } else {
+              normalRowsHtml += rowHtml;
+            }
           } else {
-            clonedRows += `<tr><td colspan="5" class="text-center text-muted">Belum ada transaksi</td></tr>`;
+            emptyRowHtml = `<tr><td colspan="5" class="text-center text-muted">Belum ada transaksi</td></tr>`;
           }
         });
-        captureTbody.innerHTML = clonedRows || `<tr><td colspan="5" class="text-center text-muted">Belum ada transaksi</td></tr>`;
+
+        let finalClonedRows = '';
+        if (adjustedRowsHtml || normalRowsHtml) {
+          finalClonedRows = adjustedRowsHtml + normalRowsHtml;
+        } else {
+          finalClonedRows = emptyRowHtml || `<tr><td colspan="5" class="text-center text-muted">Belum ada transaksi</td></tr>`;
+        }
+        captureTbody.innerHTML = finalClonedRows;
 
         const capDiv = document.getElementById('laporanGridToCapture');
         html2canvas(capDiv, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
           const base64Data = canvas.toDataURL('image/jpeg', 0.85);
 
-          // === KALKULASI COST & NET PROFIT (Identik dengan renderOpCostsUI) ===
-          let totalCost = TOTAL_SALARY_COST || 0;
-          let rincianCost = `   - Gaji Karyawan: Rp ${totalCost.toLocaleString('id-ID')}\n`;
-          
-          let totalTaxCollected = 0;
-          if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
-              let totalRevenueFromTransactions = window.CURRENT_FILTERED_REVENUE !== undefined ? window.CURRENT_FILTERED_REVENUE : 0;
-              
-              if (window.CURRENT_FILTERED_REVENUE === undefined && TRANSACTIONS_DATA) {
-                  TRANSACTIONS_DATA.forEach(t => {
-                      if (t.status !== 'Komplimen') {
-                          totalRevenueFromTransactions += Number(t.total) || 0;
-                      }
-                  });
-              }
-              
-              let calculatedSubtotal = totalRevenueFromTransactions / (1 + (TAX_PERCENTAGE / 100));
-              totalTaxCollected = totalRevenueFromTransactions - calculatedSubtotal;
-              
-              if (totalTaxCollected > 0) {
-                  totalCost += totalTaxCollected;
-                  rincianCost += `   - PPN (${TAX_PERCENTAGE}%): Rp ${totalTaxCollected.toLocaleString('id-ID', {maximumFractionDigits:0})}\n`;
-              }
-          }
-
-          if (typeof OP_COSTS_DATA !== 'undefined' && OP_COSTS_DATA && OP_COSTS_DATA.length > 0) {
-              OP_COSTS_DATA.forEach(cost => {
-                  totalCost += cost.amount;
-                  rincianCost += `   - ${cost.name}: Rp ${cost.amount.toLocaleString('id-ID')}\n`;
-              });
-          }
-
-          const profitBersih = window.CURRENT_FILTERED_PROFIT !== undefined ? window.CURRENT_FILTERED_PROFIT : getPureProfitBersih(); 
-          const netProfit = profitBersih - totalCost; 
-          
           let formatNetProfit = netProfit >= 0 ? `Rp ${netProfit.toLocaleString('id-ID', {maximumFractionDigits:0})}` : `- Rp ${Math.abs(netProfit).toLocaleString('id-ID', {maximumFractionDigits:0})}`;
 
           // === FORMATTING PESAN TELEGRAM ===
@@ -10017,11 +10223,56 @@
       }
 
       // ==========================================
+      // FUNGSI MODAL DETAIL NOTE (TAB LAPORAN)
+      // ==========================================
+      function openDetailNoteModal(orderId) {
+        const t = TRANSACTIONS_DATA.find(x => x.orderId === orderId);
+        if (!t) return;
+
+        document.getElementById('detailNoteOrderId').innerText = t.orderId;
+        document.getElementById('detailNoteTime').innerText = t.timestamp;
+        document.getElementById('detailNoteCashier').innerText = t.cashier || '-';
+
+        // Section 1: Price Notes
+        const sectionPrice = document.getElementById('sectionPriceNotes');
+        const contentPrice = document.getElementById('contentPriceNotes');
+        if (t.priceNotes && t.priceNotes.trim() !== "") {
+          sectionPrice.classList.remove('d-none');
+          const formatted = t.priceNotes.split(' | ').map(p => `• ${p}`).join('<br>');
+          contentPrice.innerHTML = formatted;
+        } else {
+          sectionPrice.classList.add('d-none');
+          contentPrice.innerHTML = '-';
+        }
+
+        // Section 2: Addon / Recipe Notes
+        const sectionAddon = document.getElementById('sectionAddonNotes');
+        const contentAddon = document.getElementById('contentAddonNotes');
+        if (t.addonNotes && t.addonNotes.trim() !== "") {
+          sectionAddon.classList.remove('d-none');
+          const formatted = t.addonNotes.split(' | ').map(a => {
+            // Hilangkan tag prefix [BAHAN] atau [NOTE] untuk estetika tampilan modal
+            let clean = a.replace('[BAHAN] ', '').replace('[NOTE] ', '');
+            return `• ${clean}`;
+          }).join('<br>');
+          contentAddon.innerHTML = formatted;
+        } else {
+          sectionAddon.classList.add('d-none');
+          contentAddon.innerHTML = '-';
+        }
+
+        document.getElementById('modalDetailNote').classList.remove('d-none');
+      }
+
+      function closeDetailNoteModal() {
+        document.getElementById('modalDetailNote').classList.add('d-none');
+      }
+
+      // ==========================================
       // DUAL POS MONITOR (CUSTOMER DISPLAY) ENGINE
       // ==========================================
 
       const posSyncChannel = new BroadcastChannel('platarium_pos_sync');
-
       // Fungsi pembantu mengekstrak ID unik dari link YouTube apa saja
       function extractYouTubeId(url) {
         if (!url) return "zpOULjyy-n8"; // ID default
@@ -11006,6 +11257,39 @@
            </div>
          </div>
       </div>
+      
+      <!-- Section Operational Cost & Net Profit untuk Capture -->
+      <div id="lapCapOpCostSection" class="mb-4 p-3 bg-light rounded border d-none" style="background-color: #f8f9fa !important; border: 1px solid #dee2e6 !important;">
+         <h5 class="fw-bold border-bottom pb-2 mb-3 text-secondary" style="font-size: 1rem;"><i class="fas fa-wallet me-2"></i>OPERATIONAL COST & NET PROFIT</h5>
+         <div class="row mb-3">
+            <div class="col-6">
+               <div class="small text-muted fw-bold" style="font-size: 0.75rem;">TOTAL OPERATIONAL COST</div>
+               <div class="fs-4 fw-bold text-danger" id="lapCapOpTotalCost" style="font-size: 1.5rem; color: #dc3545 !important;">Rp 0</div>
+            </div>
+            <div class="col-6 text-end">
+               <div class="small text-muted fw-bold" style="font-size: 0.75rem;">NET PROFIT AKHIR</div>
+               <div class="fs-4 fw-bold" id="lapCapOpNetProfit" style="font-size: 1.5rem;">Rp 0</div>
+            </div>
+         </div>
+         <!-- Progress Bar -->
+         <div class="progress mb-3" style="height: 20px; border-radius: 10px; background-color: #e9ecef; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); overflow: hidden;">
+            <div id="lapCapOpProfitBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; font-size: 0.75rem; font-weight: bold; line-height: 20px; text-align: center; color: white;">0%</div>
+         </div>
+         <!-- Cost Table -->
+         <div class="table-responsive">
+            <table class="table table-bordered table-sm m-0" style="font-size: 0.8rem; background-color: white;">
+               <thead class="table-secondary" style="background-color: #e9ecef;">
+                  <tr>
+                     <th>Keterangan Cost</th>
+                     <th class="text-end" style="width: 150px;">Nominal</th>
+                  </tr>
+               </thead>
+               <tbody id="lapCapOpCostTableBody">
+               </tbody>
+            </table>
+         </div>
+      </div>
+
       <h5 class="fw-bold border-bottom pb-2 mb-3">Rincian Transaksi</h5>
       <table class="table table-bordered table-sm" style="font-size: 0.85rem;">
         <thead class="table-dark">
