@@ -2393,7 +2393,7 @@
                   <div class="d-flex justify-content-between align-items-center mb-3 bg-light p-2 rounded-3 border">
                     <span class="small fw-bold text-muted"><i class="fas fa-seedling me-1 text-success"></i> Tidak rubah bahan</span>
                     <div class="form-check form-switch m-0">
-                      <input class="form-check-input" type="checkbox" role="switch" id="addonNoRecipeChangeToggle" style="width: 40px; height: 20px; cursor:pointer;">
+                      <input class="form-check-input" type="checkbox" role="switch" id="addonNoRecipeChangeToggle" style="width: 40px; height: 20px; cursor:pointer;" onchange="updateAddonUIState()">
                     </div>
                   </div>
 
@@ -2409,7 +2409,7 @@
                 <div class="col-12 col-md-6">
                   <div class="mb-3">
                     <label class="small fw-bold text-muted">NOTE / KETERANGAN</label>
-                    <input type="text" id="addonNoteValue" class="form-control fw-bold border-2" placeholder="Contoh: Ekstra es, Manis, dll">
+                    <input type="text" id="addonNoteValue" class="form-control fw-bold border-2" placeholder="Contoh: Ekstra es, Manis, dll" oninput="updateAddonUIState()">
                   </div>
                   <div class="mb-4">
                     <label class="small fw-bold text-muted">GANTI HARGA ITEM (Rp)</label>
@@ -7153,8 +7153,10 @@
         document.getElementById('addonNoteValue').value = item.customNote || "";
         document.getElementById('addonPriceValue').value = item.customPrice !== undefined ? item.customPrice : item.price;
         
-        // Reset toggle "Tidak rubah bahan" ke default aktif
-        document.getElementById('addonNoRecipeChangeToggle').checked = true;
+        // Reset toggle "Tidak rubah bahan" ke default selalu OFF setiap dibuka
+        const toggleEl = document.getElementById('addonNoRecipeChangeToggle');
+        toggleEl.checked = false;
+        toggleEl.disabled = false; // reset disabled state
 
         // Pemuatan resep dinamis
         const listEl = document.getElementById('addonRecipeList');
@@ -7162,28 +7164,183 @@
         
         document.getElementById('modalCartAddonCosmetic').classList.remove('d-none');
 
-        google.script.run.withSuccessHandler(recipe => {
+        const handleLoadedRecipe = (recipe) => {
           if (!recipe || recipe.length === 0) {
+            window.ORIGINAL_ADDON_RECIPE = [];
+            window.CURRENT_ADDON_RECIPE = [];
             listEl.innerHTML = '<div class="text-center p-3 text-muted small"><i class="fas fa-info-circle me-1 text-secondary"></i> Menu ini tidak memiliki bahan resep.</div>';
+            updateAddonUIState();
             return;
           }
           
-          listEl.innerHTML = recipe.map((m, index) => `
-            <div class="d-flex justify-content-between align-items-center bg-white p-2 rounded-3 shadow-sm border border-light" style="transition: all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+          window.ORIGINAL_ADDON_RECIPE = JSON.parse(JSON.stringify(recipe));
+          window.CURRENT_ADDON_RECIPE = JSON.parse(JSON.stringify(recipe));
+          
+          renderAddonRecipeList();
+        };
+
+        if (item.customRecipe && item.customRecipe.length > 0) {
+          const orig = item.originalRecipe || item.customRecipe;
+          window.ORIGINAL_ADDON_RECIPE = JSON.parse(JSON.stringify(orig));
+          window.CURRENT_ADDON_RECIPE = JSON.parse(JSON.stringify(item.customRecipe));
+          renderAddonRecipeList();
+        } else {
+          google.script.run.withSuccessHandler(recipe => {
+            handleLoadedRecipe(recipe);
+          }).withFailureHandler(err => {
+            listEl.innerHTML = '<div class="text-center p-3 text-danger small"><i class="fas fa-exclamation-circle me-1"></i> Gagal memuat bahan resep.</div>';
+          }).getProductRecipe(item.id);
+        }
+      }
+
+      function renderAddonRecipeList() {
+        const listEl = document.getElementById('addonRecipeList');
+        if (!window.CURRENT_ADDON_RECIPE || window.CURRENT_ADDON_RECIPE.length === 0) {
+          listEl.innerHTML = '<div class="text-center p-3 text-muted small"><i class="fas fa-info-circle me-1 text-secondary"></i> Menu ini tidak memiliki bahan resep.</div>';
+          updateAddonUIState();
+          return;
+        }
+
+        listEl.innerHTML = window.CURRENT_ADDON_RECIPE.map((m, index) => {
+          const orig = window.ORIGINAL_ADDON_RECIPE.find(x => x.id === m.id) || m;
+          const isDeleted = m.qty === 0;
+          const isModified = m.qty !== orig.qty;
+          
+          let borderClass = 'border-light';
+          let bgClass = 'bg-white';
+          if (isDeleted) {
+            borderClass = 'border-danger border-opacity-50';
+            bgClass = 'bg-danger bg-opacity-10';
+          } else if (isModified) {
+            borderClass = 'border-warning border-opacity-50';
+            bgClass = 'bg-warning bg-opacity-10';
+          }
+
+          return `
+            <div class="d-flex justify-content-between align-items-center ${bgClass} p-2 rounded-3 shadow-sm border ${borderClass}" style="transition: all 0.2s;">
               <div class="d-flex flex-column text-start overflow-hidden me-2">
-                <span class="fw-bold text-dark text-truncate" style="font-size: 0.85rem;" title="${m.name}">${m.name}</span>
-                <span class="small text-muted" style="font-size: 0.72rem;">Takaran: <b class="text-danger">${m.qty} ${m.unit}</b></span>
+                <span class="fw-bold text-dark text-truncate ${isDeleted ? 'text-decoration-line-through text-muted' : ''}" style="font-size: 0.85rem;" title="${m.name}">${m.name}</span>
+                <span class="small text-muted" style="font-size: 0.72rem;">Takaran: <b class="${isDeleted ? 'text-muted' : 'text-danger'}">${m.qty} ${m.unit}</b> ${isModified && !isDeleted ? `<span class="badge bg-warning text-dark ms-1">Ubah (Asli: ${orig.qty} ${orig.unit})</span>` : ''}</span>
               </div>
               <div class="d-flex gap-1 flex-shrink-0">
-                <button type="button" class="btn btn-outline-secondary btn-sm fw-bold px-2 rounded-circle" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">-</button>
-                <button type="button" class="btn btn-outline-success btn-sm fw-bold px-2 rounded-circle" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">+</button>
-                <button type="button" class="btn btn-outline-danger btn-sm fw-bold px-2 rounded-circle" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">✕</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm fw-bold px-2 rounded-circle" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;" onclick="adjustAddonIngredient(${index}, -1)">-</button>
+                <button type="button" class="btn btn-outline-success btn-sm fw-bold px-2 rounded-circle" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;" onclick="adjustAddonIngredient(${index}, 1)">+</button>
+                <button type="button" class="btn btn-outline-danger btn-sm fw-bold px-2 rounded-circle" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;" onclick="adjustAddonIngredient(${index}, 0)">✕</button>
               </div>
             </div>
-          `).join('');
-        }).withFailureHandler(err => {
-          listEl.innerHTML = '<div class="text-center p-3 text-danger small"><i class="fas fa-exclamation-circle me-1"></i> Gagal memuat bahan resep.</div>';
-        }).getProductRecipe(item.id);
+          `;
+        }).join('');
+
+        updateAddonUIState();
+      }
+
+      function adjustAddonIngredient(index, action) {
+        const item = window.CURRENT_ADDON_RECIPE[index];
+        if (!item) return;
+        const orig = window.ORIGINAL_ADDON_RECIPE.find(x => x.id === item.id);
+        if (!orig) return;
+
+        const originalQty = parseFloat(orig.qty) || 0;
+
+        if (action === 0) {
+          item.qty = 0;
+        } else if (action === 1) {
+          item.qty = parseFloat((parseFloat(item.qty) + originalQty).toFixed(2));
+        } else if (action === -1) {
+          item.qty = parseFloat((parseFloat(item.qty) - originalQty).toFixed(2));
+          if (item.qty < 0) item.qty = 0;
+        }
+
+        renderAddonRecipeList();
+      }
+
+      function updateAddonUIState() {
+        let hasActiveChanges = false;
+        let noteParts = [];
+
+        if (window.CURRENT_ADDON_RECIPE && window.ORIGINAL_ADDON_RECIPE) {
+          window.CURRENT_ADDON_RECIPE.forEach(m => {
+            const orig = window.ORIGINAL_ADDON_RECIPE.find(x => x.id === m.id);
+            if (orig) {
+              if (m.qty !== orig.qty) {
+                hasActiveChanges = true;
+                const originalQty = parseFloat(orig.qty) || 0;
+                
+                if (m.qty === 0) {
+                  noteParts.push(`Tanpa ${m.name}`);
+                } else if (m.qty > orig.qty) {
+                  const diff = m.qty - orig.qty;
+                  const mult = Math.round(diff / originalQty);
+                  if (mult <= 1) {
+                    noteParts.push(`+ ${m.name}`);
+                  } else {
+                    noteParts.push(`+ ${mult}x ${m.name}`);
+                  }
+                } else if (m.qty < orig.qty) {
+                  const diff = orig.qty - m.qty;
+                  const mult = Math.round(diff / originalQty);
+                  if (mult <= 1) {
+                    noteParts.push(`- ${m.name}`);
+                  } else {
+                    noteParts.push(`- ${mult}x ${m.name}`);
+                  }
+                }
+              }
+            }
+          });
+        }
+
+        window.HAS_ACTIVE_CHANGES = hasActiveChanges;
+
+        const toggleEl = document.getElementById('addonNoRecipeChangeToggle');
+        const noteEl = document.getElementById('addonNoteValue');
+        const saveBtn = document.getElementById('btnSaveCartAddonCosmetic');
+
+        if (hasActiveChanges) {
+          toggleEl.checked = false;
+          toggleEl.disabled = true;
+          
+          noteEl.value = noteParts.join(', ');
+          noteEl.disabled = true;
+          noteEl.style.backgroundColor = '#e9ecef';
+          
+          saveBtn.disabled = false;
+        } else {
+          toggleEl.disabled = false;
+          
+          if (toggleEl.checked) {
+            noteEl.disabled = false;
+            noteEl.style.backgroundColor = '';
+            
+            const noteVal = noteEl.value.trim();
+            if (noteVal === "") {
+              saveBtn.disabled = true;
+            } else {
+              saveBtn.disabled = false;
+            }
+          } else {
+            noteEl.value = "";
+            noteEl.disabled = true;
+            noteEl.style.backgroundColor = '#e9ecef';
+            saveBtn.disabled = false;
+          }
+        }
+        
+        const toggleContainer = toggleEl.closest('.d-flex');
+        if (toggleContainer) {
+          if (toggleEl.checked) {
+            toggleContainer.style.background = 'rgba(25, 135, 84, 0.1)';
+            toggleContainer.style.borderColor = '#198754';
+          } else if (toggleEl.disabled) {
+            toggleContainer.style.background = '#f8f9fa';
+            toggleContainer.style.borderColor = '#dee2e6';
+            toggleContainer.style.opacity = '0.6';
+          } else {
+            toggleContainer.style.background = '';
+            toggleContainer.style.borderColor = '';
+            toggleContainer.style.opacity = '';
+          }
+        }
       }
 
       function closeCartAddonModal() {
@@ -7202,18 +7359,25 @@
           const item = CART.find(x => x.id === pid);
           if (item) {
             item.customNote = note;
-            // Jika harga diubah dari harga normalnya, simpan sebagai customPrice kustom kosmetik
             if (!isNaN(price) && price >= 0 && price !== item.price) {
               item.customPrice = price;
             } else {
               delete item.customPrice;
             }
+
+            if (window.HAS_ACTIVE_CHANGES) {
+              item.customRecipe = window.CURRENT_ADDON_RECIPE;
+              item.originalRecipe = window.ORIGINAL_ADDON_RECIPE;
+            } else {
+              delete item.customRecipe;
+              delete item.originalRecipe;
+            }
           }
 
           if (btn) btn.classList.remove('saving-active');
           closeCartAddonModal();
-          toggleAddonSelectionMode(); // Otomatis matikan mode seleksi getar setelah disimpan
-        }, 500); // 500ms simulated saving feedback
+          toggleAddonSelectionMode(); 
+        }, 500); 
       }
 
       function toggleMobileCart(show) {
@@ -7386,6 +7550,9 @@
             let auditLogMessage = `Menyimpan transaksi POS Utama senilai Rp ${CURRENT_TOTAL.toLocaleString()} dengan item: [ ${itemDetails} ]`;
             if (finalPriceNotes) {
               auditLogMessage += ` | Catatan Harga: ${finalPriceNotes}`;
+            }
+            if (finalAddonNotes) {
+              auditLogMessage += ` | Catatan Addon: ${finalAddonNotes}`;
             }
             triggerAuditLog("TRANSAKSI", auditLogMessage);
 
@@ -8036,7 +8203,9 @@
             let profitClass = tProfit >= 0 ? 'text-success' : 'text-danger';
             
             // --- LOGIKA HIGHLIGHT ORANGE & BADGE DETAIL NOTE ---
-            let hasAdjustment = t.priceNotes && t.priceNotes.trim() !== "";
+            let hasPriceAdjustment = t.priceNotes && t.priceNotes.trim() !== "";
+            let hasAddonAdjustment = t.addonNotes && t.addonNotes.trim() !== "";
+            let hasAdjustment = hasPriceAdjustment || hasAddonAdjustment;
             let rowStyle = isKomplimen ? 'opacity: 0.6; background-color: #fff5f5;' : '';
             if (!isKomplimen && hasAdjustment) {
               rowStyle = 'background-color: #fff3cd;'; // Highlight Oranye/Kuning Lembut khas alert warning
@@ -8047,9 +8216,7 @@
             
             let noteBadge = '';
             if (hasAdjustment) {
-              // Melakukan sanitasi string agar aman dilempar ke event handler browser alert
-              let safeNotes = t.priceNotes.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/ \| /g, "\\n");
-              noteBadge = `<span class="badge bg-warning text-dark ms-2" style="cursor: pointer; font-size: 0.65rem;" onclick="alert('Rincian Perubahan Harga:\\n\\n${safeNotes}')"><i class="fas fa-info-circle me-1"></i>Detail Note</span>`;
+              noteBadge = `<span class="badge bg-warning text-dark ms-2" style="cursor: pointer; font-size: 0.65rem;" onclick="openDetailNoteModal('${t.orderId}')"><i class="fas fa-info-circle me-1"></i>Detail Note</span>`;
             }
 
             let cashierDisplayName = t.cashier || '';
@@ -10860,6 +11027,51 @@
         </div>
 
         <button class="btn btn-dark w-100 py-3 rounded-pill fw-bold" onclick="closeDoneTicketDetail()">TUTUP TIKET</button>
+      </div>
+    </div>
+
+    <!-- Modal Detail Note yang Bagus dan Lengkap -->
+    <div id="modalDetailNote" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 11500; opacity: 1 !important;">
+      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column text-start" style="width: 95%; max-width: 450px; animation: slideUp 0.3s ease-out;">
+        <div class="w-100 d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+          <h6 class="fw-bold m-0 text-warning"><i class="fas fa-sticky-note me-1"></i> Rincian Detail Note</h6>
+          <button class="btn-close shadow-none" onclick="closeDetailNoteModal()"></button>
+        </div>
+        
+        <div class="mb-3 bg-light p-3 rounded-4 border">
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="text-muted">ID Transaksi:</span>
+            <span class="fw-bold text-dark" id="detailNoteOrderId">ORD-000</span>
+          </div>
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="text-muted">Waktu:</span>
+            <span class="fw-bold text-dark" id="detailNoteTime">--/--/---- --:--</span>
+          </div>
+          <div class="d-flex justify-content-between small">
+            <span class="text-muted">Kasir:</span>
+            <span class="fw-bold text-dark" id="detailNoteCashier">-</span>
+          </div>
+        </div>
+
+        <div class="flex-fill overflow-auto mb-4" style="max-height: 300px;">
+          <!-- Section 1: Ganti Harga -->
+          <div id="sectionPriceNotes" class="mb-3 d-none">
+            <div class="small fw-bold text-danger mb-2"><i class="fas fa-tag me-1"></i> PERUBAHAN HARGA</div>
+            <div id="contentPriceNotes" class="bg-danger bg-opacity-10 text-danger p-3 rounded-4 border border-danger border-opacity-25 small">
+              -
+            </div>
+          </div>
+          
+          <!-- Section 2: Catatan Add-on / Resep -->
+          <div id="sectionAddonNotes" class="d-none">
+            <div class="small fw-bold text-success mb-2"><i class="fas fa-cookie-bite me-1"></i> CATATAN & PERUBAHAN BAHAN (ADD-ON)</div>
+            <div id="contentAddonNotes" class="bg-success bg-opacity-10 text-success p-3 rounded-4 border border-success border-opacity-25 small">
+              -
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold" onclick="closeDetailNoteModal()">TUTUP</button>
       </div>
     </div>
 
