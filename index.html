@@ -7245,13 +7245,13 @@
             }
           }
 
-          const isDisabled = state.activeIndex === "all";
-          if (isDisabled) {
+          const isSemuaOn = state.activeIndex === "all";
+          if (isSemuaOn) {
             btnClass = "btn btn-sm rounded-pill fw-bold px-3 py-2 border-2 btn-outline-secondary text-muted bg-light border-light";
-            style += " opacity: 0.5; cursor: not-allowed;";
+            style += " opacity: 0.6; cursor: pointer;";
           }
 
-          html += `<button type="button" class="${btnClass}" style="${style}" onclick="switchAddonPill(${i})" ${isDisabled ? 'disabled' : ''}>${i + 1}</button>`;
+          html += `<button type="button" class="${btnClass}" style="${style}" onclick="switchAddonPill(${i})">${i + 1}</button>`;
         }
 
         const isSemuaActive = state.activeIndex === "all";
