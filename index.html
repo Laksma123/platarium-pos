@@ -837,114 +837,135 @@
       }
 
       .btn-outside-circle .icon-primary,
-      .btn-outside-circle .icon-secondary {
+      .btn-outside-circle .icon-secondary,
+      .btn-outside-circle .icon-saving {
         position: absolute;
         font-size: calc(1.25rem / var(--apk-zoom, 1));
         transition: all 0.4s ease-in-out;
       }
 
-      /* Animasi untuk tombol Batal (X ke panah berputar) */
+      .btn-outside-circle .icon-saving {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* Ketika tombol simpan sedang aktif menyimpan, matikan animasi loop dan tampilkan spinner */
+      .btn-outside-circle.saving-active .icon-primary {
+        animation: none !important;
+        opacity: 0 !important;
+      }
+
+      .btn-outside-circle.saving-active .icon-secondary {
+        animation: none !important;
+        opacity: 0 !important;
+      }
+
+      .btn-outside-circle.saving-active .icon-saving {
+        opacity: 1 !important;
+      }
+
+      /* Animasi untuk tombol Batal (X ke panah berputar) - Loop 6s */
       @keyframes batal-morph-rotate {
-        0%, 30% {
+        0%, 75% {
           opacity: 1;
           transform: scale(1) rotate(0deg);
         }
-        40% {
+        79% {
           opacity: 0;
           transform: scale(0.5) rotate(90deg);
         }
-        80% {
+        91% {
           opacity: 0;
           transform: scale(0.5) rotate(90deg);
         }
-        90%, 100% {
+        95%, 100% {
           opacity: 1;
           transform: scale(1) rotate(0deg);
         }
       }
 
       @keyframes batal-arrow-rotate {
-        0%, 30% {
+        0%, 75% {
           opacity: 0;
           transform: scale(0.5) rotate(-180deg);
         }
-        40% {
+        79% {
           opacity: 1;
           transform: scale(1) rotate(-180deg);
         }
-        70% {
+        87% {
           opacity: 1;
           transform: scale(1) rotate(180deg);
         }
-        80% {
+        91% {
           opacity: 0;
           transform: scale(0.5) rotate(270deg);
         }
-        90%, 100% {
+        95%, 100% {
           opacity: 0;
           transform: scale(0.5) rotate(270deg);
         }
       }
 
       .btn-batal .icon-primary {
-        animation: batal-morph-rotate 2.5s infinite ease-in-out;
+        animation: batal-morph-rotate 6s infinite ease-in-out;
       }
 
       .btn-batal .icon-secondary {
         opacity: 0;
-        animation: batal-arrow-rotate 2.5s infinite ease-in-out;
+        animation: batal-arrow-rotate 6s infinite ease-in-out;
       }
 
-      /* Animasi untuk tombol Simpan (Disket ke garis berputar) */
+      /* Animasi untuk tombol Simpan (Disket ke panah berputar) - Loop 6s */
       @keyframes simpan-morph-rotate {
-        0%, 30% {
+        0%, 75% {
           opacity: 1;
           transform: scale(1) rotate(0deg);
         }
-        40% {
+        79% {
           opacity: 0;
           transform: scale(0.5) rotate(90deg);
         }
-        80% {
+        91% {
           opacity: 0;
           transform: scale(0.5) rotate(90deg);
         }
-        90%, 100% {
+        95%, 100% {
           opacity: 1;
           transform: scale(1) rotate(0deg);
         }
       }
 
-      @keyframes simpan-notch-rotate {
-        0%, 30% {
+      @keyframes simpan-arrow-rotate {
+        0%, 75% {
           opacity: 0;
           transform: scale(0.5) rotate(-180deg);
         }
-        40% {
+        79% {
           opacity: 1;
           transform: scale(1) rotate(-180deg);
         }
-        70% {
+        87% {
           opacity: 1;
           transform: scale(1) rotate(180deg);
         }
-        80% {
+        91% {
           opacity: 0;
           transform: scale(0.5) rotate(270deg);
         }
-        90%, 100% {
+        95%, 100% {
           opacity: 0;
           transform: scale(0.5) rotate(270deg);
         }
       }
 
       .btn-simpan .icon-primary {
-        animation: simpan-morph-rotate 2.5s infinite ease-in-out;
+        animation: simpan-morph-rotate 6s infinite ease-in-out;
       }
 
       .btn-simpan .icon-secondary {
         opacity: 0;
-        animation: simpan-notch-rotate 2.5s infinite ease-in-out;
+        animation: simpan-arrow-rotate 6s infinite ease-in-out;
       }
 
       /* Container Modal Addon & Resep dengan Skala Zoom */
@@ -2413,14 +2434,15 @@
             <div class="modal-outside-buttons">
               <button class="btn-outside-circle btn-batal" onclick="closeCartAddonModal()" title="Batal">
                 <div class="icon-wrapper">
-                  <span class="icon-primary fw-bold" style="font-family: sans-serif; font-size: 1.25rem;">X</span>
+                  <i class="fas fa-times icon-primary"></i>
                   <i class="fas fa-redo icon-secondary"></i>
                 </div>
               </button>
-              <button class="btn-outside-circle btn-simpan" onclick="saveCartAddonCosmetic()" title="Simpan">
+              <button class="btn-outside-circle btn-simpan" id="btnSaveCartAddonCosmetic" onclick="saveCartAddonCosmetic()" title="Simpan">
                 <div class="icon-wrapper">
                   <i class="fas fa-save icon-primary"></i>
-                  <i class="fas fa-circle-notch icon-secondary"></i>
+                  <i class="fas fa-redo icon-secondary"></i>
+                  <i class="fas fa-spinner fa-spin icon-saving"></i>
                 </div>
               </button>
             </div>
@@ -2718,14 +2740,15 @@
             <div class="modal-outside-buttons">
               <button class="btn-outside-circle btn-batal" onclick="closeRecipeSettings()" title="Batal">
                 <div class="icon-wrapper">
-                  <span class="icon-primary fw-bold" style="font-family: sans-serif; font-size: 1.25rem;">X</span>
+                  <i class="fas fa-times icon-primary"></i>
                   <i class="fas fa-redo icon-secondary"></i>
                 </div>
               </button>
               <button class="btn-outside-circle btn-simpan" id="btnSaveRecipeSession" onclick="saveRecipeSession()" title="Simpan">
                 <div class="icon-wrapper">
                   <i class="fas fa-save icon-primary"></i>
-                  <i class="fas fa-circle-notch icon-secondary"></i>
+                  <i class="fas fa-redo icon-secondary"></i>
+                  <i class="fas fa-spinner fa-spin icon-saving"></i>
                 </div>
               </button>
             </div>
@@ -5914,31 +5937,31 @@
       }
 
       function saveRecipeSession() {
-        const btn = document.getElementById('btnSaveRecipeSession') || (window.event ? window.event.currentTarget : null);
-        let originalHTML = '';
+        const btn = document.getElementById('btnSaveRecipeSession');
         if (btn) {
-          originalHTML = btn.innerHTML;
-          btn.innerHTML = '<div class="icon-wrapper"><i class="fas fa-spinner fa-spin icon-primary"></i></div>';
+          btn.classList.add('saving-active');
           btn.disabled = true;
         }
 
         if (CURRENT_EDITING_RECIPE_ID === 'NEW') {
-          closeRecipeSettings();
-          if (btn) {
-            btn.innerHTML = originalHTML;
-            btn.disabled = false;
-          }
-          const statusText = document.getElementById('newRecipeStatus');
-          if (TEMP_RECIPE_BASKET.length > 0) {
-            statusText.innerHTML = `<span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i> ${TEMP_RECIPE_BASKET.length} bahan tersimpan</span>`;
-          } else {
-            statusText.innerText = "Belum ada bahan diatur";
-          }
+          setTimeout(() => {
+            if (btn) {
+              btn.classList.remove('saving-active');
+              btn.disabled = false;
+            }
+            closeRecipeSettings();
+            const statusText = document.getElementById('newRecipeStatus');
+            if (TEMP_RECIPE_BASKET.length > 0) {
+              statusText.innerHTML = `<span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i> ${TEMP_RECIPE_BASKET.length} bahan tersimpan</span>`;
+            } else {
+              statusText.innerText = "Belum ada bahan diatur";
+            }
+          }, 500); // 500ms simulated saving feedback
         } else {
           // Simpan resep produk yang sudah ada ke backend
           google.script.run.withSuccessHandler(res => {
             if (btn) {
-              btn.innerHTML = originalHTML;
+              btn.classList.remove('saving-active');
               btn.disabled = false;
             }
             if(res.status === 'success') {
@@ -5952,7 +5975,7 @@
             }
           }).withFailureHandler(err => {
             if (btn) {
-              btn.innerHTML = originalHTML;
+              btn.classList.remove('saving-active');
               btn.disabled = false;
             }
             alert("Gagal menyimpan resep: " + err.message);
@@ -7160,23 +7183,29 @@
       }
 
       function saveCartAddonCosmetic() {
-        const pid = document.getElementById('addonTargetPid').value;
-        const note = document.getElementById('addonNoteValue').value.trim();
-        const price = parseFloat(document.getElementById('addonPriceValue').value);
+        const btn = document.getElementById('btnSaveCartAddonCosmetic');
+        if (btn) btn.classList.add('saving-active');
 
-        const item = CART.find(x => x.id === pid);
-        if (item) {
-          item.customNote = note;
-          // Jika harga diubah dari harga normalnya, simpan sebagai customPrice kustom kosmetik
-          if (!isNaN(price) && price >= 0) {
-            item.customPrice = price;
-          } else {
-            delete item.customPrice;
+        setTimeout(() => {
+          const pid = document.getElementById('addonTargetPid').value;
+          const note = document.getElementById('addonNoteValue').value.trim();
+          const price = parseFloat(document.getElementById('addonPriceValue').value);
+
+          const item = CART.find(x => x.id === pid);
+          if (item) {
+            item.customNote = note;
+            // Jika harga diubah dari harga normalnya, simpan sebagai customPrice kustom kosmetik
+            if (!isNaN(price) && price >= 0) {
+              item.customPrice = price;
+            } else {
+              delete item.customPrice;
+            }
           }
-        }
 
-        closeCartAddonModal();
-        toggleAddonSelectionMode(); // Otomatis matikan mode seleksi getar setelah disimpan
+          if (btn) btn.classList.remove('saving-active');
+          closeCartAddonModal();
+          toggleAddonSelectionMode(); // Otomatis matikan mode seleksi getar setelah disimpan
+        }, 500); // 500ms simulated saving feedback
       }
 
       function toggleMobileCart(show) {
