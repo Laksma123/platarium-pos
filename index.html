@@ -1834,7 +1834,7 @@
 
           <div class="row g-4 mb-4">
             <div class="col-12">
-              <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100" style="border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; padding-bottom: 1000px; margin-bottom: -900px; min-height: 100vh;">
+              <div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; padding-bottom: 1000px; margin-bottom: -900px; min-height: 100vh;">
                 <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white flex-wrap gap-3">
                   <h6 class="fw-bold m-0 text-muted">List Penjualan</h6>
                   
@@ -7641,13 +7641,13 @@
               noteBadge = `<span class="badge bg-warning text-dark ms-2" style="cursor: pointer; font-size: 0.65rem;" onclick="alert('Rincian Perubahan Harga:\\n\\n${safeNotes}')"><i class="fas fa-info-circle me-1"></i>Detail Note</span>`;
             }
 
-            let cashierDisplayName = t.cashier;
-            if (t.cashier.includes('(Pengganti)')) {
-              cashierDisplayName = `<span class="text-danger fw-bold">${t.cashier}</span>`;
-            } else if (t.cashier.includes('(Admin)')) {
-              cashierDisplayName = `<span class="text-success fw-bold">${t.cashier}</span>`;
-            } else if (t.cashier === 'Owner') {
-              cashierDisplayName = `<span class="text-success fw-bold">${t.cashier}</span>`;
+            let cashierDisplayName = t.cashier || '';
+            if (String(cashierDisplayName).includes('(Pengganti)')) {
+              cashierDisplayName = `<span class="text-danger fw-bold">${cashierDisplayName}</span>`;
+            } else if (String(cashierDisplayName).includes('(Admin)')) {
+              cashierDisplayName = `<span class="text-success fw-bold">${cashierDisplayName}</span>`;
+            } else if (String(cashierDisplayName) === 'Owner') {
+              cashierDisplayName = `<span class="text-success fw-bold">${cashierDisplayName}</span>`;
             }
 
             return `
