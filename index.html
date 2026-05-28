@@ -33,7 +33,7 @@
       }
       
       body { 
-        background-color: #000000; 
+        background-color: #f0f2f5; 
         font-family: 'Poppins', sans-serif; 
         overflow: hidden; 
         color: #2d3436;
@@ -309,9 +309,8 @@
       
       /* --- TABLE RESPONSIVE --- */
       .table-responsive { border-bottom: none !important; overflow-y: auto; scrollbar-width: thin; }
-      #view-stock .table-responsive { max-height: none !important; overflow-y: visible !important; }
-      #view-products .table-responsive { max-height: none !important; overflow-y: visible !important; }
-      #view-finance .table-responsive { max-height: none !important; overflow-y: visible !important; }
+      #view-products .table-responsive { max-height: calc(100vh - 200px) !important; }
+      #view-finance .table-responsive { max-height: calc(100vh - 150px) !important; padding-bottom: 90px; }
       thead.bg-dark { position: sticky; top: 0; z-index: 10; }
 
       /* ========================================= */
@@ -362,7 +361,7 @@
       /* ========================================= */
       /* UI ORIGINAL LAINNYA (LOGIN, MODALS, DLL)  */
       /* ========================================= */
-      .login-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; justify-content: center; align-items: center; background-color: #000000; opacity: 0; transition: opacity 0.6s ease-in-out; }
+      .login-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; justify-content: center; align-items: center; background-color: #ffffff; opacity: 0; transition: opacity 0.6s ease-in-out; }
       #loginBg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; }
       .login-box { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.3); padding: 2rem; border-radius: 2.5rem; width: 85%; max-width: 320px; box-shadow: 0 40px 80px rgba(0,0,0,0.2); text-align: center; margin-top: 270px; animation: floatBox 4s infinite ease-in-out; }
       @keyframes floatBox { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
@@ -553,7 +552,7 @@
         position: absolute;
         top: 25px;
         left: -50px;
-        right: -10000px; /* Membentang ekstrem ke kanan tanpa batas pasti agar tidak putus */
+        right: -100vw; /* Membentang ekstrem ke kanan tanpa batas pasti agar tidak putus */
         height: 3px;
         background: #bdc3c7;
         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
@@ -576,10 +575,6 @@
         transform-origin: top right; /* Animasi berpusat di jepitan */
         animation: ticketSlideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         cursor: grab;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
       }
       .ticket-paper:active { cursor: grabbing; }
       .ticket-paper::before {
@@ -616,37 +611,6 @@
       .ticket-time { font-size: 0.7rem; color: #7f8c8d; }
       .ticket-actions { margin-top: auto; padding-top: 15px; }
 
-      #view-monitor {
-        flex-direction: column !important;
-        width: 100% !important;
-      }
-
-      .tab-pane {
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: thin;
-      }
-
-      /* Fix posisi/koordinat fallback element saat di-drag pada browser ter-zoom (APK) */
-      .sortable-drag {
-        transition: none !important;
-      }
-      .sortable-fallback {
-        transition: none !important;
-        transform: none !important;
-      }
-      /* Efek melayang premium saat kertas order di-drag */
-      .ticket-paper.sortable-fallback {
-        transform: scale(0.9) rotate(-2deg) !important;
-        transform-origin: top left !important;
-        opacity: 0.95 !important;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
-        border: 2px solid var(--primary-gold, #c5a059) !important;
-        z-index: 10000 !important;
-      }
-
-
       /* ========================================= */
       /* PERBAIKAN UI MONITOR (TAB & TICKET EDIT)  */
       /* ========================================= */
@@ -681,32 +645,6 @@
       @keyframes shake-ticket {
         from { transform: rotate(-1deg); }
         to { transform: rotate(1deg); }
-      }
-
-      /* Ticket Sequence Numbers */
-      .ticket-seq-number {
-        position: absolute;
-        top: -12px;
-        left: -12px;
-        width: 32px;
-        height: 32px;
-        background: #fffdf5;
-        color: #2c3e50;
-        border: 2px solid #bdc3c7;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        font-size: 0.95rem;
-        z-index: 10;
-        font-family: 'Outfit', 'Inter', sans-serif;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-      }
-      .ticket-seq-number span {
-        position: relative;
-        z-index: 2;
       }
 
       /* Thermal Printer & Nota Design Styles */
@@ -757,617 +695,9 @@
       .shift-dropzone.bg-highlight {
         background-color: #f1f8ff !important;
       }
-
-      /* ========================================= */
-      /* ADD-ON FEATURE COSMETIC STYLES            */
-      /* ========================================= */
-      :root {
-        --apk-zoom: 1;
-      }
-
-      /* Wrapper Modal untuk menampung tombol di luar modal */
-      .modal-wrapper {
-        position: relative;
-        max-width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-
-      /* Tombol kecil melingkar di luar modal */
-      .modal-outside-buttons {
-        position: absolute;
-        top: calc(15px / var(--apk-zoom, 1));
-        right: calc(-65px / var(--apk-zoom, 1));
-        display: flex;
-        flex-direction: column;
-        gap: calc(12px / var(--apk-zoom, 1));
-        z-index: 10700;
-      }
-
-      @media (max-width: 680px) {
-        .modal-outside-buttons {
-          right: calc(15px / var(--apk-zoom, 1));
-          top: calc(-65px / var(--apk-zoom, 1));
-          flex-direction: row;
-        }
-      }
-
-      .btn-outside-circle {
-        width: calc(50px / var(--apk-zoom, 1));
-        height: calc(50px / var(--apk-zoom, 1));
-        border-radius: 50%;
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        box-shadow: 0 calc(8px / var(--apk-zoom, 1)) calc(24px / var(--apk-zoom, 1)) rgba(0, 0, 0, 0.25);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-      }
-
-      .btn-outside-circle:hover {
-        transform: scale(1.1) translateY(-2px);
-        box-shadow: 0 calc(12px / var(--apk-zoom, 1)) calc(30px / var(--apk-zoom, 1)) rgba(0, 0, 0, 0.35);
-      }
-
-      .btn-outside-circle:active {
-        transform: scale(0.95);
-      }
-
-      .btn-outside-circle.btn-batal {
-        background: linear-gradient(135deg, #ef4444, #b91c1c);
-        color: white;
-      }
-
-      .btn-outside-circle.btn-simpan {
-        background: linear-gradient(135deg, #1e3a8a, #0f172a);
-        color: white;
-      }
-
-      .btn-outside-circle .icon-wrapper {
-        position: relative;
-        width: calc(24px / var(--apk-zoom, 1));
-        height: calc(24px / var(--apk-zoom, 1));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .btn-outside-circle .icon-primary,
-      .btn-outside-circle .icon-secondary,
-      .btn-outside-circle .icon-saving {
-        position: absolute;
-        font-size: calc(1.25rem / var(--apk-zoom, 1));
-        transition: all 0.4s ease-in-out;
-      }
-
-      .btn-outside-circle .icon-saving {
-        opacity: 0;
-        pointer-events: none;
-      }
-
-      /* Ketika tombol simpan sedang aktif menyimpan, matikan animasi loop dan tampilkan spinner */
-      .btn-outside-circle.saving-active .icon-primary {
-        animation: none !important;
-        opacity: 0 !important;
-      }
-
-      .btn-outside-circle.saving-active .icon-secondary {
-        animation: none !important;
-        opacity: 0 !important;
-      }
-
-      .btn-outside-circle.saving-active .icon-saving {
-        opacity: 1 !important;
-      }
-
-      /* Animasi untuk tombol Batal (X ke panah berputar) - Loop 6s */
-      @keyframes batal-morph-rotate {
-        0%, 61% {
-          opacity: 1;
-          transform: scale(1) rotate(0deg);
-        }
-        65% {
-          opacity: 0;
-          transform: scale(0.5) rotate(90deg);
-        }
-        91% {
-          opacity: 0;
-          transform: scale(0.5) rotate(90deg);
-        }
-        95%, 100% {
-          opacity: 1;
-          transform: scale(1) rotate(0deg);
-        }
-      }
-
-      @keyframes batal-arrow-rotate {
-        0%, 61% {
-          opacity: 0;
-          transform: scale(0.5) rotate(-180deg);
-        }
-        65% {
-          opacity: 1;
-          transform: scale(1) rotate(-180deg);
-        }
-        91% {
-          opacity: 1;
-          transform: scale(1) rotate(540deg); /* 2x berputar lambat (-180deg ke 540deg = 720deg) */
-        }
-        95%, 100% {
-          opacity: 0;
-          transform: scale(0.5) rotate(630deg);
-        }
-      }
-
-      .btn-batal .icon-primary {
-        animation: batal-morph-rotate 6s infinite ease-in-out;
-      }
-
-      .btn-batal .icon-secondary {
-        opacity: 0;
-        animation: batal-arrow-rotate 6s infinite ease-in-out;
-      }
-
-      /* Animasi untuk tombol Simpan (Disket ke panah berputar) - Loop 6s */
-      @keyframes simpan-morph-rotate {
-        0%, 61% {
-          opacity: 1;
-          transform: scale(1) rotate(0deg);
-        }
-        65% {
-          opacity: 0;
-          transform: scale(0.5) rotate(90deg);
-        }
-        91% {
-          opacity: 0;
-          transform: scale(0.5) rotate(90deg);
-        }
-        95%, 100% {
-          opacity: 1;
-          transform: scale(1) rotate(0deg);
-        }
-      }
-
-      @keyframes simpan-arrow-rotate {
-        0%, 61% {
-          opacity: 0;
-          transform: scale(0.5) rotate(-180deg);
-        }
-        65% {
-          opacity: 1;
-          transform: scale(1) rotate(-180deg);
-        }
-        91% {
-          opacity: 1;
-          transform: scale(1) rotate(540deg); /* 2x berputar lambat (-180deg ke 540deg = 720deg) */
-        }
-        95%, 100% {
-          opacity: 0;
-          transform: scale(0.5) rotate(630deg);
-        }
-      }
-
-      .btn-simpan .icon-primary {
-        animation: simpan-morph-rotate 6s infinite ease-in-out;
-      }
-
-      .btn-simpan .icon-secondary {
-        opacity: 0;
-        animation: simpan-arrow-rotate 6s infinite ease-in-out;
-      }
-
-      /* Container Modal Addon & Resep dengan Skala Zoom */
-      .modal-addon-container {
-        width: 95% !important;
-        max-width: calc(530px / var(--apk-zoom, 1)) !important;
-        max-height: calc(85vh + 150px) !important;
-        overflow-y: auto !important;
-        padding: calc(24px / var(--apk-zoom, 1)) !important;
-        animation: slideUp 0.3s ease-out;
-      }
-      .modal-addon-container > h5,
-      .modal-addon-container > .row,
-      .modal-addon-container > .d-flex {
-        flex-shrink: 0 !important;
-      }
-
-      .modal-recipe-container {
-        width: 95% !important;
-        max-width: calc(340px / var(--apk-zoom, 1)) !important;
-        max-height: calc(85vh + 150px) !important;
-        overflow-y: auto !important;
-        padding: calc(24px / var(--apk-zoom, 1)) !important;
-        animation: slideUp 0.3s ease-out;
-      }
-      .modal-recipe-container > div,
-      .modal-recipe-container > button {
-        flex-shrink: 0 !important;
-      }
-
-      /* Custom Scrollbar for Main Modals (Window Utama) */
-      /* Visual scroll dibuat masuk ke dalam (border-right) dan dipotong atas/bawah 30px agar serasi dengan round edge yang lebar */
-      .modal-addon-container::-webkit-scrollbar,
-      .modal-recipe-container::-webkit-scrollbar {
-        width: 14px;
-        height: 14px;
-      }
-      .modal-addon-container::-webkit-scrollbar-track,
-      .modal-recipe-container::-webkit-scrollbar-track {
-        background: rgba(0, 0, 0, 0.03);
-        border-radius: 10px;
-        border-top: 30px solid transparent;
-        border-bottom: 30px solid transparent;
-        border-right: 4px solid transparent;
-        border-left: 2px solid transparent;
-        background-clip: padding-box;
-      }
-      .modal-addon-container::-webkit-scrollbar-thumb,
-      .modal-recipe-container::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 10px;
-        border-top: 30px solid transparent;
-        border-bottom: 30px solid transparent;
-        border-right: 4px solid transparent;
-        border-left: 2px solid transparent;
-        background-clip: padding-box;
-      }
-      .modal-addon-container::-webkit-scrollbar-thumb:hover,
-      .modal-recipe-container::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-        background-clip: padding-box;
-      }
-
-
-      /* Custom Scrollbar for Inner Containers (Daftar Bahan/Resep) */
-      #addonRecipeContainer::-webkit-scrollbar,
-      .recipe-scrollable-container::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      #addonRecipeContainer::-webkit-scrollbar-track,
-      .recipe-scrollable-container::-webkit-scrollbar-track {
-        background: rgba(0, 0, 0, 0.03);
-        border-radius: 10px;
-      }
-      #addonRecipeContainer::-webkit-scrollbar-thumb,
-      .recipe-scrollable-container::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 10px;
-        border: 1px solid transparent;
-        background-clip: padding-box;
-      }
-      #addonRecipeContainer::-webkit-scrollbar-thumb:hover,
-      .recipe-scrollable-container::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-        background-clip: padding-box;
-      }
-
-      .btn-addon-pill {
-        background: #f1f2f6;
-        color: #5c2c0b;
-        border: 1px solid rgba(197, 160, 89, 0.3);
-        font-size: 0.75rem;
-        font-weight: 700;
-        padding: 4px 14px;
-        border-radius: 20px;
-        transition: all 0.2s ease;
-      }
-      .btn-addon-pill:hover {
-        background: var(--primary-gold);
-        color: white;
-      }
-      .btn-addon-pill.active {
-        background: #d35400;
-        color: white;
-        border-color: #d35400;
-        animation: pulse-addon 1.5s infinite;
-      }
-      @keyframes pulse-addon {
-        0% { box-shadow: 0 0 0 0 rgba(211, 84, 0, 0.4); }
-        70% { box-shadow: 0 0 0 8px rgba(211, 84, 0, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(211, 84, 0, 0); }
-      }
-
-      /* Animasi Lucu Getar Saat Mode Add-On Aktif */
-      .cart-item-selectable {
-        transition: all 0.2s ease;
-        cursor: pointer !important;
-      }
-      .cart-item-selectable.addon-mode-active {
-        border: 2px dashed #d35400 !important;
-        background: #fffdf5 !important;
-        animation: shake-addon 0.25s infinite alternate;
-      }
-      @keyframes shake-addon {
-        from { transform: rotate(-1deg); }
-        to { transform: rotate(1deg); }
-      }
-
-      .addon-badge-text {
-        font-size: 0.68rem;
-        background: rgba(211, 84, 0, 0.08);
-        color: #d35400;
-        padding: 1px 6px;
-        border-radius: 4px;
-        display: inline-block;
-        margin-top: 2px;
-        font-weight: 600;
-      }
-      .ticket-paper.ticket-attention {
-        background: #fff9db !important;
-        border: 1px solid #ffe066 !important;
-        box-shadow: 0 8px 24px rgba(245, 159, 0, 0.2) !important;
-      }
-
-      /* ========================================= */
-      /* PORTRAIT VIEW BLOCKER OVERLAY             */
-      /* ========================================= */
-      .portrait-warning-overlay {
-        display: none;
-      }
-
-      @media (orientation: portrait) {
-        .portrait-warning-overlay {
-          display: flex !important;
-          position: fixed;
-          inset: 0;
-          width: 100vw;
-          height: 100vh;
-          height: 100dvh;
-          background: #050505;
-          color: #ffffff;
-          z-index: 10000000; /* Indeks tumpukan tertinggi untuk memblokir semua interaksi */
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          text-align: center;
-          padding: 30px;
-          box-sizing: border-box;
-          font-family: 'Poppins', sans-serif;
-        }
-
-        /* Mencegah scrolling latar belakang saat terkunci */
-        body {
-          overflow: hidden !important;
-        }
-      }
-
-      .portrait-warning-content {
-        max-width: 480px;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 20px;
-        animation: fadeInOverlay 0.5s ease-out;
-      }
-
-      .warning-title {
-        font-size: clamp(1.1rem, 5vw, 1.6rem);
-        font-weight: 700;
-        color: var(--primary-gold, #c5a059);
-        margin: 0;
-        line-height: 1.4;
-        letter-spacing: 0.5px;
-        text-shadow: 0 0 10px rgba(197, 160, 89, 0.2);
-        word-wrap: break-word;
-      }
-
-      .warning-subtitle {
-        font-size: clamp(0.8rem, 3.2vw, 0.95rem);
-        font-weight: 400;
-        color: #a4b0be;
-        margin: 0;
-        line-height: 1.6;
-        max-width: 90%;
-      }
-
-      /* Animasi Putar Ponsel SVG */
-      .rotate-phone-icon-wrapper {
-        width: 100px;
-        height: 100px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(197, 160, 89, 0.05);
-        border: 1.5px solid rgba(197, 160, 89, 0.15);
-        border-radius: 50%;
-        margin-bottom: 5px;
-        box-shadow: 0 0 30px rgba(197, 160, 89, 0.05);
-      }
-
-      .rotate-phone-svg {
-        width: 50px;
-        height: 50px;
-        color: var(--primary-gold, #c5a059);
-      }
-
-      .rotate-phone-svg .phone-body {
-        animation: rotateDevice 2.5s infinite ease-in-out;
-        transform-origin: center;
-      }
-
-      .rotate-phone-svg .phone-button,
-      .rotate-phone-svg .phone-speaker {
-        animation: rotateDeviceParts 2.5s infinite ease-in-out;
-        transform-origin: center;
-      }
-
-      .rotate-phone-svg .rotate-arrow-1,
-      .rotate-phone-svg .rotate-arrow-head {
-        animation: arrowPulse 2.5s infinite ease-in-out;
-      }
-
-      @keyframes rotateDevice {
-        0%, 100% {
-          transform: rotate(0deg);
-        }
-        45%, 55% {
-          transform: rotate(-90deg);
-        }
-      }
-
-      @keyframes rotateDeviceParts {
-        0%, 100% {
-          opacity: 1;
-          transform: rotate(0deg);
-        }
-        45%, 55% {
-          opacity: 0.7;
-          transform: rotate(-90deg);
-        }
-      }
-
-      @keyframes arrowPulse {
-        0%, 100% {
-          opacity: 0.3;
-          transform: scale(0.95);
-        }
-        45%, 55% {
-          opacity: 1;
-          transform: scale(1.05);
-          color: #ffffff;
-        }
-      }
-
-      @keyframes fadeInOverlay {
-        from {
-          opacity: 0;
-          transform: scale(0.95);
-        }
-        to {
-          opacity: 1;
-          transform: scale(1);
-        }
-      }
-
-      /* ========================================= */
-      /* APK ZOOM CONTROLS                         */
-      /* ========================================= */
-      .apk-zoom-controls {
-        display: none; /* Default tersembunyi, akan ditampilkan via JS hanya untuk APK */
-        align-items: center;
-        gap: 6px;
-        z-index: 10001;
-        user-select: none;
-      }
-      .apk-zoom-controls.visible {
-        display: flex !important;
-      }
-      /* Posisi di Login Page: pojok kiri atas */
-      .apk-zoom-login {
-        position: absolute;
-        top: 18px;
-        left: 18px;
-      }
-      /* Posisi di Title Bar: inline, di kiri jam */
-      .apk-zoom-titlebar {
-        margin-right: 6px;
-        flex-shrink: 0;
-      }
-      .apk-zoom-btn {
-        width: 32px;
-        height: 32px;
-        border-radius: 10px;
-        border: 1.5px solid rgba(255,255,255,0.25);
-        background: rgba(0,0,0,0.55);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        color: #ffffff;
-        font-size: 0.85rem;
-        font-weight: 800;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.15s ease;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-        padding: 0;
-        line-height: 1;
-      }
-      .apk-zoom-btn:hover {
-        background: rgba(0,0,0,0.7);
-        transform: scale(1.08);
-      }
-      .apk-zoom-btn:active {
-        transform: scale(0.92);
-        background: rgba(0,0,0,0.85);
-      }
-      /* Versi title bar: lebih terang untuk latar putih */
-      .apk-zoom-titlebar .apk-zoom-btn {
-        background: #f0f2f5;
-        border: 1.5px solid #dfe6e9;
-        color: #2d3436;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-      }
-      .apk-zoom-titlebar .apk-zoom-btn:hover {
-        background: #dfe6e9;
-      }
-      .apk-zoom-titlebar .apk-zoom-btn:active {
-        background: #b2bec3;
-      }
-      .apk-zoom-label {
-        font-size: 0.55rem;
-        font-weight: 700;
-        letter-spacing: 0.3px;
-        color: rgba(255,255,255,0.7);
-        text-transform: uppercase;
-        white-space: nowrap;
-        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-      }
-      .apk-zoom-titlebar .apk-zoom-label {
-        color: #636e72;
-        text-shadow: none;
-        font-size: 0.5rem;
-      }
-      .apk-zoom-pct {
-        font-size: 0.6rem;
-        font-weight: 800;
-        color: rgba(255,255,255,0.9);
-        min-width: 28px;
-        text-align: center;
-        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-      }
-      .apk-zoom-titlebar .apk-zoom-pct {
-        color: var(--primary-gold);
-        text-shadow: none;
-      }
-      /* FIX: Saat APK zoom aktif, main-container harus fixed agar tidak tertarik ke pojok kiri atas.
-         Elemen position:fixed (login overlay, bottom nav) tidak terpengaruh oleh CSS zoom pada <html>
-         karena mereka diposisikan relatif terhadap viewport. #main-container yang sebelumnya 
-         menggunakan normal flow (height:100dvh, width:100vw) menyusut saat zoom < 100%.
-         Dengan position:fixed dan inset:0, container mengisi viewport penuh seperti elemen lain. */
-      .apk-zoom-active #main-container {
-        position: fixed !important;
-        inset: 0 !important;
-        width: auto !important;
-        height: auto !important;
-      }
     </style>
   </head>
   <body>
-
-    <!-- Overlay Pemblokir Layar Portrait Dinamis (Orientation Blocker) -->
-    <div id="portraitWarningOverlay" class="portrait-warning-overlay">
-      <div class="portrait-warning-content">
-        <div class="rotate-phone-icon-wrapper">
-          <svg class="rotate-phone-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="6" y="2" width="12" height="20" rx="2" ry="2" class="phone-body" />
-            <path d="M12 18h.01" class="phone-button" stroke-width="2" />
-            <path d="M14 3h-4" class="phone-speaker" />
-            <path d="M17 7a5 5 0 0 1 3.5 3.5" class="rotate-arrow-1" />
-            <path d="M21 11l-2.5-2m2.5 2l-2-2.5" class="rotate-arrow-head" />
-          </svg>
-        </div>
-        <h1 class="warning-title">Rotate layar ke Landscape terlebih dahulu...</h1>
-        <p class="warning-subtitle">Aplikasi ini membutuhkan tampilan layar lebar (Landscape) agar berfungsi secara optimal.</p>
-      </div>
-    </div>
 
     <div id="initialSystemLoader" style="position: fixed; inset: 0; background: #ffffff; z-index: 999999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease;">
       <div class="spinner-border text-warning" style="width: 3.5rem; height: 3.5rem; border-width: 0.3rem;" role="status"></div>
@@ -1375,16 +705,6 @@
     </div>
 
     <div id="loginOverlay" class="login-overlay">
-      <!-- APK Zoom Controls - Login Page (pojok kiri atas) -->
-      <div id="apkZoomLogin" class="apk-zoom-controls apk-zoom-login">
-        <button type="button" class="apk-zoom-btn" onclick="apkZoomOut()" title="Zoom Out"><i class="fas fa-minus" style="font-size:0.65rem;"></i></button>
-        <div class="d-flex flex-column align-items-center" style="gap:1px;">
-          <span class="apk-zoom-label">Zoom</span>
-          <span id="apkZoomPctLogin" class="apk-zoom-pct">100%</span>
-        </div>
-        <button type="button" class="apk-zoom-btn" onclick="apkZoomIn()" title="Zoom In"><i class="fas fa-plus" style="font-size:0.65rem;"></i></button>
-      </div>
-
       <button type="button" class="btn btn-dark rounded-circle shadow d-flex justify-content-center align-items-center" style="position: absolute; top: 20px; right: 20px; z-index: 10000; width: 45px; height: 45px; opacity: 0.8; border: 2px solid rgba(255,255,255,0.5);"
         onclick="openWallpaperManager()" title="Edit Wallpaper">
         <i class="fas fa-image" style="color: white; font-size: 1.2rem;"></i>
@@ -1393,7 +713,7 @@
       <img src="https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=2071" id="loginBg" alt="background" onload="showUI()">
 
       <div class="login-box">
-        <p class="text-white small mb-4 fw-bold" style="letter-spacing: 3px; font-size: 0.65rem; text-shadow: 0 1px 3px rgba(0,0,0,0.5); opacity: 1;"><i class="fas fa-lock" style="color: var(--primary-gold); margin-right: 5px; font-size: 0.7rem;"></i> SECURED SYSTEM</p>
+        <p class="text-dark small mb-4 fw-bold" style="letter-spacing: 3px; font-size: 0.6rem; opacity: 0.8;">SECURED SYSTEM</p>
         <div class="px-2">
           <input type="password" id="passInput" class="form-control text-center mb-3" placeholder="••••" onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleLogin(); }" autofocus>
           <button type="button" onclick="handleLogin()" class="btn btn-luxury w-100 py-2 rounded-3 fw-bold mb-2" style="letter-spacing: 2px;">LOGIN</button>
@@ -1403,87 +723,6 @@
     </div>
 
     <script>
-      /* ========================================= */
-      /* APK ZOOM SYSTEM (Deteksi WebView Android) */
-      /* ========================================= */
-      const IS_APK_WEBVIEW = (function() {
-        const ua = navigator.userAgent || '';
-        // Android WebView menyertakan '; wv)' di User Agent string-nya
-        // Ini TIDAK ada di Chrome, Firefox, Samsung Internet, dll.
-        return /; wv\)/.test(ua) && /Android/.test(ua);
-      })();
-
-      let _apkZoomLevel = 100; // Persentase zoom saat ini
-      const APK_ZOOM_STEP = 5;
-      const APK_ZOOM_MIN = 30;
-      const APK_ZOOM_MAX = 150;
-      const APK_ZOOM_DEFAULT = 70; // Default zoom untuk APK
-
-      function apkApplyZoom(level) {
-        _apkZoomLevel = Math.max(APK_ZOOM_MIN, Math.min(APK_ZOOM_MAX, level));
-        // Gunakan CSS zoom (bukan transform: scale) agar layout menyesuaikan
-        document.documentElement.style.zoom = (_apkZoomLevel / 100);
-        // Set CSS custom property untuk perbandingan skala di modal addon dan resep
-        document.documentElement.style.setProperty('--apk-zoom', _apkZoomLevel / 100);
-        // Tandai <html> agar CSS rule khusus APK aktif (position:fixed pada #main-container)
-        // Ini mencegah UI tertarik ke pojok kiri atas saat zoom < 100%
-        document.documentElement.classList.add('apk-zoom-active');
-        // Update label persentase di kedua tempat
-        const pctLogin = document.getElementById('apkZoomPctLogin');
-        const pctTitle = document.getElementById('apkZoomPctTitlebar');
-        if (pctLogin) pctLogin.textContent = _apkZoomLevel + '%';
-        if (pctTitle) pctTitle.textContent = _apkZoomLevel + '%';
-        // Simpan preferensi zoom di localStorage
-        try { localStorage.setItem('apk_zoom_level', _apkZoomLevel); } catch(e) {}
-      }
-
-      function apkZoomIn() {
-        apkApplyZoom(_apkZoomLevel + APK_ZOOM_STEP);
-      }
-
-      function apkZoomOut() {
-        apkApplyZoom(_apkZoomLevel - APK_ZOOM_STEP);
-      }
-
-      // Inisialisasi: Tampilkan tombol zoom HANYA jika diakses dari APK
-      (function initApkZoom() {
-        if (!IS_APK_WEBVIEW) return; // Bukan APK → sembunyikan semua, tidak perlu init
-
-        // Tampilkan tombol zoom di login page
-        const loginCtrl = document.getElementById('apkZoomLogin');
-        if (loginCtrl) loginCtrl.classList.add('visible');
-
-        // Muat zoom level tersimpan atau gunakan default 50%
-        let savedZoom = APK_ZOOM_DEFAULT;
-        try {
-          const stored = localStorage.getItem('apk_zoom_level');
-          if (stored) savedZoom = parseInt(stored, 10) || APK_ZOOM_DEFAULT;
-        } catch(e) {}
-        apkApplyZoom(savedZoom);
-      })();
-
-      // Dipanggil setelah berhasil login → sembunyikan tombol login, tampilkan di title bar
-      function apkSwitchZoomToTitlebar() {
-        if (!IS_APK_WEBVIEW) return;
-        const loginCtrl = document.getElementById('apkZoomLogin');
-        const titleCtrl = document.getElementById('apkZoomTitlebar');
-        if (loginCtrl) loginCtrl.classList.remove('visible');
-        if (titleCtrl) {
-          titleCtrl.classList.add('visible');
-          const pctTitle = document.getElementById('apkZoomPctTitlebar');
-          if (pctTitle) pctTitle.textContent = _apkZoomLevel + '%';
-        }
-      }
-
-      // Dipanggil saat logout → kembalikan tombol ke login page
-      function apkSwitchZoomToLogin() {
-        if (!IS_APK_WEBVIEW) return;
-        const loginCtrl = document.getElementById('apkZoomLogin');
-        const titleCtrl = document.getElementById('apkZoomTitlebar');
-        if (titleCtrl) titleCtrl.classList.remove('visible');
-        if (loginCtrl) loginCtrl.classList.add('visible');
-      }
-
       let isConfigChecked = false;
       let isCustomBgLoading = false;
 
@@ -1527,16 +766,6 @@
         
         <div class="d-flex align-items-center gap-2 ms-auto">
           
-          <!-- APK Zoom Controls - Title Bar (kiri jam) -->
-          <div id="apkZoomTitlebar" class="apk-zoom-controls apk-zoom-titlebar">
-            <button type="button" class="apk-zoom-btn" onclick="apkZoomOut()" title="Zoom Out"><i class="fas fa-minus" style="font-size:0.6rem;"></i></button>
-            <div class="d-flex flex-column align-items-center" style="gap:0px;">
-              <span class="apk-zoom-label">Zoom</span>
-              <span id="apkZoomPctTitlebar" class="apk-zoom-pct">100%</span>
-            </div>
-            <button type="button" class="apk-zoom-btn" onclick="apkZoomIn()" title="Zoom In"><i class="fas fa-plus" style="font-size:0.6rem;"></i></button>
-          </div>
-
           <div class="d-none d-md-flex align-items-center px-2" style="min-width: 130px; font-variant-numeric: tabular-nums;">
              <i class="far fa-calendar-alt text-warning me-2" style="font-size: 1.1rem;"></i>
              <div class="d-flex flex-column justify-content-center lh-1">
@@ -1609,19 +838,14 @@
           <div id="cartPanel" class="pos-cart shadow-lg">
             <div class="p-3 bg-white border-bottom d-flex justify-content-between align-items-center">
               <h5 class="fw-bold m-0"><i class="fas fa-shopping-bag me-2 text-warning"></i>Pesanan</h5>
-              <div class="d-flex align-items-center gap-2">
-                <button type="button" id="btnToggleAddonMode" onclick="toggleAddonSelectionMode()" class="btn btn-addon-pill shadow-sm">
-                  <i class="fas fa-plus-circle me-1"></i> Add-On
-                </button>
-                <button class="btn btn-light btn-sm d-lg-none" onclick="toggleMobileCart(false)"><i class="fas fa-times"></i></button>
-              </div>
+              <button class="btn btn-light btn-sm d-lg-none" onclick="toggleMobileCart(false)"><i class="fas fa-times"></i></button>
             </div>
             
             <div class="flex-fill overflow-auto p-3" id="cartItems"></div>
             
-            <div class="p-4 pt-3 bg-white border-top">
-              <div class="d-flex justify-content-between mb-1 text-muted" style="font-size: 0.9rem;"><span>Subtotal</span><span id="txtSubtotal">Rp 0</span></div>
-              <div class="d-flex justify-content-between mb-2 fs-5 fw-bold"><span>Total</span><span id="txtTotal" class="text-warning">Rp 0</span></div>
+            <div class="p-4 bg-white border-top">
+              <div class="d-flex justify-content-between mb-2 text-muted"><span>Subtotal</span><span id="txtSubtotal">Rp 0</span></div>
+              <div class="d-flex justify-content-between mb-3 fs-4 fw-bold"><span>Total</span><span id="txtTotal" class="text-warning">Rp 0</span></div>
               <button onclick="processCheckout()" class="btn btn-luxury w-100 py-3 rounded-4 fw-bold fs-5">BAYAR SEKARANG</button>
             </div>
           </div>
@@ -1629,9 +853,7 @@
         
         <div id="view-products" class="app-view p-4" style="display:none; background: #f8f9fa;">
           <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pt-3 gap-3">
-              <div>
-                <p class="text-muted small m-0 ms-2" style="transform: translateY(-4px);">Manajemen Menu dan Resep.</p>
-              </div>
+              <h3 class="fw-bold m-0"><i class="fas fa-boxes me-2 text-warning"></i>Daftar Menu</h3>
               
               <div class="d-flex flex-wrap gap-2 align-items-center">
                 
@@ -1663,7 +885,7 @@
               </div>
           </div>
 
-          <div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; padding-bottom: 1000px; margin-bottom: -900px; min-height: 100vh;">
+          <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <div class="table-responsive">
               <table class="table table-hover align-middle m-0">
                 <thead class="bg-dark text-white">
@@ -1744,16 +966,14 @@
         </div>
         
         <div id="view-manning" class="app-view p-4" style="display:none; background: #f8f9fa; padding-bottom: 120px !important;">
-          <div class="row pt-3 mb-4">
-            <div class="col-2 d-none d-lg-block"></div>
-            <div class="col-12 col-lg-10 d-flex flex-wrap justify-content-between align-items-center gap-3">
-              <div>
-                <p class="text-muted small m-0 ms-2" style="transform: translateY(-4px);">Kelola karyawan, gaji, dan atur jadwal shift kerja.</p>
-              </div>
-              <button class="btn btn-primary px-4 rounded-pill shadow-sm fw-bold d-flex align-items-center" onclick="openStaffModal()" style="height: 38px;">
-                <i class="fas fa-user-plus me-2"></i>Tambah Staff
-              </button>
+          <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pt-3 gap-3">
+            <div>
+              <h3 class="fw-bold m-0 text-dark"><i class="fas fa-users-cog me-2 text-warning"></i>Staff & Schedule</h3>
+              <p class="text-muted small m-0">Kelola karyawan, gaji, dan atur jadwal shift kerja.</p>
             </div>
+            <button class="btn btn-primary px-4 rounded-pill shadow-sm fw-bold d-flex align-items-center" onclick="openStaffModal()">
+              <i class="fas fa-user-plus me-2"></i>Tambah Staff
+            </button>
           </div>
 
           <div id="manningLoadingArea" class="text-center py-5">
@@ -1765,60 +985,55 @@
           <div class="row g-4" id="staffCardsContainer">
             </div>
           <div id="view-schedule-grid" class="container-fluid mt-5 border-top pt-4 pb-5">
-            <div class="row mb-4">
-              <div class="col-2 d-none d-lg-block"></div>
-              <div class="col-12 col-lg-10 d-flex flex-wrap justify-content-between align-items-center gap-3">
-                <div class="mb-3 mb-lg-0">
-                  <h4 class="fw-bold m-0 ms-2">Pengaturan Jadwal Dinamis</h4>
-                  <p class="text-muted small m-0 ms-2" style="margin-top: 4px !important;">Atur jadwal shift operasional staff dengan drag & drop.</p>
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+              <div>
+                <h4 class="fw-bold m-0"><i class="fas fa-calendar-alt text-success me-2"></i>Pengaturan Jadwal Dinamis</h4>
+                <p class="text-muted small m-0">Atur jadwal shift operasional staff dengan drag & drop.</p>
+              </div>
+              <div class="d-flex gap-2 mt-2 mt-md-0 flex-wrap justify-content-end">
+                
+                <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
+                  <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-calendar-day me-1"></i>Mulai</span>
+                  <input type="date" id="schedStartDate" class="form-control border-0 shadow-none bg-white px-2" style="font-size: 0.85rem;" onchange="renderWeeklyScheduleGrid()">
                 </div>
-                <div class="d-flex gap-2 mt-2 mt-lg-0 flex-wrap justify-content-end">
-                  <button class="btn btn-primary rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnSaveBatchSchedule" onclick="executeBatchSaveSchedule()">
-                      <i class="fas fa-save me-2"></i>Save Schedule
-                  </button>
-                  <button class="btn btn-success rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnBroadcastSchedule" onclick="broadcastSchedule()">
-                      <i class="fab fa-telegram-plane me-2"></i>Kirim Telegram
-                  </button>
-
-                  <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
-                    <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-calendar-day me-1"></i>Mulai</span>
-                    <input type="date" id="schedStartDate" class="form-control border-0 shadow-none bg-white px-2" style="font-size: 0.85rem;" onchange="renderWeeklyScheduleGrid()">
-                  </div>
-                  <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
-                    <span class="input-group-text bg-light border-0 fw-bold small text-muted">Rentang</span>
-                    <button type="button" class="btn btn-light border-0 px-2 fw-bold" onclick="adjustSchedDayCount(-1)" style="font-size: 0.85rem; background: transparent; color: #636e72;" title="Kurangi Hari"><i class="fas fa-minus" style="font-size: 0.7rem;"></i></button>
-                    <input type="text" id="schedDayCount" class="form-control border-0 shadow-none bg-white px-1 text-center fw-bold" style="font-size: 0.85rem; width: 35px; pointer-events: none;" value="7" readonly>
-                    <button type="button" class="btn btn-light border-0 px-2 fw-bold" onclick="adjustSchedDayCount(1)" style="font-size: 0.85rem; background: transparent; color: #636e72;" title="Tambah Hari"><i class="fas fa-plus" style="font-size: 0.7rem;"></i></button>
-                    <span class="input-group-text bg-light border-0 fw-bold small text-muted">Hari</span>
-                  </div>
-
-                  <button class="btn btn-light rounded-pill border fw-bold shadow-sm d-flex align-items-center" onclick="openShiftTimeModal()">
-                      <i class="fas fa-clock text-warning me-2"></i>Waktu Shift
-                  </button>
-                  <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
-                    <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-layer-group me-1"></i>Shift/Hari</span>
-                    <select id="shiftCountSelector" class="form-select border-0 shadow-none fw-bold bg-white px-3" style="font-size: 0.85rem; cursor:pointer; padding-right: 2.5rem !important;" onchange="changeShiftCount(this.value)">
-                      <option value="1">1 Shift</option>
-                      <option value="2" selected>2 Shift</option>
-                      <option value="3">3 Shift</option>
-                    </select>
-                  </div>
+                <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
+                  <span class="input-group-text bg-light border-0 fw-bold small text-muted">Rentang</span>
+                  <input type="number" id="schedDayCount" class="form-control border-0 shadow-none bg-white px-2 text-center" style="font-size: 0.85rem; width: 60px;" min="1" max="14" value="7" onchange="renderWeeklyScheduleGrid()">
+                  <span class="input-group-text bg-light border-0 fw-bold small text-muted">Hari</span>
                 </div>
+
+                <button class="btn btn-light rounded-pill border fw-bold shadow-sm d-flex align-items-center" onclick="openShiftTimeModal()">
+                    <i class="fas fa-clock text-warning me-2"></i>Waktu Shift
+                </button>
+                <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
+                  <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-layer-group me-1"></i>Shift/Hari</span>
+                  <select id="shiftCountSelector" class="form-select border-0 shadow-none fw-bold bg-white px-3" style="font-size: 0.85rem; cursor:pointer; padding-right: 2.5rem !important;" onchange="changeShiftCount(this.value)">
+                    <option value="1">1 Shift</option>
+                    <option value="2" selected>2 Shift</option>
+                    <option value="3">3 Shift</option>
+                  </select>
+                </div>
+                <button class="btn btn-primary rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnSaveBatchSchedule" onclick="executeBatchSaveSchedule()">
+                    <i class="fas fa-save me-2"></i>Save Schedule
+                </button>
+                <button class="btn btn-success rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnBroadcastSchedule" onclick="broadcastSchedule()">
+                    <i class="fab fa-telegram-plane me-2"></i>Kirim Telegram
+                </button>
               </div>
             </div>
 
             <div class="row g-4">
-              <div class="col-2" style="position: sticky; top: 15px; align-self: start; z-index: 10;">
-                <div class="bg-light p-3 rounded-4 border shadow-sm d-flex flex-column" style="min-height: 200px;">
-                  <h6 class="fw-bold mb-1 small"><i class="fas fa-users text-primary me-1"></i> Staff</h6>
-                  <p class="text-muted mb-3" style="font-size: 9px; line-height: 1.2;">Tarik staff ke tabel.</p>
+              <div class="col-12 col-xl-3">
+                <div class="bg-light p-3 rounded-4 border shadow-sm h-100 d-flex flex-column">
+                  <h6 class="fw-bold mb-1"><i class="fas fa-users text-primary me-1"></i> Daftar Staff</h6>
+                  <p class="text-muted mb-3" style="font-size: 11px;">Tarik (Drag) staff ke tabel jadwal.</p>
                   
-                  <div id="staffPillsSource" class="d-flex flex-column align-items-center gap-2 p-2 border border-dashed rounded bg-white flex-fill shadow-sm" style="min-height: 120px;">
+                  <div id="staffPillsSource" class="d-flex flex-wrap align-content-start gap-2 p-2 border border-dashed rounded bg-white flex-fill shadow-sm" style="min-height: 150px;">
                   </div>
                 </div>
               </div>
 
-              <div class="col-10">
+              <div class="col-12 col-xl-9">
                 <div id="scheduleGridToCapture" class="table-responsive bg-white p-0 rounded-4 border shadow-sm overflow-hidden" style="scrollbar-width: thin;">
                   <div class="text-center p-3 border-bottom bg-light">
                     <h5 class="fw-bold m-0" style="letter-spacing: 1px;">JADWAL OPERASIONAL STAFF</h5>
@@ -1977,9 +1192,9 @@
         <div id="view-finance" class="app-view p-4" style="display:none; background: #f8f9fa;">
           
           <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 pt-2 gap-3">
-            <div>
-              <p class="text-muted small m-0 ms-2" style="transform: translateY(-4px);">Dashboard Laporan</p>
-            </div>
+            <h3 class="fw-bold m-0 text-dark" style="white-space: nowrap; flex-shrink: 0;">
+              <i class="fas fa-chart-line me-2 text-warning"></i>Dashboard Laporan
+            </h3>
             
             <div class="d-flex flex-wrap gap-2 ms-auto">
               <button class="btn btn-success rounded-pill fw-bold shadow-sm px-3 text-white d-flex align-items-center" id="btnBroadcastLaporan" onclick="broadcastLaporan()" style="height: 38px; font-size: 0.85rem;" title="Kirim Laporan ke Telegram Owner">
@@ -1988,7 +1203,7 @@
               <button class="btn btn-dark rounded-pill fw-bold shadow-sm px-3 d-flex align-items-center" id="btnPrintLaporan" onclick="printLaporanThermal()" style="height: 38px; font-size: 0.85rem;" title="Cetak Thermal Laporan Panjang">
                 <i class="fas fa-print me-2"></i>Print Thermal
               </button>
-              <select id="methodFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill shadow-sm" style="cursor:pointer; height: 38px;" onchange="resetFinanceLimitAndRender()">
+              <select id="methodFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill shadow-sm" style="cursor:pointer; height: 38px;" onchange="renderFinanceUI()">
                 <option value="all" selected>Semua Metode</option>
                 <option value="CASH">CASH</option>
                 <option value="QRIS">QRIS</option>
@@ -2093,7 +1308,7 @@
 
           <div class="row mb-4 d-none" id="netProfitContainer">
             <div class="col-12">
-              <div class="card border-0 shadow-sm rounded-4 p-4" style="padding-bottom: 30px !important;">
+              <div class="card border-0 shadow-sm rounded-4 p-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                   <span class="fw-bold text-muted small"><i class="fas fa-wallet me-1"></i> Progress Profit vs Cost</span>
                   <button class="btn btn-sm btn-outline-success rounded-pill fw-bold" onclick="openOpCostModal()">+ Tambah Cost</button>
@@ -2110,7 +1325,7 @@
                   <div class="text-end mt-1 fw-bold fs-6" id="opNetProfitFinal">Net Profit: Rp 0</div>
                 </div>
 
-                <div class="table-responsive" style="padding-bottom: 10px !important;">
+                <div class="table-responsive" style="max-height: 250px; overflow-y: auto; scrollbar-width: thin;">
                   <table class="table table-hover align-middle m-0 small">
                     <thead class="bg-light sticky-top" style="z-index: 5;">
                       <tr><th>Keterangan Cost</th><th class="text-end">Nominal (Rp)</th><th class="text-center" style="width: 80px;">Aksi</th></tr>
@@ -2126,7 +1341,7 @@
 
           <div class="row g-4 mb-4">
             <div class="col-12">
-              <div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; padding-bottom: 1000px; margin-bottom: -900px; min-height: 100vh;">
+              <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
                 <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white flex-wrap gap-3">
                   <h6 class="fw-bold m-0 text-muted">List Penjualan</h6>
                   
@@ -2199,8 +1414,8 @@
           </div>
         </div>
 
-        <div id="view-monitor" class="app-view p-3 p-md-4" style="display:none; background: #f8f9fa; flex: 1; width: 100%; overflow-x: hidden; flex-direction: column !important;">
-          <div class="d-flex flex-column h-100 w-100">
+        <div id="view-monitor" class="app-view p-3 p-md-4" style="display:none; background: #f8f9fa; flex: 1; width: 100%; max-width: 100vw; overflow-x: hidden;">
+          <div class="d-flex flex-column h-100">
             
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3 w-100">
               
@@ -2221,26 +1436,23 @@
                 <button id="btnMonitorReorder" class="btn btn-white rounded-pill fw-bold shadow-sm px-3 px-md-4 border flex-shrink-0" onclick="toggleMonitorReorder()">
                   <i class="fas fa-sort text-muted me-2"></i>Atur Urutan
                 </button>
-                <button class="btn btn-white rounded-pill fw-bold shadow-sm px-3 px-md-4 border flex-shrink-0" onclick="resetMonitorOrder()" title="Reset Urutan Tiket">
-                  <i class="fas fa-sync-alt text-warning me-2"></i>Reset
-                </button>
                 <button class="btn btn-warning rounded-pill fw-bold shadow-sm px-3 px-md-4 flex-shrink-0" onclick="showDoneOrders()">
                   <i class="fas fa-check-circle me-2"></i>Selesai
                 </button>
               </div>
             </div>
 
-            <div class="tab-content flex-fill w-100" id="monitorTabsContent">
+            <div class="tab-content flex-fill" id="monitorTabsContent">
               <div class="tab-pane fade show active h-100" id="content-kitchen" role="tabpanel">
                 <div class="monitor-rope-container h-100">
                   <div class="rope-line"></div>
-                  <div id="kitchenTicketsArea" class="d-inline-flex gap-3 align-items-start h-100" style="padding-left: 20px; padding-bottom: 10px; padding-top: 20px;"></div>
+                  <div id="kitchenTicketsArea" class="d-inline-flex gap-2 align-items-start h-100" style="padding-left: 10px; padding-bottom: 10px;"></div>
                 </div>
               </div>
               <div class="tab-pane fade h-100" id="content-bar" role="tabpanel">
                 <div class="monitor-rope-container h-100">
                   <div class="rope-line"></div>
-                  <div id="barTicketsArea" class="d-inline-flex gap-3 align-items-start h-100" style="padding-left: 20px; padding-bottom: 10px; padding-top: 20px;"></div>
+                  <div id="barTicketsArea" class="d-inline-flex gap-2 align-items-start h-100" style="padding-left: 10px; padding-bottom: 10px;"></div>
                 </div>
               </div>
             </div>
@@ -2376,77 +1588,6 @@
           </div>
         </div>
 
-        <div id="modalCartAddonCosmetic" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10600; opacity: 1 !important;">
-          <div class="modal-wrapper">
-            <div class="bg-white rounded-5 shadow-lg d-flex flex-column modal-addon-container">
-              <h5 class="fw-bold mb-4 border-bottom pb-3 text-dark text-center"><i class="fas fa-cookie-bite text-warning me-2"></i> Pengaturan Add-On</h5>
-              <input type="hidden" id="addonTargetPid">
-              
-              <div class="row g-4 text-start mb-4">
-                <!-- Kolom Kiri: Resep Bahan & Toggle "Tidak rubah bahan" -->
-                <div class="col-12 col-md-6 border-end">
-                  <div class="mb-3">
-                    <label class="small fw-bold text-muted">ITEM</label>
-                    <div class="fw-bold text-dark fs-5" id="addonTargetName">Nama Menu</div>
-                  </div>
-                  
-                  <!-- Pill buttons for individual index or all -->
-                  <div id="addonQtyPillsContainer" class="mb-3 d-none">
-                    <label class="small fw-bold text-muted d-block mb-2">PILIH ITEM KELIPATAN</label>
-                    <div id="addonQtyPillsList" class="d-flex flex-wrap gap-2"></div>
-                  </div>
-
-                  <div class="d-flex justify-content-between align-items-center mb-3 bg-light p-2 rounded-3 border">
-                    <span class="small fw-bold text-muted"><i class="fas fa-seedling me-1 text-success"></i> Tidak rubah bahan</span>
-                    <div class="form-check form-switch m-0">
-                      <input class="form-check-input" type="checkbox" role="switch" id="addonNoRecipeChangeToggle" style="width: 40px; height: 20px; cursor:pointer;" onchange="updateAddonUIState()">
-                    </div>
-                  </div>
-
-                  <label class="small fw-bold text-muted d-block mb-2">KOMPOSISI RESEP BAHAN</label>
-                  <div id="addonRecipeContainer" class="border rounded-4 p-3 bg-light overflow-auto" style="max-height: 400px; min-height: 330px;">
-                    <div id="addonRecipeList" class="d-flex flex-column gap-2">
-                      <div class="text-center p-3 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Memuat bahan resep...</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Kolom Kanan: Note & Ganti Harga -->
-                <div class="col-12 col-md-6">
-                  <div class="mb-3">
-                    <label class="small fw-bold text-muted">NOTE / KETERANGAN</label>
-                    <input type="text" id="addonNoteValue" class="form-control fw-bold border-2" placeholder="Contoh: Ekstra es, Manis, dll" oninput="updateAddonUIState()">
-                  </div>
-                  <div class="mb-4">
-                    <label class="small fw-bold text-muted">GANTI HARGA ITEM (Rp)</label>
-                    <div class="input-group">
-                      <span class="input-group-text bg-white border-2 border-end-0">Rp</span>
-                      <input type="number" id="addonPriceValue" class="form-control fw-bold border-2 border-start-0 ps-0" placeholder="0" oninput="updateAddonUIState()">
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Tombol Batal & Simpan di luar modal (Lingkaran) -->
-            <div class="modal-outside-buttons">
-              <button class="btn-outside-circle btn-batal" onclick="closeCartAddonModal()" title="Batal">
-                <div class="icon-wrapper">
-                  <i class="fas fa-times icon-primary"></i>
-                  <i class="fas fa-redo icon-secondary"></i>
-                </div>
-              </button>
-              <button class="btn-outside-circle btn-simpan" id="btnSaveCartAddonCosmetic" onclick="saveCartAddonCosmetic()" title="Simpan">
-                <div class="icon-wrapper">
-                  <i class="fas fa-save icon-primary"></i>
-                  <i class="fas fa-redo icon-secondary"></i>
-                  <i class="fas fa-spinner fa-spin icon-saving"></i>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-        
         <div id="modalCrop" class="login-overlay d-none" style="display:none; flex-direction: column; justify-content: center; align-items: center; z-index: 20000;">
           <div class="bg-white p-4 rounded-4" style="width: 95%; max-width: 450px;">
             <h5 class="fw-bold mb-4 text-center">Atur Posisi Gambar</h5>
@@ -2539,7 +1680,10 @@
         <div id="view-stock" class="app-view p-4" style="display:none; background: #f8f9fa;">
           <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pt-3 gap-3">
             <div>
-              <p class="text-muted small m-0 ms-2" style="transform: translateY(-4px);">Manajemen bahan baku & inventaris gudang real-time.</p>
+              <h3 class="fw-bold m-0 text-dark" style="letter-spacing: -1px;">
+                <i class="fas fa-boxes-stacked me-2 text-warning"></i>Stock Control
+              </h3>
+              <p class="text-muted small m-0">Manajemen bahan baku & inventaris gudang real-time.</p>
             </div>
             
             <div class="d-flex flex-wrap gap-2 align-items-center">
@@ -2568,8 +1712,8 @@
             </div>
           </div>
 
-          <div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; padding-bottom: 1000px; margin-bottom: -900px; min-height: 100vh;">
-            <div class="table-responsive">
+          <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="table-responsive" style="max-height: calc(100vh - 143px) !important; scrollbar-width: thin;">
               <table class="table table-hover align-middle m-0">
                 <thead class="bg-dark text-white sticky-top">
                   <tr style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
@@ -2689,67 +1833,54 @@
         </div>
 
         <div id="modalRecipeSettings" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10500; opacity: 1 !important;">
-          <div class="modal-wrapper">
-            <div class="bg-white rounded-5 shadow-lg d-flex flex-column modal-recipe-container">
-              <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
-                <div>
-                  <h5 class="fw-bold m-0"><i class="fas fa-mortar-pestle text-warning me-2"></i>Komposisi Resep</h5>
-                  <small class="text-muted fw-bold" id="recipeTargetName">Menu: ...</small>
-                </div>
+          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 500px; height: 85vh; animation: slideUp 0.3s ease-out;">
+            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+              <div>
+                <h5 class="fw-bold m-0"><i class="fas fa-mortar-pestle text-warning me-2"></i>Komposisi Resep</h5>
+                <small class="text-muted fw-bold" id="recipeTargetName">Menu: ...</small>
               </div>
-              
-              <div class="bg-light p-3 rounded-4 mb-3 border">
-                <label class="small fw-bold text-muted mb-2">TAMBAH BAHAN</label>
-                
-                <select id="recipeMaterialSelect" class="form-select fw-bold mb-2 border-2" onchange="handleMaterialSelectChange()">
-                  <option value="" selected disabled>Pilih bahan baku...</option>
-                  <option value="NEW_MATERIAL" class="text-primary fw-bold">[+] Buat Bahan Baku Baru...</option>
-                </select>
-
-                <input type="text" id="recipeNewMaterialName" class="form-control fw-bold mb-2 border-2 d-none" placeholder="Ketik nama bahan baru...">
-
-                <div class="d-flex gap-2">
-                  <div class="input-group">
-                    <input type="number" id="recipeQty" class="form-control fw-bold border-2" placeholder="Jumlah" step="0.1">
-                    <select id="recipeUnit" class="form-select border-2" style="max-width: 90px; font-weight: 600;">
-                      <option value="gr">gr</option>
-                      <option value="ml">ml</option>
-                      <option value="pcs">pcs</option>
-                      <option value="shot">shot</option>
-                      <option value="sachet">sachet</option>
-                    </select>
-                  </div>
-                  <button class="btn btn-dark px-3 rounded-3" onclick="addMaterialToTempBasket()"><i class="fas fa-plus"></i></button>
-                </div>
-              </div>
-
-              <div class="border rounded-4 mb-3 bg-white recipe-scrollable-container" style="max-height: 370px; overflow-y: auto;">
-                <table class="table table-hover align-middle m-0 small">
-                  <thead class="bg-light sticky-top">
-                    <tr><th class="ps-3">Nama Bahan</th><th class="text-center">Takaran</th><th class="text-center">#</th></tr>
-                  </thead>
-                  <tbody id="recipeBasketBody">
-                    <tr><td colspan="3" class="text-center p-4 text-muted">Belum ada bahan</td></tr>
-                  </tbody>
-                </table>
-              </div>
+              <button class="btn-close shadow-none" onclick="closeRecipeSettings()"></button>
             </div>
             
-            <div class="modal-outside-buttons">
-              <button class="btn-outside-circle btn-batal" onclick="closeRecipeSettings()" title="Batal">
-                <div class="icon-wrapper">
-                  <i class="fas fa-times icon-primary"></i>
-                  <i class="fas fa-redo icon-secondary"></i>
+            <div class="bg-light p-3 rounded-4 mb-3 border">
+              <label class="small fw-bold text-muted mb-2">TAMBAH BAHAN</label>
+              
+              <select id="recipeMaterialSelect" class="form-select fw-bold mb-2 border-2" onchange="handleMaterialSelectChange()">
+                <option value="" selected disabled>Pilih bahan baku...</option>
+                <option value="NEW_MATERIAL" class="text-primary fw-bold">[+] Buat Bahan Baku Baru...</option>
+                </select>
+
+              <input type="text" id="recipeNewMaterialName" class="form-control fw-bold mb-2 border-2 d-none" placeholder="Ketik nama bahan baru...">
+
+              <div class="d-flex gap-2">
+                <div class="input-group">
+                  <input type="number" id="recipeQty" class="form-control fw-bold border-2" placeholder="Jumlah" step="0.1">
+                  <select id="recipeUnit" class="form-select border-2" style="max-width: 90px; font-weight: 600;">
+                    <option value="gr">gr</option>
+                    <option value="ml">ml</option>
+                    <option value="pcs">pcs</option>
+                    <option value="shot">shot</option>
+                    <option value="sachet">sachet</option>
+                  </select>
                 </div>
-              </button>
-              <button class="btn-outside-circle btn-simpan" id="btnSaveRecipeSession" onclick="saveRecipeSession()" title="Simpan">
-                <div class="icon-wrapper">
-                  <i class="fas fa-save icon-primary"></i>
-                  <i class="fas fa-redo icon-secondary"></i>
-                  <i class="fas fa-spinner fa-spin icon-saving"></i>
-                </div>
-              </button>
+                <button class="btn btn-dark px-3 rounded-3" onclick="addMaterialToTempBasket()"><i class="fas fa-plus"></i></button>
+              </div>
             </div>
+
+            <div class="flex-fill overflow-auto border rounded-4 mb-3 bg-white">
+              <table class="table table-hover align-middle m-0 small">
+                <thead class="bg-light sticky-top">
+                  <tr><th class="ps-3">Nama Bahan</th><th class="text-center">Takaran</th><th class="text-center">#</th></tr>
+                </thead>
+                <tbody id="recipeBasketBody">
+                  <tr><td colspan="3" class="text-center p-4 text-muted">Belum ada bahan</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="saveRecipeSession()">
+              <i class="fas fa-save me-2"></i> SIMPAN & KEMBALI
+            </button>
           </div>
         </div>
 
@@ -2967,12 +2098,6 @@
       let CHART_PAYMENT = null;
       let TREND_INTERVAL = null; // Variabel untuk menyimpan interval agar bisa dihapus
       let MATERIALS_DATA = []; // Global storage untuk data stok
-      let STOCK_LIMIT = 50; // Limit rendering stok awal
-      let CURRENT_RENDERED_STOCK = []; // Menyimpan data stok yang sedang aktif dirender
-      let PRODUCT_LIMIT = 50; // Limit rendering produk awal
-      let CURRENT_RENDERED_PRODUCTS = []; // Menyimpan data produk yang sedang aktif dirender
-      let FINANCE_LIMIT = 100; // Limit rendering transaksi awal
-      let CURRENT_RENDERED_FINANCE = []; // Menyimpan data transaksi yang sedang aktif dirender
       let POS_SORTABLE = null;
       let IS_SORTABLE_INIT = false;
       let IS_REORDER_MODE = false;
@@ -3004,7 +2129,6 @@
       let TAX_PERCENTAGE = 0;
       let IS_STAFF_LOADED = false;
       let IS_OPCOST_LOADED = false;
-      let CURRENT_SHIFT_COUNT = 2;
 
       // =========================================
       // SETTING SHIFT DINAMIS
@@ -3066,124 +2190,6 @@
           return dates;
       }
 
-      function adjustSchedDayCount(amount) {
-          const input = document.getElementById('schedDayCount');
-          if (!input) return;
-          let val = parseInt(input.value) || 7;
-          val += amount;
-          if (val > 14) val = 14;
-          if (val < 1) val = 1;
-          input.value = val;
-          renderWeeklyScheduleGrid();
-      }
-
-      // Sistem Koreksi Drag Dinamis untuk Browser Ter-Zoom (APK)
-      // Catatan: CSS `zoom` membuat touch clientX/Y melaporkan koordinat fisik viewport,
-      // sedangkan getBoundingClientRect() dan position:fixed left/top bekerja di ruang CSS (ter-zoom).
-      // Solusi: konversi koordinat sentuh fisik → CSS dengan membagi zoom.
-      let activeDrag = null;
-
-      function handleSortableStartZoomCorrection(evt) {
-          const item = evt.item;
-          const rect = item.getBoundingClientRect();
-          const zoom = (typeof _apkZoomLevel !== 'undefined') ? (_apkZoomLevel / 100) : 1;
-          
-          let startX = 0;
-          let startY = 0;
-          const orig = evt.originalEvent;
-          if (orig) {
-              if (orig.touches && orig.touches.length > 0) {
-                  startX = orig.touches[0].clientX;
-                  startY = orig.touches[0].clientY;
-              } else {
-                  startX = orig.clientX;
-                  startY = orig.clientY;
-              }
-          }
-          
-          // Konversi posisi sentuh awal dan batas elemen ke koordinat CSS.
-          // rect.left dan rect.top di WebView melaporkan koordinat viewport fisik (device-independent),
-          // sehingga keduanya harus dibagi dengan zoom agar berada di ruang koordinat CSS yang sama.
-          const cssTouchX = startX / zoom;
-          const cssTouchY = startY / zoom;
-          const cssRectLeft = rect.left / zoom;
-          const cssRectTop = rect.top / zoom;
-          
-          activeDrag = {
-              // Offset jari dari pojok kiri-atas pill (dalam ruang CSS)
-              offsetX: cssTouchX - cssRectLeft,
-              offsetY: cssTouchY - cssRectTop,
-              zoom: zoom
-          };
-      }
-
-      function handleSortableEndZoomCorrection(evt) {
-          activeDrag = null;
-          // Bersihkan sisa elemen fallback yang mungkin tersangkut pasca drag selesai
-          cleanupOrphanedFallbacks();
-      }
-
-      // Safety net global untuk membersihkan bangkai elemen fallback drag yang tersangkut di layar
-      window.addEventListener('touchend', cleanupOrphanedFallbacks);
-      window.addEventListener('mouseup', cleanupOrphanedFallbacks);
-
-      function cleanupOrphanedFallbacks() {
-          activeDrag = null;
-          setTimeout(() => {
-              if (!activeDrag) {
-                  document.querySelectorAll('.sortable-fallback').forEach(el => {
-                      el.remove();
-                  });
-              }
-          }, 150);
-      }
-
-      // Pasang listener global untuk menimpa posisi fallback element saat drag berlangsung
-      window.addEventListener('touchmove', handleGlobalDragMove, { passive: false });
-      window.addEventListener('mousemove', handleGlobalDragMove);
-
-      function handleGlobalDragMove(e) {
-          if (!activeDrag) return;
-          
-          const fallback = document.querySelector('.sortable-fallback');
-          if (!fallback) return;
-          
-          const zoom = activeDrag.zoom;
-          // Jangan return early saat zoom === 1 (100%) karena .sortable-fallback memiliki rule
-          // transform: none !important di CSS, yang menonaktifkan translate3d bawaan SortableJS.
-          // Kita harus selalu memposisikan fallback element secara manual menggunakan left & top di semua zoom level.
-          
-          let physicalX = 0;
-          let physicalY = 0;
-          if (e.touches && e.touches.length > 0) {
-              physicalX = e.touches[0].clientX;
-              physicalY = e.touches[0].clientY;
-          } else {
-              physicalX = e.clientX;
-              physicalY = e.clientY;
-          }
-          
-          // Konversi koordinat sentuh fisik → CSS, lalu kurangi offset awal
-          // agar pill tetap menempel di posisi jari yang sama
-          const cssX = physicalX / zoom;
-          const cssY = physicalY / zoom;
-          
-          // Sesuaikan offset dengan scale factor 0.9 jika elemen adalah ticket-paper
-          // dan memiliki transform-origin: top left
-          let scaleFactor = 1;
-          if (fallback.classList.contains('ticket-paper')) {
-              scaleFactor = 0.9;
-          }
-          
-          const newLeft = cssX - activeDrag.offsetX * scaleFactor;
-          const newTop = cssY - activeDrag.offsetY * scaleFactor;
-          
-          fallback.style.position = 'fixed';
-          fallback.style.left = newLeft + 'px';
-          fallback.style.top = newTop + 'px';
-          fallback.style.transition = 'none';
-      }
-
       let SCHEDULE_SORTABLES = []; // Menampung instance memori Sortable
 
       function renderWeeklyScheduleGrid() {
@@ -3195,8 +2201,6 @@
              CURRENT_SHIFT_COUNT = parseInt(savedCount);
              let sel = document.getElementById('shiftCountSelector');
              if (sel) sel.value = CURRENT_SHIFT_COUNT;
-          } else {
-             CURRENT_SHIFT_COUNT = 2;
           }
 
           const source = document.getElementById('staffPillsSource');
@@ -3217,12 +2221,7 @@
 
             SCHEDULE_SORTABLES.push(new Sortable(source, {
                 group: { name: 'shared-schedule', pull: 'clone', put: false },
-                animation: 150, sort: false, ghostClass: 'bg-secondary',
-                forceFallback: true,
-                fallbackTolerance: 3,
-                fallbackOnBody: true,
-                onStart: handleSortableStartZoomCorrection,
-                onEnd: handleSortableEndZoomCorrection
+                animation: 150, sort: false, ghostClass: 'bg-secondary'
             }));
           }
 
@@ -3338,11 +2337,6 @@
                   animation: 150,
                   filter: '.btn-delete-pill',
                   ghostClass: 'bg-secondary',
-                  forceFallback: true,
-                  fallbackTolerance: 3,
-                  fallbackOnBody: true,
-                  onStart: handleSortableStartZoomCorrection,
-                  onEnd: handleSortableEndZoomCorrection,
                   onAdd: function(evt) {
                       const itemEl = evt.item;
                       if (!itemEl.querySelector('.btn-delete-pill')) {
@@ -3531,7 +2525,7 @@
         });
 
         // Menggunakan desain list murni (tanpa list-group-item/card per staf) agar sangat ramping
-        let html = '<div class="col-2 d-none d-lg-block text-muted small px-3 pt-2">Daftar Staff</div><div class="col-12 col-lg-10"><div class="bg-white rounded-4 shadow-sm border px-3 py-1">';
+        let html = '<div class="col-12"><div class="bg-white rounded-4 shadow-sm border px-3 py-1">';
 
         sortedStaff.forEach((staff, index) => {
           let photoUrl = faces[staff.name] || 'https://via.placeholder.com/150';
@@ -4841,7 +3835,6 @@
       function proceedToMainUI(res) {
         document.getElementById('loginOverlay').classList.add('d-none');
         document.getElementById('main-container').classList.remove('d-none');
-        apkSwitchZoomToTitlebar(); // Pindahkan tombol zoom APK dari login page ke title bar
         document.getElementById('uiStoreName').innerText = res.config.StoreName;
         document.getElementById('roleLabel').innerText = res.role;
         
@@ -5231,8 +4224,6 @@
         }).getSystemConfigsAndHPP();
       }
 
-
-
       function renderMonitorUI() {
         const kArea = document.getElementById('kitchenTicketsArea');
         const bArea = document.getElementById('barTicketsArea');
@@ -5284,8 +4275,8 @@
           // Tab "Selesai" hanya menyimpan riwayat Done khusus dari hari ini agar tidak penuh
           const isToday = t.timestamp.startsWith(todayStrFallback) || t.timestamp.includes(todayStrFallback);
           if (kDone && bDone && t.items.length > 0 && isToday) {
-            dHtml = `
-              <div class="card border-0 shadow-sm rounded-3 mb-2">
+            dHtml += `
+              <div class="card border-0 shadow-sm rounded-3">
                 <div class="card-body p-3 d-flex justify-content-between align-items-center">
                   <div>
                     <div class="fw-bold fs-5">${t.orderId}</div>
@@ -5296,15 +4287,8 @@
                   </button>
                 </div>
               </div>
-            ` + dHtml;
+            `;
           }
-        });
-
-        kTicketsData.forEach((item, index) => {
-          item.chronoIndex = index + 1;
-        });
-        bTicketsData.forEach((item, index) => {
-          item.chronoIndex = index + 1;
         });
 
         const savedKOrder = JSON.parse(localStorage.getItem('monitor_kitchen_order') || '[]');
@@ -5329,26 +4313,8 @@
           });
         }
 
-        // Ambil daftar orderId yang dipindah secara eksplisit dari localStorage
-        const explicitKMoved = JSON.parse(localStorage.getItem('monitor_kitchen_explicitly_moved') || '[]');
-        const explicitBMoved = JSON.parse(localStorage.getItem('monitor_bar_explicitly_moved') || '[]');
-
-        // Bersihkan data lama yang sudah selesai agar tidak menumpuk di memori (self-healing)
-        const activeKIds = kTicketsData.map(d => d.t.orderId);
-        const cleanedKMoved = explicitKMoved.filter(id => activeKIds.includes(id));
-        localStorage.setItem('monitor_kitchen_explicitly_moved', JSON.stringify(cleanedKMoved));
-
-        const activeBIds = bTicketsData.map(d => d.t.orderId);
-        const cleanedBMoved = explicitBMoved.filter(id => activeBIds.includes(id));
-        localStorage.setItem('monitor_bar_explicitly_moved', JSON.stringify(cleanedBMoved));
-
-        let kHtml = kTicketsData.map((data, index) => {
-          return generateTicketHTML(data.t, data.items, data.type, data.status, data.chronoIndex);
-        }).join('');
-
-        let bHtml = bTicketsData.map((data, index) => {
-          return generateTicketHTML(data.t, data.items, data.type, data.status, data.chronoIndex);
-        }).join('');
+        let kHtml = kTicketsData.map(data => generateTicketHTML(data.t, data.items, data.type, data.status)).join('');
+        let bHtml = bTicketsData.map(data => generateTicketHTML(data.t, data.items, data.type, data.status)).join('');
 
         kArea.innerHTML = kHtml || '<div class="text-muted mt-5 w-100 text-center fw-bold" style="position:absolute; left:0;"><br>Tidak ada antrian Kitchen</div>';
         bArea.innerHTML = bHtml || '<div class="text-muted mt-5 w-100 text-center fw-bold" style="position:absolute; left:0;"><br>Tidak ada antrian Bar</div>';
@@ -5360,54 +4326,24 @@
         KITCHEN_SORTABLE = new Sortable(kArea, {
           animation: 150,
           ghostClass: 'opacity-50',
-          dragClass: 'sortable-drag',
           disabled: !IS_MONITOR_REORDER,
-          delay: 0,
-          forceFallback: true,
-          fallbackTolerance: 3,
-          fallbackOnBody: true,
-          onStart: handleSortableStartZoomCorrection,
+          delay: 150,
+          delayOnTouchOnly: true,
           onEnd: function(evt) {
-            handleSortableEndZoomCorrection(evt);
             const newOrder = Array.from(kArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_kitchen_order', JSON.stringify(newOrder));
-            
-            if (evt.oldIndex !== evt.newIndex) {
-              const draggedId = evt.item.dataset.id;
-              const explicitlyMoved = JSON.parse(localStorage.getItem('monitor_kitchen_explicitly_moved') || '[]');
-              if (!explicitlyMoved.includes(draggedId)) {
-                explicitlyMoved.push(draggedId);
-                localStorage.setItem('monitor_kitchen_explicitly_moved', JSON.stringify(explicitlyMoved));
-              }
-            }
-            renderMonitorUI();
           }
         });
 
         BAR_SORTABLE = new Sortable(bArea, {
           animation: 150,
           ghostClass: 'opacity-50',
-          dragClass: 'sortable-drag',
           disabled: !IS_MONITOR_REORDER,
-          delay: 0,
-          forceFallback: true,
-          fallbackTolerance: 3,
-          fallbackOnBody: true,
-          onStart: handleSortableStartZoomCorrection,
+          delay: 150,
+          delayOnTouchOnly: true,
           onEnd: function(evt) {
-            handleSortableEndZoomCorrection(evt);
             const newOrder = Array.from(bArea.querySelectorAll('.ticket-paper')).map(el => el.dataset.id);
             localStorage.setItem('monitor_bar_order', JSON.stringify(newOrder));
-            
-            if (evt.oldIndex !== evt.newIndex) {
-              const draggedId = evt.item.dataset.id;
-              const explicitlyMoved = JSON.parse(localStorage.getItem('monitor_bar_explicitly_moved') || '[]');
-              if (!explicitlyMoved.includes(draggedId)) {
-                explicitlyMoved.push(draggedId);
-                localStorage.setItem('monitor_bar_explicitly_moved', JSON.stringify(explicitlyMoved));
-              }
-            }
-            renderMonitorUI();
           }
         });
       }
@@ -5428,17 +4364,7 @@
         renderMonitorUI();
       }
 
-      function resetMonitorOrder() {
-        if (confirm("Kembalikan urutan tiket ke default (kronologis)?")) {
-          localStorage.removeItem('monitor_kitchen_order');
-          localStorage.removeItem('monitor_kitchen_explicitly_moved');
-          localStorage.removeItem('monitor_bar_order');
-          localStorage.removeItem('monitor_bar_explicitly_moved');
-          renderMonitorUI();
-        }
-      }
-
-      function generateTicketHTML(t, items, type, status, chronoIndex) {
+      function generateTicketHTML(t, items, type, status) {
         const isProcess = status === 'PROCESS';
         const statusBadge = isProcess ? 'bg-warning text-dark' : 'bg-secondary text-white';
         const statusText = isProcess ? '<i class="fas fa-fire me-1"></i>DIPROSES' : 'MENUNGGU';
@@ -5456,35 +4382,12 @@
         // Membaca status untuk memicu visual css getar dan border
         const reorderClass = IS_MONITOR_REORDER ? 'reorder-mode' : '';
 
-        let attentionClass = "";
-        let noteBannerHtml = "";
-        if (t.addonNotes) {
-          attentionClass = "ticket-attention";
-          noteBannerHtml = `
-            <div class="alert alert-warning p-2 mb-2 text-dark border-0 rounded-3 shadow-sm d-flex align-items-center" style="font-size: 0.72rem; background: #fff3bf; color: #856404; line-height: 1.3;">
-              <i class="fas fa-exclamation-triangle me-1 text-warning" style="font-size: 0.8rem;"></i>
-              <div style="flex: 1;">
-                <strong class="d-block" style="font-size: 0.65rem; letter-spacing: 0.3px;">Special Note Attention:</strong>
-                <span>${t.addonNotes}</span>
-              </div>
-            </div>
-          `;
-        }
-
-        const seqNumberHtml = chronoIndex ? `
-          <div class="ticket-seq-number">
-              <span>${chronoIndex}</span>
-          </div>
-        ` : '';
-
         return `
-            <div class="ticket-paper ${reorderClass} ${attentionClass}" data-id="${t.orderId}">
-                ${seqNumberHtml}
+            <div class="ticket-paper ${reorderClass}" data-id="${t.orderId}">
                 <div class="ticket-header">
                     <div class="fw-bold fs-5">${t.orderId}</div>
                     <div class="ticket-time">${t.timestamp}</div>
                 </div>
-                ${noteBannerHtml}
                 <div class="flex-fill">
                     ${itemsHtml}
                 </div>
@@ -5498,62 +4401,7 @@
         `;
       }
 
-      function showNoteConfirmationModal(orderId, type, nextStatus, note, onConfirm) {
-        let modal = document.getElementById('modalNoteConfirmation');
-        if (!modal) {
-          modal = document.createElement('div');
-          modal.id = 'modalNoteConfirmation';
-          modal.className = 'fixed-top w-100 h-100 d-flex justify-content-center align-items-center';
-          modal.style.background = 'rgba(0, 0, 0, 0.6)';
-          modal.style.backdropFilter = 'blur(4px)';
-          modal.style.zIndex = '10600';
-          document.body.appendChild(modal);
-        }
-        
-        modal.innerHTML = `
-          <div class="bg-white rounded-4 shadow-lg p-4 position-relative" style="width: 90%; max-width: 400px; border-top: 5px solid #f1c40f; animation: zoomIn 0.3s ease-out;">
-            <div class="text-center mb-3">
-              <div class="d-inline-flex justify-content-center align-items-center bg-warning bg-opacity-10 rounded-circle p-3 mb-3 text-warning">
-                <i class="fas fa-exclamation-triangle fa-2x"></i>
-              </div>
-              <h5 class="fw-bold text-dark">Special Note Attention</h5>
-            </div>
-            
-            <p class="text-muted text-center small mb-3">
-              Konfirmasi anda paham note ini sebelum memproses order:
-            </p>
-            
-            <div class="bg-light p-3 rounded-3 mb-4 text-center fw-bold text-danger border border-warning" style="font-size: 1rem; white-space: pre-wrap;">"${note}"</div>
-
-            <div class="d-flex gap-2">
-              <button type="button" class="btn btn-light w-100 fw-bold py-2 border rounded-pill" onclick="document.getElementById('modalNoteConfirmation').style.setProperty('display', 'none', 'important')">Batal</button>
-              <button type="button" class="btn btn-warning w-100 fw-bold py-2 text-dark rounded-pill shadow-sm" id="btnConfirmNoteAck">Saya Paham & Proses</button>
-            </div>
-          </div>
-        `;
-        
-        modal.style.setProperty('display', 'flex', 'important');
-        document.getElementById('btnConfirmNoteAck').onclick = function() {
-          modal.style.setProperty('display', 'none', 'important');
-          onConfirm();
-        };
-      }
-
       function changeTicketStatus(orderId, type, newStatus) {
-        const targetIdx = TRANSACTIONS_DATA.findIndex(t => t.orderId === orderId);
-        if (targetIdx > -1) {
-          const t = TRANSACTIONS_DATA[targetIdx];
-          if (newStatus === 'PROCESS' && t.addonNotes) {
-            showNoteConfirmationModal(orderId, type, newStatus, t.addonNotes, () => {
-              proceedWithTicketStatusChange(orderId, type, newStatus);
-            });
-            return;
-          }
-        }
-        proceedWithTicketStatusChange(orderId, type, newStatus);
-      }
-
-      function proceedWithTicketStatusChange(orderId, type, newStatus) {
         // Manipulasi array lokal untuk efisiensi visual (Optimistic Update)
         const targetIdx = TRANSACTIONS_DATA.findIndex(t => t.orderId === orderId);
         if(targetIdx > -1) {
@@ -5641,7 +4489,7 @@
       }
 
       function applyNavMode() {
-         const mode = localStorage.getItem('pos_nav_mode') || 'Mobile';
+         const mode = localStorage.getItem('pos_nav_mode') || 'Desktop';
          const mobileMenu = document.getElementById('mobileMenu');
          const btnMobileNav = document.getElementById('btnMobileNav');
          const navModeSelect = document.getElementById('navModeSelect');
@@ -5679,7 +4527,6 @@
 
       // Di file index.html
       function loadProductsTable() {
-        PRODUCT_LIMIT = 50;
         const tbody = document.getElementById('productTableBody');
         // Ubah colspan menjadi 7 agar memakan seluruh lebar tabel
         tbody.innerHTML = `
@@ -5798,26 +4645,10 @@
           targetNameEl.innerHTML = `Menu: ${productName} <i class="fas fa-spinner fa-spin ms-2 text-primary"></i>`;
           document.getElementById('modalRecipeSettings').classList.remove('d-none');
 
-          const saveBtn = document.getElementById('btnSaveRecipeSession');
-          if (saveBtn) {
-            saveBtn.disabled = true;
-            saveBtn.style.opacity = '0.5';
-          }
-
           google.script.run.withSuccessHandler(data => {
              TEMP_RECIPE_BASKET = data;
              targetNameEl.innerText = `Menu: ${productName}`;
              renderRecipeBasket();
-             if (saveBtn) {
-               saveBtn.disabled = false;
-               saveBtn.style.opacity = '1';
-             }
-          }).withFailureHandler(err => {
-             targetNameEl.innerText = `Menu: ${productName} (Gagal memuat)`;
-             if (saveBtn) {
-               saveBtn.disabled = false;
-               saveBtn.style.opacity = '1';
-             }
           }).getProductRecipe(pid);
         }
       }
@@ -5951,33 +4782,24 @@
       }
 
       function saveRecipeSession() {
-        const btn = document.getElementById('btnSaveRecipeSession');
-        if (btn) {
-          btn.classList.add('saving-active');
-          btn.disabled = true;
-        }
-
         if (CURRENT_EDITING_RECIPE_ID === 'NEW') {
-          setTimeout(() => {
-            if (btn) {
-              btn.classList.remove('saving-active');
-              btn.disabled = false;
-            }
-            closeRecipeSettings();
-            const statusText = document.getElementById('newRecipeStatus');
-            if (TEMP_RECIPE_BASKET.length > 0) {
-              statusText.innerHTML = `<span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i> ${TEMP_RECIPE_BASKET.length} bahan tersimpan</span>`;
-            } else {
-              statusText.innerText = "Belum ada bahan diatur";
-            }
-          }, 500); // 500ms simulated saving feedback
+          closeRecipeSettings();
+          const statusText = document.getElementById('newRecipeStatus');
+          if (TEMP_RECIPE_BASKET.length > 0) {
+            statusText.innerHTML = `<span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i> ${TEMP_RECIPE_BASKET.length} bahan tersimpan</span>`;
+          } else {
+            statusText.innerText = "Belum ada bahan diatur";
+          }
         } else {
           // Simpan resep produk yang sudah ada ke backend
+          const btn = event.currentTarget;
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> MENYIMPAN...';
+          btn.disabled = true;
+
           google.script.run.withSuccessHandler(res => {
-            if (btn) {
-              btn.classList.remove('saving-active');
-              btn.disabled = false;
-            }
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
             if(res.status === 'success') {
               const menuName = document.getElementById('recipeTargetName').innerText.replace('Menu: ', '').trim();
               triggerAuditLog("UPDATE RESEP", `Memperbarui komposisi resep untuk menu: ${menuName}.`);
@@ -5987,12 +4809,6 @@
             } else {
               alert("Gagal menyimpan resep: " + res.message);
             }
-          }).withFailureHandler(err => {
-            if (btn) {
-              btn.classList.remove('saving-active');
-              btn.disabled = false;
-            }
-            alert("Gagal menyimpan resep: " + err.message);
           }).updateProductRecipe(CURRENT_EDITING_RECIPE_ID, TEMP_RECIPE_BASKET);
         }
       }
@@ -6185,12 +5001,7 @@
           }
         });
 
-        CURRENT_RENDERED_PRODUCTS = displayData; // Simpan data terurut yang aktif dirender ke global
-
-        // Iris data berdasarkan batas rendering dinamis saat ini (PRODUCT_LIMIT)
-        const slicedData = displayData.slice(0, PRODUCT_LIMIT);
-
-        tbody.innerHTML = slicedData.map(p => `
+        tbody.innerHTML = displayData.map(p => `
           <tr>
             <td class="ps-4 py-3">
               <div class="fw-bold text-dark text-truncate" style="max-width: 180px;" title="${p.name}">${p.name}</div>
@@ -6314,13 +5125,11 @@
 
       // Fungsi Pembantu Filter
       function updateSort(criteria) {
-        PRODUCT_LIMIT = 50; // Reset limit
         SORT_CRITERIA = criteria;
         renderProductTable();
       }
 
       function toggleSortDirection() {
-        PRODUCT_LIMIT = 50; // Reset limit
         SORT_ASC = !SORT_ASC;
         const btn = document.getElementById('btnToggleSort');
         btn.innerHTML = SORT_ASC ? '<i class="fas fa-sort-amount-down-alt"></i>' : '<i class="fas fa-sort-amount-up"></i>';
@@ -6668,7 +5477,16 @@
         filterPOS();              // Terapkan ke grid produk
       }
 
-
+      // Handler ketika kasir dipilih dari Top Header Dropdown
+      function handleTopCashierChange(index) {
+        const name = CONFIG.Cashiers[index];
+        if(name) {
+          // Buka modal PIN
+          openPinPad(name, index);
+          // Set sementara ke kosong sampai PIN tervalidasi dengan benar
+          document.getElementById('topCashierSelect').value = "";
+        }
+      }
 
       // --- LOGIKA PENCARIAN & RENDER ---
 
@@ -6685,7 +5503,6 @@
       }
 
       function filterTable() {
-        PRODUCT_LIMIT = 50; // Reset limit
         const keyword = document.getElementById('searchTable').value.toLowerCase();
         const filtered = PRODUCTS.filter(p => 
           p.name.toLowerCase().includes(keyword) || 
@@ -6768,7 +5585,6 @@
           POS_SORTABLE = new Sortable(grid, {
             animation: 150,
             ghostClass: 'opacity-50',
-            dragClass: 'sortable-drag',
             disabled: !IS_REORDER_MODE, 
             delay: 200, 
             delayOnTouchOnly: true,
@@ -6777,11 +5593,8 @@
             scrollSpeed: 25, 
             bubbleScroll: true,
             forceFallback: true, 
-            fallbackTolerance: 3,
-            fallbackOnBody: true,
-            onStart: handleSortableStartZoomCorrection,
+
             onEnd: function(evt) {
-              handleSortableEndZoomCorrection(evt);
               const currentOrder = JSON.parse(localStorage.getItem('pos_grid_order') || '[]');
               if (currentOrder.length === 0) {
                 PRODUCTS.forEach(p => currentOrder.push(p.id));
@@ -6866,836 +5679,111 @@
         }
       }
 
-      function getCartItemTotalPrice(item) {
-        if (item.individualAddons && item.individualAddons.length === item.qty) {
-          return item.individualAddons.reduce((sum, addon) => {
-            const p = addon.customPrice !== undefined ? addon.customPrice : item.price;
-            return sum + p;
-          }, 0);
-        } else {
-          const p = item.customPrice !== undefined ? item.customPrice : item.price;
-          return p * item.qty;
-        }
-      }
-
       function updateCart(pid, delta) {
         const product = PRODUCTS.find(x => x.id === pid);
         const cartItem = CART.find(x => x.id === pid);
         if (cartItem) {
           cartItem.qty += delta;
-          if (cartItem.qty <= 0) {
-            CART = CART.filter(x => x.id !== pid);
-          } else {
-            // Sesuaikan array individualAddons jika ada
-            if (cartItem.individualAddons) {
-              if (delta > 0) {
-                for (let i = 0; i < delta; i++) {
-                  cartItem.individualAddons.push({
-                    customNote: "",
-                    customPrice: undefined,
-                    customRecipe: null,
-                    originalRecipe: null,
-                    noRecipeChangeChecked: false
-                  });
-                }
-              } else if (delta < 0) {
-                for (let i = 0; i < -delta; i++) {
-                  cartItem.individualAddons.pop();
-                }
-              }
-            }
-          }
+          if (cartItem.qty <= 0) { CART = CART.filter(x => x.id !== pid); }
         } else if (delta > 0) {
           CART.push({ ...product, qty: 1 });
         }
         updateCartUI();
       }
 
-      let IS_ADDON_SELECTION_MODE = false;
-
       function updateCartUI() {
         const container = document.getElementById('cartItems');
-        const mobileTrigger = document.getElementById('mobileCartTrigger');
+        const mobileTrigger = document.getElementById('mobileCartTrigger'); // Panggil Elemen Grey Bar Mobile
         let subtotal = 0;
         let count = 0;
 
         if (CART.length === 0) {
-          IS_ADDON_SELECTION_MODE = false;
-          window.CUSTOM_CART_SUBTOTAL = null; // Reset kustom subtotal saat keranjang kosong
-          const btnAddon = document.getElementById('btnToggleAddonMode');
-          if (btnAddon) {
-            btnAddon.classList.remove('active');
-            btnAddon.innerHTML = `<i class="fas fa-plus-circle me-1"></i> Add-On`;
-          }
-          
-          // Bersihkan style dan matikan fungsi klik pada subtotal row saat keranjang kosong
-          const subtotalTextEl = document.getElementById('txtSubtotal');
-          if (subtotalTextEl && subtotalTextEl.parentElement) {
-            const subtotalRow = subtotalTextEl.parentElement;
-            subtotalRow.classList.remove('cart-item-selectable', 'addon-mode-active');
-            subtotalRow.style.cursor = 'default';
-            subtotalRow.title = '';
-            subtotalRow.removeAttribute('onclick');
-          }
-          
           container.innerHTML = `<div class="text-center mt-5 text-muted"><i class="fas fa-shopping-cart fa-3x mb-3 opacity-25"></i><p>Belum ada pesanan</p></div>`;
           document.getElementById('txtSubtotal').innerText = 'Rp 0';
           document.getElementById('txtTotal').innerText = 'Rp 0';
+          
           let taxNote = document.getElementById('taxNoteInfo');
           if (taxNote) taxNote.classList.add('d-none');
+          
           const mobTotalEl = document.getElementById('mobTotal');
           const mobCountEl = document.getElementById('mobItemCount');
           if (mobTotalEl && mobCountEl) {
-            mobTotalEl.innerText = 'Rp 0';
-            mobCountEl.innerText = '0';
+              mobTotalEl.innerText = 'Rp 0';
+              mobCountEl.innerText = '0';
           }
-          if (mobileTrigger) mobileTrigger.style.display = 'none';
+          
+          if (mobileTrigger) mobileTrigger.style.display = 'none'; // Sembunyikan bar cart saat data kosong
+          
           CURRENT_TOTAL = 0;
+          
+          // Sinkronisasi Dual Monitor saat keranjang kosong
           posSyncChannel.postMessage({ type: 'UPDATE_CART', cart: CART, total: CURRENT_TOTAL, taxActive: false, taxAmount: 0 });
           return;
         }
 
-        if (mobileTrigger) mobileTrigger.style.display = 'flex';
+        if (mobileTrigger) mobileTrigger.style.display = 'flex'; // Munculkan bar grey saat keranjang mulai terisi
+
         container.innerHTML = CART.map(item => {
-          let itemTotalPrice = getCartItemTotalPrice(item);
-          subtotal += itemTotalPrice;
+          subtotal += item.price * item.qty;
           count += item.qty;
-
-          // Siapkan label note kosmetik jika ada
-          let addonBadgeHtml = "";
-          if (item.individualAddons && item.individualAddons.length === item.qty) {
-            let labelParts = [];
-            item.individualAddons.forEach((addon, idx) => {
-              if (hasChangesForConfig(addon, item.price)) {
-                let parts = [];
-                if (addon.customNote) parts.push(`"${addon.customNote}"`);
-                if (addon.customPrice !== undefined) parts.push(`Custom Price`);
-                if (parts.length === 0 && addon.customRecipe) parts.push(`Custom Recipe`);
-                labelParts.push(`#${idx + 1}: ${parts.join(' | ')}`);
-              }
-            });
-            if (labelParts.length > 0) {
-              addonBadgeHtml = `<div class="addon-badge-text" style="font-size: 0.72rem; color: #27ae60; font-weight: bold; background: rgba(39, 174, 96, 0.08); padding: 4px 8px; border-radius: 6px; margin-top: 4px;"><i class="fas fa-pen small me-1"></i> ${labelParts.join(' ; ')}</div>`;
-            }
-          } else if (item.customNote || item.customPrice !== undefined) {
-            let labelParts = [];
-            if (item.customNote) labelParts.push(`"${item.customNote}"`);
-            if (item.customPrice !== undefined) labelParts.push(`Custom Price`);
-            addonBadgeHtml = `<div class="addon-badge-text"><i class="fas fa-pen small me-1"></i> ${labelParts.join(' | ')}</div>`;
-          }
-
-          // Bangun kelas pengetuk reorder animasi lucu secara dinamis
-          let cardClasses = ["d-flex", "align-items-center", "mb-2", "p-2", "bg-light", "rounded-3", "cart-item-selectable"];
-          if (IS_ADDON_SELECTION_MODE) cardClasses.push("addon-mode-active");
-
-          // Jika mode addon aktif, klik card akan memicu window kustom input kosmetik
-          let clickActionHtml = IS_ADDON_SELECTION_MODE ? `onclick="openCartAddonModal('${item.id}')"` : "";
-
           return `
-          <div class="${cardClasses.join(' ')}" ${clickActionHtml}>
-            <div class="flex-fill">
-              <div class="fw-bold small">${item.name}</div>
-              <div class="text-muted small">Rp ${itemTotalPrice.toLocaleString()}</div>
-              ${addonBadgeHtml}
+            <div class="d-flex align-items-center mb-3 p-2 bg-light rounded-3">
+              <div class="flex-fill">
+                <div class="fw-bold small">${item.name}</div>
+                <div class="text-muted small">Rp ${(item.price * item.qty).toLocaleString()}</div>
+              </div>
+              <div class="qty-control">
+                <button class="btn-qty" onclick="updateCart('${item.id}', -1)"><i class="fas fa-minus"></i></button>
+                <span class="fw-bold small">${item.qty}</span>
+                <button class="btn-qty" onclick="updateCart('${item.id}', 1)"><i class="fas fa-plus"></i></button>
+              </div>
             </div>
-        
-            <div class="qty-control" onclick="if(IS_ADDON_SELECTION_MODE) event.stopPropagation();">
-              <button class="btn-qty" onclick="updateCart('${item.id}', -1)"><i class="fas fa-minus"></i></button>
-              <span class="fw-bold small">${item.qty}</span>
-              <button class="btn-qty" onclick="updateCart('${item.id}', 1)"><i class="fas fa-plus"></i></button>
-            </div>
-          </div>
           `;
         }).join('');
 
-        // Simpan subtotal asli hasil akumulasi item sebelum di-override
-        let originalComputedSubtotal = subtotal;
-
-        // Timpa nilai subtotal jika terdapat input kustom "Ganti Sub Total" global
-        if (window.CUSTOM_CART_SUBTOTAL !== undefined && window.CUSTOM_CART_SUBTOTAL !== null) {
-          subtotal = window.CUSTOM_CART_SUBTOTAL;
-        }
-
         let finalTotal = subtotal;
-        let activeTaxAmount = 0;
+        let activeTaxAmount = 0; 
+        
         let taxNote = document.getElementById('taxNoteInfo');
         if (!taxNote) {
-          taxNote = document.createElement('div');
-          taxNote.id = 'taxNoteInfo';
-          taxNote.className = 'text-danger small fw-bold text-end mt-1';
-          taxNote.style.fontSize = '0.65rem';
-          document.getElementById('txtTotal').parentNode.parentNode.appendChild(taxNote);
+            taxNote = document.createElement('div');
+            taxNote.id = 'taxNoteInfo';
+            taxNote.className = 'text-danger small fw-bold text-end mt-1';
+            taxNote.style.fontSize = '0.65rem';
+            document.getElementById('txtTotal').parentNode.parentNode.appendChild(taxNote);
         }
-
+        
         if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
-          activeTaxAmount = subtotal * (TAX_PERCENTAGE / 100);
-          finalTotal = subtotal + activeTaxAmount;
-          taxNote.innerText = `*Sudah termasuk PPN ${TAX_PERCENTAGE}% (Rp ${activeTaxAmount.toLocaleString(undefined, {maximumFractionDigits:0})})`;
-          taxNote.classList.remove('d-none');
+            activeTaxAmount = subtotal * (TAX_PERCENTAGE / 100);
+            finalTotal = subtotal + activeTaxAmount;
+            
+            taxNote.innerText = `*Sudah termasuk PPN ${TAX_PERCENTAGE}% (Rp ${activeTaxAmount.toLocaleString(undefined, {maximumFractionDigits:0})})`;
+            taxNote.classList.remove('d-none');
         } else {
-          taxNote.classList.add('d-none');
+            taxNote.classList.add('d-none');
         }
 
-        // Render teks Subtotal dengan efek strikethrough jika nilai di-override
-        if (window.CUSTOM_CART_SUBTOTAL !== undefined && window.CUSTOM_CART_SUBTOTAL !== null) {
-          document.getElementById('txtSubtotal').innerHTML = `<s style="font-size: 0.8rem; color: #a0a0a0;">Rp ${originalComputedSubtotal.toLocaleString()}</s> <span class="text-danger fw-bold">Rp ${subtotal.toLocaleString()}</span>`;
-        } else {
-          document.getElementById('txtSubtotal').innerText = 'Rp ' + subtotal.toLocaleString();
-        }
-
+        document.getElementById('txtSubtotal').innerText = 'Rp ' + subtotal.toLocaleString();
         document.getElementById('txtTotal').innerText = 'Rp ' + finalTotal.toLocaleString(undefined, {maximumFractionDigits:0});
+        
         const mobTotalEl = document.getElementById('mobTotal');
         const mobCountEl = document.getElementById('mobItemCount');
         if (mobTotalEl && mobCountEl) {
-          mobTotalEl.innerText = 'Rp ' + finalTotal.toLocaleString(undefined, {maximumFractionDigits:0});
-          mobCountEl.innerText = count.toString();
+            mobTotalEl.innerText = 'Rp ' + finalTotal.toLocaleString(undefined, {maximumFractionDigits:0});
+            mobCountEl.innerText = count.toString();
         }
+        
         CURRENT_TOTAL = finalTotal;
-
-        // === LOGIKA ANIMASI GOYANG, BORDER PUTUS-PUTUS & KLIK PADA BARIS SUB TOTAL ===
-        const subtotalTextEl = document.getElementById('txtSubtotal');
-        if (subtotalTextEl && subtotalTextEl.parentElement) {
-          const subtotalRow = subtotalTextEl.parentElement; // Merujuk ke baris/container Sub Total
-
-          if (IS_ADDON_SELECTION_MODE) {
-            // Pasang animasi goyang, border putus-putus, dan fungsi klik hanya saat mode Add-On aktif
-            subtotalRow.classList.add('cart-item-selectable', 'addon-mode-active');
-            subtotalRow.style.cursor = 'pointer';
-            subtotalRow.title = 'Klik untuk ganti Sub Total';
-            subtotalRow.setAttribute('onclick', 'changeCartSubtotalPrompt()');
-          } else {
-            // Bersihkan style dan matikan fungsi klik saat mode Add-On dimatikan
-            subtotalRow.classList.remove('cart-item-selectable', 'addon-mode-active');
-            subtotalRow.style.cursor = 'default';
-            subtotalRow.title = '';
-            subtotalRow.removeAttribute('onclick');
-          }
-        }
-
-        posSyncChannel.postMessage({ type: 'UPDATE_CART', cart: CART, total: finalTotal, taxActive: (typeof IS_TAX_ACTIVE !== 'undefined' ? IS_TAX_ACTIVE : false), taxPercent: (typeof TAX_PERCENTAGE !== 'undefined' ? TAX_PERCENTAGE : 0), taxAmount: activeTaxAmount });
-      }
-
-      function changeCartSubtotalPrompt() {
-        if (CART.length === 0) return;
-
-        // Hitung subtotal default akumulasi item saat ini
-        let computedSub = CART.reduce((sum, item) => sum + getCartItemTotalPrice(item), 0);
         
-        // Ambil nilai kustom yang sedang aktif (jika ada), jika tidak ada gunakan subtotal asli
-        let currentDefault = window.CUSTOM_CART_SUBTOTAL !== undefined && window.CUSTOM_CART_SUBTOTAL !== null ? window.CUSTOM_CART_SUBTOTAL : computedSub;
-
-        // Cek apakah elemen modal kustom sudah ada di DOM, jika belum ada kita bangun secara dinamis
-        let modal = document.getElementById('modalCustomSubtotal');
-        if (!modal) {
-          modal = document.createElement('div');
-          modal.id = 'modalCustomSubtotal';
-          // Menggunakan standar overlay fixed-top dengan style backdrop gelap transparan
-          modal.className = 'fixed-top w-100 h-100 d-none justify-content-center align-items-center';
-          modal.style.background = 'rgba(0, 0, 0, 0.5)';
-          modal.style.zIndex = '1060'; // Memastikan berada di atas panel cart utama
-          modal.style.display = 'flex'; 
-
-          modal.innerHTML = `
-            <div class="bg-white rounded-3 shadow p-4 position-relative" style="width: 90%; max-width: 400px; border-top: 5px solid var(--primary-gold, #ffc107);">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold mb-0 text-dark">
-                  <i class="fas fa-edit me-2 text-warning"></i>Ganti Sub Total
-                </h5>
-                <button type="button" class="btn-close" onclick="closeSubtotalModal()"></button>
-              </div>
-              
-              <p class="text-muted style-normal mb-4" style="font-size: 0.8rem; line-height: 1.4;">
-                Silakan masukkan nominal subtotal global baru yang diinginkan. Perubahan ini akan otomatis dikalkulasi ulang dengan PPN (Tax) secara realtime.
-              </p>
-              
-              <div class="mb-4">
-                <label class="form-label small fw-bold text-secondary">Nominal Baru (Rp)</label>
-                <div class="input-group input-group-lg">
-                  <span class="input-group-text bg-light fw-bold text-muted" style="font-size: 1rem;">Rp</span>
-                  <input type="number" id="inputCustomSubtotalValue" class="form-control fw-bold text-danger" placeholder="0" min="0" style="font-size: 1.25rem;">
-                </div>
-                <div class="form-text text-muted small mt-2" style="font-size: 0.7rem;">
-                  <i class="fas fa-info-circle me-1"></i> Kosongkan nilai input lalu klik simpan untuk mengembalikan ke harga normal.
-                </div>
-              </div>
-
-              <div class="d-flex gap-2 justify-content-end">
-                <button type="button" class="btn btn-light btn-sm fw-bold px-3 border" onclick="closeSubtotalModal()">Batal</button>
-                <button type="button" class="btn btn-warning btn-sm fw-bold px-3 text-dark shadow-sm" onclick="saveSubtotalModal()">Simpan Perubahan</button>
-              </div>
-            </div>
-          `;
-          document.body.appendChild(modal);
-        }
-
-        // Isi form input modal dengan nilai kustom saat ini (jika ada)
-        const inputEl = document.getElementById('inputCustomSubtotalValue');
-        inputEl.value = window.CUSTOM_CART_SUBTOTAL !== undefined && window.CUSTOM_CART_SUBTOTAL !== null ? window.CUSTOM_CART_SUBTOTAL : "";
-        
-        // Tampilkan modal ke layar
-        modal.classList.remove('d-none');
-        
-        // Berikan sedikit delay fokus agar proses transisi render DOM selesai
-        setTimeout(() => inputEl.focus(), 100);
-      }
-
-      function closeSubtotalModal() {
-        const modal = document.getElementById('modalCustomSubtotal');
-        if (modal) modal.classList.add('d-none');
-      }
-
-      function saveSubtotalModal() {
-        const inputEl = document.getElementById('inputCustomSubtotalValue');
-        const inputValueStr = inputEl.value.trim();
-
-        if (inputValueStr === "") {
-          window.CUSTOM_CART_SUBTOTAL = null; // Kembalikan ke setelan normal jika input sengaja dikosongkan
-        } else {
-          let val = parseFloat(inputValueStr);
-          if (!isNaN(val) && val >= 0) {
-            window.CUSTOM_CART_SUBTOTAL = val;
-          } else {
-            alert("Mohon masukkan nilai nominal subtotal angka yang valid!");
-            return;
-          }
-        }
-
-        closeSubtotalModal();
-        updateCartUI(); // Segarkan UI cart, efek getar animasi, dan PPN secara instan 
-      }
-
-      // --- FUNGSI UTAMA MANAGEMENT STATE MODAL & ANIMASI ADD-ON ---
-      function toggleAddonSelectionMode() {
-        if (CART.length === 0) {
-          IS_ADDON_SELECTION_MODE = false;
-          const btn = document.getElementById('btnToggleAddonMode');
-          if (btn) {
-            btn.classList.remove('active');
-            btn.innerHTML = `<i class="fas fa-plus-circle me-1"></i> Add-On`;
-          }
-          return;
-        }
-        IS_ADDON_SELECTION_MODE = !IS_ADDON_SELECTION_MODE;
-        const btn = document.getElementById('btnToggleAddonMode');
-        if (IS_ADDON_SELECTION_MODE) {
-          btn.classList.add('active');
-          btn.innerHTML = `<i class="fas fa-check-circle me-1"></i> Selesai`;
-        } else {
-          btn.classList.remove('active');
-          btn.innerHTML = `<i class="fas fa-plus-circle me-1"></i> Add-On`;
-        }
-        updateCartUI(); // Segarkan untuk memasang atau melepas kelas animasi getar
-      }
-
-      // --- HELPER DAN STATE MANAGEMENT UNTUK ADD-ON MULTI-QUANTITY ---
-      function hasChangesForConfig(cfg, originalPrice) {
-        if (!cfg) return false;
-        if (cfg.customNote && cfg.customNote.trim() !== "") return true;
-        if (cfg.customPrice !== undefined && cfg.customPrice !== null && cfg.customPrice !== originalPrice) return true;
-        if (cfg.customRecipe && cfg.originalRecipe) {
-          for (let i = 0; i < cfg.customRecipe.length; i++) {
-            const cur = cfg.customRecipe[i];
-            const orig = cfg.originalRecipe.find(x => x.id === cur.id);
-            if (orig && cur.qty !== orig.qty) {
-              return true;
-            }
-          }
-        }
-        return false;
-      }
-
-      function renderAddonQtyPills() {
-        const container = document.getElementById('addonQtyPillsContainer');
-        const listEl = document.getElementById('addonQtyPillsList');
-        if (!container || !listEl) return;
-
-        const state = window.ADDON_MODAL_STATE;
-        if (!state || state.qty <= 1) {
-          container.classList.add('d-none');
-          return;
-        }
-
-        container.classList.remove('d-none');
-
-        const item = CART.find(x => x.id === state.pid);
-        const originalPrice = item ? item.price : 0;
-        
-        const hasIndividualChanges = state.individualConfigs.some(cfg => hasChangesForConfig(cfg, originalPrice));
-
-        let html = "";
-        for (let i = 0; i < state.qty; i++) {
-          const isCurrentActive = state.activeIndex === i;
-          const cfg = state.individualConfigs[i];
-          const hasChanges = hasChangesForConfig(cfg, originalPrice);
-
-          let btnClass = "btn btn-sm rounded-pill fw-bold px-3 py-2 border-2 ";
-          let style = "transition: all 0.2s;";
-
-          if (isCurrentActive) {
-            if (hasChanges) {
-              btnClass += "btn-success border-success text-white";
-            } else {
-              btnClass += "btn-dark border-dark text-white";
-            }
-          } else {
-            if (hasChanges) {
-              btnClass += "btn-outline-success border-success bg-success bg-opacity-10 text-success";
-            } else {
-              btnClass += "btn-outline-secondary border-secondary text-muted bg-white";
-            }
-          }
-
-          const isSemuaOn = state.activeIndex === "all";
-          if (isSemuaOn) {
-            btnClass = "btn btn-sm rounded-pill fw-bold px-3 py-2 border-2 btn-outline-secondary text-muted bg-light border-light";
-            style += " opacity: 0.6; cursor: pointer;";
-          }
-
-          html += `<button type="button" class="${btnClass}" style="${style}" onclick="switchAddonPill(${i})">${i + 1}</button>`;
-        }
-
-        const isSemuaActive = state.activeIndex === "all";
-        const isSemuaDisabled = hasIndividualChanges;
-
-        let semuaClass = "btn btn-sm rounded-pill fw-bold px-4 py-2 border-2 ms-auto ";
-        let semuaStyle = "transition: all 0.2s;";
-
-        if (isSemuaActive) {
-          semuaClass += "btn-primary border-primary text-white";
-        } else {
-          if (isSemuaDisabled) {
-            semuaClass += "btn-outline-secondary text-muted bg-light border-light";
-            semuaStyle += " opacity: 0.4; cursor: not-allowed;";
-          } else {
-            semuaClass += "btn-outline-primary border-primary text-primary bg-white";
-          }
-        }
-
-        html += `<button type="button" class="${semuaClass}" style="${semuaStyle}" onclick="switchAddonPill('all')" ${isSemuaDisabled ? 'disabled' : ''}>Semua</button>`;
-
-        listEl.innerHTML = html;
-      }
-
-      function switchAddonPill(targetIndex) {
-        const state = window.ADDON_MODAL_STATE;
-        if (!state) return;
-
-        saveCurrentAddonUIStateToConfig();
-
-        if (targetIndex === 'all') {
-          const item = CART.find(x => x.id === state.pid);
-          const originalPrice = item ? item.price : 0;
-          const hasIndividualChanges = state.individualConfigs.some(cfg => hasChangesForConfig(cfg, originalPrice));
-          if (hasIndividualChanges) return; // Cannot click Semua if there are individual changes
-        }
-
-        state.activeIndex = targetIndex;
-        loadAddonConfigToUI();
-      }
-
-      function saveCurrentAddonUIStateToConfig() {
-        const state = window.ADDON_MODAL_STATE;
-        if (!state) return;
-
-        const noteVal = document.getElementById('addonNoteValue').value.trim();
-        const priceVal = parseFloat(document.getElementById('addonPriceValue').value);
-
-        let activeCfg;
-        if (state.activeIndex === 'all') {
-          activeCfg = state.allConfig;
-        } else {
-          activeCfg = state.individualConfigs[state.activeIndex];
-        }
-
-        if (!activeCfg) return;
-
-        activeCfg.customNote = noteVal;
-
-        const item = CART.find(x => x.id === state.pid);
-        const originalPrice = item ? item.price : 0;
-
-        if (!isNaN(priceVal) && priceVal >= 0 && priceVal !== originalPrice) {
-          activeCfg.customPrice = priceVal;
-        } else {
-          activeCfg.customPrice = undefined;
-        }
-
-        activeCfg.noRecipeChangeChecked = document.getElementById('addonNoRecipeChangeToggle').checked;
-
-        // Check if recipe has changes
-        if (window.CURRENT_ADDON_RECIPE && window.ORIGINAL_ADDON_RECIPE) {
-          let recipeHasChanges = false;
-          window.CURRENT_ADDON_RECIPE.forEach(m => {
-            const orig = window.ORIGINAL_ADDON_RECIPE.find(x => x.id === m.id);
-            if (orig && m.qty !== orig.qty) {
-              recipeHasChanges = true;
-            }
-          });
-
-          if (recipeHasChanges) {
-            activeCfg.customRecipe = JSON.parse(JSON.stringify(window.CURRENT_ADDON_RECIPE));
-            activeCfg.originalRecipe = JSON.parse(JSON.stringify(window.ORIGINAL_ADDON_RECIPE));
-          } else {
-            activeCfg.customRecipe = null;
-            activeCfg.originalRecipe = null;
-          }
-        } else {
-          activeCfg.customRecipe = null;
-          activeCfg.originalRecipe = null;
-        }
-      }
-
-      function loadAddonConfigToUI() {
-        const state = window.ADDON_MODAL_STATE;
-        if (!state) return;
-
-        const item = CART.find(x => x.id === state.pid);
-        if (!item) return;
-
-        let activeCfg;
-        if (state.activeIndex === 'all') {
-          activeCfg = state.allConfig;
-        } else {
-          activeCfg = state.individualConfigs[state.activeIndex];
-        }
-
-        if (!activeCfg) return;
-
-        // Set note
-        document.getElementById('addonNoteValue').value = activeCfg.customNote || "";
-
-        // Set price
-        document.getElementById('addonPriceValue').value = activeCfg.customPrice !== undefined ? activeCfg.customPrice : item.price;
-
-        // Set toggle
-        const toggleEl = document.getElementById('addonNoRecipeChangeToggle');
-        toggleEl.checked = activeCfg.noRecipeChangeChecked || false;
-
-        const hasRecipeChanges = activeCfg.customRecipe && activeCfg.customRecipe.length > 0;
-        if (hasRecipeChanges) {
-          window.ORIGINAL_ADDON_RECIPE = JSON.parse(JSON.stringify(activeCfg.originalRecipe));
-          window.CURRENT_ADDON_RECIPE = JSON.parse(JSON.stringify(activeCfg.customRecipe));
-          
-          toggleEl.checked = false;
-          toggleEl.disabled = true;
-          renderAddonRecipeList();
-        } else {
-          toggleEl.disabled = false;
-          
-          if (window.PRODUCT_STANDARD_RECIPE) {
-            window.ORIGINAL_ADDON_RECIPE = JSON.parse(JSON.stringify(window.PRODUCT_STANDARD_RECIPE));
-            window.CURRENT_ADDON_RECIPE = JSON.parse(JSON.stringify(window.PRODUCT_STANDARD_RECIPE));
-            renderAddonRecipeList();
-          } else {
-            window.ORIGINAL_ADDON_RECIPE = [];
-            window.CURRENT_ADDON_RECIPE = [];
-            renderAddonRecipeList();
-          }
-        }
-
-        // Refresh the pills UI to update states
-        renderAddonQtyPills();
-      }
-
-      function initializeAddonModalState(item) {
-        window.ADDON_MODAL_STATE = {
-          pid: item.id,
-          qty: item.qty,
-          activeIndex: "all",
-          allConfig: {
-            customNote: item.customNote || "",
-            customPrice: item.customPrice !== undefined ? item.customPrice : item.price,
-            customRecipe: item.customRecipe ? JSON.parse(JSON.stringify(item.customRecipe)) : null,
-            originalRecipe: item.originalRecipe ? JSON.parse(JSON.stringify(item.originalRecipe)) : null,
-            noRecipeChangeChecked: item.customNote && (!item.customRecipe || item.customRecipe.length === 0) ? true : false
-          },
-          individualConfigs: []
-        };
-
-        if (item.individualAddons && item.individualAddons.length === item.qty) {
-          window.ADDON_MODAL_STATE.individualConfigs = JSON.parse(JSON.stringify(item.individualAddons));
-          window.ADDON_MODAL_STATE.individualConfigs.forEach(cfg => {
-            if (cfg.noRecipeChangeChecked === undefined) {
-              cfg.noRecipeChangeChecked = cfg.customNote && (!cfg.customRecipe || cfg.customRecipe.length === 0) ? true : false;
-            }
-          });
-          
-          const hasIndividualChanges = window.ADDON_MODAL_STATE.individualConfigs.some(cfg => hasChangesForConfig(cfg, item.price));
-          if (hasIndividualChanges) {
-            window.ADDON_MODAL_STATE.activeIndex = 0; // default to pill 1
-          } else {
-            window.ADDON_MODAL_STATE.activeIndex = "all";
-          }
-        } else {
-          window.ADDON_MODAL_STATE.individualConfigs = [];
-          for (let i = 0; i < item.qty; i++) {
-            window.ADDON_MODAL_STATE.individualConfigs.push({
-              customNote: "",
-              customPrice: undefined,
-              customRecipe: null,
-              originalRecipe: null,
-              noRecipeChangeChecked: false
-            });
-          }
-          window.ADDON_MODAL_STATE.activeIndex = "all";
-        }
-
-        loadAddonConfigToUI();
-      }
-
-      function openCartAddonModal(pid) {
-        const item = CART.find(x => x.id === pid);
-        if (!item) return;
-
-        document.getElementById('addonTargetPid').value = pid;
-        document.getElementById('addonTargetName').innerText = item.name;
-
-        // Reset toggle "Tidak rubah bahan" ke default selalu OFF setiap dibuka
-        const toggleEl = document.getElementById('addonNoRecipeChangeToggle');
-        toggleEl.checked = false;
-        toggleEl.disabled = false; // reset disabled state
-
-        // Pemuatan resep dinamis
-        const listEl = document.getElementById('addonRecipeList');
-        listEl.innerHTML = '<div class="text-center p-3 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Memuat bahan resep...</div>';
-        
-        document.getElementById('modalCartAddonCosmetic').classList.remove('d-none');
-
-        const handleLoadedRecipe = (recipe) => {
-          window.PRODUCT_STANDARD_RECIPE = recipe || [];
-          initializeAddonModalState(item);
-        };
-
-        if (item.originalRecipe || (item.customRecipe && item.customRecipe.length > 0)) {
-          handleLoadedRecipe(item.originalRecipe || item.customRecipe);
-        } else {
-          google.script.run.withSuccessHandler(recipe => {
-            handleLoadedRecipe(recipe);
-          }).withFailureHandler(err => {
-            listEl.innerHTML = '<div class="text-center p-3 text-danger small"><i class="fas fa-exclamation-circle me-1"></i> Gagal memuat bahan resep.</div>';
-          }).getProductRecipe(item.id);
-        }
-      }
-
-      function renderAddonRecipeList() {
-        const listEl = document.getElementById('addonRecipeList');
-        if (!window.CURRENT_ADDON_RECIPE || window.CURRENT_ADDON_RECIPE.length === 0) {
-          listEl.innerHTML = '<div class="text-center p-3 text-muted small"><i class="fas fa-info-circle me-1 text-secondary"></i> Menu ini tidak memiliki bahan resep.</div>';
-          updateAddonUIState();
-          return;
-        }
-
-        listEl.innerHTML = window.CURRENT_ADDON_RECIPE.map((m, index) => {
-          const orig = window.ORIGINAL_ADDON_RECIPE.find(x => x.id === m.id) || m;
-          const isDeleted = m.qty === 0;
-          const isModified = m.qty !== orig.qty;
-          
-          let borderClass = 'border-light';
-          let bgClass = 'bg-white';
-          if (isDeleted) {
-            borderClass = 'border-danger border-opacity-50';
-            bgClass = 'bg-danger bg-opacity-10';
-          } else if (isModified) {
-            borderClass = 'border-warning border-opacity-50';
-            bgClass = 'bg-warning bg-opacity-10';
-          }
-
-          return `
-            <div class="d-flex justify-content-between align-items-center ${bgClass} p-2 rounded-3 shadow-sm border ${borderClass}" style="transition: all 0.2s;">
-              <div class="d-flex flex-column text-start overflow-hidden me-2">
-                <span class="fw-bold text-dark text-truncate ${isDeleted ? 'text-decoration-line-through text-muted' : ''}" style="font-size: 0.85rem;" title="${m.name}">${m.name}</span>
-                <span class="small text-muted" style="font-size: 0.72rem;">Takaran: <b class="${isDeleted ? 'text-muted' : 'text-danger'}">${m.qty} ${m.unit}</b> ${isModified && !isDeleted ? `<span class="badge bg-warning text-dark ms-1">Ubah (Asli: ${orig.qty} ${orig.unit})</span>` : ''}</span>
-              </div>
-              <div class="d-flex gap-1 flex-shrink-0">
-                <button type="button" class="btn btn-outline-secondary btn-sm fw-bold px-2 rounded-circle" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;" onclick="adjustAddonIngredient(${index}, -1)">-</button>
-                <button type="button" class="btn btn-outline-success btn-sm fw-bold px-2 rounded-circle" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;" onclick="adjustAddonIngredient(${index}, 1)">+</button>
-                <button type="button" class="btn btn-outline-danger btn-sm fw-bold px-2 rounded-circle" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;" onclick="adjustAddonIngredient(${index}, 0)">✕</button>
-              </div>
-            </div>
-          `;
-        }).join('');
-
-        updateAddonUIState();
-      }
-
-      function adjustAddonIngredient(index, action) {
-        const item = window.CURRENT_ADDON_RECIPE[index];
-        if (!item) return;
-        const orig = window.ORIGINAL_ADDON_RECIPE.find(x => x.id === item.id);
-        if (!orig) return;
-
-        const originalQty = parseFloat(orig.qty) || 0;
-
-        if (action === 0) {
-          item.qty = 0;
-        } else if (action === 1) {
-          item.qty = parseFloat((parseFloat(item.qty) + originalQty).toFixed(2));
-        } else if (action === -1) {
-          item.qty = parseFloat((parseFloat(item.qty) - originalQty).toFixed(2));
-          if (item.qty < 0) item.qty = 0;
-        }
-
-        renderAddonRecipeList();
-      }
-
-      function updateAddonUIState() {
-        let hasActiveChanges = false;
-        let noteParts = [];
-
-        if (window.CURRENT_ADDON_RECIPE && window.ORIGINAL_ADDON_RECIPE) {
-          window.CURRENT_ADDON_RECIPE.forEach(m => {
-            const orig = window.ORIGINAL_ADDON_RECIPE.find(x => x.id === m.id);
-            if (orig) {
-              if (m.qty !== orig.qty) {
-                hasActiveChanges = true;
-                const originalQty = parseFloat(orig.qty) || 0;
-                
-                if (m.qty === 0) {
-                  noteParts.push(`Tanpa ${m.name}`);
-                } else if (m.qty > orig.qty) {
-                  const diff = m.qty - orig.qty;
-                  const mult = Math.round(diff / originalQty);
-                  if (mult <= 1) {
-                    noteParts.push(`+ ${m.name}`);
-                  } else {
-                    noteParts.push(`+ ${mult}x ${m.name}`);
-                  }
-                } else if (m.qty < orig.qty) {
-                  const diff = orig.qty - m.qty;
-                  const mult = Math.round(diff / originalQty);
-                  if (mult <= 1) {
-                    noteParts.push(`- ${m.name}`);
-                  } else {
-                    noteParts.push(`- ${mult}x ${m.name}`);
-                  }
-                }
-              }
-            }
-          });
-        }
-
-        window.HAS_ACTIVE_CHANGES = hasActiveChanges;
-
-        const toggleEl = document.getElementById('addonNoRecipeChangeToggle');
-        const noteEl = document.getElementById('addonNoteValue');
-        const saveBtn = document.getElementById('btnSaveCartAddonCosmetic');
-
-        if (hasActiveChanges) {
-          toggleEl.checked = false;
-          toggleEl.disabled = true;
-          
-          noteEl.value = noteParts.join(', ');
-          noteEl.disabled = true;
-          noteEl.style.backgroundColor = '#e9ecef';
-          
-          saveBtn.disabled = false;
-        } else {
-          toggleEl.disabled = false;
-          
-          if (toggleEl.checked) {
-            noteEl.disabled = false;
-            noteEl.style.backgroundColor = '';
-            
-            const noteVal = noteEl.value.trim();
-            if (noteVal === "") {
-              saveBtn.disabled = true;
-            } else {
-              saveBtn.disabled = false;
-            }
-          } else {
-            noteEl.value = "";
-            noteEl.disabled = true;
-            noteEl.style.backgroundColor = '#e9ecef';
-            saveBtn.disabled = false;
-          }
-        }
-        
-        const toggleContainer = toggleEl.closest('.d-flex');
-        if (toggleContainer) {
-          if (toggleEl.checked) {
-            toggleContainer.style.background = 'rgba(25, 135, 84, 0.1)';
-            toggleContainer.style.borderColor = '#198754';
-          } else if (toggleEl.disabled) {
-            toggleContainer.style.background = '#f8f9fa';
-            toggleContainer.style.borderColor = '#dee2e6';
-            toggleContainer.style.opacity = '0.6';
-          } else {
-            toggleContainer.style.background = '';
-            toggleContainer.style.borderColor = '';
-            toggleContainer.style.opacity = '';
-          }
-        }
-
-        // Pemicu pembaruan real-time visual pill status
-        if (window.ADDON_MODAL_STATE) {
-          saveCurrentAddonUIStateToConfig();
-          renderAddonQtyPills();
-        }
-      }
-
-      function closeCartAddonModal() {
-        document.getElementById('modalCartAddonCosmetic').classList.add('d-none');
-      }
-
-      function saveCartAddonCosmetic() {
-        const btn = document.getElementById('btnSaveCartAddonCosmetic');
-        if (btn) btn.classList.add('saving-active');
-
-        setTimeout(() => {
-          const pid = document.getElementById('addonTargetPid').value;
-          const item = CART.find(x => x.id === pid);
-          if (item) {
-            // Simpan status tampilan aktif saat ini terlebih dahulu
-            saveCurrentAddonUIStateToConfig();
-
-            const state = window.ADDON_MODAL_STATE;
-            const originalPrice = item.price;
-            
-            // Periksa apakah ada konfigurasi individual yang memiliki perubahan nyata
-            const hasIndividualChanges = state.individualConfigs.some(cfg => hasChangesForConfig(cfg, originalPrice));
-
-            if (hasIndividualChanges) {
-              item.individualAddons = JSON.parse(JSON.stringify(state.individualConfigs));
-              
-              // Hapus field bulk mode agar tidak kontradiktif
-              delete item.customNote;
-              delete item.customPrice;
-              delete item.customRecipe;
-              delete item.originalRecipe;
-            } else {
-              delete item.individualAddons;
-
-              const allCfg = state.allConfig;
-              if (hasChangesForConfig(allCfg, originalPrice)) {
-                item.customNote = allCfg.customNote;
-                if (allCfg.customPrice !== undefined && allCfg.customPrice !== originalPrice) {
-                  item.customPrice = allCfg.customPrice;
-                } else {
-                  delete item.customPrice;
-                }
-                
-                if (allCfg.customRecipe && allCfg.customRecipe.length > 0) {
-                  item.customRecipe = allCfg.customRecipe;
-                  item.originalRecipe = allCfg.originalRecipe;
-                } else {
-                  delete item.customRecipe;
-                  delete item.originalRecipe;
-                }
-              } else {
-                // Bersihkan semua jika tidak ada perubahan sama sekali
-                delete item.customNote;
-                delete item.customPrice;
-                delete item.customRecipe;
-                delete item.originalRecipe;
-              }
-            }
-          }
-
-          if (btn) btn.classList.remove('saving-active');
-          closeCartAddonModal();
-          toggleAddonSelectionMode();
-          updateCartUI(); // Segarkan cart secara instan
-        }, 500);
+        // MENGIRIM PAYLOAD PAJAK KE CUSTOMER DISPLAY
+        posSyncChannel.postMessage({ 
+          type: 'UPDATE_CART', 
+          cart: CART, 
+          total: finalTotal, 
+          taxActive: (typeof IS_TAX_ACTIVE !== 'undefined' ? IS_TAX_ACTIVE : false),
+          taxPercent: (typeof TAX_PERCENTAGE !== 'undefined' ? TAX_PERCENTAGE : 0),
+          taxAmount: activeTaxAmount 
+        });
       }
 
       function toggleMobileCart(show) {
@@ -7791,6 +5879,7 @@
         const method = document.querySelector('input[name="payMethod"]:checked').value;
         const cashInput = document.getElementById('inputCashAmount');
         const cash = parseInt(cashInput.value) || 0;
+        
         if (method === 'CASH' && cash < CURRENT_TOTAL) {
           alert("UANG PEMBAYARAN KURANG!");
           cashInput.focus();
@@ -7802,6 +5891,8 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Memproses...';
 
         let finalCashierName = getFinalCashierName();
+        
+        // Perekaman Pintar Multi-Admin (Owner) Sebelum Shift Kasir Dimulai
         if (USER_ROLE === 'ADMIN') {
           let savedShift = localStorage.getItem('pos_shift_data');
           if (!savedShift) {
@@ -7816,6 +5907,7 @@
               namesArr.push(finalCashierName);
             }
             localStorage.setItem('pos_preshift_admin_names', JSON.stringify(namesArr));
+
             // Hanya tambahkan ke total laci jika metodenya CASH
             if (method === 'CASH') {
               let preShiftCash = parseInt(localStorage.getItem('pos_preshift_admin_cash')) || 0;
@@ -7824,86 +5916,13 @@
           }
         }
 
-        // --- ANALISIS STRUKTUR PRICE ADJUSTMENT NOTES ---
-        let priceNotesArr = [];
-        CART.forEach(item => {
-          if (item.individualAddons && item.individualAddons.length === item.qty) {
-            item.individualAddons.forEach((addon, idx) => {
-              if (addon.customPrice !== undefined && addon.customPrice !== item.price) {
-                priceNotesArr.push(`Menu [${item.name}] #${idx + 1}: Harga diganti dari Rp ${item.price.toLocaleString()} ke Rp ${addon.customPrice.toLocaleString()}`);
-              }
-            });
-          } else if (item.customPrice !== undefined && item.customPrice !== item.price) {
-            let oldItemTotal = item.price * item.qty;
-            let newItemTotal = item.customPrice * item.qty;
-            priceNotesArr.push(`Menu [${item.name}] x${item.qty}: Harga diganti dari Rp ${item.price.toLocaleString()} ke Rp ${item.customPrice.toLocaleString()} (Total dari Rp ${oldItemTotal.toLocaleString()} menjadi Rp ${newItemTotal.toLocaleString()})`);
-          }
-        });
-
-        if (window.CUSTOM_CART_SUBTOTAL !== undefined && window.CUSTOM_CART_SUBTOTAL !== null) {
-          let computedSubtotalWithItems = CART.reduce((sum, item) => sum + getCartItemTotalPrice(item), 0);
-          priceNotesArr.push(`Sub Total Overridden: Dari Rp ${computedSubtotalWithItems.toLocaleString()} diganti menjadi Rp ${window.CUSTOM_CART_SUBTOTAL.toLocaleString()}`);
-        }
-        let finalPriceNotes = priceNotesArr.join(' | ');
-
-        // --- ANALISIS STRUKTUR ADD-ON NOTES ---
-        let addonNotesArr = [];
-        CART.forEach(item => {
-          if (item.individualAddons && item.individualAddons.length === item.qty) {
-            item.individualAddons.forEach((addon, idx) => {
-              if (hasChangesForConfig(addon, item.price)) {
-                let parts = [];
-                if (addon.customNote) parts.push(`"${addon.customNote}"`);
-                if (addon.customPrice !== undefined) parts.push(`Custom Price`);
-                const isRecipeChange = addon.customRecipe && addon.customRecipe.length > 0;
-                if (parts.length === 0 && isRecipeChange) parts.push(`Custom Recipe`);
-                
-                const typeLabel = isRecipeChange ? 'BAHAN' : 'NOTE';
-                addonNotesArr.push(`[${typeLabel}] Menu [${item.name}] #${idx + 1}: ${parts.join(' | ')}`);
-              }
-            });
-          } else if (item.customNote) {
-            const isRecipeChange = item.customRecipe && item.customRecipe.length > 0;
-            if (isRecipeChange) {
-              addonNotesArr.push(`[BAHAN] Menu [${item.name}] x${item.qty}: "${item.customNote}"`);
-            } else {
-              addonNotesArr.push(`[NOTE] Menu [${item.name}] x${item.qty}: "${item.customNote}"`);
-            }
-          }
-        });
-        let finalAddonNotes = addonNotesArr.join(' | ');
-
-        // --- PECAH ITEM INDIVIDUAL UNTUK SAVING & STOCK DEDUCTION ---
-        const processedItems = [];
-        CART.forEach(item => {
-          if (item.individualAddons && item.individualAddons.length === item.qty) {
-            item.individualAddons.forEach((addon, idx) => {
-              const individualItem = {
-                ...item,
-                name: `${item.name} #${idx + 1}`,
-                qty: 1,
-                customNote: addon.customNote || "",
-                customPrice: addon.customPrice !== undefined ? addon.customPrice : undefined,
-                customRecipe: addon.customRecipe || undefined,
-                originalRecipe: addon.originalRecipe || undefined
-              };
-              delete individualItem.individualAddons;
-              processedItems.push(individualItem);
-            });
-          } else {
-            processedItems.push(item);
-          }
-        });
-
         const transactionData = {
           total: CURRENT_TOTAL, 
           method: method,
           cash: method === 'CASH' ? cash : CURRENT_TOTAL,
           change: method === 'CASH' ? (cash - CURRENT_TOTAL) : 0,
-          items: processedItems,
-          cashier: finalCashierName,
-          priceNotes: finalPriceNotes, // Masukkan ke payload objek
-          addonNotes: finalAddonNotes   // [BARU] Masukkan addonNotes ke payload objek
+          items: CART,
+          cashier: finalCashierName
         };
 
         google.script.run.withSuccessHandler(res => {
@@ -7911,19 +5930,11 @@
           btn.innerText = 'BAYAR SEKARANG';
           if(res.status === 'success') {
             const itemDetails = CART.map(i => `${i.name} (x${i.qty})`).join(', ');
-            let auditLogMessage = `Menyimpan transaksi POS Utama senilai Rp ${CURRENT_TOTAL.toLocaleString()} dengan item: [ ${itemDetails} ]`;
-            if (finalPriceNotes) {
-              auditLogMessage += ` | Catatan Harga: ${finalPriceNotes}`;
-            }
-            if (finalAddonNotes) {
-              auditLogMessage += ` | Catatan Addon: ${finalAddonNotes}`;
-            }
-            triggerAuditLog("TRANSAKSI", auditLogMessage);
+            triggerAuditLog("TRANSAKSI", `Menyimpan transaksi POS Utama senilai Rp ${CURRENT_TOTAL.toLocaleString()} dengan item: [ ${itemDetails} ]`);
 
-            // Tampilkan summary & cetak nota dengan data transaksi yang sudah terpecah secara presisi
             showSummary(transactionData);
             
-            // Langsung fetch data terbaru agar orderan masuk ke Monitor dengan instan
+            // [PERBAIKAN] Langsung fetch data terbaru agar orderan masuk ke Monitor dengan instan
             fetchInitialData(false);
           } else {
             alert("Gagal: " + res.message);
@@ -7953,7 +5964,6 @@
 
       function resetAfterPayment() {
         CART = [];
-        window.CUSTOM_CART_SUBTOTAL = null; // Hapus state memori kustom subtotal global
         updateCartUI();
         document.getElementById('modalSummary').style.display = 'none';
         toggleMobileCart(false);
@@ -7961,11 +5971,91 @@
       }
 
       function renderCashierButtons() {
-        // Dropdown kasir tidak digunakan lagi karena login menggunakan auto-detect PIN langsung di login page utama.
+        const select = document.getElementById('topCashierSelect');
+        if (!select) return;
+
+        if (!CONFIG.Cashiers || CONFIG.Cashiers.length === 0) {
+          select.innerHTML = '<option disabled>Data Kasir Kosong (Cek Sheet Config)</option>';
+          return;
+        }
+
+        let html = '<option value="" disabled selected>Pilih Kasir...</option>';
+        CONFIG.Cashiers.forEach((name, index) => {
+          html += `<option value="${index}">${name}</option>`;
+        });
+        select.innerHTML = html;
       }
+
+      function openPinPad(name, index) {
+        TEMP_CASHIER = { name, index };
+        CURRENT_PIN = "";
+        document.getElementById('pinSubtitle').innerText = "Kasir: " + name;
+        updatePinDots();
+        document.getElementById('modalPin').style.display = 'flex';
+      }
+
+      function pressPin(num) {
+        if (CURRENT_PIN.length < 4) {
+          CURRENT_PIN += num;
+          updatePinDots();
+          if (CURRENT_PIN.length === 4) verifyPin();
+        }
+      }
+
+      function updatePinDots() {
+        const dots = document.querySelectorAll('#pinDots .dot');
+        dots.forEach((dot, i) => {
+          dot.classList.toggle('filled', i < CURRENT_PIN.length);
+        });
+      }
+
+      function verifyPin() {
+        const dots = document.getElementById('pinDots');
+        const subtitle = document.getElementById('pinSubtitle');
+        const originalSubtitle = subtitle.innerText;
+
+        subtitle.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+        google.script.run.withSuccessHandler(res => {
+          if (res.status === 'success') {
+            SELECTED_CASHIER = TEMP_CASHIER.name;
+            
+            // Set UI Select agar menahan nama Kasir yang sudah berhasil login
+            const topSelect = document.getElementById('topCashierSelect');
+            if(topSelect) topSelect.value = TEMP_CASHIER.index;
+            
+            closePin();
+          } else {
+            subtitle.innerHTML = '<span class="text-danger">PIN SALAH!</span>';
+            dots.classList.add('text-danger'); 
+            setTimeout(() => {
+              subtitle.innerText = originalSubtitle;
+              dots.classList.remove('text-danger');
+              clearPin();
+            }, 1000);
+          }
+        }).verifyCashierPIN(TEMP_CASHIER.name, CURRENT_PIN);
+      }
+
+      function clearPin() { CURRENT_PIN = ""; updatePinDots(); }
+      function closePin() { document.getElementById('modalPin').style.display = 'none'; }
 
       // [2026-01-18] Event Listener Keyboard Global (Root Level)
       window.addEventListener('keydown', function(e) {
+        // 1. Logika saat Modal PIN Terbuka
+        const modalPin = document.getElementById('modalPin');
+        if (modalPin && modalPin.style.display === 'flex') {
+          if (e.key >= '0' && e.key <= '9') {
+            pressPin(e.key);
+          } else if (e.key === 'Backspace') {
+            clearPin();
+          } else if (e.key === 'Enter') {
+            // Hanya verifikasi jika PIN sudah 4 digit
+            if (CURRENT_PIN.length === 4) verifyPin();
+          } else if (e.key === 'Escape') {
+            closePin();
+          }
+          return; // Berhenti di sini jika modal PIN aktif
+        }
 
         // 2. Logika saat Modal Summary Terbuka (Enter untuk Selesai)
         const modalSum = document.getElementById('modalSummary');
@@ -8396,15 +6486,9 @@
         if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center p-5"><div class="spinner-border text-warning spinner-border-sm"></div> Memproses Dashboard...</td></tr>';
         
         google.script.run.withSuccessHandler(data => {
-          FINANCE_LIMIT = 100; // Reset limit
           TRANSACTIONS_DATA = data; // <--- SANGAT PENTING: Update memori lokal
           renderFinanceUI();        // Render UI menggunakan data terbaru
         }).getAllTransactionData();
-      }
-
-      function resetFinanceLimitAndRender() {
-        FINANCE_LIMIT = 100;
-        renderFinanceUI();
       }
 
       function renderFinanceUI() {
@@ -8425,7 +6509,7 @@
         let validOrders = 0;
         let cashierCount = {};
         let productCount = {};
-        
+
         // Proses Filter Skala Global
         const filteredData = TRANSACTIONS_DATA.filter(t => {
           const tDate = t.timestamp.split(' ')[0];
@@ -8442,44 +6526,31 @@
           return timeMatch && methodMatch;
         });
 
-        // Hitung statistik menggunakan seluruh data terfilter (filteredData)
-        filteredData.forEach(t => {
-          const isKomplimen = t.status === 'Komplimen';
-          if (isKomplimen) {
-            totalKomplimen += Number(t.total) || 0;
-          } else {
-            totalRev += Number(t.total) || 0;
-            validOrders++;
-            const isOwnerOrAdmin = t.cashier === 'Owner' || String(t.cashier).includes('(Admin)');
-            if (!isOwnerOrAdmin) {
-              cashierCount[t.cashier] = (cashierCount[t.cashier] || 0) + 1;
-            }
-          }
-
-          t.items.forEach(i => {
-            let itemHPP = PRODUCT_HPP_MAP[i.id] || 0;
-            if (!isKomplimen) {
-              productCount[i.name] = (productCount[i.name] || 0) + i.qty;
-              totalHPP += (itemHPP * i.qty);
-            }
-          });
-        });
-
-        CURRENT_RENDERED_FINANCE = filteredData; // Simpan data terfilter yang aktif ke global
-
         if (filteredData.length === 0) {
           tbody.innerHTML = '<tr><td colspan="6" class="text-center p-5 text-muted">Tidak ada transaksi pada periode ini.</td></tr>';
         } else {
-          // Iris data berdasarkan batas rendering dinamis saat ini (FINANCE_LIMIT)
-          const slicedData = filteredData.slice(0, FINANCE_LIMIT);
-          
-          tbody.innerHTML = slicedData.map(t => {
+          tbody.innerHTML = filteredData.map(t => {
             const isKomplimen = t.status === 'Komplimen';
             let transHpp = 0;
             
+            if (isKomplimen) {
+              totalKomplimen += Number(t.total) || 0;
+            } else {
+              totalRev += Number(t.total) || 0;
+              validOrders++;
+              const isOwnerOrAdmin = t.cashier === 'Owner' || String(t.cashier).includes('(Admin)');
+              if (!isOwnerOrAdmin) {
+                cashierCount[t.cashier] = (cashierCount[t.cashier] || 0) + 1;
+              }
+            }
+
             t.items.forEach(i => {
               let itemHPP = PRODUCT_HPP_MAP[i.id] || 0;
               transHpp += (itemHPP * i.qty);
+              if (!isKomplimen) {
+                productCount[i.name] = (productCount[i.name] || 0) + i.qty;
+                totalHPP += (itemHPP * i.qty);
+              }
             });
 
             let tTotal = Number(t.total) || 0;
@@ -8487,46 +6558,23 @@
             let tMargin = tTotal > 0 ? ((tProfit / tTotal) * 100).toFixed(1) : 0;
             let profitClass = tProfit >= 0 ? 'text-success' : 'text-danger';
             
-            // --- LOGIKA HIGHLIGHT ORANGE & BADGE DETAIL NOTE ---
-            let hasPriceAdjustment = t.priceNotes && t.priceNotes.trim() !== "";
-            let hasAddonAdjustment = false;
-            if (t.addonNotes && t.addonNotes.trim() !== "") {
-              const notes = t.addonNotes.split(' | ');
-              hasAddonAdjustment = notes.some(note => {
-                if (note.includes('[BAHAN]')) return true;
-                if (note.includes('[NOTE]')) return false;
-                // Fallback data lama (legacy): cek tanda perubahan bahan
-                const lower = note.toLowerCase();
-                return lower.includes('+') || lower.includes('-') || lower.includes('tanpa');
-              });
-            }
-            let hasAdjustment = hasPriceAdjustment || hasAddonAdjustment;
-            let rowStyle = isKomplimen ? 'opacity: 0.6; background-color: #fff5f5;' : '';
-            if (!isKomplimen && hasAdjustment) {
-              rowStyle = 'background-color: #fff3cd;'; // Highlight Oranye/Kuning Lembut khas alert warning
-            }
-            
+            const rowStyle = isKomplimen ? 'opacity: 0.6; background-color: #fff5f5;' : '';
             const totalStyle = isKomplimen ? 'text-decoration: line-through; color: #ff7675;' : 'text-success';
             const statusBadge = isKomplimen ? `<span class="badge bg-danger ms-2" style="font-size:0.6rem;">KOMPLIMEN</span>` : '';
             
-            let noteBadge = '';
-            if (hasAdjustment) {
-              noteBadge = `<span class="badge bg-warning text-dark ms-2" style="cursor: pointer; font-size: 0.65rem;" onclick="openDetailNoteModal('${t.orderId}')"><i class="fas fa-info-circle me-1"></i>Detail Note</span>`;
-            }
-
-            let cashierDisplayName = t.cashier || '';
-            if (String(cashierDisplayName).includes('(Pengganti)')) {
-              cashierDisplayName = `<span class="text-danger fw-bold">${cashierDisplayName}</span>`;
-            } else if (String(cashierDisplayName).includes('(Admin)')) {
-              cashierDisplayName = `<span class="text-success fw-bold">${cashierDisplayName}</span>`;
-            } else if (String(cashierDisplayName) === 'Owner') {
-              cashierDisplayName = `<span class="text-success fw-bold">${cashierDisplayName}</span>`;
+            let cashierDisplayName = t.cashier;
+            if (t.cashier.includes('(Pengganti)')) {
+              cashierDisplayName = `<span class="text-danger fw-bold">${t.cashier}</span>`;
+            } else if (t.cashier.includes('(Admin)')) {
+              cashierDisplayName = `<span class="text-success fw-bold">${t.cashier}</span>`;
+            } else if (t.cashier === 'Owner') {
+              cashierDisplayName = `<span class="text-success fw-bold">${t.cashier}</span>`;
             }
 
             return `
             <tr class="border-bottom" style="${rowStyle}">
               <td class="ps-4 py-3">
-                <div class="fw-bold text-dark" style="font-size: 0.75rem;">${t.orderId} ${statusBadge}${noteBadge}</div>
+                <div class="fw-bold text-dark" style="font-size: 0.75rem;">${t.orderId} ${statusBadge}</div>
                 <div class="text-muted" style="font-size: 0.65rem;">${t.timestamp}</div>
               </td>
               <td>${t.items.map(i => `<div style="font-size:0.7rem;">• ${i.name} x${i.qty}</div>`).join('')}</td>
@@ -8564,12 +6612,13 @@
           const displayText = winners.map(name => isProduct ? `${name} (${maxVal})` : name).join(', ');
           return { display: displayText, count: winners.length };
         };
+
         document.getElementById('dashTopCashier').innerText = getWinners(cashierCount).display;
         CURRENT_PRODUCT_COUNT = productCount;
         
         const chartDataNormal = filteredData.filter(t => t.status !== 'Komplimen');
         updateSalesChart(chartDataNormal);
-        
+
         // --- SIMPAN CALCULATED FILTER KE VARIABEL GLOBAL ---
         window.CURRENT_FILTERED_REVENUE = totalRev;
         window.CURRENT_FILTERED_PROFIT = profitKotor;
@@ -8604,14 +6653,14 @@
                   document.getElementById('customDateText').innerText = dateStr;
                   document.getElementById('customDateLabel').classList.remove('d-none');
                   document.getElementById('customDateLabel').classList.add('d-flex');
-                  resetFinanceLimitAndRender();
+                  renderFinanceUI();
                 }
               },
               onClose: function(selectedDates, dateStr) {
                 // Jika panel ditutup tapi belum ada tanggal yang dipilih, kembalikan ke default
                 if (!dateStr && !SELECTED_CUSTOM_DATE) {
                    document.getElementById('revFilter').value = 'month';
-                   resetFinanceLimitAndRender();
+                   renderFinanceUI();
                 }
               }
             });
@@ -8622,7 +6671,7 @@
           document.getElementById('customDateLabel').classList.remove('d-flex');
           document.getElementById('customDateLabel').classList.add('d-none');
           SELECTED_CUSTOM_DATE = "";
-          resetFinanceLimitAndRender();
+          renderFinanceUI();
         }
       }
 
@@ -9333,7 +7382,6 @@
        * Memuat data stok dan menyimpannya ke variabel global
        */
       function loadStockData() {
-        STOCK_LIMIT = 50; // Reset limit
         const tbody = document.getElementById('stockTableBody');
         // Hanya tampilkan loading jika tabel sedang kosong
         if (tbody && tbody.innerHTML === "") {
@@ -9347,7 +7395,6 @@
       }
 
       function filterStockTable() {
-        STOCK_LIMIT = 50; // Reset limit
         const keyword = document.getElementById('searchStock').value.toLowerCase();
         const filtered = MATERIALS_DATA.filter(m => 
           m.name.toLowerCase().includes(keyword) || 
@@ -9357,7 +7404,6 @@
       }
 
       function updateStockSort(criteria) {
-        STOCK_LIMIT = 50; // Reset limit
         let sorted = [...MATERIALS_DATA];
         if (criteria === 'name') {
           sorted.sort((a, b) => a.name.localeCompare(b.name));
@@ -9370,7 +7416,6 @@
       }
 
       function renderStockUI(dataToRender = MATERIALS_DATA) {
-        CURRENT_RENDERED_STOCK = dataToRender; // Simpan data yang aktif dirender ke global
         const tbody = document.getElementById('stockTableBody');
         if (!tbody) return;
 
@@ -9379,10 +7424,7 @@
           return;
         }
 
-        // Iris data berdasarkan batas rendering dinamis saat ini (STOCK_LIMIT)
-        const slicedData = dataToRender.slice(0, STOCK_LIMIT);
-
-        tbody.innerHTML = slicedData.map(m => {
+        tbody.innerHTML = dataToRender.map(m => {
           const isLow = m.stock < 1000;
           const rowClass = isLow ? 'stock-low' : '';
           const stockDisplay = isLow ? `<span class="text-danger fw-800"><i class="fas fa-triangle-exclamation me-1"></i>${m.stock.toLocaleString()}</span>` : m.stock.toLocaleString();
@@ -9765,43 +7807,6 @@
         if (localStorage.getItem('pos_dual_monitor_video_url')) {
           document.getElementById('dualPosVideoUrl').value = localStorage.getItem('pos_dual_monitor_video_url');
         }
-
-        // --- INFINITE SCROLL INTEGRATION UNTUK TAB STOK, PRODUK, & LAPORAN ---
-        const contentArea = document.querySelector('.content-area');
-        if (contentArea) {
-          contentArea.addEventListener('scroll', () => {
-            // Tab Stok
-            const viewStock = document.getElementById('view-stock');
-            if (viewStock && viewStock.style.display !== 'none') {
-              if (contentArea.scrollTop + contentArea.clientHeight >= contentArea.scrollHeight - 250) {
-                if (STOCK_LIMIT < CURRENT_RENDERED_STOCK.length) {
-                  STOCK_LIMIT += 50;
-                  renderStockUI(CURRENT_RENDERED_STOCK);
-                }
-              }
-            }
-            // Tab Produk
-            const viewProducts = document.getElementById('view-products');
-            if (viewProducts && viewProducts.style.display !== 'none') {
-              if (contentArea.scrollTop + contentArea.clientHeight >= contentArea.scrollHeight - 250) {
-                if (PRODUCT_LIMIT < CURRENT_RENDERED_PRODUCTS.length) {
-                  PRODUCT_LIMIT += 50;
-                  renderProductTable(CURRENT_RENDERED_PRODUCTS);
-                }
-              }
-            }
-            // Tab Laporan (Transaksi)
-            const viewFinance = document.getElementById('view-finance');
-            if (viewFinance && viewFinance.style.display !== 'none') {
-              if (contentArea.scrollTop + contentArea.clientHeight >= contentArea.scrollHeight - 250) {
-                if (FINANCE_LIMIT < CURRENT_RENDERED_FINANCE.length) {
-                  FINANCE_LIMIT += 100;
-                  renderFinanceUI();
-                }
-              }
-            }
-          });
-        }
       });
 
       // 2. Format Teks ke ESC/POS (Rata Kiri Kanan / Justify)
@@ -9916,13 +7921,9 @@
         transactionData.items.forEach(i => {
           let itemName = i.name.substring(0, maxChars - 12); 
           pushTxt(itemName);
-          const itemPrice = i.customPrice !== undefined ? i.customPrice : i.price;
-          const qtyPrice = `x${i.qty} @${(itemPrice).toLocaleString('id-ID')}`;
-          const subtotal = (i.qty * itemPrice).toLocaleString('id-ID');
+          const qtyPrice = `x${i.qty} @${(i.price).toLocaleString('id-ID')}`;
+          const subtotal = (i.qty * i.price).toLocaleString('id-ID');
           pushTxt(padText(qtyPrice, subtotal, maxChars));
-          if (i.customNote && i.customNote.trim() !== "") {
-            pushTxt(`  * "${i.customNote}"`);
-          }
         });
 
         pushTxt('-'.repeat(maxChars));
@@ -10090,7 +8091,6 @@
 
           // --- EKSTRAK DATA KOMPLIMEN & KATEGORI PRODUK ---
           let komplimenList = [];
-          let adjustmentList = [];
           let itemAgg = {};
           
           // Perhitungan Tax (Pajak)
@@ -10108,26 +8108,6 @@
                   total: finalTotal
                 });
                 return; // Abaikan item komplimen dari rekap total penjualan bawah
-            }
-
-            // Check if there is an addon adjustment / recipe changes or price changes
-            let hasPriceAdj = t.priceNotes && t.priceNotes.trim() !== "";
-            let hasAddonAdj = false;
-            if (t.addonNotes && t.addonNotes.trim() !== "") {
-              const notes = t.addonNotes.split(' | ');
-              hasAddonAdj = notes.some(note => {
-                if (note.includes('[BAHAN]')) return true;
-                if (note.includes('[NOTE]')) return false;
-                const lower = note.toLowerCase();
-                return lower.includes('+') || lower.includes('-') || lower.includes('tanpa');
-              });
-            }
-            if (hasPriceAdj || hasAddonAdj) {
-              adjustmentList.push({
-                id: t.orderId,
-                priceNotes: t.priceNotes || "",
-                addonNotes: t.addonNotes || ""
-              });
             }
 
             t.items.forEach(i => {
@@ -10237,54 +8217,6 @@
             pushTxt('-'.repeat(maxChars));
           }
 
-          // FORMAT ADJUSTMENT PERUBAHAN HARGA/BAHAN BARU
-          if (adjustmentList.length > 0) {
-            bytes.push(...cmd.boldOn);
-            pushTxt("DAFTAR PERUBAHAN HARGA/BAHAN:");
-            bytes.push(...cmd.boldOff);
-            
-            adjustmentList.forEach((adj, idx) => {
-              pushTxt(`ID Order : ${adj.id}`);
-              
-              if (adj.priceNotes && adj.priceNotes.trim() !== "") {
-                let cleanPrice = adj.priceNotes.replace(/\[BAHAN\] /g, '').replace(/\[NOTE\] /g, '');
-                let words = `Harga   : ${cleanPrice}`.split(' ');
-                let line = '  ';
-                words.forEach(w => {
-                  if ((line + w).length > maxChars) {
-                    pushTxt(line.trimEnd());
-                    line = '  ' + w + ' ';
-                  } else {
-                    line += w + ' ';
-                  }
-                });
-                if (line.trim().length > 0) pushTxt(line.trimEnd());
-              }
-              
-              if (adj.addonNotes && adj.addonNotes.trim() !== "") {
-                let cleanAddon = adj.addonNotes.replace(/\[BAHAN\] /g, '').replace(/\[NOTE\] /g, '');
-                let words = `Bahan   : ${cleanAddon}`.split(' ');
-                let line = '  ';
-                words.forEach(w => {
-                  if ((line + w).length > maxChars) {
-                    pushTxt(line.trimEnd());
-                    line = '  ' + w + ' ';
-                  } else {
-                    line += w + ' ';
-                  }
-                });
-                if (line.trim().length > 0) pushTxt(line.trimEnd());
-              }
-              
-              if (idx < adjustmentList.length - 1) {
-                pushTxt('. '.repeat(maxChars / 2));
-              } else {
-                pushTxt(''); // Baris kosong pembatas akhir
-              }
-            });
-            pushTxt('-'.repeat(maxChars));
-          }
-
           const catKeys = Object.keys(catMap).sort();
           if (catKeys.length > 0) {
               catKeys.forEach(cat => {
@@ -10374,192 +8306,65 @@
         document.getElementById('lapCapTopProd').innerText = document.getElementById('dashTopProduct').innerText.replace('Lihat List', '').trim();
         document.getElementById('lapCapTopKasir').innerText = document.getElementById('dashTopCashier').innerText;
 
-        // === KALKULASI COST & NET PROFIT ===
-        let totalCost = TOTAL_SALARY_COST || 0;
-        let rincianCost = `   - Gaji Karyawan: Rp ${totalCost.toLocaleString('id-ID')}\n`;
-        
-        let totalTaxCollected = 0;
-        if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
-            let totalRevenueFromTransactions = window.CURRENT_FILTERED_REVENUE !== undefined ? window.CURRENT_FILTERED_REVENUE : 0;
-            
-            if (window.CURRENT_FILTERED_REVENUE === undefined && TRANSACTIONS_DATA) {
-                TRANSACTIONS_DATA.forEach(t => {
-                    if (t.status !== 'Komplimen') {
-                        totalRevenueFromTransactions += Number(t.total) || 0;
-                    }
-                });
-            }
-            
-            let calculatedSubtotal = totalRevenueFromTransactions / (1 + (TAX_PERCENTAGE / 100));
-            totalTaxCollected = totalRevenueFromTransactions - calculatedSubtotal;
-            
-            if (totalTaxCollected > 0) {
-                totalCost += totalTaxCollected;
-                rincianCost += `   - PPN (${TAX_PERCENTAGE}%): Rp ${totalTaxCollected.toLocaleString('id-ID', {maximumFractionDigits:0})}\n`;
-            }
-        }
-
-        if (typeof OP_COSTS_DATA !== 'undefined' && OP_COSTS_DATA && OP_COSTS_DATA.length > 0) {
-            OP_COSTS_DATA.forEach(cost => {
-                totalCost += cost.amount;
-                rincianCost += `   - ${cost.name}: Rp ${cost.amount.toLocaleString('id-ID')}\n`;
-            });
-        }
-
-        const profitBersih = window.CURRENT_FILTERED_PROFIT !== undefined ? window.CURRENT_FILTERED_PROFIT : getPureProfitBersih(); 
-        const netProfit = profitBersih - totalCost; 
-
-        // Populate Operational Cost UI in Capture
-        let capOpCostHtml = '';
-        capOpCostHtml += `
-          <tr>
-            <td class="fw-bold"><i class="fas fa-users text-primary me-2"></i>Gaji Karyawan (Otomatis)</td>
-            <td class="text-end fw-bold text-danger" style="text-align: right !important;">Rp ${(TOTAL_SALARY_COST || 0).toLocaleString('id-ID')}</td>
-          </tr>
-        `;
-        if (totalTaxCollected > 0) {
-          capOpCostHtml += `
-            <tr>
-              <td class="fw-bold"><i class="fas fa-percent text-danger me-2"></i>Pengurangan Tax (PPN ${TAX_PERCENTAGE}%)</td>
-              <td class="text-end fw-bold text-danger" style="text-align: right !important;">Rp ${totalTaxCollected.toLocaleString('id-ID', {maximumFractionDigits:0})}</td>
-            </tr>
-          `;
-        }
-        if (typeof OP_COSTS_DATA !== 'undefined' && OP_COSTS_DATA && OP_COSTS_DATA.length > 0) {
-          OP_COSTS_DATA.forEach(cost => {
-            capOpCostHtml += `
-              <tr>
-                <td class="fw-bold"><i class="fas fa-file-invoice-dollar text-secondary me-2"></i>${cost.name}</td>
-                <td class="text-end fw-bold text-danger" style="text-align: right !important;">Rp ${cost.amount.toLocaleString('id-ID')}</td>
-              </tr>
-            `;
-          });
-        }
-        document.getElementById('lapCapOpCostTableBody').innerHTML = capOpCostHtml;
-        document.getElementById('lapCapOpTotalCost').innerText = 'Rp ' + totalCost.toLocaleString('id-ID', {maximumFractionDigits:0});
-        
-        const capNetProfitEl = document.getElementById('lapCapOpNetProfit');
-        if (netProfit >= 0) {
-          capNetProfitEl.innerText = 'Rp ' + netProfit.toLocaleString('id-ID', {maximumFractionDigits:0});
-          capNetProfitEl.className = 'fs-4 fw-bold text-success';
-          capNetProfitEl.style.color = '#38a169';
-        } else {
-          capNetProfitEl.innerText = '- Rp ' + Math.abs(netProfit).toLocaleString('id-ID', {maximumFractionDigits:0});
-          capNetProfitEl.className = 'fs-4 fw-bold text-danger';
-          capNetProfitEl.style.color = '#e53e3e';
-        }
-
-        const capBar = document.getElementById('lapCapOpProfitBar');
-        let capPercentage = totalCost > 0 ? (profitBersih / totalCost) * 100 : 100;
-        if (capPercentage < 0) capPercentage = 0;
-        if (capPercentage > 100) capPercentage = 100;
-        capBar.style.width = capPercentage + '%';
-        capBar.innerText = capPercentage.toFixed(1) + '%';
-        if (capPercentage < 50) {
-          capBar.style.backgroundColor = '#e53e3e';
-        } else if (capPercentage < 80) {
-          capBar.style.backgroundColor = '#dd6b20';
-        } else {
-          capBar.style.backgroundColor = '#38a169';
-        }
-
-        // Tampilkan/Sembunyikan Section Operational Cost
-        const opCostSectionEl = document.getElementById('lapCapOpCostSection');
-        if (totalCost > 0) {
-          opCostSectionEl.style.display = 'block';
-        } else {
-          opCostSectionEl.style.display = 'none';
-        }
-
-        // Clone Table baris per baris dengan memisahkan Transaksi Khusus vs Normal
+        // Clone Table baris per baris dengan membuang kolom button Aksi
         const originalTbody = document.getElementById('financeTableBody');
         const captureTbody = document.getElementById('lapCapTableBody');
+        let clonedRows = '';
         const rows = originalTbody.querySelectorAll('tr');
-        
-        let adjustedRowsHtml = '';
-        let normalRowsHtml = '';
-        let emptyRowHtml = '';
-
         rows.forEach(row => {
           if(row.cells.length > 1) {
-            // Extract order ID
-            const orderIdEl = row.querySelector('.fw-bold.text-dark');
-            let orderId = '';
-            if (orderIdEl) {
-              orderId = orderIdEl.textContent.trim().split(' ')[0];
-            }
-            
-            // Find transaction in TRANSACTIONS_DATA
-            const t = TRANSACTIONS_DATA.find(x => x.orderId === orderId);
-            let hasPriceAdj = t ? (t.priceNotes && t.priceNotes.trim() !== "") : false;
-            let hasAddonAdj = false;
-            if (t && t.addonNotes && t.addonNotes.trim() !== "") {
-              const notes = t.addonNotes.split(' | ');
-              hasAddonAdj = notes.some(note => {
-                if (note.includes('[BAHAN]')) return true;
-                if (note.includes('[NOTE]')) return false;
-                const lower = note.toLowerCase();
-                return lower.includes('+') || lower.includes('-') || lower.includes('tanpa');
-              });
-            }
-            let hasAdjustment = hasPriceAdj || hasAddonAdj;
-
-            let rowHtml = '';
-            let rowStyle = row.getAttribute('style') || '';
-            rowHtml += `<tr style="${rowStyle}">`;
+            clonedRows += '<tr>';
             for(let i=0; i < row.cells.length - 1; i++) {
               let text = row.cells[i].innerHTML;
               if(i === 0) text = text.replace(/<div class="small text-muted">/g, ' <div>').replace(/<br>/g, ' ');
-              rowHtml += `<td ${row.cells[i].className.includes('text-end') ? 'class="text-end" style="text-align: right !important;"' : (row.cells[i].className.includes('text-center') ? 'class="text-center" style="text-align: center !important;"' : '')}>${text}</td>`;
+              clonedRows += `<td ${row.cells[i].className.includes('text-end') ? 'class="text-end"' : (row.cells[i].className.includes('text-center') ? 'class="text-center"' : '')}>${text}</td>`;
             }
-            rowHtml += '</tr>';
-
-            if (t && hasAdjustment) {
-              // Add Detail Note details sub-row
-              let details = '';
-              if (t.priceNotes && t.priceNotes.trim() !== "") {
-                details += `<div style="color: #e53e3e !important; font-weight: bold; margin-bottom: 2px; text-align: left !important;"><i class="fas fa-tag me-1"></i> Perubahan Harga:</div>`;
-                details += t.priceNotes.split(' | ').map(p => `<div style="padding-left: 15px; color: #e53e3e !important; text-align: left !important;">• ${p}</div>`).join('');
-              }
-              if (t.addonNotes && t.addonNotes.trim() !== "") {
-                let cleanNotes = t.addonNotes.split(' | ').map(a => {
-                  let clean = a.replace('[BAHAN] ', '').replace('[NOTE] ', '');
-                  return `• ${clean}`;
-                }).join('<br>');
-                details += `<div style="color: #38a169 !important; font-weight: bold; margin-top: 5px; margin-bottom: 2px; text-align: left !important;"><i class="fas fa-cookie-bite me-1"></i> Perubahan Bahan (Add-on):</div>`;
-                details += `<div style="padding-left: 15px; color: #38a169 !important; text-align: left !important;">${cleanNotes}</div>`;
-              }
-
-              rowHtml += `
-                <tr class="adjustment-row" style="background-color: #fffdeb !important;">
-                  <td colspan="5" class="ps-4 py-2 border-bottom small" style="line-height: 1.4; border-top: none !important; text-align: left !important; background-color: #fffdeb !important; color: #4a5568 !important;">
-                    ${details}
-                  </td>
-                </tr>
-              `;
-              adjustedRowsHtml += rowHtml;
-            } else {
-              normalRowsHtml += rowHtml;
-            }
+            clonedRows += '</tr>';
           } else {
-            emptyRowHtml = `<tr><td colspan="5" class="text-center text-muted">Belum ada transaksi</td></tr>`;
+            clonedRows += `<tr><td colspan="5" class="text-center text-muted">Belum ada transaksi</td></tr>`;
           }
         });
-
-        let finalClonedRows = '';
-        if (adjustedRowsHtml || normalRowsHtml) {
-          finalClonedRows = adjustedRowsHtml + normalRowsHtml;
-        } else {
-          finalClonedRows = emptyRowHtml || `<tr><td colspan="5" class="text-center text-muted">Belum ada transaksi</td></tr>`;
-        }
-        captureTbody.innerHTML = finalClonedRows;
+        captureTbody.innerHTML = clonedRows || `<tr><td colspan="5" class="text-center text-muted">Belum ada transaksi</td></tr>`;
 
         const capDiv = document.getElementById('laporanGridToCapture');
-
-        // Ambil screenshot langsung (sudah ter-layout sempurna di dalam parent 0px fixed container)
         html2canvas(capDiv, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
           const base64Data = canvas.toDataURL('image/jpeg', 0.85);
 
+          // === KALKULASI COST & NET PROFIT (Identik dengan renderOpCostsUI) ===
+          let totalCost = TOTAL_SALARY_COST || 0;
+          let rincianCost = `   - Gaji Karyawan: Rp ${totalCost.toLocaleString('id-ID')}\n`;
+          
+          let totalTaxCollected = 0;
+          if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
+              let totalRevenueFromTransactions = window.CURRENT_FILTERED_REVENUE !== undefined ? window.CURRENT_FILTERED_REVENUE : 0;
+              
+              if (window.CURRENT_FILTERED_REVENUE === undefined && TRANSACTIONS_DATA) {
+                  TRANSACTIONS_DATA.forEach(t => {
+                      if (t.status !== 'Komplimen') {
+                          totalRevenueFromTransactions += Number(t.total) || 0;
+                      }
+                  });
+              }
+              
+              let calculatedSubtotal = totalRevenueFromTransactions / (1 + (TAX_PERCENTAGE / 100));
+              totalTaxCollected = totalRevenueFromTransactions - calculatedSubtotal;
+              
+              if (totalTaxCollected > 0) {
+                  totalCost += totalTaxCollected;
+                  rincianCost += `   - PPN (${TAX_PERCENTAGE}%): Rp ${totalTaxCollected.toLocaleString('id-ID', {maximumFractionDigits:0})}\n`;
+              }
+          }
+
+          if (typeof OP_COSTS_DATA !== 'undefined' && OP_COSTS_DATA && OP_COSTS_DATA.length > 0) {
+              OP_COSTS_DATA.forEach(cost => {
+                  totalCost += cost.amount;
+                  rincianCost += `   - ${cost.name}: Rp ${cost.amount.toLocaleString('id-ID')}\n`;
+              });
+          }
+
+          const profitBersih = window.CURRENT_FILTERED_PROFIT !== undefined ? window.CURRENT_FILTERED_PROFIT : getPureProfitBersih(); 
+          const netProfit = profitBersih - totalCost; 
+          
           let formatNetProfit = netProfit >= 0 ? `Rp ${netProfit.toLocaleString('id-ID', {maximumFractionDigits:0})}` : `- Rp ${Math.abs(netProfit).toLocaleString('id-ID', {maximumFractionDigits:0})}`;
 
           // === FORMATTING PESAN TELEGRAM ===
@@ -10601,56 +8406,11 @@
       }
 
       // ==========================================
-      // FUNGSI MODAL DETAIL NOTE (TAB LAPORAN)
-      // ==========================================
-      function openDetailNoteModal(orderId) {
-        const t = TRANSACTIONS_DATA.find(x => x.orderId === orderId);
-        if (!t) return;
-
-        document.getElementById('detailNoteOrderId').innerText = t.orderId;
-        document.getElementById('detailNoteTime').innerText = t.timestamp;
-        document.getElementById('detailNoteCashier').innerText = t.cashier || '-';
-
-        // Section 1: Price Notes
-        const sectionPrice = document.getElementById('sectionPriceNotes');
-        const contentPrice = document.getElementById('contentPriceNotes');
-        if (t.priceNotes && t.priceNotes.trim() !== "") {
-          sectionPrice.classList.remove('d-none');
-          const formatted = t.priceNotes.split(' | ').map(p => `• ${p}`).join('<br>');
-          contentPrice.innerHTML = formatted;
-        } else {
-          sectionPrice.classList.add('d-none');
-          contentPrice.innerHTML = '-';
-        }
-
-        // Section 2: Addon / Recipe Notes
-        const sectionAddon = document.getElementById('sectionAddonNotes');
-        const contentAddon = document.getElementById('contentAddonNotes');
-        if (t.addonNotes && t.addonNotes.trim() !== "") {
-          sectionAddon.classList.remove('d-none');
-          const formatted = t.addonNotes.split(' | ').map(a => {
-            // Hilangkan tag prefix [BAHAN] atau [NOTE] untuk estetika tampilan modal
-            let clean = a.replace('[BAHAN] ', '').replace('[NOTE] ', '');
-            return `• ${clean}`;
-          }).join('<br>');
-          contentAddon.innerHTML = formatted;
-        } else {
-          sectionAddon.classList.add('d-none');
-          contentAddon.innerHTML = '-';
-        }
-
-        document.getElementById('modalDetailNote').classList.remove('d-none');
-      }
-
-      function closeDetailNoteModal() {
-        document.getElementById('modalDetailNote').classList.add('d-none');
-      }
-
-      // ==========================================
       // DUAL POS MONITOR (CUSTOMER DISPLAY) ENGINE
       // ==========================================
 
       const posSyncChannel = new BroadcastChannel('platarium_pos_sync');
+
       // Fungsi pembantu mengekstrak ID unik dari link YouTube apa saja
       function extractYouTubeId(url) {
         if (!url) return "zpOULjyy-n8"; // ID default
@@ -10806,29 +8566,12 @@
         document.getElementById('doneTicketId').innerText = t.orderId;
         document.getElementById('doneTicketTime').innerText = t.timestamp;
 
-        let itemsHtml = t.items.map(i => `
+        const itemsHtml = t.items.map(i => `
             <div class="ticket-item-row">
                 <span style="flex:1;">${i.name}</span>
                 <span class="ticket-qty">x${i.qty}</span>
             </div>
         `).join('');
-
-        const doneTicketEl = document.querySelector('#modalDoneTicketDetail .ticket-paper');
-
-        if (t.addonNotes) {
-          itemsHtml += `
-            <div class="alert alert-warning p-2 mt-3 mb-0 text-dark border-0 rounded-3 shadow-sm d-flex align-items-center" style="font-size: 0.72rem; background: #fff3bf; color: #856404; line-height: 1.3;">
-              <i class="fas fa-exclamation-triangle me-1 text-warning" style="font-size: 0.8rem;"></i>
-              <div style="flex: 1;">
-                <strong class="d-block" style="font-size: 0.65rem; letter-spacing: 0.3px;">Special Note Attention:</strong>
-                <span>${t.addonNotes}</span>
-              </div>
-            </div>
-          `;
-          if (doneTicketEl) doneTicketEl.classList.add('ticket-attention');
-        } else {
-          if (doneTicketEl) doneTicketEl.classList.remove('ticket-attention');
-        }
 
         document.getElementById('doneTicketItems').innerHTML = itemsHtml;
         document.getElementById('modalDoneTicketDetail').classList.remove('d-none');
@@ -11037,7 +8780,31 @@
       </div>
     </div>
 
+    <div id="modalPin" class="pin-overlay">
+      <div class="pin-box">
+        <h5 class="fw-bold mb-1" id="pinTitle">Verifikasi PIN</h5>
+        <p class="text-muted small mb-4" id="pinSubtitle">Kasir: Nama</p>
+        
+        <div class="pin-dots" id="pinDots">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
 
+        <div class="numpad-grid">
+          <button class="btn-num" onclick="pressPin(1)">1</button>
+          <button class="btn-num" onclick="pressPin(2)">2</button>
+          <button class="btn-num" onclick="pressPin(3)">3</button>
+          <button class="btn-num" onclick="pressPin(4)">4</button>
+          <button class="btn-num" onclick="pressPin(5)">5</button>
+          <button class="btn-num" onclick="pressPin(6)">6</button>
+          <button class="btn-num" onclick="pressPin(7)">7</button>
+          <button class="btn-num" onclick="pressPin(8)">8</button>
+          <button class="btn-num" onclick="pressPin(9)">9</button>
+          <button class="btn-num text-danger" onclick="clearPin()"><i class="fas fa-times"></i></button>
+          <button class="btn-num" onclick="pressPin(0)">0</button>
+          <button class="btn-num text-warning" onclick="closePin()"><i class="fas fa-chevron-down"></i></button>
+        </div>
+      </div>
+    </div>
 
     <div id="modalRegisterFace" class="payment-overlay" style="z-index: 11000;">
       <div class="bg-white p-4 rounded-5 shadow-lg text-center" style="width: 90%; max-width: 400px;">
@@ -11546,256 +9313,64 @@
       </div>
     </div>
 
-    <!-- Modal Detail Note yang Bagus dan Lengkap -->
-    <div id="modalDetailNote" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 11500; opacity: 1 !important;">
-      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column text-start" style="width: 95%; max-width: 450px; animation: slideUp 0.3s ease-out;">
-        <div class="w-100 d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
-          <h6 class="fw-bold m-0 text-warning"><i class="fas fa-sticky-note me-1"></i> Rincian Detail Note</h6>
-          <button class="btn-close shadow-none" onclick="closeDetailNoteModal()"></button>
-        </div>
-        
-        <div class="mb-3 bg-light p-3 rounded-4 border">
-          <div class="d-flex justify-content-between small mb-1">
-            <span class="text-muted">ID Transaksi:</span>
-            <span class="fw-bold text-dark" id="detailNoteOrderId">ORD-000</span>
-          </div>
-          <div class="d-flex justify-content-between small mb-1">
-            <span class="text-muted">Waktu:</span>
-            <span class="fw-bold text-dark" id="detailNoteTime">--/--/---- --:--</span>
-          </div>
-          <div class="d-flex justify-content-between small">
-            <span class="text-muted">Kasir:</span>
-            <span class="fw-bold text-dark" id="detailNoteCashier">-</span>
-          </div>
-        </div>
-
-        <div class="flex-fill overflow-auto mb-4" style="max-height: 300px;">
-          <!-- Section 1: Ganti Harga -->
-          <div id="sectionPriceNotes" class="mb-3 d-none">
-            <div class="small fw-bold text-danger mb-2"><i class="fas fa-tag me-1"></i> PERUBAHAN HARGA</div>
-            <div id="contentPriceNotes" class="bg-danger bg-opacity-10 text-danger p-3 rounded-4 border border-danger border-opacity-25 small">
-              -
-            </div>
-          </div>
-          
-          <!-- Section 2: Catatan Add-on / Resep -->
-          <div id="sectionAddonNotes" class="d-none">
-            <div class="small fw-bold text-success mb-2"><i class="fas fa-cookie-bite me-1"></i> CATATAN & PERUBAHAN BAHAN (ADD-ON)</div>
-            <div id="contentAddonNotes" class="bg-success bg-opacity-10 text-success p-3 rounded-4 border border-success border-opacity-25 small">
-              -
-            </div>
-          </div>
-        </div>
-
-        <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold" onclick="closeDetailNoteModal()">TUTUP</button>
+    <div id="laporanGridToCapture" class="bg-white p-4" style="position: absolute; left: -9999px; top: -9999px; width: 800px; color: #333; z-index: -1;">
+      <div class="text-center mb-4">
+         <h2 class="fw-bold mb-1">LAPORAN KEUANGAN PLATARIUM POS</h2>
+         <h5 class="text-muted" id="lapCapPeriode">Periode: -</h5>
+         <p class="small text-muted mb-0">Dicetak: <span id="lapCapTime"></span></p>
       </div>
-    </div>
-
-    <!-- ================================================================= -->
-    <!-- CAPTURE TEMPLATE: LAPORAN KEUANGAN (TELEGRAM SCREENSHOT)           -->
-    <!-- Menggunakan Layout Landscape 2-Kolom Berbasis Table & System Font -->
-    <!-- Kebal Terhadap Bug Overlapping & Font Latency WebView Android APK  -->
-    <!-- ================================================================= -->
-    <style>
-      #laporanGridToCapture * {
-        box-sizing: border-box !important;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-        letter-spacing: 0px !important;
-        text-transform: none !important;
-      }
-      #laporanGridToCapture,
-      #laporanGridToCapture div,
-      #laporanGridToCapture p,
-      #laporanGridToCapture h2,
-      #laporanGridToCapture h5,
-      #laporanGridToCapture td,
-      #laporanGridToCapture span {
-        color: #2d3436 !important;
-      }
-      #laporanGridToCapture th {
-        background-color: #1a202c !important;
-        color: #ffffff !important;
-        padding: 10px 12px !important;
-        border: 1px solid #2d3748 !important;
-        font-size: 0.72rem !important;
-        font-weight: 700 !important;
-        text-align: left !important;
-      }
-      /* specific overrides for colored elements */
-      #laporanGridToCapture .text-danger,
-      #laporanGridToCapture .text-danger *,
-      #laporanGridToCapture td.text-danger {
-        color: #e53e3e !important;
-      }
-      #laporanGridToCapture .text-success,
-      #laporanGridToCapture .text-success *,
-      #laporanGridToCapture td.text-success {
-        color: #38a169 !important;
-      }
-      #laporanGridToCapture .text-primary,
-      #laporanGridToCapture .text-primary * {
-        color: #3182ce !important;
-      }
-      #laporanGridToCapture .text-info,
-      #laporanGridToCapture .text-info * {
-        color: #00b5d8 !important;
-      }
-      #laporanGridToCapture .text-muted,
-      #laporanGridToCapture .text-muted * {
-        color: #718096 !important;
-      }
-      #laporanGridToCapture table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-        background: #ffffff !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border: none !important;
-      }
-      #laporanGridToCapture td {
-        padding: 8px 12px !important;
-        border: 1px solid #e2e8f0 !important;
-        line-height: 1.4 !important;
-        vertical-align: middle !important;
-      }
-      #laporanGridToCapture .text-end {
-        text-align: right !important;
-      }
-      #laporanGridToCapture .text-center {
-        text-align: center !important;
-      }
-      #laporanGridToCapture .fw-bold {
-        font-weight: 700 !important;
-      }
-      #laporanGridToCapture .small {
-        font-size: 0.72rem !important;
-      }
-      #laporanGridToCapture .bg-light {
-        background-color: #f7fafc !important;
-      }
-      #laporanGridToCapture .rounded {
-        border-radius: 8px !important;
-      }
-      #laporanGridToCapture .border {
-        border: 1px solid #e2e8f0 !important;
-      }
-      #laporanGridToCapture .adjustment-row td {
-        background-color: #fffdeb !important;
-        color: #4a5568 !important;
-        border-top: none !important;
-        padding-left: 20px !important;
-      }
-    </style>
-    
-    <!-- Parent container dengan lebar & tinggi 0px, overflow hidden, tapi tetap berada di pohon render viewport -->
-    <div style="position: fixed; left: 0; top: 0; width: 0px; height: 0px; overflow: hidden; z-index: -9999; pointer-events: none;">
-      <div id="laporanGridToCapture" style="width: 1200px; background: #ffffff; color: #2d3436; padding: 30px; box-sizing: border-box;">
-        <table style="width: 100%; border-collapse: collapse; border: none; background: #ffffff;">
-          <tr>
-            <!-- KOLOM KIRI: Ringkasan & Operational Cost (Lebar 48%) -->
-            <td style="width: 48%; vertical-align: top; padding-right: 25px; border: none !important;">
-              <!-- Header Judul -->
-              <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #edf2f7; padding-bottom: 15px;">
-                <h2 style="font-weight: 800; font-size: 1.55rem; color: #1a202c; margin: 0 0 5px 0; letter-spacing: 0.5px;">LAPORAN KEUANGAN PLATARIUM POS</h2>
-                <h5 style="color: #4a5568; font-size: 0.95rem; margin: 0 0 5px 0; font-weight: 600;" id="lapCapPeriode">Periode: -</h5>
-                <p style="color: #a0aec0; font-size: 0.75rem; margin: 0;">Dicetak: <span id="lapCapTime">-</span></p>
-              </div>
-
-              <!-- Grid KPI Cards (3 Kolom x 2 Baris menggunakan standard table) -->
-              <table style="width: 100%; border-collapse: separate !important; border-spacing: 10px !important; margin-bottom: 20px; border: none !important; background: transparent !important;">
-                <tr>
-                  <td style="width: 33%; background: #f7fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
-                    <div style="font-size: 0.68rem; color: #718096; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOTAL REVENUE</div>
-                    <div style="font-size: 1.2rem; font-weight: 800; color: #1a202c;" id="lapCapRev">Rp 0</div>
-                  </td>
-                  <td style="width: 33%; background: #fff5f5; border: 1px solid #fed7d7 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
-                    <div style="font-size: 0.68rem; color: #e53e3e; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOTAL HPP</div>
-                    <div style="font-size: 1.2rem; font-weight: 800; color: #e53e3e;" id="lapCapHPP">Rp 0</div>
-                  </td>
-                  <td style="width: 33%; background: #f0fff4; border: 1px solid #c6f6d5 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
-                    <div style="font-size: 0.68rem; color: #38a169; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">PROFIT KOTOR</div>
-                    <div style="font-size: 1.2rem; font-weight: 800; color: #38a169;" id="lapCapProfit">Rp 0</div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="width: 33%; background: #f7fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
-                    <div style="font-size: 0.68rem; color: #4a5568; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOTAL PESANAN</div>
-                    <div style="font-size: 1.15rem; font-weight: 800; color: #2d3748;" id="lapCapOrders">0</div>
-                  </td>
-                  <td style="width: 33%; background: #ebf8ff; border: 1px solid #bee3f8 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
-                    <div style="font-size: 0.68rem; color: #3182ce; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOP PRODUK</div>
-                    <div style="font-size: 0.95rem; font-weight: 800; color: #3182ce; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" id="lapCapTopProd">-</div>
-                  </td>
-                  <td style="width: 33%; background: #faf5ff; border: 1px solid #e9d8fd !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
-                    <div style="font-size: 0.68rem; color: #805ad5; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOP KASIR</div>
-                    <div style="font-size: 1.05rem; font-weight: 800; color: #805ad5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" id="lapCapTopKasir">-</div>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Section Operational Cost & Net Profit -->
-              <div id="lapCapOpCostSection" style="background-color: #f7fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px;">
-                 <h5 style="font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; font-size: 0.9rem; color: #4a5568; letter-spacing: 0.5px;">
-                   <i class="fas fa-wallet" style="margin-right: 8px; color: #4a5568;"></i>OPERATIONAL COST & NET PROFIT
-                 </h5>
-                 
-                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; border: none !important; background: transparent !important;">
-                   <tr>
-                     <td style="width: 50%; vertical-align: top; border: none !important; padding: 0 !important;">
-                        <div style="font-size: 0.68rem; color: #718096; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 3px;">TOTAL OPERATIONAL COST</div>
-                        <div style="font-size: 1.35rem; font-weight: 800; color: #e53e3e;" id="lapCapOpTotalCost">Rp 0</div>
-                     </td>
-                     <td style="width: 50%; text-align: right; vertical-align: top; border: none !important; padding: 0 !important;">
-                        <div style="font-size: 0.68rem; color: #718096; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 3px;">NET PROFIT AKHIR</div>
-                        <div style="font-size: 1.35rem; font-weight: 800;" id="lapCapOpNetProfit">Rp 0</div>
-                     </td>
-                   </tr>
-                 </table>
-
-                 <!-- Progress Bar Container -->
-                 <div style="height: 20px; border-radius: 10px; background-color: #edf2f7; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 15px; position: relative;">
-                    <div id="lapCapOpProfitBar" style="width: 0%; font-size: 0.72rem; font-weight: 800; line-height: 18px; text-align: center; color: white; background-image: linear-gradient(45deg, rgba(255, 255, 255, .15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%, transparent 75%, transparent); background-size: 1rem 1rem; transition: width .6s ease; height: 100%; display: block;">0%</div>
-                 </div>
-
-                 <!-- Cost List Table -->
-                 <table style="width: 100%; border-collapse: collapse; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-                    <thead>
-                       <tr style="background-color: #edf2f7; color: #4a5568; font-weight: 800; font-size: 0.72rem; text-align: left;">
-                          <th style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; border-top: none; border-left: none; border-right: none;">Keterangan Cost</th>
-                          <th style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; border-top: none; border-left: none; border-right: none; text-align: right; width: 140px;">Nominal</th>
-                       </tr>
-                    </thead>
-                    <tbody id="lapCapOpCostTableBody" style="font-size: 0.75rem; color: #2d3748;">
-                       <!-- Populated via JS -->
-                    </tbody>
-                 </table>
-              </div>
-            </td>
-
-            <!-- KOLOM KANAN: Rincian Transaksi (Lebar 52%) -->
-            <td style="width: 52%; vertical-align: top; padding-left: 25px; border-left: 2px dashed #edf2f7 !important;">
-              <h5 style="font-weight: 800; border-bottom: 2px solid #edf2f7; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; font-size: 0.9rem; color: #2d3748; letter-spacing: 0.5px;">
-                <i class="fas fa-list-alt" style="margin-right: 8px; color: #c5a059;"></i>Rincian Transaksi
-              </h5>
-              
-              <table style="width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #ffffff;">
-                <thead>
-                   <tr style="background-color: #1a202c; color: #ffffff; font-weight: 700; font-size: 0.72rem; text-align: left;">
-                     <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important; width: 20%;">ID & Waktu</th>
-                     <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important; width: 40%;">Item</th>
-                     <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important; text-align: right; width: 13%;">Total</th>
-                     <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important; text-align: right; width: 15%;">Profit</th>
-                     <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important; text-align: center; width: 12%;">Kasir</th>
-                   </tr>
-                </thead>
-                <tbody id="lapCapTableBody" style="font-size: 0.72rem; color: #2d3748; line-height: 1.35;">
-                   <!-- Populated via JS -->
-                </tbody>
-              </table>
-            </td>
-          </tr>
-        </table>
+      <div class="row g-3 mb-4">
+         <div class="col-4">
+           <div class="p-3 bg-light rounded border text-center">
+             <div class="small text-muted fw-bold">TOTAL REVENUE</div>
+             <div class="fs-4 fw-bold text-dark" id="lapCapRev">Rp 0</div>
+           </div>
+         </div>
+         <div class="col-4">
+           <div class="p-3 bg-light rounded border text-center">
+             <div class="small text-muted fw-bold">TOTAL HPP</div>
+             <div class="fs-4 fw-bold text-danger" id="lapCapHPP">Rp 0</div>
+           </div>
+         </div>
+         <div class="col-4">
+           <div class="p-3 bg-light rounded border text-center">
+             <div class="small text-muted fw-bold">PROFIT KOTOR</div>
+             <div class="fs-4 fw-bold text-success" id="lapCapProfit">Rp 0</div>
+           </div>
+         </div>
+         <div class="col-4">
+           <div class="p-3 bg-light rounded border text-center">
+             <div class="small text-muted fw-bold">TOTAL PESANAN</div>
+             <div class="fs-5 fw-bold text-dark" id="lapCapOrders">0</div>
+           </div>
+         </div>
+         <div class="col-4">
+           <div class="p-3 bg-light rounded border text-center">
+             <div class="small text-muted fw-bold">TOP PRODUK</div>
+             <div class="fs-5 fw-bold text-primary" id="lapCapTopProd">-</div>
+           </div>
+         </div>
+         <div class="col-4">
+           <div class="p-3 bg-light rounded border text-center">
+             <div class="small text-muted fw-bold">TOP KASIR</div>
+             <div class="fs-5 fw-bold text-info" id="lapCapTopKasir">-</div>
+           </div>
+         </div>
       </div>
+      <h5 class="fw-bold border-bottom pb-2 mb-3">Rincian Transaksi</h5>
+      <table class="table table-bordered table-sm" style="font-size: 0.85rem;">
+        <thead class="table-dark">
+           <tr>
+             <th>ID & Waktu</th>
+             <th>Item</th>
+             <th class="text-end">Total</th>
+             <th class="text-end">Profit Kotor</th>
+             <th class="text-center">Kasir</th>
+           </tr>
+        </thead>
+        <tbody id="lapCapTableBody">
+        </tbody>
+      </table>
     </div>
   </body>
 </html>
