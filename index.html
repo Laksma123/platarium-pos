@@ -4189,6 +4189,14 @@
       let OP_COSTS_DATA = [];
       let TOTAL_SALARY_COST = 0;
 
+      function getNetRevenue(t) {
+        let val = Number(t.total) || 0;
+        if (t.surchargeInfo && t.surchargeInfo.effect === 'cut') {
+          val += Number(t.surchargeInfo.feeAmount) || 0;
+        }
+        return val;
+      }
+
       // Kalkulator Murni Profit dari Laporan
       function getPureProfitBersih() {
           let totalRev = 0;
@@ -4197,7 +4205,7 @@
           
           TRANSACTIONS_DATA.forEach(t => {
               if (t.status === 'Komplimen') return;
-              totalRev += Number(t.total) || 0;
+              totalRev += getNetRevenue(t);
               t.items.forEach(i => {
                   let itemHPP = PRODUCT_HPP_MAP[i.id] || 0;
                   totalHPP += (itemHPP * i.qty);
@@ -4288,7 +4296,7 @@
               if (window.CURRENT_FILTERED_REVENUE === undefined && TRANSACTIONS_DATA) {
                   TRANSACTIONS_DATA.forEach(t => {
                       if (t.status !== 'Komplimen') {
-                          totalRevenueFromTransactions += Number(t.total) || 0;
+                          totalRevenueFromTransactions += getNetRevenue(t);
                       }
                   });
               }
@@ -5108,14 +5116,14 @@
              if (t.rawTime && t.rawTime >= shiftStartMs) {
                  const isOwnerOrAdmin = t.cashier === 'Owner' || String(t.cashier).includes('(Admin)');
                  if (isOwnerOrAdmin) {
-                     adminTotalSalesInShift += Number(t.total);
+                     adminTotalSalesInShift += getNetRevenue(t);
                      adminNamesDuringShift.add(String(t.cashier));
                      if (t.method === 'CASH') {
-                         adminCashSalesInShift += Number(t.total);
+                         adminCashSalesInShift += getNetRevenue(t);
                      }
                  } else { // Ini adalah transaksi oleh kasir utama
                      if (t.method === 'CASH') {
-                         cashSales += Number(t.total);
+                         cashSales += getNetRevenue(t);
                      }
                  }
              }
@@ -8706,9 +8714,9 @@
         filteredData.forEach(t => {
           const isKomplimen = t.status === 'Komplimen';
           if (isKomplimen) {
-            totalKomplimen += Number(t.total) || 0;
+            totalKomplimen += getNetRevenue(t);
           } else {
-            totalRev += Number(t.total) || 0;
+            totalRev += getNetRevenue(t);
             validOrders++;
             const isOwnerOrAdmin = t.cashier === 'Owner' || String(t.cashier).includes('(Admin)');
             if (!isOwnerOrAdmin) {
@@ -8742,7 +8750,7 @@
               transHpp += (itemHPP * i.qty);
             });
 
-            let tTotal = Number(t.total) || 0;
+            let tTotal = getNetRevenue(t);
             let tProfit = tTotal - transHpp;
             let tMargin = tTotal > 0 ? ((tProfit / tTotal) * 100).toFixed(1) : 0;
             let profitClass = tProfit >= 0 ? 'text-success' : 'text-danger';
@@ -10710,7 +10718,7 @@
                 if (window.CURRENT_FILTERED_REVENUE === undefined && TRANSACTIONS_DATA) {
                     TRANSACTIONS_DATA.forEach(t => {
                         if (t.status !== 'Komplimen') {
-                            totalRevenueFromTransactions += Number(t.total) || 0;
+                            totalRevenueFromTransactions += getNetRevenue(t);
                         }
                     });
                 }
