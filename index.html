@@ -10552,7 +10552,16 @@
         captureTbody.innerHTML = finalClonedRows;
 
         const capDiv = document.getElementById('laporanGridToCapture');
+
+        // [FIX SCREENSHOT] Simpan zoom level saat ini dan reset ke 1 sebelum capture.
+        // CSS zoom (dari APK Zoom System) menyebabkan html2canvas menghitung posisi elemen
+        // secara salah → font tumpang tindih, elemen keluar border.
+        const savedZoom = document.documentElement.style.zoom;
+        document.documentElement.style.zoom = '1';
+
         html2canvas(capDiv, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+          // [FIX SCREENSHOT] Kembalikan zoom level APK setelah capture selesai
+          document.documentElement.style.zoom = savedZoom;
           const base64Data = canvas.toDataURL('image/jpeg', 0.85);
 
           let formatNetProfit = netProfit >= 0 ? `Rp ${netProfit.toLocaleString('id-ID', {maximumFractionDigits:0})}` : `- Rp ${Math.abs(netProfit).toLocaleString('id-ID', {maximumFractionDigits:0})}`;
@@ -10589,6 +10598,8 @@
           }).sendLaporanToTelegram(base64Data, captionMsg);
 
         }).catch(err => {
+          // [FIX SCREENSHOT] Pastikan zoom dikembalikan meskipun terjadi error
+          document.documentElement.style.zoom = savedZoom;
           btn.innerHTML = ogHtml;
           btn.disabled = false;
           alert("Gagal memproses screenshot: " + err);
@@ -10848,7 +10859,13 @@
         gridElement.style.height = 'auto';
         gridElement.style.maxHeight = 'none';
 
+        // [FIX SCREENSHOT] Simpan zoom level dan reset ke 1 sebelum capture
+        const savedZoom = document.documentElement.style.zoom;
+        document.documentElement.style.zoom = '1';
+
         html2canvas(gridElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+            // [FIX SCREENSHOT] Kembalikan zoom level APK setelah capture selesai
+            document.documentElement.style.zoom = savedZoom;
             // Restore styling setelah gambar tertangkap
             gridElement.classList.add('table-responsive', 'overflow-hidden');
             gridElement.style.height = '';
@@ -10877,6 +10894,8 @@
                 }
             }).sendScheduleToTelegram(base64Data, captionMsg);
         }).catch(err => {
+            // [FIX SCREENSHOT] Pastikan zoom dikembalikan meskipun terjadi error
+            document.documentElement.style.zoom = savedZoom;
             gridElement.classList.add('table-responsive', 'overflow-hidden');
             gridElement.style.height = '';
             document.querySelectorAll('.btn-delete-pill').forEach(el => el.classList.remove('d-none'));
