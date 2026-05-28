@@ -10563,8 +10563,8 @@
             scale: 2,
             backgroundColor: "#ffffff",
             useCORS: true,
-            windowWidth: 1080,
-            width: 1080,
+            windowWidth: 1440,
+            width: 1440,
             onclone: (clonedDoc) => {
               const el = clonedDoc.getElementById('laporanGridToCapture');
               if (el) {
@@ -10572,14 +10572,14 @@
                 clonedDoc.body.innerHTML = '';
                 clonedDoc.body.appendChild(el);
                 
-                // 2. Set lebar dokumen html & body klon menjadi 1080px penuh
-                clonedDoc.documentElement.style.width = '1080px';
-                clonedDoc.documentElement.style.minWidth = '1080px';
+                // 2. Set lebar dokumen html & body klon menjadi 1440px penuh (Landscape)
+                clonedDoc.documentElement.style.width = '1440px';
+                clonedDoc.documentElement.style.minWidth = '1440px';
                 clonedDoc.documentElement.style.maxWidth = 'none';
                 clonedDoc.documentElement.style.overflow = 'visible';
                 
-                clonedDoc.body.style.width = '1080px';
-                clonedDoc.body.style.minWidth = '1080px';
+                clonedDoc.body.style.width = '1440px';
+                clonedDoc.body.style.minWidth = '1440px';
                 clonedDoc.body.style.maxWidth = 'none';
                 clonedDoc.body.style.overflow = 'visible';
                 clonedDoc.body.style.backgroundColor = '#ffffff';
@@ -10590,11 +10590,11 @@
                 el.style.position = 'relative';
                 el.style.left = '0';
                 el.style.top = '0';
-                el.style.width = '1080px';
-                el.style.minWidth = '1080px';
+                el.style.width = '1440px';
+                el.style.minWidth = '1440px';
                 el.style.maxWidth = 'none';
                 el.style.margin = '0';
-                el.style.padding = '30px';
+                el.style.padding = '40px';
                 el.style.boxSizing = 'border-box';
                 el.style.backgroundColor = '#ffffff';
                 el.style.display = 'block';
@@ -11666,7 +11666,7 @@
       </div>
     </div>
 
-    <div id="laporanGridToCapture" class="bg-white p-4" style="position: absolute; left: -9999px; top: -9999px; width: 1080px; color: #333; z-index: -1; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; letter-spacing: normal;">
+    <div id="laporanGridToCapture" class="bg-white p-4" style="position: absolute; left: -9999px; top: -9999px; width: 1440px; color: #333; z-index: -1; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; letter-spacing: normal;">
       <div class="text-center mb-4">
          <h2 class="fw-bold mb-1">LAPORAN KEUANGAN PLATARIUM POS</h2>
          <h5 class="text-muted" id="lapCapPeriode">Periode: -</h5>
