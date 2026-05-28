@@ -2661,6 +2661,376 @@
           </div>
         </div>
 
+        <!-- MODAL SPECIAL PRICE -->
+        <style>
+          .sp-slot { width: 80px; height: 80px; border: 2px dashed #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #ccc; cursor: pointer; transition: all 0.2s; position: relative; background: #fff; }
+          .sp-slot:hover { border-color: #d4af37; color: #d4af37; }
+          .sp-slot.active { border: 2px solid #d4af37; color: #d4af37; background: #fffcf5; }
+          .sp-slot.configured { border-style: solid; color: #333; font-size: 0.8rem; font-weight: bold; text-align: center; padding: 5px; line-height: 1.1; flex-direction: column; }
+          .sp-slot .remove-slot { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: #ff4757; color: white; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; z-index: 10; }
+          .sp-slot:hover .remove-slot { opacity: 1; }
+          .sp-slot .slot-title { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        </style>
+
+        <div id="modalSpecialPrice" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 10500; opacity: 1 !important;">
+          <div class="bg-white rounded-5 shadow-lg d-flex flex-column overflow-hidden" style="width: 95vw; height: 90vh; max-width: 1200px; animation: slideUp 0.3s ease-out;">
+            <div class="bg-dark text-white p-3 d-flex justify-content-between align-items-center">
+              <h5 class="fw-bold m-0"><i class="fas fa-tags text-warning me-2"></i>Setup Special Price (Promo & Diskon)</h5>
+              <button class="btn-close btn-close-white shadow-none" onclick="document.getElementById('modalSpecialPrice').classList.add('d-none')"></button>
+            </div>
+            
+            <div class="d-flex flex-column flex-fill overflow-hidden" style="background: #f8f9fa;">
+              <!-- Tabs Header -->
+              <ul class="nav nav-pills p-3 bg-white border-bottom gap-2" id="spTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active fw-bold px-4 rounded-pill border" id="sp-dinein-tab" data-bs-toggle="pill" data-bs-target="#sp-dinein" type="button" role="tab"><i class="fas fa-utensils me-2"></i>Dine In</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link fw-bold px-4 rounded-pill border" id="sp-takeaway-tab" data-bs-toggle="pill" data-bs-target="#sp-takeaway" type="button" role="tab"><i class="fas fa-shopping-bag me-2"></i>Takeaway</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link fw-bold px-4 rounded-pill border" id="sp-delivery-tab" data-bs-toggle="pill" data-bs-target="#sp-delivery" type="button" role="tab"><i class="fas fa-motorcycle me-2"></i>Delivery</button>
+                </li>
+              </ul>
+              
+              <!-- Tabs Content -->
+              <div class="tab-content flex-fill overflow-hidden" id="spTabContent">
+                
+                <!-- DINE IN -->
+                <div class="tab-pane fade show active h-100" id="sp-dinein" role="tabpanel">
+                  <div class="row m-0 h-100">
+                    <!-- Left Panel -->
+                    <div class="col-4 p-4 border-end bg-white overflow-auto h-100 pb-5">
+                      <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-layer-group me-2 text-primary"></i>Slot Promo Dine In</h6>
+                      <p class="text-muted small mb-4">Tambahkan slot untuk membuat aturan promo baru. Klik slot untuk mengatur detailnya di panel kanan.</p>
+                      <div class="d-flex flex-wrap gap-3" id="spDineInSlots">
+                        <div class="sp-slot active" onclick="activateSpSlot(this, 'dinein')">
+                          <i class="fas fa-plus"></i>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Right Panel -->
+                    <div class="col-8 p-0 bg-light d-flex flex-column h-100" id="spDineInConfig" style="opacity: 0.5; pointer-events: none;">
+                      <div class="p-3 border-bottom bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold m-0 text-dark" id="spDineInConfigTitle">Pengaturan Slot Promo</h5>
+                        <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                          <input class="form-check-input m-0" type="checkbox" role="switch" style="width: 40px; height: 20px; cursor:pointer;" checked>
+                          <label class="form-check-label small fw-bold text-success">Aktif</label>
+                        </div>
+                      </div>
+                      <div class="p-4 overflow-auto flex-fill pb-5">
+                        <div class="mb-4">
+                          <label class="small fw-bold text-muted mb-2">TIPE PROMO / DISKON</label>
+                          <select class="form-select fw-bold border-2 shadow-sm" onchange="changeSpType(this.value, 'dinein')">
+                            <option value="subtotal">Discount Subtotal Bayar</option>
+                            <option value="all_menu">Discount ALL MENU</option>
+                            <option value="category">Discount Per KATEGORI</option>
+                            <option value="item">Discount Per ITEM</option>
+                            <option value="buy_get">Beli [X] Gratis / Tebus Murah [Y]</option>
+                            <option value="min_purchase">Total Belanja Minimal -> Gratis / Tebus Murah</option>
+                          </select>
+                        </div>
+
+                        <!-- Dynamic Config Area -->
+                        <div id="spDineInDynamicConfig" class="bg-white p-4 rounded-4 shadow-sm border mb-4">
+                          <!-- Form Subtotal -->
+                          <div class="sp-form-group" id="sp-form-subtotal" style="display:block;">
+                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-percent text-danger me-2"></i>Diskon Subtotal Bayar</h6>
+                            <div class="row g-3">
+                              <div class="col-md-6">
+                                <label class="small fw-bold text-muted">Bentuk Diskon</label>
+                                <select class="form-select border-2 fw-bold"><option value="percent">Persentase (%)</option><option value="nominal">Nominal (Rp)</option></select>
+                              </div>
+                              <div class="col-md-6">
+                                <label class="small fw-bold text-muted">Nilai Diskon</label>
+                                <input type="number" class="form-control border-2 fw-bold" placeholder="0">
+                              </div>
+                              <div class="col-12 mt-3">
+                                <div class="alert alert-info py-2 small m-0"><i class="fas fa-info-circle me-2"></i>Jika Tax ON, diskon akan diterapkan ke subtotal bayar, dan Tax tetap utuh dikenakan pada nilai akhirnya.</div>
+                              </div>
+                            </div>
+                          </div>
+                          <!-- Form All Menu -->
+                          <div class="sp-form-group" id="sp-form-all_menu" style="display:none;">
+                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-boxes text-success me-2"></i>Diskon Semua Menu</h6>
+                            <div class="row g-3">
+                              <div class="col-md-6">
+                                <label class="small fw-bold text-muted">Diskon Per Item (Persen/Nominal)</label>
+                                <div class="input-group">
+                                  <select class="form-select border-2 fw-bold" style="max-width:80px;"><option>%</option><option>Rp</option></select>
+                                  <input type="number" class="form-control border-2 fw-bold" placeholder="0">
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <!-- Form Category -->
+                          <div class="sp-form-group" id="sp-form-category" style="display:none;">
+                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-list text-info me-2"></i>Diskon Kategori Tertentu</h6>
+                            <div class="row g-3">
+                              <div class="col-12">
+                                <label class="small fw-bold text-muted">Pilih Kategori</label>
+                                <select class="form-select border-2 fw-bold">
+                                  <option>Kopi</option>
+                                  <option>Teh</option>
+                                  <option>Makanan</option>
+                                </select>
+                              </div>
+                              <div class="col-12">
+                                <label class="small fw-bold text-muted">Diskon yang Diberikan</label>
+                                <div class="input-group">
+                                  <select class="form-select border-2 fw-bold" style="max-width:80px;"><option>%</option><option>Rp</option></select>
+                                  <input type="number" class="form-control border-2 fw-bold" placeholder="0">
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <!-- Form Item -->
+                          <div class="sp-form-group" id="sp-form-item" style="display:none;">
+                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-coffee text-primary me-2"></i>Diskon Item Spesifik</h6>
+                            <div class="row g-3">
+                              <div class="col-12">
+                                <label class="small fw-bold text-muted">Pilih Menu</label>
+                                <select class="form-select border-2 fw-bold"><option>-- Pilih Menu --</option></select>
+                              </div>
+                              <div class="col-12">
+                                <label class="small fw-bold text-muted">Diskon yang Diberikan</label>
+                                <div class="input-group">
+                                  <select class="form-select border-2 fw-bold" style="max-width:80px;"><option>%</option><option>Rp</option></select>
+                                  <input type="number" class="form-control border-2 fw-bold" placeholder="0">
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <!-- Form Buy X Get Y -->
+                          <div class="sp-form-group" id="sp-form-buy_get" style="display:none;">
+                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-gift text-warning me-2"></i>Beli X Gratis / Tebus Murah Y</h6>
+                            <div class="row g-3 align-items-center">
+                              <div class="col-md-2"><label class="fw-bold text-dark">SYARAT BELI</label></div>
+                              <div class="col-md-3"><input type="number" class="form-control border-2 fw-bold" placeholder="Qty"></div>
+                              <div class="col-md-7"><select class="form-select border-2 fw-bold"><option>-- Pilih Menu --</option><option>Semua Menu</option></select></div>
+                              
+                              <div class="col-12 border-bottom my-2"></div>
+                              
+                              <div class="col-md-2"><label class="fw-bold text-success">MENDAPAT</label></div>
+                              <div class="col-md-3"><input type="number" class="form-control border-2 fw-bold" placeholder="Qty"></div>
+                              <div class="col-md-7">
+                                <div class="d-flex flex-column gap-2">
+                                  <select class="form-select border-2 fw-bold"><option>-- Pilih Menu Reward --</option></select>
+                                  <div class="input-group">
+                                    <span class="input-group-text bg-light border-2 small">Harga Tebus Rp</span>
+                                    <input type="number" class="form-control border-2 fw-bold text-success" placeholder="0 (Kosong/0 = Gratis)">
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm mt-3 fw-bold rounded-pill"><i class="fas fa-plus me-1"></i> Tambah Menu Reward Lain</button>
+                          </div>
+                          <!-- Form Min Purchase -->
+                          <div class="sp-form-group" id="sp-form-min_purchase" style="display:none;">
+                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-cart-arrow-down text-dark me-2"></i>Total Belanja Minimum -> Reward</h6>
+                            <div class="row g-3 align-items-center">
+                              <div class="col-12">
+                                <label class="small fw-bold text-muted">Minimal Total Belanja (Rp)</label>
+                                <input type="number" class="form-control border-2 fw-bold text-danger" placeholder="Contoh: 100000">
+                              </div>
+                              <div class="col-12 border-bottom my-2"></div>
+                              <div class="col-md-2"><label class="fw-bold text-success">MENDAPAT</label></div>
+                              <div class="col-md-3"><input type="number" class="form-control border-2 fw-bold" placeholder="Qty"></div>
+                              <div class="col-md-7">
+                                <div class="d-flex flex-column gap-2">
+                                  <select class="form-select border-2 fw-bold"><option>-- Pilih Menu Reward --</option></select>
+                                  <div class="input-group">
+                                    <span class="input-group-text bg-light border-2 small">Harga Tebus Rp</span>
+                                    <input type="number" class="form-control border-2 fw-bold text-success" placeholder="0 (Kosong/0 = Gratis)">
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <label class="small fw-bold text-muted mb-2">NAMA LABEL PROMO (Ditampilkan di Struk)</label>
+                          <input type="text" id="spDineInLabelName" class="form-control border-2 fw-bold text-dark" placeholder="Contoh: Diskon Merdeka 10%">
+                        </div>
+                      </div>
+                      
+                      <div class="p-3 border-top bg-white d-flex justify-content-end gap-2 mt-auto">
+                        <button class="btn btn-light fw-bold px-4 rounded-pill">Reset</button>
+                        <button class="btn btn-luxury fw-bold px-4 rounded-pill shadow-sm" onclick="saveSpSlot('dinein')">Simpan Pengaturan</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- TAKEAWAY -->
+                <div class="tab-pane fade h-100" id="sp-takeaway" role="tabpanel">
+                  <div class="row m-0 h-100">
+                    <div class="col-4 p-4 border-end bg-white overflow-auto h-100 pb-5">
+                      <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-layer-group me-2 text-primary"></i>Slot Promo Takeaway</h6>
+                      <p class="text-muted small mb-4">Pengaturan slot promo khusus untuk pesanan Takeaway.</p>
+                      <div class="d-flex flex-wrap gap-3" id="spTakeawaySlots">
+                        <div class="sp-slot active" onclick="activateSpSlot(this, 'takeaway')">
+                          <i class="fas fa-plus"></i>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-8 p-0 bg-light d-flex flex-column h-100" id="spTakeawayConfig" style="opacity: 0.5; pointer-events: none;">
+                      <div class="p-3 border-bottom bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold m-0 text-dark">Pengaturan Slot Promo Takeaway</h5>
+                        <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                          <input class="form-check-input m-0" type="checkbox" role="switch" style="width: 40px; height: 20px; cursor:pointer;" checked>
+                          <label class="form-check-label small fw-bold text-success">Aktif</label>
+                        </div>
+                      </div>
+                      <div class="p-4 overflow-auto flex-fill pb-5">
+                        <div class="mb-4">
+                          <label class="small fw-bold text-muted mb-2">TIPE PROMO / DISKON</label>
+                          <select class="form-select fw-bold border-2 shadow-sm" onchange="changeSpType(this.value, 'takeaway')">
+                            <option value="subtotal">Discount Subtotal Bayar</option>
+                            <option value="all_menu">Discount ALL MENU</option>
+                            <option value="category">Discount Per KATEGORI</option>
+                            <option value="item">Discount Per ITEM</option>
+                            <option value="buy_get">Beli [X] Gratis / Tebus Murah [Y]</option>
+                            <option value="min_purchase">Total Belanja Minimal -> Gratis / Tebus Murah</option>
+                          </select>
+                        </div>
+
+                        <!-- Dynamic Config Area (Duplikasi DineIn) -->
+                        <div id="spTakeawayDynamicConfig" class="bg-white p-4 rounded-4 shadow-sm border mb-4">
+                          <!-- Form Subtotal -->
+                          <div class="sp-form-group" id="sp-form-subtotal" style="display:block;">
+                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-percent text-danger me-2"></i>Diskon Subtotal Bayar</h6>
+                            <div class="row g-3">
+                              <div class="col-md-6">
+                                <label class="small fw-bold text-muted">Bentuk Diskon</label>
+                                <select class="form-select border-2 fw-bold"><option value="percent">Persentase (%)</option><option value="nominal">Nominal (Rp)</option></select>
+                              </div>
+                              <div class="col-md-6">
+                                <label class="small fw-bold text-muted">Nilai Diskon</label>
+                                <input type="number" class="form-control border-2 fw-bold" placeholder="0">
+                              </div>
+                            </div>
+                          </div>
+                          <!-- Form All Menu -->
+                          <div class="sp-form-group" id="sp-form-all_menu" style="display:none;">
+                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-boxes text-success me-2"></i>Diskon Semua Menu</h6>
+                            <div class="row g-3">
+                              <div class="col-md-6">
+                                <label class="small fw-bold text-muted">Diskon Per Item (Persen/Nominal)</label>
+                                <div class="input-group">
+                                  <select class="form-select border-2 fw-bold" style="max-width:80px;"><option>%</option><option>Rp</option></select>
+                                  <input type="number" class="form-control border-2 fw-bold" placeholder="0">
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <!-- Form Category -->
+                          <div class="sp-form-group" id="sp-form-category" style="display:none;">
+                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-list text-info me-2"></i>Diskon Kategori Tertentu</h6>
+                            <div class="row g-3">
+                              <div class="col-12">
+                                <label class="small fw-bold text-muted">Pilih Kategori</label>
+                                <select class="form-select border-2 fw-bold"><option>Kopi</option><option>Teh</option><option>Makanan</option></select>
+                              </div>
+                              <div class="col-12">
+                                <label class="small fw-bold text-muted">Diskon yang Diberikan</label>
+                                <div class="input-group">
+                                  <select class="form-select border-2 fw-bold" style="max-width:80px;"><option>%</option><option>Rp</option></select>
+                                  <input type="number" class="form-control border-2 fw-bold" placeholder="0">
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <!-- Form Item -->
+                          <div class="sp-form-group" id="sp-form-item" style="display:none;">
+                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-coffee text-primary me-2"></i>Diskon Item Spesifik</h6>
+                            <div class="row g-3">
+                              <div class="col-12">
+                                <label class="small fw-bold text-muted">Pilih Menu</label>
+                                <select class="form-select border-2 fw-bold"><option>-- Pilih Menu --</option></select>
+                              </div>
+                              <div class="col-12">
+                                <label class="small fw-bold text-muted">Diskon yang Diberikan</label>
+                                <div class="input-group">
+                                  <select class="form-select border-2 fw-bold" style="max-width:80px;"><option>%</option><option>Rp</option></select>
+                                  <input type="number" class="form-control border-2 fw-bold" placeholder="0">
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <!-- Form Buy X Get Y -->
+                          <div class="sp-form-group" id="sp-form-buy_get" style="display:none;">
+                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-gift text-warning me-2"></i>Beli X Gratis / Tebus Murah Y</h6>
+                            <div class="row g-3 align-items-center">
+                              <div class="col-md-2"><label class="fw-bold text-dark">SYARAT BELI</label></div>
+                              <div class="col-md-3"><input type="number" class="form-control border-2 fw-bold" placeholder="Qty"></div>
+                              <div class="col-md-7"><select class="form-select border-2 fw-bold"><option>-- Pilih Menu --</option><option>Semua Menu</option></select></div>
+                              <div class="col-12 border-bottom my-2"></div>
+                              <div class="col-md-2"><label class="fw-bold text-success">MENDAPAT</label></div>
+                              <div class="col-md-3"><input type="number" class="form-control border-2 fw-bold" placeholder="Qty"></div>
+                              <div class="col-md-7">
+                                <div class="d-flex flex-column gap-2">
+                                  <select class="form-select border-2 fw-bold"><option>-- Pilih Menu Reward --</option></select>
+                                  <div class="input-group">
+                                    <span class="input-group-text bg-light border-2 small">Harga Tebus Rp</span>
+                                    <input type="number" class="form-control border-2 fw-bold text-success" placeholder="0">
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm mt-3 fw-bold rounded-pill"><i class="fas fa-plus me-1"></i> Tambah Menu Reward Lain</button>
+                          </div>
+                          <!-- Form Min Purchase -->
+                          <div class="sp-form-group" id="sp-form-min_purchase" style="display:none;">
+                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-cart-arrow-down text-dark me-2"></i>Total Belanja Minimum -> Reward</h6>
+                            <div class="row g-3 align-items-center">
+                              <div class="col-12">
+                                <label class="small fw-bold text-muted">Minimal Total Belanja (Rp)</label>
+                                <input type="number" class="form-control border-2 fw-bold text-danger" placeholder="Contoh: 100000">
+                              </div>
+                              <div class="col-12 border-bottom my-2"></div>
+                              <div class="col-md-2"><label class="fw-bold text-success">MENDAPAT</label></div>
+                              <div class="col-md-3"><input type="number" class="form-control border-2 fw-bold" placeholder="Qty"></div>
+                              <div class="col-md-7">
+                                <div class="d-flex flex-column gap-2">
+                                  <select class="form-select border-2 fw-bold"><option>-- Pilih Menu Reward --</option></select>
+                                  <div class="input-group">
+                                    <span class="input-group-text bg-light border-2 small">Harga Tebus Rp</span>
+                                    <input type="number" class="form-control border-2 fw-bold text-success" placeholder="0">
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <label class="small fw-bold text-muted mb-2">NAMA LABEL PROMO</label>
+                          <input type="text" id="spTakeawayLabelName" class="form-control border-2 fw-bold text-dark" placeholder="Contoh: Promo Takeaway">
+                        </div>
+                      </div>
+                      <div class="p-3 border-top bg-white d-flex justify-content-end gap-2 mt-auto">
+                        <button class="btn btn-light fw-bold px-4 rounded-pill">Reset</button>
+                        <button class="btn btn-luxury fw-bold px-4 rounded-pill shadow-sm" onclick="saveSpSlot('takeaway')">Simpan Pengaturan</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- DELIVERY -->
+                <div class="tab-pane fade h-100" id="sp-delivery" role="tabpanel">
+                  <div class="h-100 d-flex flex-column align-items-center justify-content-center text-center p-5 bg-white">
+                    <i class="fas fa-motorcycle fa-4x mb-4 text-muted" style="opacity: 0.3;"></i>
+                    <h4 class="fw-bold text-dark">Fitur Delivery Masih Kosong</h4>
+                    <p class="text-muted">Tab ini disediakan untuk pengaturan lanjutan Promo atau Delivery Price di masa mendatang.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div id="view-stock" class="app-view p-4" style="display:none; background: #f8f9fa;">
           <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pt-3 gap-3">
             <div>
@@ -2745,7 +3115,7 @@
 
             <div class="list-group-item p-3 border-bottom border-light">
                <div class="d-flex justify-content-between align-items-center" style="cursor: pointer;" onclick="toggleSettingAdvance('paymentSettingArea')">
-                  <h6 class="fw-bold m-0 text-dark"><i class="fas fa-credit-card text-primary me-2"></i>Setup Payment / Delivery Price</h6>
+                  <h6 class="fw-bold m-0 text-dark"><i class="fas fa-credit-card text-primary me-2"></i>Setup Payment / Special Price</h6>
                   <i class="fas fa-chevron-down text-muted" id="icon-paymentSettingArea"></i>
                </div>
                <div id="paymentSettingArea" class="d-none mt-3 pt-3 border-top">
@@ -2753,8 +3123,8 @@
                        <button class="btn btn-dark border-primary w-100 py-2 rounded-pill fw-bold shadow-sm" onclick="openPaymentMethodModal()" style="color: #3498db;">
                            <i class="fas fa-sliders-h me-2"></i>Metode Bayar
                        </button>
-                       <button class="btn btn-dark border-primary w-100 py-2 rounded-pill fw-bold shadow-sm" style="color: #3498db;">
-                           <i class="fas fa-sliders-h me-2"></i>Delivery Price
+                       <button class="btn btn-dark border-primary w-100 py-2 rounded-pill fw-bold shadow-sm" onclick="openSpecialPriceModal()" style="color: #3498db;">
+                           <i class="fas fa-tags me-2"></i>Special Price
                        </button>
                    </div>
                </div>
@@ -13205,6 +13575,76 @@
               }
               alert('Gagal menyimpan: ' + e.message);
           }
+      }
+
+      // --- SPECIAL PRICE / PROMO MODAL LOGIC ---
+      function openSpecialPriceModal() {
+        document.getElementById('modalSpecialPrice').classList.remove('d-none');
+      }
+
+      function activateSpSlot(element, tabContext) {
+        const slots = document.getElementById(tabContext === 'dinein' ? 'spDineInSlots' : 'spTakeawaySlots').querySelectorAll('.sp-slot');
+        slots.forEach(slot => slot.classList.remove('active'));
+        
+        element.classList.add('active');
+        
+        const rightPanel = document.getElementById(tabContext === 'dinein' ? 'spDineInConfig' : 'spTakeawayConfig');
+        rightPanel.style.opacity = '1';
+        rightPanel.style.pointerEvents = 'auto';
+
+        if(element.innerHTML.includes('fa-plus')) {
+          element.innerHTML = '<span class="slot-title mt-1">Promo Baru</span><div class="remove-slot" onclick="event.stopPropagation(); removeSpSlot(this, \'' + tabContext + '\')"><i class="fas fa-times"></i></div>';
+          element.classList.add('configured');
+          
+          const newPlus = document.createElement('div');
+          newPlus.className = 'sp-slot';
+          newPlus.innerHTML = '<i class="fas fa-plus"></i>';
+          newPlus.onclick = function() { activateSpSlot(this, tabContext); };
+          document.getElementById(tabContext === 'dinein' ? 'spDineInSlots' : 'spTakeawaySlots').appendChild(newPlus);
+        }
+      }
+
+      function removeSpSlot(btn, tabContext) {
+        const slot = btn.parentElement;
+        slot.remove();
+        if(slot.classList.contains('active')) {
+          const rightPanel = document.getElementById(tabContext === 'dinein' ? 'spDineInConfig' : 'spTakeawayConfig');
+          rightPanel.style.opacity = '0.5';
+          rightPanel.style.pointerEvents = 'none';
+        }
+      }
+
+      function changeSpType(val, tabContext) {
+        const containerId = tabContext === 'dinein' ? 'spDineInDynamicConfig' : 'spTakeawayDynamicConfig';
+        const container = document.getElementById(containerId);
+        if(!container) return;
+        
+        const groups = container.querySelectorAll('.sp-form-group');
+        groups.forEach(g => g.style.display = 'none');
+        
+        const target = container.querySelector('#sp-form-' + val);
+        if(target) target.style.display = 'block';
+      }
+
+      function saveSpSlot(tabContext) {
+        const slotsContainer = document.getElementById(tabContext === 'dinein' ? 'spDineInSlots' : 'spTakeawaySlots');
+        const activeSlot = slotsContainer.querySelector('.sp-slot.active');
+        if(activeSlot && activeSlot.classList.contains('configured')) {
+          const btn = event.currentTarget;
+          const oldText = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-check me-2"></i>Tersimpan';
+          btn.classList.replace('btn-luxury', 'btn-success');
+          
+          const inputName = document.getElementById('sp' + (tabContext === 'dinein' ? 'DineIn' : 'Takeaway') + 'LabelName');
+          if(inputName && inputName.value.trim() !== '') {
+             activeSlot.querySelector('.slot-title').innerText = inputName.value.trim();
+          }
+
+          setTimeout(() => {
+            btn.innerHTML = oldText;
+            btn.classList.replace('btn-success', 'btn-luxury');
+          }, 1500);
+        }
       }
 
       // --- HELPER: Hitung surcharge untuk metode bayar tertentu ---
