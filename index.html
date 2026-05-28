@@ -12838,13 +12838,19 @@
     </div>
     
     <script>
+      let pmSettingsBefore = null;
+
       function openPaymentMethodModal() {
+        pmSettingsBefore = JSON.parse(JSON.stringify(pmSettings));
         document.getElementById('modalPaymentMethod').classList.remove('d-none');
         document.getElementById('modalPaymentMethod').style.display = 'flex';
         selectPaymentMethodTab('QRIS');
       }
 
       function closePaymentMethodModal() {
+        if (pmSettingsBefore) {
+          pmSettings = JSON.parse(JSON.stringify(pmSettingsBefore));
+        }
         document.getElementById('modalPaymentMethod').classList.add('d-none');
         document.getElementById('modalPaymentMethod').style.display = 'none';
       }
@@ -13073,6 +13079,52 @@
           document.getElementById('pmSimNet').innerText = 'Rp ' + uangMasuk.toLocaleString(undefined, {maximumFractionDigits:0});
       }
       
+      function getPMSettingsDiff(before, after) {
+          if (!before) return [];
+          let changes = [];
+          const keys = ['QRIS', 'DEBIT', 'CC', 'DANA', 'OVO', 'GOPAY'];
+          
+          keys.forEach(key => {
+            if (key === 'DEBIT') {
+              const bsBefore = before.DEBIT.bankSama || { label: 'BANK SAMA', value: 0 };
+              const bsAfter = after.DEBIT.bankSama || { label: 'BANK SAMA', value: 0 };
+              if (bsBefore.label !== bsAfter.label || bsBefore.value !== bsAfter.value) {
+                let labelChange = bsBefore.label !== bsAfter.label ? `Nama: "${bsBefore.label}" ➔ "${bsAfter.label}"` : '';
+                let valueChange = bsBefore.value !== bsAfter.value ? `Biaya: ${bsBefore.value}% ➔ ${bsAfter.value}%` : '';
+                let details = [labelChange, valueChange].filter(Boolean).join(', ');
+                changes.push(`DEBIT (Sama Bank): ${details}`);
+              }
+              
+              const bbBefore = before.DEBIT.bankBeda || { label: 'BANK BEDA', value: -1.0 };
+              const bbAfter = after.DEBIT.bankBeda || { label: 'BANK BEDA', value: -1.0 };
+              if (bbBefore.label !== bbAfter.label || bbBefore.value !== bbAfter.value) {
+                let labelChange = bbBefore.label !== bbAfter.label ? `Nama: "${bbBefore.label}" ➔ "${bbAfter.label}"` : '';
+                let valueChange = bbBefore.value !== bbAfter.value ? `Biaya: ${bbBefore.value}% ➔ ${bbAfter.value}%` : '';
+                let details = [labelChange, valueChange].filter(Boolean).join(', ');
+                changes.push(`DEBIT (Beda Bank): ${details}`);
+              }
+            } else {
+              const b = before[key] || { effect: 'cut', feeType: 'percent', value: 0 };
+              const a = after[key] || { effect: 'cut', feeType: 'percent', value: 0 };
+              if (b.value !== a.value || b.feeType !== a.feeType || b.effect !== a.effect) {
+                let oldValStr = b.feeType === 'percent' ? `${b.value}%` : `Rp ${b.value.toLocaleString()}`;
+                let newValStr = a.feeType === 'percent' ? `${a.value}%` : `Rp ${a.value.toLocaleString()}`;
+                let oldEffect = b.effect === 'add' ? 'Tambah (Beban Pembeli)' : 'Potong (Internal)';
+                let newEffect = a.effect === 'add' ? 'Tambah (Beban Pembeli)' : 'Potong (Internal)';
+                
+                let details = [];
+                if (b.value !== a.value) details.push(`Nilai: ${oldValStr} ➔ ${newValStr}`);
+                if (b.feeType !== a.feeType) details.push(`Tipe: ${b.feeType === 'percent' ? 'Persen' : 'Nominal'} ➔ ${a.feeType === 'percent' ? 'Persen' : 'Nominal'}`);
+                if (b.effect !== a.effect) details.push(`Efek: ${oldEffect} ➔ ${newEffect}`);
+                
+                changes.push(`${key}: ${details.join(', ')}`);
+              }
+            }
+          });
+          
+          return changes;
+      }
+
       function savePaymentMethod() {
           // Pastikan data Debit tersimpan dari input
           if (currentPMTab === 'DEBIT') {
@@ -13105,6 +13157,17 @@
                       }
                       if (res && res.status === 'success') {
                           alert('Pengaturan Surcharge Metode Bayar disimpan secara permanen ke Google Sheets!');
+                          
+                          // Kirim log audit jika ada perubahan nyata
+                          if (pmSettingsBefore) {
+                              const diff = getPMSettingsDiff(pmSettingsBefore, pmSettings);
+                              if (diff.length > 0) {
+                                  const detailText = `Mengubah pengaturan Metode Bayar:\n` + diff.map(c => `- ${c}`).join('\n');
+                                  triggerAuditLog('EDIT METODE BAYAR', detailText);
+                              }
+                          }
+                          
+                          pmSettingsBefore = null; // Reset agar tidak ter-rollback di close modal
                           closePaymentMethodModal();
                       } else {
                           alert('Gagal menyimpan ke server: ' + (res ? res.message : 'Unknown error'));
@@ -13117,6 +13180,17 @@
                           btn.disabled = false;
                       }
                       alert('Pengaturan disimpan lokal (backend tidak tersedia).');
+                      
+                      // Kirim log audit lokal untuk debugging
+                      if (pmSettingsBefore) {
+                          const diff = getPMSettingsDiff(pmSettingsBefore, pmSettings);
+                          if (diff.length > 0) {
+                              const detailText = `Mengubah pengaturan Metode Bayar:\n` + diff.map(c => `- ${c}`).join('\n');
+                              console.log('Local Audit Log:', detailText);
+                          }
+                      }
+                      
+                      pmSettingsBefore = null; // Reset agar tidak ter-rollback di close modal
                       closePaymentMethodModal();
                   }, 600);
               }
