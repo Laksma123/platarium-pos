@@ -10374,7 +10374,7 @@
         document.getElementById('lapCapTopProd').innerText = document.getElementById('dashTopProduct').innerText.replace('Lihat List', '').trim();
         document.getElementById('lapCapTopKasir').innerText = document.getElementById('dashTopCashier').innerText;
 
-        // === KALKULASI COST & NET PROFIT (DIPINDAHKAN KE ATAS AGAR TER-CAPTURE OLEH HTML2CANVAS) ===
+        // === KALKULASI COST & NET PROFIT ===
         let totalCost = TOTAL_SALARY_COST || 0;
         let rincianCost = `   - Gaji Karyawan: Rp ${totalCost.toLocaleString('id-ID')}\n`;
         
@@ -10414,14 +10414,14 @@
         capOpCostHtml += `
           <tr>
             <td class="fw-bold"><i class="fas fa-users text-primary me-2"></i>Gaji Karyawan (Otomatis)</td>
-            <td class="text-end fw-bold text-danger">Rp ${(TOTAL_SALARY_COST || 0).toLocaleString('id-ID')}</td>
+            <td class="text-end fw-bold text-danger" style="text-align: right !important;">Rp ${(TOTAL_SALARY_COST || 0).toLocaleString('id-ID')}</td>
           </tr>
         `;
         if (totalTaxCollected > 0) {
           capOpCostHtml += `
             <tr>
               <td class="fw-bold"><i class="fas fa-percent text-danger me-2"></i>Pengurangan Tax (PPN ${TAX_PERCENTAGE}%)</td>
-              <td class="text-end fw-bold text-danger">Rp ${totalTaxCollected.toLocaleString('id-ID', {maximumFractionDigits:0})}</td>
+              <td class="text-end fw-bold text-danger" style="text-align: right !important;">Rp ${totalTaxCollected.toLocaleString('id-ID', {maximumFractionDigits:0})}</td>
             </tr>
           `;
         }
@@ -10430,7 +10430,7 @@
             capOpCostHtml += `
               <tr>
                 <td class="fw-bold"><i class="fas fa-file-invoice-dollar text-secondary me-2"></i>${cost.name}</td>
-                <td class="text-end fw-bold text-danger">Rp ${cost.amount.toLocaleString('id-ID')}</td>
+                <td class="text-end fw-bold text-danger" style="text-align: right !important;">Rp ${cost.amount.toLocaleString('id-ID')}</td>
               </tr>
             `;
           });
@@ -10442,11 +10442,11 @@
         if (netProfit >= 0) {
           capNetProfitEl.innerText = 'Rp ' + netProfit.toLocaleString('id-ID', {maximumFractionDigits:0});
           capNetProfitEl.className = 'fs-4 fw-bold text-success';
-          capNetProfitEl.style.color = '#198754';
+          capNetProfitEl.style.color = '#38a169';
         } else {
           capNetProfitEl.innerText = '- Rp ' + Math.abs(netProfit).toLocaleString('id-ID', {maximumFractionDigits:0});
           capNetProfitEl.className = 'fs-4 fw-bold text-danger';
-          capNetProfitEl.style.color = '#dc3545';
+          capNetProfitEl.style.color = '#e53e3e';
         }
 
         const capBar = document.getElementById('lapCapOpProfitBar');
@@ -10456,17 +10456,20 @@
         capBar.style.width = capPercentage + '%';
         capBar.innerText = capPercentage.toFixed(1) + '%';
         if (capPercentage < 50) {
-          capBar.className = 'progress-bar progress-bar-striped bg-danger';
-          capBar.style.backgroundColor = '#dc3545';
+          capBar.style.backgroundColor = '#e53e3e';
         } else if (capPercentage < 80) {
-          capBar.className = 'progress-bar progress-bar-striped bg-warning text-dark';
-          capBar.style.backgroundColor = '#ffc107';
-          capBar.style.color = '#212529';
+          capBar.style.backgroundColor = '#dd6b20';
         } else {
-          capBar.className = 'progress-bar progress-bar-striped bg-success';
-          capBar.style.backgroundColor = '#198754';
+          capBar.style.backgroundColor = '#38a169';
         }
-        document.getElementById('lapCapOpCostSection').classList.remove('d-none');
+
+        // Tampilkan/Sembunyikan Section Operational Cost
+        const opCostSectionEl = document.getElementById('lapCapOpCostSection');
+        if (totalCost > 0) {
+          opCostSectionEl.style.display = 'block';
+        } else {
+          opCostSectionEl.style.display = 'none';
+        }
 
         // Clone Table baris per baris dengan memisahkan Transaksi Khusus vs Normal
         const originalTbody = document.getElementById('financeTableBody');
@@ -10507,7 +10510,7 @@
             for(let i=0; i < row.cells.length - 1; i++) {
               let text = row.cells[i].innerHTML;
               if(i === 0) text = text.replace(/<div class="small text-muted">/g, ' <div>').replace(/<br>/g, ' ');
-              rowHtml += `<td ${row.cells[i].className.includes('text-end') ? 'class="text-end"' : (row.cells[i].className.includes('text-center') ? 'class="text-center"' : '')}>${text}</td>`;
+              rowHtml += `<td ${row.cells[i].className.includes('text-end') ? 'class="text-end" style="text-align: right !important;"' : (row.cells[i].className.includes('text-center') ? 'class="text-center" style="text-align: center !important;"' : '')}>${text}</td>`;
             }
             rowHtml += '</tr>';
 
@@ -10515,21 +10518,21 @@
               // Add Detail Note details sub-row
               let details = '';
               if (t.priceNotes && t.priceNotes.trim() !== "") {
-                details += `<div style="color: #dc3545 !important; font-weight: bold; margin-bottom: 2px; text-align: left !important;"><i class="fas fa-tag me-1"></i> Perubahan Harga:</div>`;
-                details += t.priceNotes.split(' | ').map(p => `<div style="padding-left: 15px; color: #dc3545 !important; text-align: left !important;">• ${p}</div>`).join('');
+                details += `<div style="color: #e53e3e !important; font-weight: bold; margin-bottom: 2px; text-align: left !important;"><i class="fas fa-tag me-1"></i> Perubahan Harga:</div>`;
+                details += t.priceNotes.split(' | ').map(p => `<div style="padding-left: 15px; color: #e53e3e !important; text-align: left !important;">• ${p}</div>`).join('');
               }
               if (t.addonNotes && t.addonNotes.trim() !== "") {
                 let cleanNotes = t.addonNotes.split(' | ').map(a => {
                   let clean = a.replace('[BAHAN] ', '').replace('[NOTE] ', '');
                   return `• ${clean}`;
                 }).join('<br>');
-                details += `<div style="color: #198754 !important; font-weight: bold; margin-top: 5px; margin-bottom: 2px; text-align: left !important;"><i class="fas fa-cookie-bite me-1"></i> Perubahan Bahan (Add-on):</div>`;
-                details += `<div style="padding-left: 15px; color: #198754 !important; text-align: left !important;">${cleanNotes}</div>`;
+                details += `<div style="color: #38a169 !important; font-weight: bold; margin-top: 5px; margin-bottom: 2px; text-align: left !important;"><i class="fas fa-cookie-bite me-1"></i> Perubahan Bahan (Add-on):</div>`;
+                details += `<div style="padding-left: 15px; color: #38a169 !important; text-align: left !important;">${cleanNotes}</div>`;
               }
 
               rowHtml += `
-                <tr style="background-color: #fffdeb !important;">
-                  <td colspan="5" class="ps-4 py-2 border-bottom small" style="line-height: 1.4; border-top: none; text-align: left !important; background-color: #fffdeb !important; color: #666 !important;">
+                <tr class="adjustment-row" style="background-color: #fffdeb !important;">
+                  <td colspan="5" class="ps-4 py-2 border-bottom small" style="line-height: 1.4; border-top: none !important; text-align: left !important; background-color: #fffdeb !important; color: #4a5568 !important;">
                     ${details}
                   </td>
                 </tr>
@@ -10552,7 +10555,18 @@
         captureTbody.innerHTML = finalClonedRows;
 
         const capDiv = document.getElementById('laporanGridToCapture');
+        
+        // Simpan style asli
+        const originalStyle = capDiv.getAttribute('style') || '';
+        
+        // Pindahkan sementara ke fixed layout dalam viewport agar rendering engine menghitung layout secara presisi
+        capDiv.setAttribute('style', 'position: fixed; left: 0; top: 0; width: 1200px !important; height: auto !important; max-height: none !important; overflow: visible !important; background: #ffffff !important; color: #2d3436 !important; padding: 30px !important; z-index: -9999 !important; opacity: 0.01 !important; pointer-events: none !important; box-sizing: border-box !important;');
+
+        // Ambil screenshot
         html2canvas(capDiv, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+          // Kembalikan style asli segera
+          capDiv.setAttribute('style', originalStyle);
+
           const base64Data = canvas.toDataURL('image/jpeg', 0.85);
 
           let formatNetProfit = netProfit >= 0 ? `Rp ${netProfit.toLocaleString('id-ID', {maximumFractionDigits:0})}` : `- Rp ${Math.abs(netProfit).toLocaleString('id-ID', {maximumFractionDigits:0})}`;
@@ -10589,6 +10603,9 @@
           }).sendLaporanToTelegram(base64Data, captionMsg);
 
         }).catch(err => {
+          // Kembalikan style asli jika terjadi error
+          capDiv.setAttribute('style', originalStyle);
+
           btn.innerHTML = ogHtml;
           btn.disabled = false;
           alert("Gagal memproses screenshot: " + err);
@@ -11586,96 +11603,191 @@
       </div>
     </div>
 
-    <div id="laporanGridToCapture" class="bg-white p-4" style="position: absolute; left: -9999px; top: -9999px; width: 800px; color: #333; z-index: -1;">
-      <div class="text-center mb-4">
-         <h2 class="fw-bold mb-1">LAPORAN KEUANGAN PLATARIUM POS</h2>
-         <h5 class="text-muted" id="lapCapPeriode">Periode: -</h5>
-         <p class="small text-muted mb-0">Dicetak: <span id="lapCapTime"></span></p>
-      </div>
-      <div class="row g-3 mb-4">
-         <div class="col-4">
-           <div class="p-3 bg-light rounded border text-center">
-             <div class="small text-muted fw-bold">TOTAL REVENUE</div>
-             <div class="fs-4 fw-bold text-dark" id="lapCapRev">Rp 0</div>
-           </div>
-         </div>
-         <div class="col-4">
-           <div class="p-3 bg-light rounded border text-center">
-             <div class="small text-muted fw-bold">TOTAL HPP</div>
-             <div class="fs-4 fw-bold text-danger" id="lapCapHPP">Rp 0</div>
-           </div>
-         </div>
-         <div class="col-4">
-           <div class="p-3 bg-light rounded border text-center">
-             <div class="small text-muted fw-bold">PROFIT KOTOR</div>
-             <div class="fs-4 fw-bold text-success" id="lapCapProfit">Rp 0</div>
-           </div>
-         </div>
-         <div class="col-4">
-           <div class="p-3 bg-light rounded border text-center">
-             <div class="small text-muted fw-bold">TOTAL PESANAN</div>
-             <div class="fs-5 fw-bold text-dark" id="lapCapOrders">0</div>
-           </div>
-         </div>
-         <div class="col-4">
-           <div class="p-3 bg-light rounded border text-center">
-             <div class="small text-muted fw-bold">TOP PRODUK</div>
-             <div class="fs-5 fw-bold text-primary" id="lapCapTopProd">-</div>
-           </div>
-         </div>
-         <div class="col-4">
-           <div class="p-3 bg-light rounded border text-center">
-             <div class="small text-muted fw-bold">TOP KASIR</div>
-             <div class="fs-5 fw-bold text-info" id="lapCapTopKasir">-</div>
-           </div>
-         </div>
-      </div>
-      
-      <!-- Section Operational Cost & Net Profit untuk Capture -->
-      <div id="lapCapOpCostSection" class="mb-4 p-3 bg-light rounded border d-none" style="background-color: #f8f9fa !important; border: 1px solid #dee2e6 !important;">
-         <h5 class="fw-bold border-bottom pb-2 mb-3 text-secondary" style="font-size: 1rem;"><i class="fas fa-wallet me-2"></i>OPERATIONAL COST & NET PROFIT</h5>
-         <div class="row mb-3">
-            <div class="col-6">
-               <div class="small text-muted fw-bold" style="font-size: 0.75rem;">TOTAL OPERATIONAL COST</div>
-               <div class="fs-4 fw-bold text-danger" id="lapCapOpTotalCost" style="font-size: 1.5rem; color: #dc3545 !important;">Rp 0</div>
+    <!-- ================================================================= -->
+    <!-- CAPTURE TEMPLATE: LAPORAN KEUANGAN (TELEGRAM SCREENSHOT)           -->
+    <!-- Menggunakan Layout Landscape 2-Kolom Berbasis Table & System Font -->
+    <!-- Kebal Terhadap Bug Overlapping & Font Latency WebView Android APK  -->
+    <!-- ================================================================= -->
+    <style>
+      #laporanGridToCapture * {
+        box-sizing: border-box !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+        letter-spacing: 0px !important;
+        text-transform: none !important;
+      }
+      #laporanGridToCapture {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+      }
+      #laporanGridToCapture table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+      }
+      #laporanGridToCapture td {
+        padding: 8px 12px !important;
+        border: 1px solid #e2e8f0 !important;
+        line-height: 1.4 !important;
+        vertical-align: middle !important;
+      }
+      #laporanGridToCapture th {
+        padding: 10px 12px !important;
+        border: 1px solid #edf2f7 !important;
+        font-size: 0.75rem !important;
+        font-weight: 700 !important;
+        text-align: left !important;
+      }
+      #laporanGridToCapture .text-end {
+        text-align: right !important;
+      }
+      #laporanGridToCapture .text-center {
+        text-align: center !important;
+      }
+      #laporanGridToCapture .fw-bold {
+        font-weight: 700 !important;
+      }
+      #laporanGridToCapture .small {
+        font-size: 0.72rem !important;
+      }
+      #laporanGridToCapture .text-muted {
+        color: #718096 !important;
+      }
+      #laporanGridToCapture .text-danger {
+        color: #e53e3e !important;
+      }
+      #laporanGridToCapture .text-success {
+        color: #38a169 !important;
+      }
+      #laporanGridToCapture .text-primary {
+        color: #3182ce !important;
+      }
+      #laporanGridToCapture .text-info {
+        color: #00b5d8 !important;
+      }
+      #laporanGridToCapture .bg-light {
+        background-color: #f7fafc !important;
+      }
+      #laporanGridToCapture .rounded {
+        border-radius: 8px !important;
+      }
+      #laporanGridToCapture .border {
+        border: 1px solid #e2e8f0 !important;
+      }
+      #laporanGridToCapture .adjustment-row td {
+        background-color: #fffdeb !important;
+        color: #4a5568 !important;
+        border-top: none !important;
+        padding-left: 20px !important;
+      }
+    </style>
+    
+    <div id="laporanGridToCapture" style="position: absolute; left: -9999px; top: -9999px; width: 1200px; background: #ffffff; color: #2d3436; padding: 30px; z-index: -1; box-sizing: border-box;">
+      <table style="width: 100%; border-collapse: collapse; border: none; background: #ffffff;">
+        <tr>
+          <!-- KOLOM KIRI: Ringkasan & Operational Cost (Lebar 48%) -->
+          <td style="width: 48%; vertical-align: top; padding-right: 25px; border: none !important;">
+            <!-- Header Judul -->
+            <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #edf2f7; padding-bottom: 15px;">
+              <h2 style="font-weight: 800; font-size: 1.55rem; color: #1a202c; margin: 0 0 5px 0; letter-spacing: 0.5px;">LAPORAN KEUANGAN PLATARIUM POS</h2>
+              <h5 style="color: #4a5568; font-size: 0.95rem; margin: 0 0 5px 0; font-weight: 600;" id="lapCapPeriode">Periode: -</h5>
+              <p style="color: #a0aec0; font-size: 0.75rem; margin: 0;">Dicetak: <span id="lapCapTime">-</span></p>
             </div>
-            <div class="col-6 text-end">
-               <div class="small text-muted fw-bold" style="font-size: 0.75rem;">NET PROFIT AKHIR</div>
-               <div class="fs-4 fw-bold" id="lapCapOpNetProfit" style="font-size: 1.5rem;">Rp 0</div>
-            </div>
-         </div>
-         <!-- Progress Bar -->
-         <div class="progress mb-3" style="height: 20px; border-radius: 10px; background-color: #e9ecef; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); overflow: hidden;">
-            <div id="lapCapOpProfitBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; font-size: 0.75rem; font-weight: bold; line-height: 20px; text-align: center; color: white;">0%</div>
-         </div>
-         <!-- Cost Table -->
-         <div class="table-responsive">
-            <table class="table table-bordered table-sm m-0" style="font-size: 0.8rem; background-color: white;">
-               <thead class="table-secondary" style="background-color: #e9ecef;">
-                  <tr>
-                     <th>Keterangan Cost</th>
-                     <th class="text-end" style="width: 150px;">Nominal</th>
-                  </tr>
-               </thead>
-               <tbody id="lapCapOpCostTableBody">
-               </tbody>
-            </table>
-         </div>
-      </div>
 
-      <h5 class="fw-bold border-bottom pb-2 mb-3">Rincian Transaksi</h5>
-      <table class="table table-bordered table-sm" style="font-size: 0.85rem;">
-        <thead class="table-dark">
-           <tr>
-             <th>ID & Waktu</th>
-             <th>Item</th>
-             <th class="text-end">Total</th>
-             <th class="text-end">Profit Kotor</th>
-             <th class="text-center">Kasir</th>
-           </tr>
-        </thead>
-        <tbody id="lapCapTableBody">
-        </tbody>
+            <!-- Grid KPI Cards (3 Kolom x 2 Baris menggunakan standard table) -->
+            <table style="width: 100%; border-collapse: separate !important; border-spacing: 10px !important; margin-bottom: 20px; border: none !important; background: transparent !important;">
+              <tr>
+                <td style="width: 33%; background: #f7fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
+                  <div style="font-size: 0.68rem; color: #718096; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOTAL REVENUE</div>
+                  <div style="font-size: 1.2rem; font-weight: 800; color: #1a202c;" id="lapCapRev">Rp 0</div>
+                </td>
+                <td style="width: 33%; background: #fff5f5; border: 1px solid #fed7d7 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
+                  <div style="font-size: 0.68rem; color: #e53e3e; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOTAL HPP</div>
+                  <div style="font-size: 1.2rem; font-weight: 800; color: #e53e3e;" id="lapCapHPP">Rp 0</div>
+                </td>
+                <td style="width: 33%; background: #f0fff4; border: 1px solid #c6f6d5 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
+                  <div style="font-size: 0.68rem; color: #38a169; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">PROFIT KOTOR</div>
+                  <div style="font-size: 1.2rem; font-weight: 800; color: #38a169;" id="lapCapProfit">Rp 0</div>
+                </td>
+              </tr>
+              <tr>
+                <td style="width: 33%; background: #f7fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
+                  <div style="font-size: 0.68rem; color: #4a5568; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOTAL PESANAN</div>
+                  <div style="font-size: 1.15rem; font-weight: 800; color: #2d3748;" id="lapCapOrders">0</div>
+                </td>
+                <td style="width: 33%; background: #ebf8ff; border: 1px solid #bee3f8 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
+                  <div style="font-size: 0.68rem; color: #3182ce; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOP PRODUK</div>
+                  <div style="font-size: 0.95rem; font-weight: 800; color: #3182ce; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" id="lapCapTopProd">-</div>
+                </td>
+                <td style="width: 33%; background: #faf5ff; border: 1px solid #e9d8fd !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
+                  <div style="font-size: 0.68rem; color: #805ad5; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOP KASIR</div>
+                  <div style="font-size: 1.05rem; font-weight: 800; color: #805ad5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" id="lapCapTopKasir">-</div>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Section Operational Cost & Net Profit -->
+            <div id="lapCapOpCostSection" style="background-color: #f7fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px;">
+               <h5 style="font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; font-size: 0.9rem; color: #4a5568; letter-spacing: 0.5px;">
+                 <i class="fas fa-wallet" style="margin-right: 8px; color: #4a5568;"></i>OPERATIONAL COST & NET PROFIT
+               </h5>
+               
+               <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; border: none !important; background: transparent !important;">
+                 <tr>
+                   <td style="width: 50%; vertical-align: top; border: none !important; padding: 0 !important;">
+                      <div style="font-size: 0.68rem; color: #718096; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 3px;">TOTAL OPERATIONAL COST</div>
+                      <div style="font-size: 1.35rem; font-weight: 800; color: #e53e3e;" id="lapCapOpTotalCost">Rp 0</div>
+                   </td>
+                   <td style="width: 50%; text-align: right; vertical-align: top; border: none !important; padding: 0 !important;">
+                      <div style="font-size: 0.68rem; color: #718096; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 3px;">NET PROFIT AKHIR</div>
+                      <div style="font-size: 1.35rem; font-weight: 800;" id="lapCapOpNetProfit">Rp 0</div>
+                   </td>
+                 </tr>
+               </table>
+
+               <!-- Progress Bar Container -->
+               <div style="height: 20px; border-radius: 10px; background-color: #edf2f7; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 15px; position: relative;">
+                  <div id="lapCapOpProfitBar" style="width: 0%; font-size: 0.72rem; font-weight: 800; line-height: 18px; text-align: center; color: white; background-image: linear-gradient(45deg, rgba(255, 255, 255, .15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%, transparent 75%, transparent); background-size: 1rem 1rem; transition: width .6s ease; height: 100%; display: block;">0%</div>
+               </div>
+
+               <!-- Cost List Table -->
+               <table style="width: 100%; border-collapse: collapse; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                  <thead>
+                     <tr style="background-color: #edf2f7; color: #4a5568; font-weight: 800; font-size: 0.72rem; text-align: left;">
+                        <th style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; border-top: none; border-left: none; border-right: none;">Keterangan Cost</th>
+                        <th style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; border-top: none; border-left: none; border-right: none; text-align: right; width: 140px;">Nominal</th>
+                     </tr>
+                  </thead>
+                  <tbody id="lapCapOpCostTableBody" style="font-size: 0.75rem; color: #2d3748;">
+                     <!-- Populated via JS -->
+                  </tbody>
+               </table>
+            </div>
+          </td>
+
+          <!-- KOLOM KANAN: Rincian Transaksi (Lebar 52%) -->
+          <td style="width: 52%; vertical-align: top; padding-left: 25px; border-left: 2px dashed #edf2f7 !important;">
+            <h5 style="font-weight: 800; border-bottom: 2px solid #edf2f7; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; font-size: 0.9rem; color: #2d3748; letter-spacing: 0.5px;">
+              <i class="fas fa-list-alt" style="margin-right: 8px; color: #c5a059;"></i>Rincian Transaksi
+            </h5>
+            
+            <table style="width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #ffffff;">
+              <thead>
+                 <tr style="background-color: #1a202c; color: #ffffff; font-weight: 700; font-size: 0.72rem; text-align: left;">
+                   <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important;">ID & Waktu</th>
+                   <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important;">Item</th>
+                   <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important; text-align: right; width: 85px;">Total</th>
+                   <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important; text-align: right; width: 85px;">Profit</th>
+                   <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important; text-align: center; width: 70px;">Kasir</th>
+                 </tr>
+              </thead>
+              <tbody id="lapCapTableBody" style="font-size: 0.72rem; color: #2d3748; line-height: 1.35;">
+                 <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </td>
+        </tr>
       </table>
     </div>
   </body>
