@@ -7926,22 +7926,16 @@
           document.getElementById('payTotalText').innerText = 'Rp ' + CURRENT_TOTAL.toLocaleString(undefined, {maximumFractionDigits:0});
         } else {
           const qrisArea = document.getElementById('qrisInfoArea');
-          let isCard = false;
-          let isCredit = false;
-          
-          if (method === 'DEBIT' || method === 'CREDIT CARD') {
-            isCard = true;
-            isCredit = method === 'CREDIT CARD';
-          }
+          let isCard = (method === 'DEBIT');
           
           if (isCard) {
-            let themeClass = isCredit ? 'info' : 'success';
-            let cardName = isCredit ? 'Kredit' : 'Debit';
+            let themeClass = 'success';
+            let cardName = 'Debit';
             
             // Ambil label dinamis dari pmSettings untuk DEBIT
             let labelSama = 'BANK SAMA';
             let labelBeda = 'BANK BEDA';
-            if (method === 'DEBIT' && pmSettings.DEBIT) {
+            if (pmSettings.DEBIT) {
               labelSama = pmSettings.DEBIT.bankSama ? pmSettings.DEBIT.bankSama.label || 'BANK SAMA' : 'BANK SAMA';
               labelBeda = pmSettings.DEBIT.bankBeda ? pmSettings.DEBIT.bankBeda.label || 'BANK BEDA' : 'BANK BEDA';
             }
@@ -7959,7 +7953,10 @@
           } else {
             let iconHtml = '<i class="fas fa-qrcode fa-3x mb-2 text-primary"></i>';
             let msgHtml = 'Silakan scan kode QRIS di meja kasir.';
-            if (method === 'DANA') {
+            if (method === 'CREDIT CARD') {
+              iconHtml = '<i class="fas fa-credit-card fa-3x mb-2 text-info"></i>';
+              msgHtml = 'Proses pembayaran menggunakan mesin EDC Kartu Kredit.';
+            } else if (method === 'DANA') {
               iconHtml = '<i class="fas fa-wallet fa-3x mb-2 text-primary"></i>';
               msgHtml = 'Proses pembayaran menggunakan DANA E-Wallet.';
             } else if (method === 'OVO') {
@@ -12714,26 +12711,30 @@
                     </div>
 
                     <!-- Simulasi Debit Dual (Bank Sama vs Bank Beda) -->
-                    <div id="debitSimContent" class="d-none">
-                      <div class="premium-receipt-card text-dark mb-2" style="border-left: 3px solid #10b981 !important;">
-                        <div class="receipt-logo">
-                          <div class="fw-bold" style="font-size: calc(0.6rem / var(--apk-zoom, 1)); color: #10b981;"><i class="fas fa-university me-1"></i><span id="debitSimLabelSama">BANK SAMA</span></div>
+                    <div id="debitSimContent" class="d-none row g-2">
+                      <div class="col-6">
+                        <div class="premium-receipt-card text-dark h-100" style="border-left: 3px solid #10b981 !important; margin-bottom: 0 !important;">
+                          <div class="receipt-logo">
+                            <div class="fw-bold" style="font-size: calc(0.6rem / var(--apk-zoom, 1)); color: #10b981;"><i class="fas fa-university me-1"></i><span id="debitSimLabelSama">BANK SAMA</span></div>
+                          </div>
+                          <div class="dotted-receipt-line"></div>
+                          <div class="receipt-row bold" style="margin-bottom:4px;"><span>Belanja</span><span>Rp 100.000</span></div>
+                          <div class="receipt-row text-muted" style="font-size:0.56rem;margin-bottom:4px;"><span>Pot. Bank</span><span id="debitSimCutSama" class="text-danger fw-bold">(Rp 0)</span></div>
+                          <div class="receipt-row net" style="font-size:calc(0.68rem / var(--apk-zoom,1));margin-top:2px;"><span>Bayar</span><span>Rp 100.000</span></div>
+                          <div class="receipt-row" style="font-size:calc(0.62rem / var(--apk-zoom,1));margin-top:2px;"><span>Kas Masuk</span><span id="debitSimNetSama" class="fw-bold" style="color:#10b981;">Rp 100.000</span></div>
                         </div>
-                        <div class="dotted-receipt-line"></div>
-                        <div class="receipt-row bold" style="margin-bottom:4px;"><span>Belanja</span><span>Rp 100.000</span></div>
-                        <div class="receipt-row text-muted" style="font-size:0.56rem;margin-bottom:4px;"><span>Pot. Bank</span><span id="debitSimCutSama" class="text-danger fw-bold">(Rp 0)</span></div>
-                        <div class="receipt-row net" style="font-size:calc(0.68rem / var(--apk-zoom,1));margin-top:2px;"><span>Bayar</span><span>Rp 100.000</span></div>
-                        <div class="receipt-row" style="font-size:calc(0.62rem / var(--apk-zoom,1));margin-top:2px;"><span>Kas Masuk</span><span id="debitSimNetSama" class="fw-bold" style="color:#10b981;">Rp 100.000</span></div>
                       </div>
-                      <div class="premium-receipt-card text-dark" style="border-left: 3px solid #ef4444 !important;">
-                        <div class="receipt-logo">
-                          <div class="fw-bold" style="font-size: calc(0.6rem / var(--apk-zoom, 1)); color: #ef4444;"><i class="fas fa-exchange-alt me-1"></i><span id="debitSimLabelBeda">BANK BEDA</span></div>
+                      <div class="col-6">
+                        <div class="premium-receipt-card text-dark h-100" style="border-left: 3px solid #ef4444 !important; margin-bottom: 0 !important;">
+                          <div class="receipt-logo">
+                            <div class="fw-bold" style="font-size: calc(0.6rem / var(--apk-zoom, 1)); color: #ef4444;"><i class="fas fa-exchange-alt me-1"></i><span id="debitSimLabelBeda">BANK BEDA</span></div>
+                          </div>
+                          <div class="dotted-receipt-line"></div>
+                          <div class="receipt-row bold" style="margin-bottom:4px;"><span>Belanja</span><span>Rp 100.000</span></div>
+                          <div class="receipt-row text-muted" style="font-size:0.56rem;margin-bottom:4px;"><span>Pot. Bank</span><span id="debitSimCutBeda" class="text-danger fw-bold">(Rp 0)</span></div>
+                          <div class="receipt-row net" style="font-size:calc(0.68rem / var(--apk-zoom,1));margin-top:2px;"><span>Bayar</span><span>Rp 100.000</span></div>
+                          <div class="receipt-row" style="font-size:calc(0.62rem / var(--apk-zoom,1));margin-top:2px;"><span>Kas Masuk</span><span id="debitSimNetBeda" class="fw-bold" style="color:#ef4444;">Rp 99.000</span></div>
                         </div>
-                        <div class="dotted-receipt-line"></div>
-                        <div class="receipt-row bold" style="margin-bottom:4px;"><span>Belanja</span><span>Rp 100.000</span></div>
-                        <div class="receipt-row text-muted" style="font-size:0.56rem;margin-bottom:4px;"><span>Pot. Bank</span><span id="debitSimCutBeda" class="text-danger fw-bold">(Rp 0)</span></div>
-                        <div class="receipt-row net" style="font-size:calc(0.68rem / var(--apk-zoom,1));margin-top:2px;"><span>Bayar</span><span>Rp 100.000</span></div>
-                        <div class="receipt-row" style="font-size:calc(0.62rem / var(--apk-zoom,1));margin-top:2px;"><span>Kas Masuk</span><span id="debitSimNetBeda" class="fw-bold" style="color:#ef4444;">Rp 99.000</span></div>
                       </div>
                     </div>
                 </div>
