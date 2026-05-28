@@ -7898,6 +7898,10 @@
         // [PERBAIKAN] Sembunyikan cart mobile sebelum membuka popup payment
         toggleMobileCart(false);
         
+        // Reset surcharge state
+        window.CHECKOUT_SURCHARGE_INFO = null;
+        window.CHECKOUT_ADJUSTED_TOTAL = CURRENT_TOTAL;
+        
         document.getElementById('payTotalText').innerText = 'Rp ' + CURRENT_TOTAL.toLocaleString(undefined, {maximumFractionDigits:0});
         document.getElementById('inputCashAmount').value = '';
         document.getElementById('payChangeText').innerText = 'Rp 0';
@@ -7916,6 +7920,10 @@
         
         if (isCash) {
           document.getElementById('inputCashAmount').focus();
+          // Reset surcharge for CASH
+          window.CHECKOUT_SURCHARGE_INFO = null;
+          window.CHECKOUT_ADJUSTED_TOTAL = CURRENT_TOTAL;
+          document.getElementById('payTotalText').innerText = 'Rp ' + CURRENT_TOTAL.toLocaleString(undefined, {maximumFractionDigits:0});
         } else {
           const qrisArea = document.getElementById('qrisInfoArea');
           let isCard = false;
@@ -7929,13 +7937,22 @@
           if (isCard) {
             let themeClass = isCredit ? 'info' : 'success';
             let cardName = isCredit ? 'Kredit' : 'Debit';
+            
+            // Ambil label dinamis dari pmSettings untuk DEBIT
+            let labelSama = 'BANK SAMA';
+            let labelBeda = 'BANK BEDA';
+            if (method === 'DEBIT' && pmSettings.DEBIT) {
+              labelSama = pmSettings.DEBIT.bankSama ? pmSettings.DEBIT.bankSama.label || 'BANK SAMA' : 'BANK SAMA';
+              labelBeda = pmSettings.DEBIT.bankBeda ? pmSettings.DEBIT.bankBeda.label || 'BANK BEDA' : 'BANK BEDA';
+            }
+            
             qrisArea.innerHTML = `
               <div class="d-flex gap-3 justify-content-center mt-2 w-100 px-2">
-                 <input type="radio" class="btn-check" name="bankType" id="bankSama" autocomplete="off" value="SAMA" checked>
-                 <label class="btn btn-outline-${themeClass} rounded-4 w-50 fw-bold py-2.5" style="font-size: 0.9rem;" for="bankSama">BANK SAMA</label>
+                 <input type="radio" class="btn-check" name="bankType" id="bankSama" autocomplete="off" value="SAMA" checked onchange="updateCheckoutTotalWithSurcharge()">
+                 <label class="btn btn-outline-${themeClass} rounded-4 w-50 fw-bold py-2.5" style="font-size: 0.9rem;" for="bankSama">${labelSama}</label>
 
-                 <input type="radio" class="btn-check" name="bankType" id="bankBeda" autocomplete="off" value="BEDA">
-                 <label class="btn btn-outline-${themeClass} rounded-4 w-50 fw-bold py-2.5" style="font-size: 0.9rem;" for="bankBeda">BANK BEDA</label>
+                 <input type="radio" class="btn-check" name="bankType" id="bankBeda" autocomplete="off" value="BEDA" onchange="updateCheckoutTotalWithSurcharge()">
+                 <label class="btn btn-outline-${themeClass} rounded-4 w-50 fw-bold py-2.5" style="font-size: 0.9rem;" for="bankBeda">${labelBeda}</label>
               </div>
               <p class="text-muted mt-3 mb-0 fw-semibold" style="font-size: 0.85rem;">Silakan pilih jenis mesin EDC untuk kartu ${cardName}.</p>
             `;
@@ -7957,12 +7974,54 @@
               <p class="text-muted m-0 fw-semibold mt-2" style="font-size: 0.88rem;">${msgHtml}</p>
             `;
           }
+          
+          // Hitung surcharge untuk metode non-CASH
+          updateCheckoutTotalWithSurcharge();
         }
+      }
+
+      // --- FUNGSI BARU: Hitung dan tampilkan total dengan surcharge di modal checkout ---
+      function updateCheckoutTotalWithSurcharge() {
+        const method = document.querySelector('input[name="payMethod"]:checked').value;
+        if (method === 'CASH') {
+          window.CHECKOUT_SURCHARGE_INFO = null;
+          window.CHECKOUT_ADJUSTED_TOTAL = CURRENT_TOTAL;
+          document.getElementById('payTotalText').innerText = 'Rp ' + CURRENT_TOTAL.toLocaleString(undefined, {maximumFractionDigits:0});
+          return;
+        }
+        
+        let bankType = null;
+        const bankTypeEl = document.querySelector('input[name="bankType"]:checked');
+        if (bankTypeEl) bankType = bankTypeEl.value;
+        
+        const sc = calculateSurchargeForMethod(method, bankType);
+        const fee = sc.isPercent ? (CURRENT_TOTAL * sc.absVal / 100) : sc.absVal;
+        const feeAmount = sc.effect === 'add' ? fee : -fee;
+        
+        // Surcharge (add): total naik. Potong (cut): total tetap.
+        const adjustedTotal = sc.effect === 'add' ? CURRENT_TOTAL + fee : CURRENT_TOTAL;
+        
+        window.CHECKOUT_SURCHARGE_INFO = {
+          bankType: bankType,
+          feeType: sc.feeType,
+          rawValue: sc.rawValue,
+          feeAmount: Math.round(feeAmount),
+          effect: sc.effect,
+          label: sc.label,
+          baseTotal: CURRENT_TOTAL
+        };
+        window.CHECKOUT_ADJUSTED_TOTAL = Math.round(adjustedTotal);
+        
+        document.getElementById('payTotalText').innerText = 'Rp ' + window.CHECKOUT_ADJUSTED_TOTAL.toLocaleString(undefined, {maximumFractionDigits:0});
+        
+        // Update kembalian jika CASH input sudah terisi
+        calculateChange();
       }
 
       function calculateChange() {
         const cash = parseInt(document.getElementById('inputCashAmount').value) || 0;
-        const change = cash - CURRENT_TOTAL;
+        const totalToBePaid = window.CHECKOUT_ADJUSTED_TOTAL || CURRENT_TOTAL;
+        const change = cash - totalToBePaid;
         const textEl = document.getElementById('payChangeText');
         
         if (change < 0) {
@@ -7982,7 +8041,9 @@
         const method = document.querySelector('input[name="payMethod"]:checked').value;
         const cashInput = document.getElementById('inputCashAmount');
         const cash = parseInt(cashInput.value) || 0;
-        if (method === 'CASH' && cash < CURRENT_TOTAL) {
+        const finalTotal = window.CHECKOUT_ADJUSTED_TOTAL || CURRENT_TOTAL;
+        
+        if (method === 'CASH' && cash < finalTotal) {
           alert("UANG PEMBAYARAN KURANG!");
           cashInput.focus();
           return;
@@ -7998,7 +8059,7 @@
           if (!savedShift) {
             // Catat total penjualan (semua metode) untuk notifikasi
             let preShiftTotal = parseInt(localStorage.getItem('pos_preshift_admin_total')) || 0;
-            localStorage.setItem('pos_preshift_admin_total', preShiftTotal + CURRENT_TOTAL);
+            localStorage.setItem('pos_preshift_admin_total', preShiftTotal + finalTotal);
 
             // Catat nama admin yang melakukan transaksi
             let preShiftNames = localStorage.getItem('pos_preshift_admin_names');
@@ -8010,7 +8071,7 @@
             // Hanya tambahkan ke total laci jika metodenya CASH
             if (method === 'CASH') {
               let preShiftCash = parseInt(localStorage.getItem('pos_preshift_admin_cash')) || 0;
-              localStorage.setItem('pos_preshift_admin_cash', preShiftCash + CURRENT_TOTAL);
+              localStorage.setItem('pos_preshift_admin_cash', preShiftCash + finalTotal);
             }
           }
         }
@@ -8086,15 +8147,19 @@
           }
         });
 
+        // --- SURCHARGE INFO ---
+        const surchargeInfo = window.CHECKOUT_SURCHARGE_INFO || null;
+
         const transactionData = {
-          total: CURRENT_TOTAL, 
+          total: finalTotal, 
           method: method,
-          cash: method === 'CASH' ? cash : CURRENT_TOTAL,
-          change: method === 'CASH' ? (cash - CURRENT_TOTAL) : 0,
+          cash: method === 'CASH' ? cash : finalTotal,
+          change: method === 'CASH' ? (cash - finalTotal) : 0,
           items: processedItems,
           cashier: finalCashierName,
-          priceNotes: finalPriceNotes, // Masukkan ke payload objek
-          addonNotes: finalAddonNotes   // [BARU] Masukkan addonNotes ke payload objek
+          priceNotes: finalPriceNotes,
+          addonNotes: finalAddonNotes,
+          surchargeInfo: surchargeInfo
         };
 
         google.script.run.withSuccessHandler(res => {
@@ -8102,12 +8167,19 @@
           btn.innerText = 'BAYAR SEKARANG';
           if(res.status === 'success') {
             const itemDetails = CART.map(i => `${i.name} (x${i.qty})`).join(', ');
-            let auditLogMessage = `Menyimpan transaksi POS Utama senilai Rp ${CURRENT_TOTAL.toLocaleString()} dengan item: [ ${itemDetails} ]`;
+            let auditLogMessage = `Menyimpan transaksi POS Utama senilai Rp ${finalTotal.toLocaleString()} dengan item: [ ${itemDetails} ]`;
             if (finalPriceNotes) {
               auditLogMessage += ` | Catatan Harga: ${finalPriceNotes}`;
             }
             if (finalAddonNotes) {
               auditLogMessage += ` | Catatan Addon: ${finalAddonNotes}`;
+            }
+            // Detail surcharge/potongan bank
+            if (surchargeInfo && surchargeInfo.feeAmount !== 0) {
+              const feeLabel = surchargeInfo.label || method;
+              const feeStr = surchargeInfo.feeAmount > 0 ? `+Rp ${surchargeInfo.feeAmount.toLocaleString()}` : `-Rp ${Math.abs(surchargeInfo.feeAmount).toLocaleString()}`;
+              const effectLabel = surchargeInfo.effect === 'add' ? 'Surcharge' : 'Pot. Bank';
+              auditLogMessage += ` | ${effectLabel}: ${feeLabel} ${surchargeInfo.rawValue}% (${feeStr})`;
             }
             triggerAuditLog("TRANSAKSI", auditLogMessage);
 
@@ -10126,11 +10198,27 @@
         });
 
         pushTxt('-'.repeat(maxChars));
+        
+        // D2. Surcharge/Potongan Bank
+        const sc = transactionData.surchargeInfo;
+        if (sc && sc.feeAmount !== 0) {
+          if (sc.effect === 'add') {
+            pushTxt(padText(`Surcharge (${sc.label}):`, '+' + Math.abs(sc.feeAmount).toLocaleString('id-ID'), maxChars));
+          }
+        }
+        
         bytes.push(...cmd.boldOn);
         pushTxt(padText('TOTAL:', transactionData.total.toLocaleString('id-ID'), maxChars));
         pushTxt(padText('BAYAR:', transactionData.cash.toLocaleString('id-ID'), maxChars));
         pushTxt(padText('KEMBALI:', transactionData.change.toLocaleString('id-ID'), maxChars));
         bytes.push(...cmd.boldOff);
+        
+        if (sc && sc.feeAmount !== 0 && sc.effect === 'cut') {
+          pushTxt(padText(`Pot.Bank (${sc.label}):`, '-' + Math.abs(sc.feeAmount).toLocaleString('id-ID'), maxChars));
+          const kasNet = transactionData.total - Math.abs(sc.feeAmount);
+          pushTxt(padText('Kas Masuk:', kasNet.toLocaleString('id-ID'), maxChars));
+        }
+        
         pushTxt('-'.repeat(maxChars));
 
         // E. Footer
@@ -10401,6 +10489,34 @@
           pushTxt(padText("Total HPP:", totalHPP, maxChars));
           pushTxt(padText("Profit Kotor:", netProfit, maxChars));
           pushTxt(padText("Total Pesanan:", totalOrders, maxChars));
+          
+          // --- RINGKASAN BIAYA METODE BAYAR ---
+          let totalBankFee = 0;
+          let totalSurchargeAdd = 0;
+          filteredData.forEach(t => {
+            if (t.surchargeInfo && t.surchargeInfo.feeAmount) {
+              if (t.surchargeInfo.effect === 'cut') {
+                totalBankFee += Math.abs(t.surchargeInfo.feeAmount);
+              } else if (t.surchargeInfo.effect === 'add') {
+                totalSurchargeAdd += Math.abs(t.surchargeInfo.feeAmount);
+              }
+            }
+          });
+          if (totalBankFee > 0 || totalSurchargeAdd > 0) {
+            pushTxt('. '.repeat(maxChars / 2));
+            if (totalBankFee > 0) {
+              pushTxt(padText("Pot. Bank:", "-Rp " + totalBankFee.toLocaleString('id-ID', {maximumFractionDigits:0}), maxChars));
+            }
+            if (totalSurchargeAdd > 0) {
+              pushTxt(padText("Surcharge:", "+Rp " + totalSurchargeAdd.toLocaleString('id-ID', {maximumFractionDigits:0}), maxChars));
+            }
+            if (totalBankFee > 0) {
+              let pendapatanNum = parseInt(totalRev.replace(/[^\d]/g, '')) || 0;
+              let kasMasuk = pendapatanNum - totalBankFee;
+              pushTxt(padText("Kas Masuk:", "Rp " + kasMasuk.toLocaleString('id-ID', {maximumFractionDigits:0}), maxChars));
+            }
+          }
+          
           pushTxt('-'.repeat(maxChars));
 
           bytes.push(...cmd.alignCenter);
@@ -10792,6 +10908,35 @@
                   let myProfit = (netProfit > 0) ? (netProfit * (myShare.percentage / 100)) : 0;
                   captionMsg += `<b>Pembagian Saham Anda (${myShare.percentage}%):</b> Rp ${myProfit.toLocaleString('id-ID', {maximumFractionDigits:0})}\n`;
                 }
+              }
+
+              // --- RINGKASAN BIAYA METODE BAYAR (TELEGRAM REKAP) ---
+              let tgTotalBankFee = 0;
+              let tgTotalSurchargeAdd = 0;
+              if (TRANSACTIONS_DATA) {
+                const now2 = new Date();
+                const todayStr2 = Utilities_formatDateIndo(now2);
+                const monthStr2 = (now2.getMonth() + 1).toString().padStart(2, '0') + '/' + now2.getFullYear();
+                const filterType2 = document.getElementById('revFilter').value;
+                
+                TRANSACTIONS_DATA.forEach(t => {
+                  const tDate = t.timestamp.split(' ')[0];
+                  let timeMatch = true;
+                  if (filterType2 === 'today') timeMatch = (tDate === todayStr2);
+                  else if (filterType2 === 'month') timeMatch = tDate.includes(monthStr2);
+                  else if (filterType2 === 'year') timeMatch = tDate.includes(now2.getFullYear().toString());
+                  else if (filterType2 === 'custom') timeMatch = (tDate === (window.SELECTED_CUSTOM_DATE || ''));
+                  
+                  if (timeMatch && t.surchargeInfo && t.surchargeInfo.feeAmount) {
+                    if (t.surchargeInfo.effect === 'cut') tgTotalBankFee += Math.abs(t.surchargeInfo.feeAmount);
+                    else if (t.surchargeInfo.effect === 'add') tgTotalSurchargeAdd += Math.abs(t.surchargeInfo.feeAmount);
+                  }
+                });
+              }
+              if (tgTotalBankFee > 0 || tgTotalSurchargeAdd > 0) {
+                captionMsg += `\n<b>📌 Biaya Metode Bayar:</b>\n`;
+                if (tgTotalBankFee > 0) captionMsg += `   Pot. Bank: -Rp ${tgTotalBankFee.toLocaleString('id-ID', {maximumFractionDigits:0})}\n`;
+                if (tgTotalSurchargeAdd > 0) captionMsg += `   Surcharge: +Rp ${tgTotalSurchargeAdd.toLocaleString('id-ID', {maximumFractionDigits:0})}\n`;
               }
 
               captionMsg += `\n<i>Detail terlampir pada gambar.</i>`;
@@ -12429,9 +12574,48 @@
               </li>
             </ul>
 
+            <!-- DEBIT-SPECIFIC: Dual Bank Sama/Beda Config (hidden by default) -->
+            <div id="debitDualConfigArea" class="d-none mb-2">
+              <div class="row g-2">
+                <div class="col-6">
+                  <div class="surcharge-form-card" style="border-left: 3px solid #10b981;">
+                    <label class="fw-bold mb-1" style="color: #10b981 !important; font-size: calc(0.62rem / var(--apk-zoom, 1)) !important;"><i class="fas fa-university me-1"></i>BANK SAMA :</label>
+                    <input type="text" id="pmDebitLabelSama" class="form-control fw-bold py-1 mb-1" value="BANK SAMA" style="font-size: calc(0.66rem / var(--apk-zoom, 1)); border-color: #d1fae5 !important; height: auto;" oninput="updateDebitSimulation()">
+                    <div class="d-flex align-items-center justify-content-between gap-1">
+                      <label class="fw-bold text-muted mb-0" style="font-size: calc(0.55rem / var(--apk-zoom, 1)) !important; white-space: nowrap;">Biaya (%):</label>
+                      <div class="premium-luxury-counter" style="max-width: 110px;">
+                        <button class="btn-counter-lux" type="button" onclick="changeDebitValue('sama', -1)">-</button>
+                        <input type="text" id="pmDebitValueSama" value="0" readonly style="font-size: calc(0.65rem / var(--apk-zoom, 1)) !important;">
+                        <button class="btn-counter-lux" type="button" onclick="changeDebitValue('sama', 1)">+</button>
+                      </div>
+                    </div>
+                    <button class="btn btn-sm surcharge-btn-auto w-100 mt-1" onclick="setDebitAuto('sama', 0)" style="font-size: calc(0.52rem / var(--apk-zoom, 1)) !important;">Auto: 0% (Gratis)</button>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="surcharge-form-card" style="border-left: 3px solid #ef4444;">
+                    <label class="fw-bold mb-1" style="color: #ef4444 !important; font-size: calc(0.62rem / var(--apk-zoom, 1)) !important;"><i class="fas fa-exchange-alt me-1"></i>BANK BEDA :</label>
+                    <input type="text" id="pmDebitLabelBeda" class="form-control fw-bold py-1 mb-1" value="BANK BEDA" style="font-size: calc(0.66rem / var(--apk-zoom, 1)); border-color: #fee2e2 !important; height: auto;" oninput="updateDebitSimulation()">
+                    <div class="d-flex align-items-center justify-content-between gap-1">
+                      <label class="fw-bold text-muted mb-0" style="font-size: calc(0.55rem / var(--apk-zoom, 1)) !important; white-space: nowrap;">Biaya (%):</label>
+                      <div class="premium-luxury-counter" style="max-width: 110px;">
+                        <button class="btn-counter-lux" type="button" onclick="changeDebitValue('beda', -1)">-</button>
+                        <input type="text" id="pmDebitValueBeda" value="-1" readonly style="font-size: calc(0.65rem / var(--apk-zoom, 1)) !important;">
+                        <button class="btn-counter-lux" type="button" onclick="changeDebitValue('beda', 1)">+</button>
+                      </div>
+                    </div>
+                    <button class="btn btn-sm surcharge-btn-auto w-100 mt-1" onclick="setDebitAuto('beda', -1)" style="font-size: calc(0.52rem / var(--apk-zoom, 1)) !important;">Auto: -1% (Bank Beda)</button>
+                  </div>
+                </div>
+              </div>
+              <div class="surcharge-warning-text text-muted lh-sm rounded-3 mt-2">
+                <span class="text-danger fw-bold"><i class="fas fa-exclamation-triangle me-1"></i> Regulasi BI:</span> Pembebanan surcharge pada customer dilarang. Gunakan <strong>Potong Internal</strong> agar biaya dipotong legal dari merchant.
+              </div>
+            </div>
+
             <div class="row mt-1 text-dark g-2">
-                <!-- KOLOM KIRI (INPUT FORM) -->
-                <div class="col-md-6 border-end pe-md-2">
+                <!-- KOLOM KIRI (INPUT FORM) - Standard (non-Debit) -->
+                <div class="col-md-6 border-end pe-md-2" id="standardFormCol">
                     <div class="surcharge-form-card">
                         <div class="d-flex align-items-center justify-content-between">
                             <label class="fw-bold text-muted mb-0">Nama Metode</label>
@@ -12492,7 +12676,8 @@
 
                 <!-- KOLOM KANAN (SIMULASI RIIL STRUK) -->
                 <div class="col-md-6 ps-md-2">
-                    <div class="premium-receipt-card text-dark">
+                    <!-- Simulasi Standard (non-Debit) -->
+                    <div id="standardSimContent" class="premium-receipt-card text-dark">
                         <div class="receipt-logo">
                            <div class="fw-bold" style="font-size: calc(0.68rem / var(--apk-zoom, 1)); letter-spacing: 0.5px; color: #c5a059;">SIMULASI RIIL TRANSAKSI</div>
                         </div>
@@ -12526,6 +12711,30 @@
                             <span>Uang Masuk Kas</span>
                             <span id="pmSimNet" class="fw-bold">Rp 100.000</span>
                         </div>
+                    </div>
+
+                    <!-- Simulasi Debit Dual (Bank Sama vs Bank Beda) -->
+                    <div id="debitSimContent" class="d-none">
+                      <div class="premium-receipt-card text-dark mb-2" style="border-left: 3px solid #10b981 !important;">
+                        <div class="receipt-logo">
+                          <div class="fw-bold" style="font-size: calc(0.6rem / var(--apk-zoom, 1)); color: #10b981;"><i class="fas fa-university me-1"></i><span id="debitSimLabelSama">BANK SAMA</span></div>
+                        </div>
+                        <div class="dotted-receipt-line"></div>
+                        <div class="receipt-row bold" style="margin-bottom:4px;"><span>Belanja</span><span>Rp 100.000</span></div>
+                        <div class="receipt-row text-muted" style="font-size:0.56rem;margin-bottom:4px;"><span>Pot. Bank</span><span id="debitSimCutSama" class="text-danger fw-bold">(Rp 0)</span></div>
+                        <div class="receipt-row net" style="font-size:calc(0.68rem / var(--apk-zoom,1));margin-top:2px;"><span>Bayar</span><span>Rp 100.000</span></div>
+                        <div class="receipt-row" style="font-size:calc(0.62rem / var(--apk-zoom,1));margin-top:2px;"><span>Kas Masuk</span><span id="debitSimNetSama" class="fw-bold" style="color:#10b981;">Rp 100.000</span></div>
+                      </div>
+                      <div class="premium-receipt-card text-dark" style="border-left: 3px solid #ef4444 !important;">
+                        <div class="receipt-logo">
+                          <div class="fw-bold" style="font-size: calc(0.6rem / var(--apk-zoom, 1)); color: #ef4444;"><i class="fas fa-exchange-alt me-1"></i><span id="debitSimLabelBeda">BANK BEDA</span></div>
+                        </div>
+                        <div class="dotted-receipt-line"></div>
+                        <div class="receipt-row bold" style="margin-bottom:4px;"><span>Belanja</span><span>Rp 100.000</span></div>
+                        <div class="receipt-row text-muted" style="font-size:0.56rem;margin-bottom:4px;"><span>Pot. Bank</span><span id="debitSimCutBeda" class="text-danger fw-bold">(Rp 0)</span></div>
+                        <div class="receipt-row net" style="font-size:calc(0.68rem / var(--apk-zoom,1));margin-top:2px;"><span>Bayar</span><span>Rp 100.000</span></div>
+                        <div class="receipt-row" style="font-size:calc(0.62rem / var(--apk-zoom,1));margin-top:2px;"><span>Kas Masuk</span><span id="debitSimNetBeda" class="fw-bold" style="color:#ef4444;">Rp 99.000</span></div>
+                      </div>
                     </div>
                 </div>
             </div>
@@ -12563,18 +12772,28 @@
       
       let pmSettings = {
         'QRIS': { effect: 'cut', feeType: 'percent', value: 0 },
-        'DEBIT': { effect: 'cut', feeType: 'percent', value: 0 },
+        'DEBIT': { effect: 'cut', feeType: 'percent', value: 0,
+          bankSama: { label: 'BANK SAMA', feeType: 'percent', value: 0 },
+          bankBeda: { label: 'BANK BEDA', feeType: 'percent', value: -1.0 }
+        },
         'CC': { effect: 'cut', feeType: 'percent', value: 0 },
         'DANA': { effect: 'cut', feeType: 'percent', value: 0 },
         'OVO': { effect: 'cut', feeType: 'percent', value: 0 },
         'GOPAY': { effect: 'cut', feeType: 'percent', value: 0 }
       };
       
-      // Load from localStorage if available
+      // Load from localStorage if available (with migration for old DEBIT format)
       try {
         const savedPmSettings = localStorage.getItem('pm_surcharge_settings');
         if (savedPmSettings) {
-          pmSettings = JSON.parse(savedPmSettings);
+          const parsed = JSON.parse(savedPmSettings);
+          // Migrasi: jika DEBIT format lama (tanpa bankSama/bankBeda), konversi
+          if (parsed.DEBIT && !parsed.DEBIT.bankSama) {
+            const oldVal = parsed.DEBIT.value || 0;
+            parsed.DEBIT.bankSama = { label: 'BANK SAMA', feeType: 'percent', value: 0 };
+            parsed.DEBIT.bankBeda = { label: 'BANK BEDA', feeType: parsed.DEBIT.feeType || 'percent', value: oldVal };
+          }
+          pmSettings = parsed;
         }
       } catch (e) {
         console.error('Failed to load pmSettings from localStorage', e);
@@ -12588,45 +12807,56 @@
          
          const tabs = document.querySelectorAll('#paymentMethodTabs .nav-link');
          tabs.forEach(tab => {
-             // Reset all active classes
              tab.classList.remove('active', 'active-qris', 'active-debit', 'active-cc', 'active-dana', 'active-ovo', 'active-gopay');
              if (tab.id.replace('tab-', '').toUpperCase() === methodName.toUpperCase()) {
                  tab.classList.add('active-' + methodName.toLowerCase());
              }
          });
+
+         const isDebit = (methodName === 'DEBIT');
+         // Toggle tampilan: form standar vs form khusus Debit
+         document.getElementById('standardFormCol').style.display = isDebit ? 'none' : '';
+         document.getElementById('debitDualConfigArea').classList.toggle('d-none', !isDebit);
+         document.getElementById('standardSimContent').style.display = isDebit ? 'none' : '';
+         document.getElementById('debitSimContent').classList.toggle('d-none', !isDebit);
          
-         const data = pmSettings[methodName];
-         document.getElementById('pmEffectAdd').checked = data.effect === 'add';
-         document.getElementById('pmEffectCut').checked = data.effect === 'cut';
-         document.getElementById('pmFeePercent').checked = data.feeType === 'percent';
-         document.getElementById('pmFeeFlat').checked = data.feeType === 'flat';
-         document.getElementById('pmValue').value = data.value;
-         
-         const autoContainer = document.getElementById('pmAutoButtons');
-         autoContainer.innerHTML = '';
-         
-         if (methodName === 'QRIS') {
-             autoContainer.innerHTML = `
-                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold surcharge-btn-auto" onclick="setAutoPM(0.3, 'percent', 'cut')">Usaha Mikro (0.3%)</button>
-                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold surcharge-btn-auto" onclick="setAutoPM(0.7, 'percent', 'cut')">Usaha Menengah (0.7%)</button>
-             `;
-         } else if (methodName === 'DEBIT') {
-             autoContainer.innerHTML = `
-                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold surcharge-btn-auto" onclick="setAutoPM(0.15, 'percent', 'cut')">Bank Sama (0.15%)</button>
-                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold surcharge-btn-auto" onclick="setAutoPM(1.0, 'percent', 'cut')">Bank Beda (1.0%)</button>
-             `;
-         } else if (methodName === 'CC') {
-             autoContainer.innerHTML = `
-                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold surcharge-btn-auto" onclick="setAutoPM(2.0, 'percent', 'cut')">BCA/Mandiri (2%)</button>
-                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold surcharge-btn-auto" onclick="setAutoPM(2.5, 'percent', 'cut')">Standard (2.5%)</button>
-             `;
-         } else if (methodName === 'DANA' || methodName === 'OVO' || methodName === 'GOPAY') {
-             autoContainer.innerHTML = `
-                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold surcharge-btn-auto" onclick="setAutoPM(0.7, 'percent', 'cut')">QRIS/E-Wallet (0.7%)</button>
-                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold surcharge-btn-auto" onclick="setAutoPM(1.5, 'percent', 'cut')">Standard Apps (1.5%)</button>
-             `;
+         if (isDebit) {
+           // Load data Debit sub-configs
+           const d = pmSettings.DEBIT;
+           document.getElementById('pmDebitLabelSama').value = d.bankSama.label || 'BANK SAMA';
+           document.getElementById('pmDebitValueSama').value = d.bankSama.value || 0;
+           document.getElementById('pmDebitLabelBeda').value = d.bankBeda.label || 'BANK BEDA';
+           document.getElementById('pmDebitValueBeda').value = d.bankBeda.value || -1;
+           updateDebitSimulation();
+         } else {
+           const data = pmSettings[methodName];
+           document.getElementById('pmEffectAdd').checked = data.effect === 'add';
+           document.getElementById('pmEffectCut').checked = data.effect === 'cut';
+           document.getElementById('pmFeePercent').checked = data.feeType === 'percent';
+           document.getElementById('pmFeeFlat').checked = data.feeType === 'flat';
+           document.getElementById('pmValue').value = data.value;
+           
+           const autoContainer = document.getElementById('pmAutoButtons');
+           autoContainer.innerHTML = '';
+           
+           if (methodName === 'QRIS') {
+               autoContainer.innerHTML = `
+                   <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold surcharge-btn-auto" onclick="setAutoPM(0.3, 'percent', 'cut')">Usaha Mikro (0.3%)</button>
+                   <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold surcharge-btn-auto" onclick="setAutoPM(0.7, 'percent', 'cut')">Usaha Menengah (0.7%)</button>
+               `;
+           } else if (methodName === 'CC') {
+               autoContainer.innerHTML = `
+                   <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold surcharge-btn-auto" onclick="setAutoPM(2.0, 'percent', 'cut')">BCA/Mandiri (2%)</button>
+                   <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold surcharge-btn-auto" onclick="setAutoPM(2.5, 'percent', 'cut')">Standard (2.5%)</button>
+               `;
+           } else if (methodName === 'DANA' || methodName === 'OVO' || methodName === 'GOPAY') {
+               autoContainer.innerHTML = `
+                   <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold surcharge-btn-auto" onclick="setAutoPM(0.7, 'percent', 'cut')">QRIS/E-Wallet (0.7%)</button>
+                   <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold surcharge-btn-auto" onclick="setAutoPM(1.5, 'percent', 'cut')">Standard Apps (1.5%)</button>
+               `;
+           }
+           updatePMSimulation();
          }
-         updatePMSimulation();
       }
       
       function setAutoPM(val, feeType, effect) {
@@ -12649,7 +12879,69 @@
           updatePMSimulation();
       }
 
+      // --- DEBIT-SPECIFIC FUNCTIONS ---
+      function changeDebitValue(type, direction) {
+          const inputId = type === 'sama' ? 'pmDebitValueSama' : 'pmDebitValueBeda';
+          let currentVal = parseFloat(document.getElementById(inputId).value) || 0;
+          let newVal = currentVal + (direction * 0.1);
+          newVal = Math.round(newVal * 10) / 10;
+          document.getElementById(inputId).value = newVal;
+          updateDebitSimulation();
+      }
+
+      function setDebitAuto(type, val) {
+          const inputId = type === 'sama' ? 'pmDebitValueSama' : 'pmDebitValueBeda';
+          document.getElementById(inputId).value = val;
+          updateDebitSimulation();
+      }
+
+      function updateDebitSimulation() {
+          const simAmount = 100000;
+          const samaVal = parseFloat(document.getElementById('pmDebitValueSama').value) || 0;
+          const bedaVal = parseFloat(document.getElementById('pmDebitValueBeda').value) || 0;
+          const samaLabel = document.getElementById('pmDebitLabelSama').value || 'BANK SAMA';
+          const bedaLabel = document.getElementById('pmDebitLabelBeda').value || 'BANK BEDA';
+
+          // Update labels di simulasi
+          document.getElementById('debitSimLabelSama').innerText = samaLabel;
+          document.getElementById('debitSimLabelBeda').innerText = bedaLabel;
+
+          // Hitung Bank Sama
+          const samaAbsVal = Math.abs(samaVal);
+          const samaFee = simAmount * samaAbsVal / 100;
+          const samaSurcharge = samaVal > 0 ? samaFee : 0;
+          const samaCut = samaVal <= 0 ? samaFee : 0;
+          const samaBayar = simAmount + samaSurcharge;
+          const samaNet = samaBayar - samaCut;
+
+          // Hitung Bank Beda
+          const bedaAbsVal = Math.abs(bedaVal);
+          const bedaFee = simAmount * bedaAbsVal / 100;
+          const bedaSurcharge = bedaVal > 0 ? bedaFee : 0;
+          const bedaCut = bedaVal <= 0 ? bedaFee : 0;
+          const bedaBayar = simAmount + bedaSurcharge;
+          const bedaNet = bedaBayar - bedaCut;
+
+          document.getElementById('debitSimCutSama').innerText = '(Rp ' + samaCut.toLocaleString(undefined,{maximumFractionDigits:0}) + ')';
+          const debitSimNetSamaRow = document.getElementById('debitSimNetSama');
+          debitSimNetSamaRow.innerText = 'Rp ' + samaNet.toLocaleString(undefined,{maximumFractionDigits:0});
+          // Update Bayar row for Sama
+          debitSimNetSamaRow.closest('.premium-receipt-card').querySelector('.receipt-row.net span:last-child').innerText = 'Rp ' + samaBayar.toLocaleString(undefined,{maximumFractionDigits:0});
+
+          document.getElementById('debitSimCutBeda').innerText = '(Rp ' + bedaCut.toLocaleString(undefined,{maximumFractionDigits:0}) + ')';
+          const debitSimNetBedaRow = document.getElementById('debitSimNetBeda');
+          debitSimNetBedaRow.innerText = 'Rp ' + bedaNet.toLocaleString(undefined,{maximumFractionDigits:0});
+          // Update Bayar row for Beda
+          debitSimNetBedaRow.closest('.premium-receipt-card').querySelector('.receipt-row.net span:last-child').innerText = 'Rp ' + bedaBayar.toLocaleString(undefined,{maximumFractionDigits:0});
+
+          // Simpan ke pmSettings
+          pmSettings.DEBIT.bankSama = { label: samaLabel, feeType: 'percent', value: samaVal };
+          pmSettings.DEBIT.bankBeda = { label: bedaLabel, feeType: 'percent', value: bedaVal };
+      }
+
       function updatePMSimulation() {
+          if (currentPMTab === 'DEBIT') { updateDebitSimulation(); return; }
+
           const pmValueEl = document.getElementById('pmValue');
           const isFlat = document.getElementById('pmFeeFlat').checked;
           
@@ -12694,6 +12986,20 @@
       }
       
       function savePaymentMethod() {
+          // Pastikan data Debit tersimpan dari input
+          if (currentPMTab === 'DEBIT') {
+            pmSettings.DEBIT.bankSama = {
+              label: document.getElementById('pmDebitLabelSama').value || 'BANK SAMA',
+              feeType: 'percent',
+              value: parseFloat(document.getElementById('pmDebitValueSama').value) || 0
+            };
+            pmSettings.DEBIT.bankBeda = {
+              label: document.getElementById('pmDebitLabelBeda').value || 'BANK BEDA',
+              feeType: 'percent',
+              value: parseFloat(document.getElementById('pmDebitValueBeda').value) || -1
+            };
+          }
+
           const btn = document.getElementById('btnSavePaymentMethod');
           if (btn) {
               btn.classList.add('saving-active');
@@ -12716,6 +13022,40 @@
               }
               alert('Gagal menyimpan ke penyimpanan lokal: ' + e.message);
           }
+      }
+
+      // --- HELPER: Hitung surcharge untuk metode bayar tertentu ---
+      function calculateSurchargeForMethod(method, bankType) {
+        if (method === 'CASH') return { feeAmount: 0, effect: 'cut', feeType: 'percent', rawValue: 0, label: 'CASH', baseTotal: 0 };
+        
+        let config;
+        let label = method;
+        
+        if (method === 'DEBIT' && pmSettings.DEBIT) {
+          if (bankType === 'SAMA') {
+            config = pmSettings.DEBIT.bankSama || { feeType: 'percent', value: 0 };
+            label = config.label || 'BANK SAMA';
+          } else {
+            config = pmSettings.DEBIT.bankBeda || { feeType: 'percent', value: -1 };
+            label = config.label || 'BANK BEDA';
+          }
+        } else {
+          config = pmSettings[method] || { effect: 'cut', feeType: 'percent', value: 0 };
+        }
+        
+        const val = config.value || 0;
+        const isPercent = (config.feeType || 'percent') === 'percent';
+        const absVal = Math.abs(val);
+        const effect = val > 0 ? 'add' : 'cut';
+        
+        return {
+          feeType: isPercent ? 'percent' : 'flat',
+          rawValue: val,
+          effect: effect,
+          label: label,
+          absVal: absVal,
+          isPercent: isPercent
+        };
       }
     </script>
   </body>
