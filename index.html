@@ -2624,7 +2624,7 @@
                <div class="d-flex justify-content-between align-items-center">
                   <h6 class="fw-bold m-0 text-dark"><i class="fab fa-telegram text-info me-2"></i>Notifikasi Telegram</h6>
                   <div class="form-check form-switch m-0">
-                    <input class="form-check-input" type="checkbox" role="switch" id="tgToggle" onchange="toggleTelegramInputs()" style="width: 40px; height: 20px; cursor:pointer;">
+                    <input class="form-check-input" type="checkbox" role="switch" id="tgToggle" onchange="toggleTelegramInputs(true)" style="width: 40px; height: 20px; cursor:pointer;">
                   </div>
                </div>
                <div id="tgAdvanceArea" class="mt-3 pt-2 d-none border-top">
@@ -4704,7 +4704,7 @@
         }
       }
 
-      function toggleTelegramInputs() {
+      function toggleTelegramInputs(isUserAction = false) {
         const tgToggleEl = document.getElementById('tgToggle');
         const isActive = tgToggleEl ? tgToggleEl.checked : false;
         const area = document.getElementById('tgAdvanceArea');
@@ -4724,9 +4724,11 @@
         if (document.getElementById('tgChatSchedule')) TELEGRAM_CONFIG.chatSchedule = document.getElementById('tgChatSchedule').value.trim();
         if (document.getElementById('tgChatOwner')) TELEGRAM_CONFIG.chatOwner = document.getElementById('tgChatOwner').value.trim();
         
-        google.script.run.withSuccessHandler(() => {
-          console.log("Telegram setting auto-saved in background");
-        }).saveSettingConfig(TELEGRAM_CONFIG);
+        if (isUserAction === true) {
+          google.script.run.withSuccessHandler(() => {
+            console.log("Telegram setting auto-saved in background");
+          }).saveSettingConfig(TELEGRAM_CONFIG);
+        }
       }
 
       function openTelegramModal() {
@@ -5159,6 +5161,9 @@
               
               const tgSched = document.getElementById('tgChatSchedule');
               if (tgSched) tgSched.value = res.chatSchedule || '';
+              
+              const tgOwner = document.getElementById('tgChatOwner');
+              if (tgOwner) tgOwner.value = res.chatOwner || '';
               
               const ytLinkEl = document.getElementById('dualPosVideoUrl');
               if (ytLinkEl) {
