@@ -2714,7 +2714,7 @@
         </div>
 
         <div id="view-setting" class="app-view p-4" style="display:none; background: #f8f9fa; padding-bottom: 120px !important; overflow-y: auto;">
-          <div class="text-center mb-4 pt-3">
+          <div class="text-center mb-4 pt-3 d-none" id="settingHeaderArea">
             <h3 class="fw-bold m-0 text-dark"><i class="fas fa-cog me-2 text-warning"></i>Pengaturan Sistem</h3>
             <p class="text-muted small mt-2">Konfigurasi UI, notifikasi Telegram, dan sistem otomatis.</p>
           </div>
@@ -4757,9 +4757,11 @@
         const btn = document.getElementById('btnSaveSetting');
         const loadingArea = document.getElementById('settingLoadingArea');
         const contentArea = document.getElementById('settingContentArea');
+        const headerArea = document.getElementById('settingHeaderArea');
         
         if (loadingArea) loadingArea.classList.remove('d-none');
         if (contentArea) contentArea.classList.add('d-none');
+        if (headerArea) headerArea.classList.add('d-none');
         
         google.script.run.withSuccessHandler(res => {
           TELEGRAM_CONFIG = res;
@@ -4790,6 +4792,7 @@
 
           if (loadingArea) loadingArea.classList.add('d-none');
           if (contentArea) contentArea.classList.remove('d-none');
+          if (headerArea) headerArea.classList.remove('d-none');
 
         }).getSettingConfig(ACTIVE_CASHIER); 
       }
@@ -12100,112 +12103,405 @@
       </div>
     </div>
     <div id="modalPaymentMethod" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 10600; opacity: 1 !important;">
+      <style>
+        /* Premium Scoped Styles for Payment Method Settings Modal */
+        #modalPaymentMethod {
+          background: rgba(10, 10, 10, 0.85) !important;
+          backdrop-filter: blur(12px) !important;
+          -webkit-backdrop-filter: blur(12px) !important;
+        }
+        .modal-surcharge-container {
+          background: linear-gradient(135deg, #ffffff 0%, #fcfbf7 100%) !important;
+          border: 1px solid rgba(197, 160, 89, 0.2) !important;
+          border-radius: 28px !important;
+          box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25) !important;
+          padding: 24px !important;
+          max-width: 820px !important;
+          font-family: 'Poppins', 'Inter', sans-serif !important;
+        }
+        .surcharge-modal-header {
+          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+          padding-bottom: 12px;
+          margin-bottom: 20px;
+        }
+        .surcharge-modal-header h4 {
+          font-size: 1.15rem !important;
+          font-weight: 700 !important;
+          color: #1e293b !important;
+          letter-spacing: 0.5px;
+        }
+        .surcharge-modal-header p {
+          font-size: 0.65rem !important;
+          color: #64748b !important;
+          margin: 4px 0 0 0;
+        }
+        #paymentMethodTabs {
+          background: rgba(241, 245, 249, 0.9);
+          padding: 5px;
+          border-radius: 16px;
+          display: flex;
+          gap: 4px !important;
+          border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        #paymentMethodTabs .nav-item {
+          flex: 1;
+        }
+        #paymentMethodTabs .nav-link {
+          width: 100%;
+          text-align: center;
+          border-radius: 12px !important;
+          border: none !important;
+          font-size: 0.68rem !important;
+          font-weight: 700 !important;
+          padding: 8px 10px !important;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          color: #64748b !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+        /* Dynamic Brand Active State Tints */
+        #paymentMethodTabs .nav-link.active-qris {
+          background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
+          color: #ffffff !important;
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+        }
+        #paymentMethodTabs .nav-link.active-debit {
+          background: linear-gradient(135deg, #10b981, #047857) !important;
+          color: #ffffff !important;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+        }
+        #paymentMethodTabs .nav-link.active-cc {
+          background: linear-gradient(135deg, #334155, #0f172a) !important;
+          color: #ffffff !important;
+          box-shadow: 0 4px 12px rgba(51, 65, 85, 0.3) !important;
+        }
+        #paymentMethodTabs .nav-link.active-dana {
+          background: linear-gradient(135deg, #008dff, #0056b3) !important;
+          color: #ffffff !important;
+          box-shadow: 0 4px 12px rgba(0, 141, 255, 0.3) !important;
+        }
+        #paymentMethodTabs .nav-link.active-ovo {
+          background: linear-gradient(135deg, #a855f7, #6b21a8) !important;
+          color: #ffffff !important;
+          box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3) !important;
+        }
+        #paymentMethodTabs .nav-link.active-gopay {
+          background: linear-gradient(135deg, #22c55e, #15803d) !important;
+          color: #ffffff !important;
+          box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
+        }
+        .surcharge-form-card {
+          background: #f8fafc;
+          border: 1px solid #f1f5f9;
+          border-radius: 18px;
+          padding: 16px;
+        }
+        .segmented-toggle-container {
+          display: flex;
+          background: #e2e8f0;
+          padding: 3px;
+          border-radius: 10px;
+          width: 100%;
+          border: 1px solid #cbd5e1;
+        }
+        .segmented-toggle-item {
+          flex: 1;
+          text-align: center;
+        }
+        .segmented-toggle-item input[type="radio"] {
+          display: none;
+        }
+        .segmented-toggle-item label {
+          display: block;
+          padding: 6px 4px;
+          font-size: 0.62rem !important;
+          font-weight: 700 !important;
+          color: #64748b;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.25s ease;
+          margin: 0;
+          text-transform: none !important;
+          letter-spacing: 0px !important;
+        }
+        .segmented-toggle-item input[type="radio"]:checked + label {
+          background: #ffffff;
+          color: #1e293b;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .segmented-toggle-container.disabled {
+          opacity: 0.7;
+          background: #e2e8f0;
+          border-color: #cbd5e1;
+          pointer-events: none;
+        }
+        .segmented-toggle-container.disabled input[type="radio"]:checked + label {
+          background: #cbd5e1;
+          color: #475569;
+        }
+        .premium-luxury-counter {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: #ffffff;
+          border: 2px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 4px;
+          width: 100%;
+          transition: border-color 0.2s ease;
+        }
+        .premium-luxury-counter:focus-within {
+          border-color: var(--primary-gold, #c5a059);
+        }
+        .premium-luxury-counter input {
+          border: none !important;
+          background: transparent !important;
+          outline: none !important;
+          font-size: 0.85rem !important;
+          font-weight: 800 !important;
+          color: #1e293b !important;
+          text-align: center;
+          width: 100%;
+          box-shadow: none !important;
+          padding: 0 !important;
+        }
+        .btn-counter-lux {
+          width: 32px;
+          height: 32px;
+          border-radius: 10px;
+          border: none;
+          background: linear-gradient(135deg, #c5a059, #b08d46);
+          color: #ffffff;
+          font-weight: 800;
+          font-size: 0.85rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+          box-shadow: 0 2px 6px rgba(197, 160, 89, 0.3);
+        }
+        .btn-counter-lux:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 10px rgba(197, 160, 89, 0.4);
+        }
+        .btn-counter-lux:active {
+          transform: translateY(1px);
+        }
+        .surcharge-btn-auto {
+          font-size: 0.6rem !important;
+          padding: 4px 10px !important;
+          border-radius: 50rem !important;
+          border: 1px solid rgba(197, 160, 89, 0.3) !important;
+          background: rgba(197, 160, 89, 0.04) !important;
+          color: #b08d46 !important;
+          font-weight: 700 !important;
+          transition: all 0.25s ease !important;
+          box-shadow: none !important;
+        }
+        .surcharge-btn-auto:hover {
+          background: linear-gradient(135deg, #c5a059, #b08d46) !important;
+          color: #ffffff !important;
+          border-color: #c5a059 !important;
+          transform: translateY(-1px);
+        }
+        .premium-receipt-card {
+          background: linear-gradient(180deg, #fffef5 0%, #fffdf2 100%) !important;
+          border: 1px dashed rgba(197, 160, 89, 0.4) !important;
+          border-radius: 22px !important;
+          padding: 20px !important;
+          position: relative;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03) !important;
+          overflow: hidden;
+        }
+        .premium-receipt-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 4px;
+          background: linear-gradient(90deg, #c5a059 0%, #b08d46 100%);
+        }
+        .receipt-logo {
+          text-align: center;
+          font-size: 0.58rem;
+          font-weight: 800;
+          color: #c5a059;
+          letter-spacing: 2px;
+          margin-bottom: 12px;
+        }
+        .dotted-receipt-line {
+          border-top: 2px dashed rgba(197, 160, 89, 0.2);
+          margin: 10px 0;
+        }
+        .receipt-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 0.68rem;
+          margin-bottom: 6px;
+        }
+        .receipt-row.bold {
+          font-weight: 700;
+          color: #1e293b;
+        }
+        .receipt-row.total {
+          font-weight: 800;
+          font-size: 0.8rem;
+          color: #1e293b;
+          margin-top: 4px;
+        }
+        .receipt-row.net {
+          font-weight: 800;
+          font-size: 0.82rem;
+          color: #10b981;
+          background: rgba(16, 185, 129, 0.08);
+          padding: 6px 10px;
+          border-radius: 8px;
+          margin-top: 8px;
+        }
+      </style>
       <div class="modal-wrapper">
          <div class="modal-surcharge-container d-flex flex-column mx-auto">
-            <h4 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="fas fa-credit-card text-primary me-2"></i>Pengaturan Surcharge & Biaya Tambahan</h4>
+            <div class="surcharge-modal-header text-center">
+               <h4 class="fw-bold m-0"><i class="fas fa-credit-card text-warning me-2"></i>Pengaturan Surcharge & Biaya Tambahan</h4>
+               <p class="text-muted">Kelola persentase pemotongan bank internal dan beban biaya transaksi secara detail</p>
+            </div>
             
             <ul class="nav nav-pills mb-3 gap-2" id="paymentMethodTabs" role="tablist">
               <li class="nav-item" role="presentation">
-                <button class="nav-link active fw-bold rounded-pill shadow-sm border" id="tab-qris" type="button" onclick="selectPaymentMethodTab('QRIS')" style="transition: all 0.3s; color: #2d3436;">QRIS</button>
+                <button class="nav-link active-qris fw-bold border" id="tab-qris" type="button" onclick="selectPaymentMethodTab('QRIS')">
+                  <i class="fas fa-qrcode"></i> QRIS
+                </button>
               </li>
               <li class="nav-item" role="presentation">
-                <button class="nav-link fw-bold rounded-pill shadow-sm border" id="tab-debit" type="button" onclick="selectPaymentMethodTab('DEBIT')" style="transition: all 0.3s; color: #2d3436;">DEBIT</button>
+                <button class="nav-link fw-bold border" id="tab-debit" type="button" onclick="selectPaymentMethodTab('DEBIT')">
+                  <i class="fas fa-university"></i> DEBIT
+                </button>
               </li>
               <li class="nav-item" role="presentation">
-                <button class="nav-link fw-bold rounded-pill shadow-sm border" id="tab-cc" type="button" onclick="selectPaymentMethodTab('CC')" style="transition: all 0.3s; color: #2d3436;">CC</button>
+                <button class="nav-link fw-bold border" id="tab-cc" type="button" onclick="selectPaymentMethodTab('CC')">
+                  <i class="fas fa-credit-card"></i> CC
+                </button>
               </li>
               <li class="nav-item" role="presentation">
-                <button class="nav-link fw-bold rounded-pill shadow-sm border" id="tab-dana" type="button" onclick="selectPaymentMethodTab('DANA')" style="transition: all 0.3s; color: #2d3436;">DANA</button>
+                <button class="nav-link fw-bold border" id="tab-dana" type="button" onclick="selectPaymentMethodTab('DANA')">
+                  <i class="fas fa-wallet"></i> DANA
+                </button>
               </li>
               <li class="nav-item" role="presentation">
-                <button class="nav-link fw-bold rounded-pill shadow-sm border" id="tab-ovo" type="button" onclick="selectPaymentMethodTab('OVO')" style="transition: all 0.3s; color: #2d3436;">OVO</button>
+                <button class="nav-link fw-bold border" id="tab-ovo" type="button" onclick="selectPaymentMethodTab('OVO')">
+                  <i class="fas fa-coins"></i> OVO
+                </button>
               </li>
               <li class="nav-item" role="presentation">
-                <button class="nav-link fw-bold rounded-pill shadow-sm border" id="tab-gopay" type="button" onclick="selectPaymentMethodTab('GOPAY')" style="transition: all 0.3s; color: #2d3436;">Gopay</button>
+                <button class="nav-link fw-bold border" id="tab-gopay" type="button" onclick="selectPaymentMethodTab('GOPAY')">
+                  <i class="fas fa-leaf"></i> Gopay
+                </button>
               </li>
             </ul>
 
             <div class="row mt-2 text-dark g-3">
-                <!-- KOLOM KIRI (INPUT) -->
+                <!-- KOLOM KIRI (INPUT FORM) -->
                 <div class="col-md-6 border-end pe-md-3">
-                    <div class="mb-2.5 d-flex align-items-center">
-                        <label class="fw-bold text-muted me-2" style="width: 100px; font-size: 0.65rem;">Nama Metode</label>
-                        <input type="text" id="pmName" class="form-control fw-bold text-center py-1" value="QRIS" readonly style="background-color: #f8f9fa; font-size: 0.72rem; height: auto;">
-                    </div>
-                    <div class="mb-2.5 d-flex align-items-center">
-                        <label class="fw-bold text-muted me-2" style="width: 100px; font-size: 0.65rem;">Tipe Efek</label>
-                        <div class="d-flex gap-3" style="font-size: 0.68rem;">
-                            <div class="form-check">
-                              <input class="form-check-input" type="radio" name="pmEffectType" id="pmEffectAdd" value="add" disabled>
-                              <label class="form-check-label text-dark fw-semibold" for="pmEffectAdd">Menambah Nota</label>
-                            </div>
-                            <div class="form-check">
-                              <input class="form-check-input" type="radio" name="pmEffectType" id="pmEffectCut" value="cut" checked disabled>
-                              <label class="form-check-label text-dark fw-semibold" for="pmEffectCut">Potong Internal</label>
+                    <div class="surcharge-form-card d-flex flex-column gap-3">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <label class="fw-bold text-muted mb-0" style="font-size: 0.65rem;">Nama Metode</label>
+                            <input type="text" id="pmName" class="form-control fw-bold text-center py-1" value="QRIS" readonly style="background-color: #ffffff; font-size: 0.75rem; max-width: 200px; border-color: #e2e8f0 !important; height: auto;">
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <label class="fw-bold text-muted mb-0" style="font-size: 0.65rem;">Tipe Efek</label>
+                            <div class="segmented-toggle-container disabled" style="max-width: 200px;">
+                                <div class="segmented-toggle-item">
+                                  <input type="radio" name="pmEffectType" id="pmEffectAdd" value="add" disabled>
+                                  <label for="pmEffectAdd">Tambah Nota</label>
+                                </div>
+                                <div class="segmented-toggle-item">
+                                  <input type="radio" name="pmEffectType" id="pmEffectCut" value="cut" checked disabled>
+                                  <label for="pmEffectCut">Potong Internal</label>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="mb-2.5 d-flex align-items-center">
-                        <label class="fw-bold text-muted me-2" style="width: 100px; font-size: 0.65rem;">Jenis Biaya</label>
-                        <div class="d-flex gap-3" style="font-size: 0.68rem;">
-                            <div class="form-check">
-                              <input class="form-check-input" type="radio" name="pmFeeType" id="pmFeePercent" value="percent" checked onchange="updatePMSimulation()">
-                              <label class="form-check-label text-dark fw-semibold" for="pmFeePercent">Persentase (%)</label>
-                            </div>
-                            <div class="form-check">
-                              <input class="form-check-input" type="radio" name="pmFeeType" id="pmFeeFlat" value="flat" onchange="updatePMSimulation()">
-                              <label class="form-check-label text-dark fw-semibold" for="pmFeeFlat">Nominal Flat (Rp)</label>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <label class="fw-bold text-muted mb-0" style="font-size: 0.65rem;">Jenis Biaya</label>
+                            <div class="segmented-toggle-container" style="max-width: 200px;">
+                                <div class="segmented-toggle-item">
+                                  <input type="radio" name="pmFeeType" id="pmFeePercent" value="percent" checked onchange="updatePMSimulation()">
+                                  <label for="pmFeePercent">Persentase (%)</label>
+                                </div>
+                                <div class="segmented-toggle-item">
+                                  <input type="radio" name="pmFeeType" id="pmFeeFlat" value="flat" onchange="updatePMSimulation()">
+                                  <label for="pmFeeFlat">Nominal (Rp)</label>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="mb-2.5 d-flex align-items-center">
-                        <label class="fw-bold text-muted me-2" style="width: 100px; font-size: 0.65rem;">Nilai</label>
-                        <div class="input-group input-group-sm" style="width: 180px;">
-                            <button class="btn btn-outline-secondary fw-bold px-2 py-0" type="button" onclick="changePMValue(-1)" style="font-size: 0.75rem;">&lt;</button>
-                            <input type="text" id="pmValue" class="form-control text-center fw-bold py-0" value="0" readonly oninput="updatePMSimulation()" style="font-size: 0.72rem; height: auto;">
-                            <button class="btn btn-outline-secondary fw-bold px-2 py-0" type="button" onclick="changePMValue(1)" style="font-size: 0.75rem;">&gt;</button>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <label class="fw-bold text-muted mb-0" style="font-size: 0.65rem;">Nilai Biaya</label>
+                            <div style="width: 200px;">
+                                <div class="premium-luxury-counter">
+                                    <button class="btn-counter-lux" type="button" onclick="changePMValue(-1)">-</button>
+                                    <input type="text" id="pmValue" value="0" readonly oninput="updatePMSimulation()">
+                                    <button class="btn-counter-lux" type="button" onclick="changePMValue(1)">+</button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="text-muted mb-2.5 lh-sm" style="font-size: 0.58rem; line-height: 1.25 !important;">
-                        Klik &lt; jika dibebankan ke pembukuan. Klik &gt; jika dibebankan ke Customer.<br>
-                        <span class="text-danger fw-bold">*Secara hukum, pembebanan nilai ini pada customer dilarang oleh BI.</span>
-                    </div>
-                    
-                    <div class="alert alert-info py-1.5 px-2.5 d-flex align-items-start gap-2 mb-0 border-0" style="background-color: #e0f2fe !important; color: #0369a1 !important; border-radius: 12px; font-size: 0.62rem;">
-                        <i class="fas fa-lightbulb text-warning mt-0.5" style="font-size: 0.75rem;"></i>
-                        <div>
-                            <strong>Saran pengisian :</strong> Klik untuk Auto atau biarkan kosong sampai anda tahu angka pastinya.<br>
-                            <div class="d-flex gap-1.5 mt-1.5 flex-wrap" id="pmAutoButtons">
-                                <!-- Auto buttons injected here -->
+                        
+                        <div class="text-muted lh-sm p-2 rounded-3" style="font-size: 0.58rem; background: rgba(239, 68, 68, 0.04); border: 1px solid rgba(239, 68, 68, 0.1); line-height: 1.35 !important;">
+                            <span class="text-danger fw-bold"><i class="fas fa-exclamation-triangle me-1"></i> Informasi Regulasi:</span> Pembebanan surcharge transaksi pada customer dilarang keras oleh BI. Silakan gunakan <strong>Potong Internal</strong> agar dipotong langsung dari merchant secara legal.
+                        </div>
+                        
+                        <div class="alert alert-info py-2 px-3 d-flex align-items-start gap-2 mb-0 border-0" style="background-color: #e0f2fe !important; color: #0369a1 !important; border-radius: 14px; font-size: 0.62rem;">
+                            <i class="fas fa-lightbulb text-warning mt-0.5" style="font-size: 0.75rem;"></i>
+                            <div>
+                                <strong>Rekomendasi Tarif Bank :</strong> Klik tarif di bawah untuk mengisi secara otomatis:<br>
+                                <div class="d-flex gap-1.5 mt-2 flex-wrap" id="pmAutoButtons">
+                                    <!-- Auto buttons injected here -->
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- KOLOM KANAN (SIMULASI RIIL) -->
+                <!-- KOLOM KANAN (SIMULASI RIIL STRUK) -->
                 <div class="col-md-6 ps-md-3">
-                    <div class="p-3 border rounded-4 bg-light shadow-sm surcharge-card-sim" style="font-size: 0.68rem;">
-                        <div class="d-flex justify-content-between mb-2 align-items-center border-bottom pb-2">
-                            <span class="fw-bold text-muted">Jika Konsumen Belanja :</span>
-                            <span class="fw-semibold text-dark" style="font-size: 0.75rem;">Rp 100.000</span>
+                    <div class="premium-receipt-card text-dark">
+                        <div class="receipt-logo">
+                           <i class="fas fa-store me-1"></i> PLATARIUM POS RETAIL
+                           <div class="small text-muted" style="font-size: 0.5rem; letter-spacing: 0.5px; margin-top: 2px;">SIMULASI RIIL TRANSAKSI</div>
+                        </div>
+                        <div class="dotted-receipt-line"></div>
+                        
+                        <div class="receipt-row bold">
+                            <span>Nilai Belanja Awal</span>
+                            <span>Rp 100.000</span>
                             <input type="hidden" id="pmSimAmount" value="100000">
                         </div>
-                        <div class="mb-1.5 text-muted fw-bold small text-center" style="font-size: 0.58rem;">Maka di Layar Kasir:</div>
-                        <div class="d-flex justify-content-between mb-1.5">
-                            <span>[+] Biaya Tambahan :</span>
+                        
+                        <div class="dotted-receipt-line"></div>
+                        
+                        <div class="receipt-row text-muted">
+                            <span>Surcharge (Beban Pembeli)</span>
                             <span id="pmSimSurcharge" class="fw-bold text-danger">Rp 0</span>
                         </div>
-                        <div class="d-flex justify-content-between mb-2 pb-2 border-bottom">
-                            <span class="fw-bold text-dark">Total Bayar Konsumen:</span>
-                            <span id="pmSimTotal" class="fw-bold text-dark" style="font-size: 0.78rem;">Rp 100.000</span>
+                        <div class="receipt-row total">
+                            <span>Total Dibayar Pembeli</span>
+                            <span id="pmSimTotal" class="fw-bold">Rp 100.000</span>
                         </div>
-                        <div class="d-flex justify-content-between mb-1 mt-2.5">
-                            <span class="text-success fw-bold">Uang Masuk Rekening :</span>
-                            <span id="pmSimNet" class="fw-bold text-success" style="font-size: 0.78rem;">Rp 100.000</span>
+                        
+                        <div class="dotted-receipt-line"></div>
+                        
+                        <div class="receipt-row text-muted" style="font-size: 0.62rem;">
+                            <span>Potongan Bank (Internal)</span>
+                            <span id="pmSimCut" class="text-danger fw-bold">Rp 0</span>
                         </div>
-                        <div class="d-flex justify-content-between text-danger" style="font-size: 0.58rem;">
-                            <span>(Dipotong biaya bank:</span>
-                            <span id="pmSimCut">Rp 0)</span>
+                        
+                        <div class="receipt-row net">
+                            <span>Uang Masuk Kas</span>
+                            <span id="pmSimNet" class="fw-bold">Rp 100.000</span>
                         </div>
                     </div>
                 </div>
@@ -12219,10 +12515,11 @@
                   <i class="fas fa-redo icon-secondary"></i>
                </div>
             </button>
-            <button class="btn-outside-circle btn-simpan" onclick="savePaymentMethod()" title="Simpan">
+            <button class="btn-outside-circle btn-simpan" onclick="savePaymentMethod()" title="Simpan" id="btnSavePaymentMethod">
                <div class="icon-wrapper">
                   <i class="fas fa-save icon-primary"></i>
                   <i class="fas fa-check icon-secondary"></i>
+                  <i class="fas fa-spinner fa-spin icon-saving"></i>
                </div>
             </button>
          </div>
@@ -12268,9 +12565,10 @@
          
          const tabs = document.querySelectorAll('#paymentMethodTabs .nav-link');
          tabs.forEach(tab => {
-             tab.classList.remove('active');
+             // Reset all active classes
+             tab.classList.remove('active', 'active-qris', 'active-debit', 'active-cc', 'active-dana', 'active-ovo', 'active-gopay');
              if (tab.id.replace('tab-', '').toUpperCase() === methodName.toUpperCase()) {
-                 tab.classList.add('active');
+                 tab.classList.add('active-' + methodName.toLowerCase());
              }
          });
          
@@ -12373,11 +12671,26 @@
       }
       
       function savePaymentMethod() {
+          const btn = document.getElementById('btnSavePaymentMethod');
+          if (btn) {
+              btn.classList.add('saving-active');
+              btn.disabled = true;
+          }
           try {
               localStorage.setItem('pm_surcharge_settings', JSON.stringify(pmSettings));
-              alert('Pengaturan Surcharge Metode Bayar disimpan secara permanen!');
-              closePaymentMethodModal();
+              setTimeout(() => {
+                  if (btn) {
+                      btn.classList.remove('saving-active');
+                      btn.disabled = false;
+                  }
+                  alert('Pengaturan Surcharge Metode Bayar disimpan secara permanen!');
+                  closePaymentMethodModal();
+              }, 600);
           } catch(e) {
+              if (btn) {
+                  btn.classList.remove('saving-active');
+                  btn.disabled = false;
+              }
               alert('Gagal menyimpan ke penyimpanan lokal: ' + e.message);
           }
       }
