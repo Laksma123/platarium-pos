@@ -7930,14 +7930,14 @@
             let themeClass = isCredit ? 'info' : 'success';
             let cardName = isCredit ? 'Kredit' : 'Debit';
             qrisArea.innerHTML = `
-              <div class="d-flex gap-2 justify-content-center mt-2 w-100 px-3">
+              <div class="d-flex gap-3 justify-content-center mt-2 w-100 px-2">
                  <input type="radio" class="btn-check" name="bankType" id="bankSama" autocomplete="off" value="SAMA" checked>
-                 <label class="btn btn-outline-${themeClass} rounded-pill w-50 fw-bold" for="bankSama">BANK SAMA</label>
+                 <label class="btn btn-outline-${themeClass} rounded-4 w-50 fw-bold py-2.5" style="font-size: 0.9rem;" for="bankSama">BANK SAMA</label>
 
                  <input type="radio" class="btn-check" name="bankType" id="bankBeda" autocomplete="off" value="BEDA">
-                 <label class="btn btn-outline-${themeClass} rounded-pill w-50 fw-bold" for="bankBeda">BANK BEDA</label>
+                 <label class="btn btn-outline-${themeClass} rounded-4 w-50 fw-bold py-2.5" style="font-size: 0.9rem;" for="bankBeda">BANK BEDA</label>
               </div>
-              <p class="small text-muted mt-3 mb-0">Silakan pilih jenis mesin EDC untuk kartu ${cardName}.</p>
+              <p class="text-muted mt-3 mb-0 fw-semibold" style="font-size: 0.85rem;">Silakan pilih jenis mesin EDC untuk kartu ${cardName}.</p>
             `;
           } else {
             let iconHtml = '<i class="fas fa-qrcode fa-3x mb-2 text-primary"></i>';
@@ -7954,7 +7954,7 @@
             }
             qrisArea.innerHTML = `
               ${iconHtml}
-              <p class="small text-muted m-0">${msgHtml}</p>
+              <p class="text-muted m-0 fw-semibold mt-2" style="font-size: 0.88rem;">${msgHtml}</p>
             `;
           }
         }
@@ -11221,75 +11221,75 @@
       <div class="payment-box shadow-lg" style="width: 95% !important; max-width: calc(750px / var(--apk-zoom, 1)) !important; border-radius: 25px; overflow: hidden; background: white; animation: slideUp 0.3s ease-out; max-height: calc(92dvh / var(--apk-zoom, 1)); display: flex; flex-direction: column;">
         <div class="row g-0 flex-fill">
           <!-- LEFT COLUMN: Order Type & Payment Method -->
-          <div class="col-6 border-end p-3 d-flex flex-column justify-content-between" style="overflow-y: auto;">
+          <div class="col-6 border-end p-4 d-flex flex-column justify-content-between" style="overflow-y: auto;">
             <div>
               <!-- Tipe Pesanan -->
-              <div class="mb-3">
-                <label class="small fw-bold text-muted mb-2">TIPE PESANAN</label>
+              <div class="mb-4">
+                <label class="fw-bold text-muted mb-3" style="font-size: 0.85rem; letter-spacing: 0.8px;">TIPE PESANAN</label>
                 <div class="d-flex gap-2">
                   <input type="radio" class="btn-check" name="orderType" id="typeDineIn" value="Dine In" checked>
-                  <label class="btn btn-outline-dark w-100 fw-bold py-2 rounded-3 d-flex flex-column align-items-center justify-content-center gap-1 shadow-sm" for="typeDineIn">
-                    <i class="fas fa-chair fs-5"></i>
-                    <span style="font-size: 0.7rem;">Dine In</span>
+                  <label class="btn btn-outline-dark w-100 fw-bold py-3 rounded-4 d-flex flex-column align-items-center justify-content-center gap-2 shadow-sm" for="typeDineIn">
+                    <i class="fas fa-chair fs-4"></i>
+                    <span style="font-size: 0.9rem;">Dine In</span>
                   </label>
                   
                   <input type="radio" class="btn-check" name="orderType" id="typeTakeaway" value="Takeaway">
-                  <label class="btn btn-outline-dark w-100 fw-bold py-2 rounded-3 d-flex flex-column align-items-center justify-content-center gap-1 shadow-sm" for="typeTakeaway">
-                    <i class="fas fa-shopping-bag fs-5"></i>
-                    <span style="font-size: 0.7rem;">Takeaway</span>
+                  <label class="btn btn-outline-dark w-100 fw-bold py-3 rounded-4 d-flex flex-column align-items-center justify-content-center gap-2 shadow-sm" for="typeTakeaway">
+                    <i class="fas fa-shopping-bag fs-4"></i>
+                    <span style="font-size: 0.9rem;">Takeaway</span>
                   </label>
                   
                   <input type="radio" class="btn-check" name="orderType" id="typeDelivery" value="Delivery">
-                  <label class="btn btn-outline-dark w-100 fw-bold py-2 rounded-3 d-flex flex-column align-items-center justify-content-center gap-1 shadow-sm" for="typeDelivery">
-                    <i class="fas fa-motorcycle fs-5"></i>
-                    <span style="font-size: 0.7rem;">Delivery</span>
+                  <label class="btn btn-outline-dark w-100 fw-bold py-3 rounded-4 d-flex flex-column align-items-center justify-content-center gap-2 shadow-sm" for="typeDelivery">
+                    <i class="fas fa-motorcycle fs-4"></i>
+                    <span style="font-size: 0.9rem;">Delivery</span>
                   </label>
                 </div>
               </div>
 
               <!-- Metode Pembayaran -->
               <div>
-                <label class="small fw-bold text-muted mb-2">METODE PEMBAYARAN</label>
-                <div class="row g-2">
+                <label class="fw-bold text-muted mb-3" style="font-size: 0.85rem; letter-spacing: 0.8px;">METODE PEMBAYARAN</label>
+                <div class="row g-3">
                   <div class="col-6">
                     <input type="radio" class="btn-check" name="payMethod" id="payCash" value="CASH" checked onchange="togglePayInput()">
-                    <label class="btn btn-outline-warning w-100 fw-bold py-2 rounded-3 d-flex align-items-center justify-content-center gap-2 shadow-sm" style="font-size: 0.8rem;" for="payCash">
+                    <label class="btn btn-outline-warning w-100 fw-bold py-3 rounded-4 d-flex align-items-center justify-content-center gap-2 shadow-sm" style="font-size: 0.95rem;" for="payCash">
                       <i class="fas fa-money-bill-wave"></i> CASH
                     </label>
                   </div>
                   <div class="col-6">
                     <input type="radio" class="btn-check" name="payMethod" id="payQris" value="QRIS" onchange="togglePayInput()">
-                    <label class="btn btn-outline-primary w-100 fw-bold py-2 rounded-3 d-flex align-items-center justify-content-center gap-2 shadow-sm" style="font-size: 0.8rem;" for="payQris">
+                    <label class="btn btn-outline-primary w-100 fw-bold py-3 rounded-4 d-flex align-items-center justify-content-center gap-2 shadow-sm" style="font-size: 0.95rem;" for="payQris">
                       <i class="fas fa-qrcode"></i> QRIS
                     </label>
                   </div>
                   <div class="col-6">
                     <input type="radio" class="btn-check" name="payMethod" id="payDebit" value="DEBIT" onchange="togglePayInput()">
-                    <label class="btn btn-outline-success w-100 fw-bold py-2 rounded-3 d-flex align-items-center justify-content-center gap-2 shadow-sm" style="font-size: 0.8rem;" for="payDebit">
+                    <label class="btn btn-outline-success w-100 fw-bold py-3 rounded-4 d-flex align-items-center justify-content-center gap-2 shadow-sm" style="font-size: 0.95rem;" for="payDebit">
                       <i class="fas fa-credit-card"></i> DEBIT
                     </label>
                   </div>
                   <div class="col-6">
                     <input type="radio" class="btn-check" name="payMethod" id="payCreditCard" value="CREDIT CARD" onchange="togglePayInput()">
-                    <label class="btn btn-outline-info w-100 fw-bold py-2 rounded-3 d-flex align-items-center justify-content-center gap-2 shadow-sm text-nowrap" style="font-size: 0.8rem;" for="payCreditCard">
+                    <label class="btn btn-outline-info w-100 fw-bold py-3 rounded-4 d-flex align-items-center justify-content-center gap-2 shadow-sm text-nowrap" style="font-size: 0.95rem;" for="payCreditCard">
                       <i class="far fa-credit-card"></i> CC
                     </label>
                   </div>
                   <div class="col-4">
                     <input type="radio" class="btn-check" name="payMethod" id="payDana" value="DANA" onchange="togglePayInput()">
-                    <label class="btn btn-outline-primary w-100 fw-bold py-2 rounded-3 d-flex align-items-center justify-content-center gap-1 shadow-sm text-nowrap" style="font-size: 0.75rem;" for="payDana">
+                    <label class="btn btn-outline-primary w-100 fw-bold py-3 rounded-4 d-flex align-items-center justify-content-center gap-1 shadow-sm text-nowrap" style="font-size: 0.9rem;" for="payDana">
                       DANA
                     </label>
                   </div>
                   <div class="col-4">
                     <input type="radio" class="btn-check" name="payMethod" id="payOvo" value="OVO" onchange="togglePayInput()">
-                    <label class="btn btn-outline-secondary w-100 fw-bold py-2 rounded-3 d-flex align-items-center justify-content-center gap-1 shadow-sm text-nowrap" style="font-size: 0.75rem; border-color: #9b59b6; color: #9b59b6;" for="payOvo">
+                    <label class="btn btn-outline-secondary w-100 fw-bold py-3 rounded-4 d-flex align-items-center justify-content-center gap-1 shadow-sm text-nowrap" style="font-size: 0.9rem; border-color: #9b59b6; color: #9b59b6;" for="payOvo">
                       OVO
                     </label>
                   </div>
                   <div class="col-4">
                     <input type="radio" class="btn-check" name="payMethod" id="payGopay" value="GOPAY" onchange="togglePayInput()">
-                    <label class="btn btn-outline-success w-100 fw-bold py-2 rounded-3 d-flex align-items-center justify-content-center gap-1 shadow-sm text-nowrap" style="font-size: 0.75rem; border-color: #2ecc71; color: #2ecc71;" for="payGopay">
+                    <label class="btn btn-outline-success w-100 fw-bold py-3 rounded-4 d-flex align-items-center justify-content-center gap-1 shadow-sm text-nowrap" style="font-size: 0.9rem; border-color: #2ecc71; color: #2ecc71;" for="payGopay">
                       GOPAY
                     </label>
                   </div>
@@ -11299,42 +11299,42 @@
           </div>
 
           <!-- RIGHT COLUMN: Billing summary, dynamic payment input, and Action Buttons -->
-          <div class="col-6 p-3 d-flex flex-column justify-content-between bg-light" style="overflow-y: auto;">
+          <div class="col-6 p-4 d-flex flex-column justify-content-between bg-light" style="overflow-y: auto;">
             <div>
               <!-- Header: Total Tagihan -->
-              <div class="text-center border-bottom pb-2 mb-2">
-                <h6 class="text-muted mb-0 small fw-bold" style="font-size: 0.7rem;">TOTAL TAGIHAN</h6>
-                <h2 class="fw-bold m-0 text-dark" id="payTotalText" style="font-size: 1.8rem;">Rp 0</h2>
+              <div class="text-center border-bottom pb-3 mb-4">
+                <h6 class="text-muted mb-2 fw-bold" style="font-size: 0.85rem; letter-spacing: 1px;">TOTAL TAGIHAN</h6>
+                <h1 class="fw-extrabold m-0 text-dark" id="payTotalText" style="font-size: 2.2rem; letter-spacing: -0.5px;">Rp 0</h1>
               </div>
 
               <!-- Input Tunai / Area Non-Tunai -->
-              <div class="mb-2">
+              <div class="mb-4">
                 <div id="cashInputArea">
-                  <label class="small fw-bold text-muted mb-1" style="font-size: 0.7rem;">UANG DITERIMA</label>
-                  <div class="input-group input-group-sm mb-2 shadow-sm rounded-3 overflow-hidden">
-                    <span class="input-group-text bg-white border-end-0 text-muted">Rp</span>
-                    <input type="number" id="inputCashAmount" class="form-control border-start-0 ps-0 fw-bold" 
+                  <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem; letter-spacing: 0.5px;">UANG DITERIMA</label>
+                  <div class="input-group input-group-lg mb-3 shadow-sm rounded-4 overflow-hidden">
+                    <span class="input-group-text bg-white border-end-0 text-muted fw-bold fs-5">Rp</span>
+                    <input type="number" id="inputCashAmount" class="form-control border-start-0 ps-0 fw-bold fs-4 py-2.5" 
                     placeholder="0" oninput="calculateChange()" 
                     onkeydown="if(event.key === 'Enter') executePayment()">
                   </div>
                   
-                  <div class="d-flex justify-content-between align-items-center p-2 bg-white border rounded-3 shadow-sm">
-                    <span class="fw-bold text-muted small" style="font-size: 0.75rem;">Kembalian</span>
-                    <span class="fw-bold text-success fs-5" id="payChangeText">Rp 0</span>
+                  <div class="d-flex justify-content-between align-items-center p-3 bg-white border rounded-4 shadow-sm mt-3">
+                    <span class="fw-bold text-muted" style="font-size: 0.9rem;">Kembalian</span>
+                    <span class="fw-extrabold text-success fs-3" id="payChangeText">Rp 0</span>
                   </div>
                 </div>
 
-                <div id="qrisInfoArea" style="display:none;" class="text-center p-3 bg-white border rounded-3 shadow-sm">
-                  <i class="fas fa-qrcode fa-2x mb-1 text-primary"></i>
-                  <p class="small text-muted m-0" style="font-size: 0.75rem;">Silakan scan kode QRIS di meja kasir.</p>
+                <div id="qrisInfoArea" style="display:none;" class="text-center p-4 bg-white border rounded-4 shadow-sm mt-3">
+                  <i class="fas fa-qrcode fa-3x mb-2 text-primary"></i>
+                  <p class="text-muted m-0 fw-semibold" style="font-size: 0.9rem;">Silakan scan kode QRIS di meja kasir.</p>
                 </div>
               </div>
             </div>
 
             <!-- Tombol Aksi Bawah -->
-            <div class="d-flex gap-2 pt-2 border-top">
-              <button class="btn btn-light flex-fill py-2.5 rounded-3 fw-bold shadow-sm" style="font-size: 0.85rem;" onclick="closePayment()">BATAL</button>
-              <button class="btn btn-luxury flex-fill py-2.5 rounded-3 fw-bold shadow-sm" style="font-size: 0.85rem;" id="btnConfirmPay" onclick="executePayment()">BAYAR SEKARANG</button>
+            <div class="d-flex gap-3 pt-3 border-top">
+              <button class="btn btn-light flex-fill py-3 rounded-4 fw-bold shadow-sm" style="font-size: 0.95rem; letter-spacing: 0.5px;" onclick="closePayment()">BATAL</button>
+              <button class="btn btn-luxury flex-fill py-3 rounded-4 fw-bold shadow-sm" style="font-size: 0.95rem; letter-spacing: 0.5px;" id="btnConfirmPay" onclick="executePayment()">BAYAR SEKARANG</button>
             </div>
           </div>
         </div>
