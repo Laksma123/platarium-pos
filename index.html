@@ -2436,10 +2436,10 @@
                   <label class="small fw-bold text-muted">POS KERJA / DIKERJAKAN OLEH <span class="text-danger">*</span></label>
                   <div class="d-flex gap-2 mt-1">
                     <input type="radio" class="btn-check" name="newPPos" id="posKitchen" value="KITCHEN">
-                    <label class="btn btn-outline-warning w-100 fw-bold py-2 rounded-3" for="posKitchen"><i class="fas fa-fire me-2"></i>KITCHEN</label>
+                    <label class="btn btn-outline-warning w-100 fw-bold py-2 rounded-3" for="posKitchen" style="--bs-btn-color: #9e6f00; --bs-btn-border-color: #9e6f00;">KITCHEN</label>
                     
                     <input type="radio" class="btn-check" name="newPPos" id="posBar" value="BAR">
-                    <label class="btn btn-outline-info w-100 fw-bold py-2 rounded-3" for="posBar"><i class="fas fa-glass-water me-2"></i>BARISTA</label>
+                    <label class="btn btn-outline-info w-100 fw-bold py-2 rounded-3" for="posBar" style="--bs-btn-color: #0c5460; --bs-btn-border-color: #0c5460;">BARISTA</label>
                   </div>
                 </div>
 
@@ -2894,46 +2894,50 @@
         </div>
 
         <div id="modalBulkRecipe" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10500; opacity: 1 !important;">
-          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 500px; max-height: 90vh; animation: slideUp 0.3s ease-out;">
+          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 95%; max-width: 800px; animation: slideUp 0.3s ease-out;">
             <h5 class="fw-bold mb-1 text-center"><i class="fas fa-magic text-danger me-2"></i>Edit Massal Resep</h5>
             <p class="text-center text-muted small mb-4">Ubah atau hapus satu bahan secara serentak di banyak menu.</p>
             
-            <div class="overflow-auto pe-2 flex-fill" style="scrollbar-width: thin;">
-              <div class="mb-3">
-                <label class="small fw-bold text-muted">1. PILIH BAHAN TARGET</label>
-                <select id="bulkMaterialSelect" class="form-select fw-bold border-2 mb-1" onchange="handleBulkMaterialChange()"></select>
-                <small class="text-muted d-block" style="font-size: 0.65rem; font-style: italic;">*Untuk bahan jenis baru, gunakan tombol Resep di sebelah produk.</small>
-              </div>
+            <div class="row m-0">
+              <div class="col-6 pe-3">
+                <div class="mb-3">
+                  <label class="small fw-bold text-muted">1. PILIH BAHAN TARGET</label>
+                  <select id="bulkMaterialSelect" class="form-select fw-bold border-2 mb-1" onchange="handleBulkMaterialChange()"></select>
+                  <small class="text-muted d-block" style="font-size: 0.65rem; font-style: italic;">*Untuk bahan jenis baru, gunakan tombol Resep di sebelah produk.</small>
+                </div>
 
-              <div class="mb-3">
-                <label class="small fw-bold text-muted">2. AKSI</label>
-                <select id="bulkActionSelect" class="form-select fw-bold border-2" onchange="toggleBulkActionUI()">
-                  <option value="EDIT">Ubah Nilai Takaran</option>
-                  <option value="DELETE" class="text-danger">Hapus Total dari Menu</option>
-                </select>
-              </div>
+                <div class="mb-3">
+                  <label class="small fw-bold text-muted">2. AKSI</label>
+                  <select id="bulkActionSelect" class="form-select fw-bold border-2" onchange="toggleBulkActionUI()">
+                    <option value="EDIT">Ubah Nilai Takaran</option>
+                    <option value="DELETE" class="text-danger">Hapus Total dari Menu</option>
+                  </select>
+                </div>
 
-              <div class="mb-3" id="bulkValueArea">
-                <label class="small fw-bold text-muted">3. NILAI BARU</label>
-                <div class="input-group">
-                  <input type="number" id="bulkNewQty" class="form-control fw-bold border-2" placeholder="0" step="0.1">
-                  <select id="bulkNewUnit" class="form-select bg-light border-2 fw-bold" style="max-width: 90px;"></select>
+                <div class="mb-3" id="bulkValueArea">
+                  <label class="small fw-bold text-muted">3. NILAI BARU</label>
+                  <div class="input-group">
+                    <input type="number" id="bulkNewQty" class="form-control fw-bold border-2" placeholder="0" step="0.1">
+                    <select id="bulkNewUnit" class="form-select bg-light border-2 fw-bold" style="max-width: 90px;"></select>
+                  </div>
                 </div>
               </div>
 
-              <div id="bulkAffectedArea" class="d-none mt-4">
-                <label class="small fw-bold text-muted mb-2"><i class="fas fa-list-check text-warning me-1"></i> MENU TERDAMPAK</label>
-                <div class="border rounded-4 overflow-hidden mb-3">
-                  <table class="table table-sm table-hover m-0" style="font-size: 0.8rem;">
-                    <tbody id="bulkAffectedList"></tbody>
-                  </table>
+              <div class="col-6 ps-3 d-flex flex-column border-start">
+                <div id="bulkAffectedArea" class="d-none flex-fill mb-3">
+                  <label class="small fw-bold text-muted mb-2"><i class="fas fa-list-check text-warning me-1"></i> MENU TERDAMPAK</label>
+                  <div class="border rounded-4 overflow-hidden">
+                    <table class="table table-sm table-hover m-0" style="font-size: 0.8rem;">
+                      <tbody id="bulkAffectedList"></tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-auto pt-3 border-top w-100">
+                  <button class="btn btn-light w-100 py-2 fw-bold rounded-pill" onclick="closeBulkRecipeModal()">BATAL</button>
+                  <button class="btn btn-danger w-100 py-2 fw-bold rounded-pill shadow-sm" id="btnExecuteBulk" onclick="executeBulkAction()" disabled>LANJUTKAN <i class="fas fa-arrow-right ms-1"></i></button>
                 </div>
               </div>
-            </div>
-
-            <div class="d-flex gap-2 mt-3 pt-3 border-top">
-              <button class="btn btn-light w-100 py-2 fw-bold rounded-pill" onclick="closeBulkRecipeModal()">BATAL</button>
-              <button class="btn btn-danger w-100 py-2 fw-bold rounded-pill shadow-sm" id="btnExecuteBulk" onclick="executeBulkAction()" disabled>LANJUTKAN <i class="fas fa-arrow-right ms-1"></i></button>
             </div>
           </div>
         </div>
@@ -10014,6 +10018,40 @@
 
       // Saat halaman dimuat, panggil konfigurasi yang tersimpan
       window.addEventListener('DOMContentLoaded', () => {
+        // Reset scroll position on Bootstrap Tab change
+        document.addEventListener('shown.bs.tab', function (e) {
+          window.scrollTo(0, 0);
+          const targetId = e.target.getAttribute('data-bs-target') || e.target.getAttribute('href');
+          if (targetId) {
+            const targetEl = document.querySelector(targetId);
+            if (targetEl) {
+              targetEl.scrollTop = 0;
+              targetEl.querySelectorAll('.overflow-auto, .table-responsive, .category-scroller, .pos-menu, .tab-pane').forEach(el => el.scrollTop = 0);
+            }
+          }
+        });
+
+        // Reset scroll position on Modal or App View change
+        const scrollObserver = new MutationObserver(mutations => {
+          let shouldReset = false;
+          mutations.forEach(m => {
+            if (m.type === 'attributes') {
+              const el = m.target;
+              const isVisible = !el.classList.contains('d-none') && getComputedStyle(el).display !== 'none';
+              if (isVisible) {
+                el.scrollTop = 0;
+                el.querySelectorAll('.overflow-auto, .table-responsive, .category-scroller, .pos-menu, .tab-pane').forEach(child => child.scrollTop = 0);
+                shouldReset = true;
+              }
+            }
+          });
+          if (shouldReset) window.scrollTo(0, 0);
+        });
+        
+        document.querySelectorAll('.login-overlay, .app-view').forEach(el => {
+          scrollObserver.observe(el, { attributes: true, attributeFilter: ['class', 'style'] });
+        });
+
         if (localStorage.getItem('pos_printer_active') === 'true') {
           document.getElementById('thermalToggle').checked = true;
           document.getElementById('btnThermalSetting').classList.remove('d-none');
