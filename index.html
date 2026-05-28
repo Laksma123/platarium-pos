@@ -10563,13 +10563,53 @@
             onclone: (clonedDoc) => {
               const el = clonedDoc.getElementById('laporanGridToCapture');
               if (el) {
+                // 1. Kosongkan seluruh body klon dan hanya masukkan elemen tangkapan
+                clonedDoc.body.innerHTML = '';
+                clonedDoc.body.appendChild(el);
+                
+                // 2. Set lebar dokumen html & body klon menjadi 1080px penuh
+                clonedDoc.documentElement.style.width = '1080px';
+                clonedDoc.documentElement.style.minWidth = '1080px';
+                clonedDoc.documentElement.style.maxWidth = 'none';
+                clonedDoc.documentElement.style.overflow = 'visible';
+                
+                clonedDoc.body.style.width = '1080px';
+                clonedDoc.body.style.minWidth = '1080px';
+                clonedDoc.body.style.maxWidth = 'none';
+                clonedDoc.body.style.overflow = 'visible';
+                clonedDoc.body.style.backgroundColor = '#ffffff';
+                clonedDoc.body.style.margin = '0';
+                clonedDoc.body.style.padding = '0';
+                
+                // 3. Posisikan secara normal (relative) di posisi (0,0) dokumen klon
                 el.style.position = 'relative';
                 el.style.left = '0';
                 el.style.top = '0';
-                el.style.margin = '0';
-                el.style.padding = '20px';
                 el.style.width = '1080px';
-                el.style.zIndex = '1';
+                el.style.minWidth = '1080px';
+                el.style.maxWidth = 'none';
+                el.style.margin = '0';
+                el.style.padding = '30px';
+                el.style.boxSizing = 'border-box';
+                el.style.backgroundColor = '#ffffff';
+                el.style.display = 'block';
+                el.style.zIndex = '99999';
+                
+                // 4. Override font dan reset jarak huruf agar tidak ada tabrakan
+                el.style.fontFamily = 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+                el.style.letterSpacing = 'normal';
+                el.style.lineHeight = '1.5';
+                
+                el.querySelectorAll('*').forEach(child => {
+                  child.style.maxWidth = 'none';
+                  child.style.letterSpacing = 'normal';
+                  child.style.fontFeatureSettings = 'normal';
+                  child.style.textShadow = 'none';
+                  if (child.style.width && child.style.width.includes('vw')) {
+                    child.style.width = 'auto';
+                  }
+                });
+                
                 if (clonedDoc.fonts && document.fonts) {
                   document.fonts.forEach(font => {
                     clonedDoc.fonts.add(font);
