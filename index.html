@@ -2673,7 +2673,7 @@
         </style>
 
         <div id="modalSpecialPrice" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 10500; opacity: 1 !important;">
-          <div class="bg-white rounded-5 shadow-lg d-flex flex-column overflow-hidden" style="width: 95vw; height: 90vh; max-width: 1200px; animation: slideUp 0.3s ease-out;">
+          <div class="bg-white rounded-5 shadow-lg d-flex flex-column overflow-hidden" style="width: 98vw; height: 96vh; max-width: 1400px; animation: slideUp 0.3s ease-out;">
             <div class="bg-dark text-white p-3 d-flex justify-content-between align-items-center">
               <h5 class="fw-bold m-0"><i class="fas fa-tags text-warning me-2"></i>Setup Special Price (Promo & Diskon)</h5>
               <button class="btn-close btn-close-white shadow-none" onclick="document.getElementById('modalSpecialPrice').classList.add('d-none')"></button>
@@ -2718,45 +2718,51 @@
                           <label class="form-check-label small fw-bold text-success">Aktif</label>
                         </div>
                       </div>
-                      <div class="p-4 overflow-auto flex-fill pb-5">
-                        <div class="mb-4">
-                          <label class="small fw-bold text-muted mb-2">TIPE PROMO / DISKON</label>
-                          <select class="form-select fw-bold border-2 shadow-sm" onchange="changeSpType(this.value, 'dinein')">
-                            <option value="subtotal">Discount Subtotal Bayar</option>
-                            <option value="all_menu">Discount ALL MENU</option>
-                            <option value="category">Discount Per KATEGORI</option>
-                            <option value="item">Discount Per ITEM</option>
-                            <option value="buy_get">Beli [X] Gratis / Tebus Murah [Y]</option>
-                            <option value="min_purchase">Total Belanja Minimal -> Gratis / Tebus Murah</option>
-                          </select>
+                      <div class="p-3 overflow-auto flex-fill pb-4">
+                        <div class="row g-3 mb-3">
+                          <div class="col-md-6">
+                            <label class="small fw-bold text-muted mb-1">NAMA LABEL PROMO (Struk)</label>
+                            <input type="text" id="spDineInLabelName" class="form-control border-2 fw-bold text-dark form-control-sm py-2" placeholder="Contoh: Diskon Merdeka 10%">
+                          </div>
+                          <div class="col-md-6">
+                            <label class="small fw-bold text-muted mb-1">TIPE PROMO / DISKON</label>
+                            <select class="form-select fw-bold border-2 shadow-sm form-select-sm py-2" onchange="changeSpType(this.value, 'dinein')">
+                              <option value="subtotal">Discount Subtotal Bayar</option>
+                              <option value="all_menu">Discount ALL MENU</option>
+                              <option value="category">Discount Per KATEGORI</option>
+                              <option value="item">Discount Per ITEM</option>
+                              <option value="buy_get">Beli [X] Gratis / Tebus Murah [Y]</option>
+                              <option value="min_purchase">Total Belanja Minimal -> Gratis/Tebus</option>
+                            </select>
+                          </div>
                         </div>
 
                         <!-- Dynamic Config Area -->
-                        <div id="spDineInDynamicConfig" class="bg-white p-4 rounded-4 shadow-sm border mb-4">
+                        <div id="spDineInDynamicConfig" class="bg-white p-3 rounded-4 shadow-sm border mb-2">
                           <!-- Form Subtotal -->
                           <div class="sp-form-group" id="sp-form-subtotal" style="display:block;">
-                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-percent text-danger me-2"></i>Diskon Subtotal Bayar</h6>
-                            <div class="row g-3">
+                            <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-percent text-danger me-2"></i>Diskon Subtotal Bayar</h6>
+                            <div class="row g-2">
                               <div class="col-md-6">
-                                <label class="small fw-bold text-muted">Bentuk Diskon</label>
-                                <select class="form-select border-2 fw-bold"><option value="percent">Persentase (%)</option><option value="nominal">Nominal (Rp)</option></select>
+                                <label class="small fw-bold text-muted mb-1">Bentuk Diskon</label>
+                                <select class="form-select border-2 fw-bold form-select-sm"><option value="percent">Persentase (%)</option><option value="nominal">Nominal (Rp)</option></select>
                               </div>
                               <div class="col-md-6">
-                                <label class="small fw-bold text-muted">Nilai Diskon</label>
-                                <input type="number" class="form-control border-2 fw-bold" placeholder="0">
+                                <label class="small fw-bold text-muted mb-1">Nilai Diskon</label>
+                                <input type="number" class="form-control border-2 fw-bold form-control-sm" placeholder="0">
                               </div>
-                              <div class="col-12 mt-3">
-                                <div class="alert alert-info py-2 small m-0"><i class="fas fa-info-circle me-2"></i>Jika Tax ON, diskon akan diterapkan ke subtotal bayar, dan Tax tetap utuh dikenakan pada nilai akhirnya.</div>
+                              <div class="col-12 mt-2">
+                                <div class="alert alert-info py-1 px-2 small m-0"><i class="fas fa-info-circle me-1"></i>Jika Tax ON, diskon diterapkan ke subtotal sebelum ditambah Tax.</div>
                               </div>
                             </div>
                           </div>
                           <!-- Form All Menu -->
                           <div class="sp-form-group" id="sp-form-all_menu" style="display:none;">
-                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-boxes text-success me-2"></i>Diskon Semua Menu</h6>
-                            <div class="row g-3">
+                            <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-boxes text-success me-2"></i>Diskon Semua Menu</h6>
+                            <div class="row g-2">
                               <div class="col-md-6">
-                                <label class="small fw-bold text-muted">Diskon Per Item (Persen/Nominal)</label>
-                                <div class="input-group">
+                                <label class="small fw-bold text-muted mb-1">Diskon Per Item (Persen/Nominal)</label>
+                                <div class="input-group input-group-sm">
                                   <select class="form-select border-2 fw-bold" style="max-width:80px;"><option>%</option><option>Rp</option></select>
                                   <input type="number" class="form-control border-2 fw-bold" placeholder="0">
                                 </div>
@@ -2765,19 +2771,19 @@
                           </div>
                           <!-- Form Category -->
                           <div class="sp-form-group" id="sp-form-category" style="display:none;">
-                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-list text-info me-2"></i>Diskon Kategori Tertentu</h6>
-                            <div class="row g-3">
-                              <div class="col-12">
-                                <label class="small fw-bold text-muted">Pilih Kategori</label>
-                                <select class="form-select border-2 fw-bold">
+                            <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-list text-info me-2"></i>Diskon Kategori Tertentu</h6>
+                            <div class="row g-2">
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Pilih Kategori</label>
+                                <select class="form-select border-2 fw-bold form-select-sm">
                                   <option>Kopi</option>
                                   <option>Teh</option>
                                   <option>Makanan</option>
                                 </select>
                               </div>
-                              <div class="col-12">
-                                <label class="small fw-bold text-muted">Diskon yang Diberikan</label>
-                                <div class="input-group">
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Diskon yang Diberikan</label>
+                                <div class="input-group input-group-sm">
                                   <select class="form-select border-2 fw-bold" style="max-width:80px;"><option>%</option><option>Rp</option></select>
                                   <input type="number" class="form-control border-2 fw-bold" placeholder="0">
                                 </div>
@@ -2786,15 +2792,15 @@
                           </div>
                           <!-- Form Item -->
                           <div class="sp-form-group" id="sp-form-item" style="display:none;">
-                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-coffee text-primary me-2"></i>Diskon Item Spesifik</h6>
-                            <div class="row g-3">
-                              <div class="col-12">
-                                <label class="small fw-bold text-muted">Pilih Menu</label>
-                                <select class="form-select border-2 fw-bold"><option>-- Pilih Menu --</option></select>
+                            <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-coffee text-primary me-2"></i>Diskon Item Spesifik</h6>
+                            <div class="row g-2">
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Pilih Menu</label>
+                                <select class="form-select border-2 fw-bold form-select-sm"><option>-- Pilih Menu --</option></select>
                               </div>
-                              <div class="col-12">
-                                <label class="small fw-bold text-muted">Diskon yang Diberikan</label>
-                                <div class="input-group">
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Diskon yang Diberikan</label>
+                                <div class="input-group input-group-sm">
                                   <select class="form-select border-2 fw-bold" style="max-width:80px;"><option>%</option><option>Rp</option></select>
                                   <input type="number" class="form-control border-2 fw-bold" placeholder="0">
                                 </div>
@@ -2803,55 +2809,50 @@
                           </div>
                           <!-- Form Buy X Get Y -->
                           <div class="sp-form-group" id="sp-form-buy_get" style="display:none;">
-                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-gift text-warning me-2"></i>Beli X Gratis / Tebus Murah Y</h6>
-                            <div class="row g-3 align-items-center">
-                              <div class="col-md-2"><label class="fw-bold text-dark">SYARAT BELI</label></div>
-                              <div class="col-md-3"><input type="number" class="form-control border-2 fw-bold" placeholder="Qty"></div>
-                              <div class="col-md-7"><select class="form-select border-2 fw-bold"><option>-- Pilih Menu --</option><option>Semua Menu</option></select></div>
+                            <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-gift text-warning me-2"></i>Beli X Gratis / Tebus Murah Y</h6>
+                            <div class="row g-2 align-items-center">
+                              <div class="col-md-2"><label class="small fw-bold text-dark m-0">SYARAT BELI</label></div>
+                              <div class="col-md-3"><input type="number" class="form-control form-control-sm border-2 fw-bold" placeholder="Qty"></div>
+                              <div class="col-md-7"><select class="form-select form-select-sm border-2 fw-bold"><option>-- Pilih Menu --</option><option>Semua Menu</option></select></div>
                               
-                              <div class="col-12 border-bottom my-2"></div>
+                              <div class="col-12 border-bottom my-1"></div>
                               
-                              <div class="col-md-2"><label class="fw-bold text-success">MENDAPAT</label></div>
-                              <div class="col-md-3"><input type="number" class="form-control border-2 fw-bold" placeholder="Qty"></div>
+                              <div class="col-md-2"><label class="small fw-bold text-success m-0">MENDAPAT</label></div>
+                              <div class="col-md-3"><input type="number" class="form-control form-control-sm border-2 fw-bold" placeholder="Qty"></div>
                               <div class="col-md-7">
-                                <div class="d-flex flex-column gap-2">
-                                  <select class="form-select border-2 fw-bold"><option>-- Pilih Menu Reward --</option></select>
-                                  <div class="input-group">
-                                    <span class="input-group-text bg-light border-2 small">Harga Tebus Rp</span>
-                                    <input type="number" class="form-control border-2 fw-bold text-success" placeholder="0 (Kosong/0 = Gratis)">
+                                <div class="d-flex align-items-center gap-2">
+                                  <select class="form-select form-select-sm border-2 fw-bold"><option>-- Menu Reward --</option></select>
+                                  <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light border-2 small">Tebus Rp</span>
+                                    <input type="number" class="form-control border-2 fw-bold text-success" placeholder="0 (Gratis)">
                                   </div>
                                 </div>
                               </div>
                             </div>
-                            <button class="btn btn-outline-primary btn-sm mt-3 fw-bold rounded-pill"><i class="fas fa-plus me-1"></i> Tambah Menu Reward Lain</button>
+                            <button class="btn btn-outline-primary btn-sm mt-2 fw-bold rounded-pill w-100"><i class="fas fa-plus me-1"></i> Tambah Menu Reward Lain</button>
                           </div>
                           <!-- Form Min Purchase -->
                           <div class="sp-form-group" id="sp-form-min_purchase" style="display:none;">
-                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-cart-arrow-down text-dark me-2"></i>Total Belanja Minimum -> Reward</h6>
-                            <div class="row g-3 align-items-center">
-                              <div class="col-12">
-                                <label class="small fw-bold text-muted">Minimal Total Belanja (Rp)</label>
-                                <input type="number" class="form-control border-2 fw-bold text-danger" placeholder="Contoh: 100000">
+                            <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-cart-arrow-down text-dark me-2"></i>Total Belanja Minimal -> Reward</h6>
+                            <div class="row g-2 align-items-center">
+                              <div class="col-md-5">
+                                <label class="small fw-bold text-muted mb-1">Minimal Belanja (Rp)</label>
+                                <input type="number" class="form-control form-control-sm border-2 fw-bold text-danger" placeholder="100000">
                               </div>
-                              <div class="col-12 border-bottom my-2"></div>
-                              <div class="col-md-2"><label class="fw-bold text-success">MENDAPAT</label></div>
-                              <div class="col-md-3"><input type="number" class="form-control border-2 fw-bold" placeholder="Qty"></div>
+                              <div class="col-12 border-bottom my-1"></div>
+                              <div class="col-md-2"><label class="small fw-bold text-success m-0">MENDAPAT</label></div>
+                              <div class="col-md-3"><input type="number" class="form-control form-control-sm border-2 fw-bold" placeholder="Qty"></div>
                               <div class="col-md-7">
-                                <div class="d-flex flex-column gap-2">
-                                  <select class="form-select border-2 fw-bold"><option>-- Pilih Menu Reward --</option></select>
-                                  <div class="input-group">
-                                    <span class="input-group-text bg-light border-2 small">Harga Tebus Rp</span>
-                                    <input type="number" class="form-control border-2 fw-bold text-success" placeholder="0 (Kosong/0 = Gratis)">
+                                <div class="d-flex align-items-center gap-2">
+                                  <select class="form-select form-select-sm border-2 fw-bold"><option>-- Menu Reward --</option></select>
+                                  <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light border-2 small">Tebus Rp</span>
+                                    <input type="number" class="form-control border-2 fw-bold text-success" placeholder="0 (Gratis)">
                                   </div>
                                 </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                        
-                        <div>
-                          <label class="small fw-bold text-muted mb-2">NAMA LABEL PROMO (Ditampilkan di Struk)</label>
-                          <input type="text" id="spDineInLabelName" class="form-control border-2 fw-bold text-dark" placeholder="Contoh: Diskon Merdeka 10%">
                         </div>
                       </div>
                       
@@ -2883,42 +2884,48 @@
                           <label class="form-check-label small fw-bold text-success">Aktif</label>
                         </div>
                       </div>
-                      <div class="p-4 overflow-auto flex-fill pb-5">
-                        <div class="mb-4">
-                          <label class="small fw-bold text-muted mb-2">TIPE PROMO / DISKON</label>
-                          <select class="form-select fw-bold border-2 shadow-sm" onchange="changeSpType(this.value, 'takeaway')">
-                            <option value="subtotal">Discount Subtotal Bayar</option>
-                            <option value="all_menu">Discount ALL MENU</option>
-                            <option value="category">Discount Per KATEGORI</option>
-                            <option value="item">Discount Per ITEM</option>
-                            <option value="buy_get">Beli [X] Gratis / Tebus Murah [Y]</option>
-                            <option value="min_purchase">Total Belanja Minimal -> Gratis / Tebus Murah</option>
-                          </select>
+                      <div class="p-3 overflow-auto flex-fill pb-4">
+                        <div class="row g-3 mb-3">
+                          <div class="col-md-6">
+                            <label class="small fw-bold text-muted mb-1">NAMA LABEL PROMO (Struk)</label>
+                            <input type="text" id="spTakeawayLabelName" class="form-control border-2 fw-bold text-dark form-control-sm py-2" placeholder="Contoh: Promo Takeaway">
+                          </div>
+                          <div class="col-md-6">
+                            <label class="small fw-bold text-muted mb-1">TIPE PROMO / DISKON</label>
+                            <select class="form-select fw-bold border-2 shadow-sm form-select-sm py-2" onchange="changeSpType(this.value, 'takeaway')">
+                              <option value="subtotal">Discount Subtotal Bayar</option>
+                              <option value="all_menu">Discount ALL MENU</option>
+                              <option value="category">Discount Per KATEGORI</option>
+                              <option value="item">Discount Per ITEM</option>
+                              <option value="buy_get">Beli [X] Gratis / Tebus Murah [Y]</option>
+                              <option value="min_purchase">Total Belanja Minimal -> Gratis/Tebus</option>
+                            </select>
+                          </div>
                         </div>
 
-                        <!-- Dynamic Config Area (Duplikasi DineIn) -->
-                        <div id="spTakeawayDynamicConfig" class="bg-white p-4 rounded-4 shadow-sm border mb-4">
+                        <!-- Dynamic Config Area -->
+                        <div id="spTakeawayDynamicConfig" class="bg-white p-3 rounded-4 shadow-sm border mb-2">
                           <!-- Form Subtotal -->
                           <div class="sp-form-group" id="sp-form-subtotal" style="display:block;">
-                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-percent text-danger me-2"></i>Diskon Subtotal Bayar</h6>
-                            <div class="row g-3">
+                            <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-percent text-danger me-2"></i>Diskon Subtotal Bayar</h6>
+                            <div class="row g-2">
                               <div class="col-md-6">
-                                <label class="small fw-bold text-muted">Bentuk Diskon</label>
-                                <select class="form-select border-2 fw-bold"><option value="percent">Persentase (%)</option><option value="nominal">Nominal (Rp)</option></select>
+                                <label class="small fw-bold text-muted mb-1">Bentuk Diskon</label>
+                                <select class="form-select border-2 fw-bold form-select-sm"><option value="percent">Persentase (%)</option><option value="nominal">Nominal (Rp)</option></select>
                               </div>
                               <div class="col-md-6">
-                                <label class="small fw-bold text-muted">Nilai Diskon</label>
-                                <input type="number" class="form-control border-2 fw-bold" placeholder="0">
+                                <label class="small fw-bold text-muted mb-1">Nilai Diskon</label>
+                                <input type="number" class="form-control border-2 fw-bold form-control-sm" placeholder="0">
                               </div>
                             </div>
                           </div>
                           <!-- Form All Menu -->
                           <div class="sp-form-group" id="sp-form-all_menu" style="display:none;">
-                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-boxes text-success me-2"></i>Diskon Semua Menu</h6>
-                            <div class="row g-3">
+                            <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-boxes text-success me-2"></i>Diskon Semua Menu</h6>
+                            <div class="row g-2">
                               <div class="col-md-6">
-                                <label class="small fw-bold text-muted">Diskon Per Item (Persen/Nominal)</label>
-                                <div class="input-group">
+                                <label class="small fw-bold text-muted mb-1">Diskon Per Item (Persen/Nominal)</label>
+                                <div class="input-group input-group-sm">
                                   <select class="form-select border-2 fw-bold" style="max-width:80px;"><option>%</option><option>Rp</option></select>
                                   <input type="number" class="form-control border-2 fw-bold" placeholder="0">
                                 </div>
@@ -2927,15 +2934,15 @@
                           </div>
                           <!-- Form Category -->
                           <div class="sp-form-group" id="sp-form-category" style="display:none;">
-                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-list text-info me-2"></i>Diskon Kategori Tertentu</h6>
-                            <div class="row g-3">
-                              <div class="col-12">
-                                <label class="small fw-bold text-muted">Pilih Kategori</label>
-                                <select class="form-select border-2 fw-bold"><option>Kopi</option><option>Teh</option><option>Makanan</option></select>
+                            <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-list text-info me-2"></i>Diskon Kategori Tertentu</h6>
+                            <div class="row g-2">
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Pilih Kategori</label>
+                                <select class="form-select border-2 fw-bold form-select-sm"><option>Kopi</option><option>Teh</option><option>Makanan</option></select>
                               </div>
-                              <div class="col-12">
-                                <label class="small fw-bold text-muted">Diskon yang Diberikan</label>
-                                <div class="input-group">
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Diskon yang Diberikan</label>
+                                <div class="input-group input-group-sm">
                                   <select class="form-select border-2 fw-bold" style="max-width:80px;"><option>%</option><option>Rp</option></select>
                                   <input type="number" class="form-control border-2 fw-bold" placeholder="0">
                                 </div>
@@ -2944,15 +2951,15 @@
                           </div>
                           <!-- Form Item -->
                           <div class="sp-form-group" id="sp-form-item" style="display:none;">
-                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-coffee text-primary me-2"></i>Diskon Item Spesifik</h6>
-                            <div class="row g-3">
-                              <div class="col-12">
-                                <label class="small fw-bold text-muted">Pilih Menu</label>
-                                <select class="form-select border-2 fw-bold"><option>-- Pilih Menu --</option></select>
+                            <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-coffee text-primary me-2"></i>Diskon Item Spesifik</h6>
+                            <div class="row g-2">
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Pilih Menu</label>
+                                <select class="form-select border-2 fw-bold form-select-sm"><option>-- Pilih Menu --</option></select>
                               </div>
-                              <div class="col-12">
-                                <label class="small fw-bold text-muted">Diskon yang Diberikan</label>
-                                <div class="input-group">
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Diskon yang Diberikan</label>
+                                <div class="input-group input-group-sm">
                                   <select class="form-select border-2 fw-bold" style="max-width:80px;"><option>%</option><option>Rp</option></select>
                                   <input type="number" class="form-control border-2 fw-bold" placeholder="0">
                                 </div>
@@ -2961,53 +2968,48 @@
                           </div>
                           <!-- Form Buy X Get Y -->
                           <div class="sp-form-group" id="sp-form-buy_get" style="display:none;">
-                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-gift text-warning me-2"></i>Beli X Gratis / Tebus Murah Y</h6>
-                            <div class="row g-3 align-items-center">
-                              <div class="col-md-2"><label class="fw-bold text-dark">SYARAT BELI</label></div>
-                              <div class="col-md-3"><input type="number" class="form-control border-2 fw-bold" placeholder="Qty"></div>
-                              <div class="col-md-7"><select class="form-select border-2 fw-bold"><option>-- Pilih Menu --</option><option>Semua Menu</option></select></div>
-                              <div class="col-12 border-bottom my-2"></div>
-                              <div class="col-md-2"><label class="fw-bold text-success">MENDAPAT</label></div>
-                              <div class="col-md-3"><input type="number" class="form-control border-2 fw-bold" placeholder="Qty"></div>
+                            <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-gift text-warning me-2"></i>Beli X Gratis / Tebus Murah Y</h6>
+                            <div class="row g-2 align-items-center">
+                              <div class="col-md-2"><label class="small fw-bold text-dark m-0">SYARAT BELI</label></div>
+                              <div class="col-md-3"><input type="number" class="form-control form-control-sm border-2 fw-bold" placeholder="Qty"></div>
+                              <div class="col-md-7"><select class="form-select form-select-sm border-2 fw-bold"><option>-- Pilih Menu --</option><option>Semua Menu</option></select></div>
+                              <div class="col-12 border-bottom my-1"></div>
+                              <div class="col-md-2"><label class="small fw-bold text-success m-0">MENDAPAT</label></div>
+                              <div class="col-md-3"><input type="number" class="form-control form-control-sm border-2 fw-bold" placeholder="Qty"></div>
                               <div class="col-md-7">
-                                <div class="d-flex flex-column gap-2">
-                                  <select class="form-select border-2 fw-bold"><option>-- Pilih Menu Reward --</option></select>
-                                  <div class="input-group">
-                                    <span class="input-group-text bg-light border-2 small">Harga Tebus Rp</span>
-                                    <input type="number" class="form-control border-2 fw-bold text-success" placeholder="0">
+                                <div class="d-flex align-items-center gap-2">
+                                  <select class="form-select form-select-sm border-2 fw-bold"><option>-- Menu Reward --</option></select>
+                                  <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light border-2 small">Tebus Rp</span>
+                                    <input type="number" class="form-control border-2 fw-bold text-success" placeholder="0 (Gratis)">
                                   </div>
                                 </div>
                               </div>
                             </div>
-                            <button class="btn btn-outline-primary btn-sm mt-3 fw-bold rounded-pill"><i class="fas fa-plus me-1"></i> Tambah Menu Reward Lain</button>
+                            <button class="btn btn-outline-primary btn-sm mt-2 fw-bold rounded-pill w-100"><i class="fas fa-plus me-1"></i> Tambah Menu Reward Lain</button>
                           </div>
                           <!-- Form Min Purchase -->
                           <div class="sp-form-group" id="sp-form-min_purchase" style="display:none;">
-                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fas fa-cart-arrow-down text-dark me-2"></i>Total Belanja Minimum -> Reward</h6>
-                            <div class="row g-3 align-items-center">
-                              <div class="col-12">
-                                <label class="small fw-bold text-muted">Minimal Total Belanja (Rp)</label>
-                                <input type="number" class="form-control border-2 fw-bold text-danger" placeholder="Contoh: 100000">
+                            <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-cart-arrow-down text-dark me-2"></i>Total Belanja Minimal -> Reward</h6>
+                            <div class="row g-2 align-items-center">
+                              <div class="col-md-5">
+                                <label class="small fw-bold text-muted mb-1">Minimal Belanja (Rp)</label>
+                                <input type="number" class="form-control form-control-sm border-2 fw-bold text-danger" placeholder="100000">
                               </div>
-                              <div class="col-12 border-bottom my-2"></div>
-                              <div class="col-md-2"><label class="fw-bold text-success">MENDAPAT</label></div>
-                              <div class="col-md-3"><input type="number" class="form-control border-2 fw-bold" placeholder="Qty"></div>
+                              <div class="col-12 border-bottom my-1"></div>
+                              <div class="col-md-2"><label class="small fw-bold text-success m-0">MENDAPAT</label></div>
+                              <div class="col-md-3"><input type="number" class="form-control form-control-sm border-2 fw-bold" placeholder="Qty"></div>
                               <div class="col-md-7">
-                                <div class="d-flex flex-column gap-2">
-                                  <select class="form-select border-2 fw-bold"><option>-- Pilih Menu Reward --</option></select>
-                                  <div class="input-group">
-                                    <span class="input-group-text bg-light border-2 small">Harga Tebus Rp</span>
-                                    <input type="number" class="form-control border-2 fw-bold text-success" placeholder="0">
+                                <div class="d-flex align-items-center gap-2">
+                                  <select class="form-select form-select-sm border-2 fw-bold"><option>-- Menu Reward --</option></select>
+                                  <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light border-2 small">Tebus Rp</span>
+                                    <input type="number" class="form-control border-2 fw-bold text-success" placeholder="0 (Gratis)">
                                   </div>
                                 </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                        
-                        <div>
-                          <label class="small fw-bold text-muted mb-2">NAMA LABEL PROMO</label>
-                          <input type="text" id="spTakeawayLabelName" class="form-control border-2 fw-bold text-dark" placeholder="Contoh: Promo Takeaway">
                         </div>
                       </div>
                       <div class="p-3 border-top bg-white d-flex justify-content-end gap-2 mt-auto">
