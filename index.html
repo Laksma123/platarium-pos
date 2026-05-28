@@ -5160,6 +5160,9 @@
               const tgSched = document.getElementById('tgChatSchedule');
               if (tgSched) tgSched.value = res.chatSchedule || '';
               
+              const tgOwner = document.getElementById('tgChatOwner');
+              if (tgOwner) tgOwner.value = res.chatOwner || '';
+              
               const ytLinkEl = document.getElementById('dualPosVideoUrl');
               if (ytLinkEl) {
                   ytLinkEl.value = res.ytLink || '';
