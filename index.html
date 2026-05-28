@@ -10359,6 +10359,11 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
 
+        // [FIX SCREENSHOT] Simpan zoom level saat ini dan reset ke 1 sebelum memunculkan overlay
+        // agar overlay langsung ter-render 100% fullscreen tanpa efek kedipan zoom-in
+        const savedZoom = document.documentElement.style.zoom || '1';
+        document.documentElement.style.zoom = '1';
+
         // Tampilkan loading overlay premium instan
         const overlay = document.getElementById('screenshotLoadingOverlay');
         if (overlay) overlay.classList.remove('d-none');
@@ -10560,12 +10565,8 @@
 
             const capDiv = document.getElementById('laporanGridToCapture');
 
-            // [FIX SCREENSHOT] Simpan zoom level saat ini dan reset ke 1 sebelum capture.
-            const savedZoom = document.documentElement.style.zoom;
-            document.documentElement.style.zoom = '1';
-
-            // Capture dengan scale 4 untuk resolusi maksimal
-            html2canvas(capDiv, { scale: 4, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+            // Capture dengan scale 3 (sangat tajam, performa aman, anti-hang di WebView)
+            html2canvas(capDiv, { scale: 3, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
               // [FIX SCREENSHOT] Kembalikan zoom level APK setelah capture selesai
               document.documentElement.style.zoom = savedZoom;
               
@@ -10616,6 +10617,7 @@
             });
 
           } catch (e) {
+            document.documentElement.style.zoom = savedZoom;
             if (overlay) overlay.classList.add('d-none');
             btn.innerHTML = ogHtml;
             btn.disabled = false;
@@ -10869,6 +10871,11 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
 
+        // [FIX SCREENSHOT] Simpan zoom level saat ini dan reset ke 1 sebelum memunculkan overlay
+        // agar overlay langsung ter-render 100% fullscreen tanpa efek kedipan zoom-in
+        const savedZoom = document.documentElement.style.zoom || '1';
+        document.documentElement.style.zoom = '1';
+
         // Tampilkan loading overlay premium instan
         const overlay = document.getElementById('screenshotLoadingOverlay');
         if (overlay) overlay.classList.remove('d-none');
@@ -10887,12 +10894,8 @@
             // 3. Sembunyikan ikon silang/hapus pill di dalam template capture offscreen
             capBody.querySelectorAll('.btn-delete-pill').forEach(el => el.style.display = 'none');
 
-            // [FIX SCREENSHOT] Simpan zoom level dan reset ke 1 sebelum capture
-            const savedZoom = document.documentElement.style.zoom;
-            document.documentElement.style.zoom = '1';
-
-            // Capture template offscreen dengan scale: 4 untuk kualitas super tajam Ultra-HD
-            html2canvas(gridElement, { scale: 4, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+            // Capture template offscreen dengan scale: 3 untuk kualitas super tajam (HD aman & cepat)
+            html2canvas(gridElement, { scale: 3, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
                 // [FIX SCREENSHOT] Kembalikan zoom level APK setelah capture selesai
                 document.documentElement.style.zoom = savedZoom;
 
@@ -10930,6 +10933,7 @@
                 alert("Gagal memproses screenshot: " + err);
             });
           } catch (e) {
+            document.documentElement.style.zoom = savedZoom;
             if (overlay) overlay.classList.add('d-none');
             btn.innerHTML = originalHtml;
             btn.disabled = false;
