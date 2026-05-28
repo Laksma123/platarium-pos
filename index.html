@@ -13070,21 +13070,38 @@
               btn.disabled = true;
           }
           try {
-              localStorage.setItem('pm_surcharge_settings', JSON.stringify(pmSettings));
-              setTimeout(() => {
-                  if (btn) {
-                      btn.classList.remove('saving-active');
-                      btn.disabled = false;
-                  }
-                  alert('Pengaturan Surcharge Metode Bayar disimpan secara permanen!');
-                  closePaymentMethodModal();
-              }, 600);
+              const settingsJson = JSON.stringify(pmSettings);
+              localStorage.setItem('pm_surcharge_settings', settingsJson);
+              
+              if (typeof google !== 'undefined' && google.script && google.script.run) {
+                  google.script.run.withSuccessHandler(function(res) {
+                      if (btn) {
+                          btn.classList.remove('saving-active');
+                          btn.disabled = false;
+                      }
+                      if (res && res.status === 'success') {
+                          alert('Pengaturan Surcharge Metode Bayar disimpan secara permanen ke Google Sheets!');
+                          closePaymentMethodModal();
+                      } else {
+                          alert('Gagal menyimpan ke server: ' + (res ? res.message : 'Unknown error'));
+                      }
+                  }).savePMSettingsToSheet(settingsJson);
+              } else {
+                  setTimeout(() => {
+                      if (btn) {
+                          btn.classList.remove('saving-active');
+                          btn.disabled = false;
+                      }
+                      alert('Pengaturan disimpan lokal (backend tidak tersedia).');
+                      closePaymentMethodModal();
+                  }, 600);
+              }
           } catch(e) {
               if (btn) {
                   btn.classList.remove('saving-active');
                   btn.disabled = false;
               }
-              alert('Gagal menyimpan ke penyimpanan lokal: ' + e.message);
+              alert('Gagal menyimpan: ' + e.message);
           }
       }
 
