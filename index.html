@@ -2788,7 +2788,7 @@
               </div>
             </div>
 
-            <div class="list-group-item p-3 border-bottom border-light">
+            <div class="list-group-item p-3 border-bottom border-light" id="multiOwnerContainer">
               <div class="d-flex justify-content-between align-items-center">
                   <h6 class="fw-bold m-0 text-dark"><i class="fas fa-building text-warning me-2"></i>Multi Owner / Saham</h6>
                   <div class="form-check form-switch m-0">
@@ -4571,6 +4571,7 @@
           
           IS_TAX_ACTIVE = res.config.TaxActive;
           TAX_PERCENTAGE = res.config.TaxPercent;
+          IS_MULTI_OWNER = res.config.MultiOwner || false;
           
           document.getElementById('activeCashierName').innerText = ACTIVE_CASHIER;
 
@@ -4814,22 +4815,41 @@
         const isMulti = document.getElementById('multiOwnerToggle').checked;
         const passArea = document.getElementById('ownerPasswordArea');
         const infoArea = document.getElementById('multiOwnerInfo');
+        const multiOwnerContainer = document.getElementById('multiOwnerContainer');
         
         // ---> PERBAIKAN: Selalu isi value ke input terlepas area disembunyikan atau tidak <---
         if (document.getElementById('settingOwnerPass')) {
             document.getElementById('settingOwnerPass').value = ownerPass || '';
         }
 
+        // 1. Visibilitas Toggle Multi Owner
+        if (multiOwnerContainer) {
+          if (isMulti) {
+            // Jika Multi Owner ON, Owner & Admin bisa melihat toggle ini
+            multiOwnerContainer.classList.remove('d-none');
+          } else {
+            // Jika Multi Owner OFF, Hanya Owner yang bisa melihat toggle ini
+            if (ACTIVE_CASHIER === 'Owner') {
+              multiOwnerContainer.classList.remove('d-none');
+            } else {
+              multiOwnerContainer.classList.add('d-none');
+            }
+          }
+        }
+
+        // 2. Info tambahan Multi Owner
         if (isMulti) {
-          if(passArea) passArea.classList.add('d-none');
           if(infoArea) infoArea.classList.remove('d-none');
         } else {
           if(infoArea) infoArea.classList.add('d-none');
-          // Hanya tampilkan jika yang login adalah "Owner"
+        }
+
+        // 3. Password Owner tetap hanya login Owner yang bisa dan perlu melihat
+        if (passArea) {
           if (ACTIVE_CASHIER === 'Owner') {
-            if(passArea) passArea.classList.remove('d-none');
+            passArea.classList.remove('d-none');
           } else {
-            if(passArea) passArea.classList.add('d-none');
+            passArea.classList.add('d-none');
           }
         }
       }
@@ -10997,7 +11017,11 @@
                 btn.innerHTML = ogHtml;
                 btn.disabled = false;
                 if(res.status === 'success') {
-                  alert("Berhasil mengirim rekap laporan ke Telegram Owner!");
+                  if (typeof IS_MULTI_OWNER !== 'undefined' && IS_MULTI_OWNER) {
+                    alert("Berhasil mengirim rekap laporan ke Grup Telegram Log Audit!");
+                  } else {
+                    alert("Berhasil mengirim rekap laporan ke Grup Telegram Rekap Total!");
+                  }
                 } else {
                   alert("Gagal: " + res.message);
                 }
