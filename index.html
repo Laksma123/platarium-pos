@@ -1992,6 +1992,11 @@
                 <option value="all" selected>Semua Metode</option>
                 <option value="CASH">CASH</option>
                 <option value="QRIS">QRIS</option>
+                <option value="DEBIT">DEBIT</option>
+                <option value="CREDIT CARD">CREDIT CARD</option>
+                <option value="DANA">DANA</option>
+                <option value="OVO">OVO</option>
+                <option value="GOPAY">GOPAY</option>
               </select>
               <div class="d-flex align-items-center">
                 <select id="revFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill shadow-sm" style="cursor:pointer; height: 38px;" onchange="handleRevFilterChange(this)">
@@ -2497,9 +2502,14 @@
               <div><span class="text-muted">Kasir:</span> <b>Manual</b></div>
               <div class="d-flex align-items-center gap-1">
                 <span class="text-muted">Metode:</span>
-                <select id="manMethodSelect" class="form-select form-select-sm fw-bold border-2 py-0 px-2" style="width: 75px; height: 24px; font-size: 0.75rem;" onchange="updateManualIdPrefix()">
+                <select id="manMethodSelect" class="form-select form-select-sm fw-bold border-2 py-0 px-2" style="width: 110px; height: 24px; font-size: 0.75rem;" onchange="updateManualIdPrefix()">
                   <option value="CASH">CASH</option>
                   <option value="QRIS">QRIS</option>
+                  <option value="DEBIT">DEBIT</option>
+                  <option value="CREDIT CARD">CREDIT CARD</option>
+                  <option value="DANA">DANA</option>
+                  <option value="OVO">OVO</option>
+                  <option value="GOPAY">GOPAY</option>
                 </select>
               </div>
             </div>
@@ -7766,10 +7776,40 @@
       }
 
       function togglePayInput() {
-        const isCash = document.getElementById('payCash').checked;
+        const method = document.querySelector('input[name="payMethod"]:checked').value;
+        const isCash = (method === 'CASH');
         document.getElementById('cashInputArea').style.display = isCash ? 'block' : 'none';
         document.getElementById('qrisInfoArea').style.display = isCash ? 'none' : 'block';
-        if(isCash) document.getElementById('inputCashAmount').focus();
+        
+        if (isCash) {
+          document.getElementById('inputCashAmount').focus();
+        } else {
+          const qrisArea = document.getElementById('qrisInfoArea');
+          let iconHtml = '<i class="fas fa-qrcode fa-3x mb-2 text-primary"></i>';
+          let msgHtml = 'Silakan scan kode QRIS di meja kasir.';
+          
+          if (method === 'DEBIT') {
+            iconHtml = '<i class="fas fa-credit-card fa-3x mb-2 text-success"></i>';
+            msgHtml = 'Silakan gesek / insert kartu Debit pada mesin EDC.';
+          } else if (method === 'CREDIT CARD') {
+            iconHtml = '<i class="far fa-credit-card fa-3x mb-2 text-info"></i>';
+            msgHtml = 'Silakan gesek / insert kartu Kredit pada mesin EDC.';
+          } else if (method === 'DANA') {
+            iconHtml = '<i class="fas fa-wallet fa-3x mb-2 text-primary"></i>';
+            msgHtml = 'Proses pembayaran menggunakan DANA E-Wallet.';
+          } else if (method === 'OVO') {
+            iconHtml = '<i class="fas fa-wallet fa-3x mb-2" style="color: #9b59b6;"></i>';
+            msgHtml = 'Proses pembayaran menggunakan OVO E-Wallet.';
+          } else if (method === 'GOPAY') {
+            iconHtml = '<i class="fas fa-wallet fa-3x mb-2" style="color: #2ecc71;"></i>';
+            msgHtml = 'Proses pembayaran menggunakan Gopay E-Wallet.';
+          }
+          
+          qrisArea.innerHTML = `
+            \${iconHtml}
+            <p class="small text-muted m-0">\${msgHtml}</p>
+          `;
+        }
       }
 
       function calculateChange() {
@@ -9186,8 +9226,17 @@
       function updateManualIdPrefix() {
         if (!NEXT_MANUAL_ID) return;
         const method = document.getElementById('manMethodSelect').value;
-        const prefix = method === 'QRIS' ? 'QRIS-' : 'ORD-';
-        NEXT_MANUAL_ID = NEXT_MANUAL_ID.replace(/^(ORD|QRIS)-/, prefix);
+        const methodPrefixes = {
+          'CASH': 'ORD-',
+          'QRIS': 'QRIS-',
+          'DEBIT': 'DEBIT-',
+          'CREDIT CARD': 'CC-',
+          'DANA': 'DANA-',
+          'OVO': 'OVO-',
+          'GOPAY': 'GOPAY-'
+        };
+        const prefix = methodPrefixes[method] || 'ORD-';
+        NEXT_MANUAL_ID = NEXT_MANUAL_ID.replace(/^(ORD|QRIS|DEBIT|CC|DANA|OVO|GOPAY)-/, prefix);
         document.getElementById('manOrderId').innerText = NEXT_MANUAL_ID;
       }
 
@@ -11021,21 +11070,83 @@
     </div>
 
     <div id="modalPayment" class="payment-overlay">
-      <div class="payment-box shadow-lg">
+      <div class="payment-box shadow-lg" style="max-height: 95dvh; overflow-y: auto; display: flex; flex-direction: column;">
         <div class="p-4 text-center border-bottom bg-light">
           <h6 class="text-muted mb-1">TOTAL TAGIHAN</h6>
           <h2 class="fw-bold m-0 text-dark" id="payTotalText">Rp 0</h2>
         </div>
         
         <div class="p-4">
-          <div class="mb-3">
-            <label class="small fw-bold text-muted mb-2">METODE PEMBAYARAN</label>
+          <!-- Tipe Pesanan (UI Only) -->
+          <div class="mb-4">
+            <label class="small fw-bold text-muted mb-2">TIPE PESANAN</label>
             <div class="d-flex gap-2">
-              <input type="radio" class="btn-check" name="payMethod" id="payCash" value="CASH" checked onchange="togglePayInput()">
-              <label class="btn btn-outline-warning w-100 fw-bold py-2 rounded-3" for="payCash">CASH</label>
+              <input type="radio" class="btn-check" name="orderType" id="typeDineIn" value="Dine In" checked>
+              <label class="btn btn-outline-dark w-100 fw-bold py-2.5 rounded-3 d-flex flex-column align-items-center justify-content-center gap-1 shadow-sm" for="typeDineIn">
+                <i class="fas fa-chair fs-5"></i>
+                <span style="font-size: 0.75rem;">Dine In</span>
+              </label>
               
-              <input type="radio" class="btn-check" name="payMethod" id="payQris" value="QRIS" onchange="togglePayInput()">
-              <label class="btn btn-outline-primary w-100 fw-bold py-2 rounded-3" for="payQris">QRIS</label>
+              <input type="radio" class="btn-check" name="orderType" id="typeTakeaway" value="Takeaway">
+              <label class="btn btn-outline-dark w-100 fw-bold py-2.5 rounded-3 d-flex flex-column align-items-center justify-content-center gap-1 shadow-sm" for="typeTakeaway">
+                <i class="fas fa-shopping-bag fs-5"></i>
+                <span style="font-size: 0.75rem;">Takeaway</span>
+              </label>
+              
+              <input type="radio" class="btn-check" name="orderType" id="typeDelivery" value="Delivery">
+              <label class="btn btn-outline-dark w-100 fw-bold py-2.5 rounded-3 d-flex flex-column align-items-center justify-content-center gap-1 shadow-sm" for="typeDelivery">
+                <i class="fas fa-motorcycle fs-5"></i>
+                <span style="font-size: 0.75rem;">Delivery</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Metode Pembayaran -->
+          <div class="mb-4">
+            <label class="small fw-bold text-muted mb-2">METODE PEMBAYARAN</label>
+            <div class="row g-2">
+              <div class="col-6">
+                <input type="radio" class="btn-check" name="payMethod" id="payCash" value="CASH" checked onchange="togglePayInput()">
+                <label class="btn btn-outline-warning w-100 fw-bold py-2.5 rounded-3 d-flex align-items-center justify-content-center gap-2 shadow-sm" for="payCash">
+                  <i class="fas fa-money-bill-wave"></i> CASH
+                </label>
+              </div>
+              <div class="col-6">
+                <input type="radio" class="btn-check" name="payMethod" id="payQris" value="QRIS" onchange="togglePayInput()">
+                <label class="btn btn-outline-primary w-100 fw-bold py-2.5 rounded-3 d-flex align-items-center justify-content-center gap-2 shadow-sm" for="payQris">
+                  <i class="fas fa-qrcode"></i> QRIS
+                </label>
+              </div>
+              <div class="col-6">
+                <input type="radio" class="btn-check" name="payMethod" id="payDebit" value="DEBIT" onchange="togglePayInput()">
+                <label class="btn btn-outline-success w-100 fw-bold py-2.5 rounded-3 d-flex align-items-center justify-content-center gap-2 shadow-sm" for="payDebit">
+                  <i class="fas fa-credit-card"></i> DEBIT
+                </label>
+              </div>
+              <div class="col-6">
+                <input type="radio" class="btn-check" name="payMethod" id="payCreditCard" value="CREDIT CARD" onchange="togglePayInput()">
+                <label class="btn btn-outline-info w-100 fw-bold py-2.5 rounded-3 d-flex align-items-center justify-content-center gap-2 shadow-sm" for="payCreditCard">
+                  <i class="far fa-credit-card"></i> CREDIT CARD
+                </label>
+              </div>
+              <div class="col-4">
+                <input type="radio" class="btn-check" name="payMethod" id="payDana" value="DANA" onchange="togglePayInput()">
+                <label class="btn btn-outline-primary w-100 fw-bold py-2 rounded-3 d-flex align-items-center justify-content-center gap-1 shadow-sm text-nowrap" style="font-size: 0.8rem;" for="payDana">
+                  DANA
+                </label>
+              </div>
+              <div class="col-4">
+                <input type="radio" class="btn-check" name="payMethod" id="payOvo" value="OVO" onchange="togglePayInput()">
+                <label class="btn btn-outline-secondary w-100 fw-bold py-2 rounded-3 d-flex align-items-center justify-content-center gap-1 shadow-sm text-nowrap" style="font-size: 0.8rem; border-color: #9b59b6; color: #9b59b6;" for="payOvo">
+                  OVO
+                </label>
+              </div>
+              <div class="col-4">
+                <input type="radio" class="btn-check" name="payMethod" id="payGopay" value="GOPAY" onchange="togglePayInput()">
+                <label class="btn btn-outline-success w-100 fw-bold py-2 rounded-3 d-flex align-items-center justify-content-center gap-1 shadow-sm text-nowrap" style="font-size: 0.8rem; border-color: #2ecc71; color: #2ecc71;" for="payGopay">
+                  GOPAY
+                </label>
+              </div>
             </div>
           </div>
 
