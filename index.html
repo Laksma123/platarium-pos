@@ -2629,6 +2629,23 @@
             </div>
 
             <div class="list-group-item p-3 border-bottom border-light">
+               <div class="d-flex justify-content-between align-items-center" style="cursor: pointer;" onclick="toggleSettingAdvance('paymentSettingArea')">
+                  <h6 class="fw-bold m-0 text-dark"><i class="fas fa-credit-card text-primary me-2"></i>Setup Payment / Delivery Price</h6>
+                  <i class="fas fa-chevron-down text-muted" id="icon-paymentSettingArea"></i>
+               </div>
+               <div id="paymentSettingArea" class="d-none mt-3 pt-3 border-top">
+                   <div class="d-flex flex-column gap-2">
+                       <button class="btn btn-dark border-primary w-100 py-2 rounded-pill fw-bold shadow-sm" onclick="openPaymentMethodModal()" style="color: #3498db;">
+                           <i class="fas fa-sliders-h me-2"></i>Metode Bayar
+                       </button>
+                       <button class="btn btn-dark border-primary w-100 py-2 rounded-pill fw-bold shadow-sm" style="color: #3498db;">
+                           <i class="fas fa-sliders-h me-2"></i>Delivery Price
+                       </button>
+                   </div>
+               </div>
+            </div>
+
+            <div class="list-group-item p-3 border-bottom border-light">
                <div class="d-flex justify-content-between align-items-center">
                   <h6 class="fw-bold m-0 text-dark"><i class="fab fa-telegram text-info me-2"></i>Notifikasi Telegram</h6>
                   <div class="form-check form-switch m-0">
@@ -7783,30 +7800,45 @@
           document.getElementById('inputCashAmount').focus();
         } else {
           const qrisArea = document.getElementById('qrisInfoArea');
-          let iconHtml = '<i class="fas fa-qrcode fa-3x mb-2 text-primary"></i>';
-          let msgHtml = 'Silakan scan kode QRIS di meja kasir.';
+          let isCard = false;
+          let isCredit = false;
           
-          if (method === 'DEBIT') {
-            iconHtml = '<i class="fas fa-credit-card fa-3x mb-2 text-success"></i>';
-            msgHtml = 'Silakan gesek / insert kartu Debit pada mesin EDC.';
-          } else if (method === 'CREDIT CARD') {
-            iconHtml = '<i class="far fa-credit-card fa-3x mb-2 text-info"></i>';
-            msgHtml = 'Silakan gesek / insert kartu Kredit pada mesin EDC.';
-          } else if (method === 'DANA') {
-            iconHtml = '<i class="fas fa-wallet fa-3x mb-2 text-primary"></i>';
-            msgHtml = 'Proses pembayaran menggunakan DANA E-Wallet.';
-          } else if (method === 'OVO') {
-            iconHtml = '<i class="fas fa-wallet fa-3x mb-2" style="color: #9b59b6;"></i>';
-            msgHtml = 'Proses pembayaran menggunakan OVO E-Wallet.';
-          } else if (method === 'GOPAY') {
-            iconHtml = '<i class="fas fa-wallet fa-3x mb-2" style="color: #2ecc71;"></i>';
-            msgHtml = 'Proses pembayaran menggunakan Gopay E-Wallet.';
+          if (method === 'DEBIT' || method === 'CREDIT CARD') {
+            isCard = true;
+            isCredit = method === 'CREDIT CARD';
           }
           
-          qrisArea.innerHTML = `
-            \${iconHtml}
-            <p class="small text-muted m-0">\${msgHtml}</p>
-          `;
+          if (isCard) {
+            let themeClass = isCredit ? 'info' : 'success';
+            let cardName = isCredit ? 'Kredit' : 'Debit';
+            qrisArea.innerHTML = `
+              <div class="d-flex gap-2 justify-content-center mt-2 w-100 px-3">
+                 <input type="radio" class="btn-check" name="bankType" id="bankSama" autocomplete="off" value="SAMA" checked>
+                 <label class="btn btn-outline-${themeClass} rounded-pill w-50 fw-bold" for="bankSama">BANK SAMA</label>
+
+                 <input type="radio" class="btn-check" name="bankType" id="bankBeda" autocomplete="off" value="BEDA">
+                 <label class="btn btn-outline-${themeClass} rounded-pill w-50 fw-bold" for="bankBeda">BANK BEDA</label>
+              </div>
+              <p class="small text-muted mt-3 mb-0">Silakan pilih jenis mesin EDC untuk kartu ${cardName}.</p>
+            `;
+          } else {
+            let iconHtml = '<i class="fas fa-qrcode fa-3x mb-2 text-primary"></i>';
+            let msgHtml = 'Silakan scan kode QRIS di meja kasir.';
+            if (method === 'DANA') {
+              iconHtml = '<i class="fas fa-wallet fa-3x mb-2 text-primary"></i>';
+              msgHtml = 'Proses pembayaran menggunakan DANA E-Wallet.';
+            } else if (method === 'OVO') {
+              iconHtml = '<i class="fas fa-wallet fa-3x mb-2" style="color: #9b59b6;"></i>';
+              msgHtml = 'Proses pembayaran menggunakan OVO E-Wallet.';
+            } else if (method === 'GOPAY') {
+              iconHtml = '<i class="fas fa-wallet fa-3x mb-2" style="color: #2ecc71;"></i>';
+              msgHtml = 'Proses pembayaran menggunakan Gopay E-Wallet.';
+            }
+            qrisArea.innerHTML = `
+              ${iconHtml}
+              <p class="small text-muted m-0">${msgHtml}</p>
+            `;
+          }
         }
       }
 
@@ -11952,5 +11984,269 @@
         <p class="text-muted small px-4 mb-0">Mohon tunggu sejenak, sistem sedang memproses dokumen dengan resolusi tinggi.</p>
       </div>
     </div>
+    <!-- Modal Payment Method Settings -->
+    <div id="modalPaymentMethod" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 10600; opacity: 1 !important;">
+      <div class="modal-wrapper w-100">
+         <div class="bg-white rounded-5 shadow-lg d-flex flex-column mx-auto" style="width: 95%; max-width: 900px; padding: 25px;">
+            <h4 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="fas fa-credit-card text-primary me-2"></i>Pengaturan Surcharge & Biaya Tambahan</h4>
+            
+            <ul class="nav nav-pills mb-3 gap-2" id="paymentMethodTabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold rounded-pill shadow-sm border" id="tab-qris" type="button" onclick="selectPaymentMethodTab('QRIS')" style="transition: all 0.3s; color: #2d3436;">QRIS</button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold rounded-pill shadow-sm border" id="tab-debit" type="button" onclick="selectPaymentMethodTab('DEBIT')" style="transition: all 0.3s; color: #2d3436;">DEBIT</button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold rounded-pill shadow-sm border" id="tab-cc" type="button" onclick="selectPaymentMethodTab('CC')" style="transition: all 0.3s; color: #2d3436;">CC</button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold rounded-pill shadow-sm border" id="tab-dana" type="button" onclick="selectPaymentMethodTab('DANA')" style="transition: all 0.3s; color: #2d3436;">DANA</button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold rounded-pill shadow-sm border" id="tab-ovo" type="button" onclick="selectPaymentMethodTab('OVO')" style="transition: all 0.3s; color: #2d3436;">OVO</button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold rounded-pill shadow-sm border" id="tab-gopay" type="button" onclick="selectPaymentMethodTab('GOPAY')" style="transition: all 0.3s; color: #2d3436;">Gopay</button>
+              </li>
+            </ul>
+
+            <div class="row mt-3 text-dark">
+                <!-- KOLOM KIRI (INPUT) -->
+                <div class="col-md-6 border-end">
+                    <h6 class="fw-bold bg-light p-2 rounded mb-3 text-center">KOLOM KIRI (INPUT)</h6>
+                    <div class="mb-3 d-flex align-items-center">
+                        <label class="fw-bold me-3" style="width: 120px;">Nama Metode</label>
+                        <input type="text" id="pmName" class="form-control fw-bold text-center" value="QRIS" readonly style="background-color: #f8f9fa;">
+                    </div>
+                    <div class="mb-3 d-flex align-items-center">
+                        <label class="fw-bold me-3" style="width: 120px;">Tipe Efek</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                              <input class="form-check-input" type="radio" name="pmEffectType" id="pmEffectAdd" value="add" onchange="updatePMSimulation()">
+                              <label class="form-check-label" for="pmEffectAdd">Menambah Nota</label>
+                            </div>
+                            <div class="form-check">
+                              <input class="form-check-input" type="radio" name="pmEffectType" id="pmEffectCut" value="cut" checked onchange="updatePMSimulation()">
+                              <label class="form-check-label" for="pmEffectCut">Potong Internal</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex align-items-center">
+                        <label class="fw-bold me-3" style="width: 120px;">Jenis Biaya</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                              <input class="form-check-input" type="radio" name="pmFeeType" id="pmFeePercent" value="percent" checked onchange="updatePMSimulation()">
+                              <label class="form-check-label" for="pmFeePercent">Persentase (%)</label>
+                            </div>
+                            <div class="form-check">
+                              <input class="form-check-input" type="radio" name="pmFeeType" id="pmFeeFlat" value="flat" onchange="updatePMSimulation()">
+                              <label class="form-check-label" for="pmFeeFlat">Nominal Flat (Rp)</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex align-items-center">
+                        <label class="fw-bold me-3" style="width: 120px;">Nilai</label>
+                        <div class="input-group" style="width: 250px;">
+                            <button class="btn btn-outline-secondary fw-bold" type="button" onclick="changePMValue(-1)">&#60;</button>
+                            <input type="text" id="pmValue" class="form-control text-center fw-bold" value="0" readonly>
+                            <button class="btn btn-outline-secondary fw-bold" type="button" onclick="changePMValue(1)">&#62;</button>
+                        </div>
+                    </div>
+                    <div class="small text-muted mb-3" style="font-size: 0.75rem;">
+                        Klik &lt; jika dibebankan ke pembukuan. Klik &gt; jika dibebankan ke Customer.<br>
+                        <span class="text-danger fw-bold">*Secara hukum, pembebanan nilai ini pada customer dilarang oleh BI.</span>
+                    </div>
+                    
+                    <div class="alert alert-info py-2 px-3 small d-flex align-items-start gap-2">
+                        <i class="fas fa-lightbulb text-warning mt-1 fs-5"></i>
+                        <div>
+                            <strong>💡 Saran pengisian :</strong> Klik untuk Auto atau biarkan kosong sampai anda tahu angka pastinya.<br>
+                            <div class="d-flex gap-2 mt-2 flex-wrap" id="pmAutoButtons">
+                                <!-- Auto buttons injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KOLOM KANAN (SIMULASI RIIL) -->
+                <div class="col-md-6">
+                    <h6 class="fw-bold bg-light p-2 rounded mb-3 text-center">KOLOM KANAN (SIMULASI RIIL)</h6>
+                    <div class="p-3 border rounded bg-white shadow-sm" style="background-color: #fafbfc !important;">
+                        <div class="d-flex justify-content-between mb-3 align-items-center border-bottom pb-2">
+                            <span class="fw-bold">Jika Konsumen Belanja :</span>
+                            <div class="input-group input-group-sm" style="width: 150px;">
+                                <span class="input-group-text bg-white fw-bold">Rp</span>
+                                <input type="number" id="pmSimAmount" class="form-control text-end fw-bold" value="100000" oninput="updatePMSimulation()">
+                            </div>
+                        </div>
+                        <div class="mb-2 text-muted fw-bold small text-center">Maka di Layar Kasir:</div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>[+] Biaya Tambahan :</span>
+                            <span id="pmSimSurcharge" class="fw-bold text-danger">Rp 0</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3 pb-2 border-bottom">
+                            <span class="fw-bold text-dark">Total Bayar Konsumen:</span>
+                            <span id="pmSimTotal" class="fw-bold text-dark fs-5">Rp 100.000</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1 mt-3">
+                            <span class="text-success fw-bold">Uang Masuk Rekening :</span>
+                            <span id="pmSimNet" class="fw-bold text-success fs-5">Rp 100.000</span>
+                        </div>
+                        <div class="d-flex justify-content-between small text-danger">
+                            <span>(Dipotong biaya bank:</span>
+                            <span id="pmSimCut">Rp 0)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+         </div>
+         
+         <div class="modal-outside-buttons">
+            <button class="btn-outside-circle btn-batal" onclick="closePaymentMethodModal()" title="Batal">
+               <div class="icon-wrapper">
+                  <i class="fas fa-times icon-primary"></i>
+                  <i class="fas fa-redo icon-secondary"></i>
+               </div>
+            </button>
+            <button class="btn-outside-circle btn-simpan" onclick="savePaymentMethod()" title="Simpan">
+               <div class="icon-wrapper">
+                  <i class="fas fa-save icon-primary"></i>
+                  <i class="fas fa-check icon-secondary"></i>
+               </div>
+            </button>
+         </div>
+      </div>
+    </div>
+    
+    <script>
+      function openPaymentMethodModal() {
+        document.getElementById('modalPaymentMethod').classList.remove('d-none');
+        document.getElementById('modalPaymentMethod').style.display = 'flex';
+        selectPaymentMethodTab('QRIS');
+      }
+
+      function closePaymentMethodModal() {
+        document.getElementById('modalPaymentMethod').classList.add('d-none');
+        document.getElementById('modalPaymentMethod').style.display = 'none';
+      }
+      
+      const pmSettings = {
+        'QRIS': { effect: 'cut', feeType: 'percent', value: 0 },
+        'DEBIT': { effect: 'cut', feeType: 'percent', value: 0 },
+        'CC': { effect: 'cut', feeType: 'percent', value: 0 },
+        'DANA': { effect: 'cut', feeType: 'percent', value: 0 },
+        'OVO': { effect: 'cut', feeType: 'percent', value: 0 },
+        'GOPAY': { effect: 'cut', feeType: 'percent', value: 0 }
+      };
+      let currentPMTab = 'QRIS';
+
+      function selectPaymentMethodTab(methodName) {
+         currentPMTab = methodName;
+         document.getElementById('pmName').value = methodName;
+         
+         const tabs = document.querySelectorAll('#paymentMethodTabs .nav-link');
+         tabs.forEach(tab => {
+             tab.classList.remove('active', 'bg-warning', 'text-white');
+             tab.style.background = '#f8f9fa';
+             if(tab.innerText === methodName) {
+                 tab.classList.add('active');
+                 tab.style.background = 'var(--primary-gold)';
+                 tab.style.color = 'white';
+             }
+         });
+         
+         const data = pmSettings[methodName];
+         document.getElementById('pmEffectAdd').checked = data.effect === 'add';
+         document.getElementById('pmEffectCut').checked = data.effect === 'cut';
+         document.getElementById('pmFeePercent').checked = data.feeType === 'percent';
+         document.getElementById('pmFeeFlat').checked = data.feeType === 'flat';
+         document.getElementById('pmValue').value = data.value;
+         
+         const autoContainer = document.getElementById('pmAutoButtons');
+         autoContainer.innerHTML = '';
+         
+         if (methodName === 'QRIS') {
+             autoContainer.innerHTML = `
+                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="setAutoPM(0.3, 'percent', 'cut')">Usaha Mikro (0.3%)</button>
+                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="setAutoPM(0.7, 'percent', 'cut')">Usaha Menengah (0.7%)</button>
+             `;
+         } else if (methodName === 'DEBIT') {
+             autoContainer.innerHTML = `
+                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="setAutoPM(0.15, 'percent', 'cut')">Bank Sama (0.15%)</button>
+                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="setAutoPM(1.0, 'percent', 'cut')">Bank Beda (1.0%)</button>
+             `;
+         } else if (methodName === 'CC') {
+             autoContainer.innerHTML = `
+                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="setAutoPM(2.0, 'percent', 'cut')">BCA/Mandiri (2%)</button>
+                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="setAutoPM(2.5, 'percent', 'cut')">Standard (2.5%)</button>
+             `;
+         } else if (methodName === 'DANA' || methodName === 'OVO' || methodName === 'GOPAY') {
+             autoContainer.innerHTML = `
+                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="setAutoPM(0.7, 'percent', 'cut')">QRIS/E-Wallet (0.7%)</button>
+                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="setAutoPM(1.5, 'percent', 'cut')">Standard Apps (1.5%)</button>
+             `;
+         }
+         updatePMSimulation();
+      }
+      
+      function setAutoPM(val, feeType, effect) {
+          let targetVal = effect === 'cut' ? -Math.abs(val) : Math.abs(val);
+          document.getElementById('pmValue').value = targetVal;
+          document.getElementById('pmEffectAdd').checked = effect === 'add';
+          document.getElementById('pmEffectCut').checked = effect === 'cut';
+          document.getElementById('pmFeePercent').checked = feeType === 'percent';
+          document.getElementById('pmFeeFlat').checked = feeType === 'flat';
+          updatePMSimulation();
+      }
+
+      function changePMValue(direction) {
+          let currentVal = parseFloat(document.getElementById('pmValue').value) || 0;
+          let isPercent = document.getElementById('pmFeePercent').checked;
+          let step = isPercent ? 0.1 : 500;
+          let newVal = currentVal + (direction * step);
+          if (isPercent) newVal = Math.round(newVal * 10) / 10;
+          document.getElementById('pmValue').value = newVal;
+          updatePMSimulation();
+      }
+
+      function updatePMSimulation() {
+          let val = parseFloat(document.getElementById('pmValue').value) || 0;
+          let simAmount = parseFloat(document.getElementById('pmSimAmount').value) || 0;
+          
+          if (val > 0) {
+              document.getElementById('pmEffectAdd').checked = true;
+          } else if (val < 0) {
+              document.getElementById('pmEffectCut').checked = true;
+          }
+          
+          let isAdd = document.getElementById('pmEffectAdd').checked;
+          let isPercent = document.getElementById('pmFeePercent').checked;
+          let effectType = isAdd ? 'add' : 'cut';
+          
+          pmSettings[currentPMTab].effect = effectType;
+          pmSettings[currentPMTab].feeType = isPercent ? 'percent' : 'flat';
+          pmSettings[currentPMTab].value = val;
+          
+          let absVal = Math.abs(val);
+          let fee = isPercent ? (simAmount * absVal / 100) : absVal;
+          
+          let surcharge = effectType === 'add' ? fee : 0;
+          let cut = effectType === 'cut' ? fee : 0;
+          
+          let totalBayar = simAmount + surcharge;
+          let uangMasuk = totalBayar - cut;
+          
+          document.getElementById('pmSimSurcharge').innerText = 'Rp ' + surcharge.toLocaleString(undefined, {maximumFractionDigits:0});
+          document.getElementById('pmSimTotal').innerText = 'Rp ' + totalBayar.toLocaleString(undefined, {maximumFractionDigits:0});
+          document.getElementById('pmSimCut').innerText = 'Rp ' + cut.toLocaleString(undefined, {maximumFractionDigits:0}) + ')';
+          document.getElementById('pmSimNet').innerText = 'Rp ' + uangMasuk.toLocaleString(undefined, {maximumFractionDigits:0});
+      }
+      
+      function savePaymentMethod() {
+          alert('Pengaturan Surcharge Metode Bayar disimpan (Simulasi Lokal).');
+          closePaymentMethodModal();
+      }
+    </script>
   </body>
 </html>
