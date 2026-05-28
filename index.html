@@ -10555,18 +10555,9 @@
         captureTbody.innerHTML = finalClonedRows;
 
         const capDiv = document.getElementById('laporanGridToCapture');
-        
-        // Simpan style asli
-        const originalStyle = capDiv.getAttribute('style') || '';
-        
-        // Pindahkan sementara ke fixed layout dalam viewport agar rendering engine menghitung layout secara presisi
-        capDiv.setAttribute('style', 'position: fixed; left: 0; top: 0; width: 1200px !important; height: auto !important; max-height: none !important; overflow: visible !important; background: #ffffff !important; color: #2d3436 !important; padding: 30px !important; z-index: -9999 !important; opacity: 0.01 !important; pointer-events: none !important; box-sizing: border-box !important;');
 
-        // Ambil screenshot
+        // Ambil screenshot langsung (sudah ter-layout sempurna di dalam parent 0px fixed container)
         html2canvas(capDiv, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
-          // Kembalikan style asli segera
-          capDiv.setAttribute('style', originalStyle);
-
           const base64Data = canvas.toDataURL('image/jpeg', 0.85);
 
           let formatNetProfit = netProfit >= 0 ? `Rp ${netProfit.toLocaleString('id-ID', {maximumFractionDigits:0})}` : `- Rp ${Math.abs(netProfit).toLocaleString('id-ID', {maximumFractionDigits:0})}`;
@@ -10603,9 +10594,6 @@
           }).sendLaporanToTelegram(base64Data, captionMsg);
 
         }).catch(err => {
-          // Kembalikan style asli jika terjadi error
-          capDiv.setAttribute('style', originalStyle);
-
           btn.innerHTML = ogHtml;
           btn.disabled = false;
           alert("Gagal memproses screenshot: " + err);
@@ -11615,8 +11603,46 @@
         letter-spacing: 0px !important;
         text-transform: none !important;
       }
-      #laporanGridToCapture {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+      #laporanGridToCapture,
+      #laporanGridToCapture div,
+      #laporanGridToCapture p,
+      #laporanGridToCapture h2,
+      #laporanGridToCapture h5,
+      #laporanGridToCapture td,
+      #laporanGridToCapture span {
+        color: #2d3436 !important;
+      }
+      #laporanGridToCapture th {
+        background-color: #1a202c !important;
+        color: #ffffff !important;
+        padding: 10px 12px !important;
+        border: 1px solid #2d3748 !important;
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        text-align: left !important;
+      }
+      /* specific overrides for colored elements */
+      #laporanGridToCapture .text-danger,
+      #laporanGridToCapture .text-danger *,
+      #laporanGridToCapture td.text-danger {
+        color: #e53e3e !important;
+      }
+      #laporanGridToCapture .text-success,
+      #laporanGridToCapture .text-success *,
+      #laporanGridToCapture td.text-success {
+        color: #38a169 !important;
+      }
+      #laporanGridToCapture .text-primary,
+      #laporanGridToCapture .text-primary * {
+        color: #3182ce !important;
+      }
+      #laporanGridToCapture .text-info,
+      #laporanGridToCapture .text-info * {
+        color: #00b5d8 !important;
+      }
+      #laporanGridToCapture .text-muted,
+      #laporanGridToCapture .text-muted * {
+        color: #718096 !important;
       }
       #laporanGridToCapture table {
         width: 100% !important;
@@ -11632,13 +11658,6 @@
         line-height: 1.4 !important;
         vertical-align: middle !important;
       }
-      #laporanGridToCapture th {
-        padding: 10px 12px !important;
-        border: 1px solid #edf2f7 !important;
-        font-size: 0.75rem !important;
-        font-weight: 700 !important;
-        text-align: left !important;
-      }
       #laporanGridToCapture .text-end {
         text-align: right !important;
       }
@@ -11650,21 +11669,6 @@
       }
       #laporanGridToCapture .small {
         font-size: 0.72rem !important;
-      }
-      #laporanGridToCapture .text-muted {
-        color: #718096 !important;
-      }
-      #laporanGridToCapture .text-danger {
-        color: #e53e3e !important;
-      }
-      #laporanGridToCapture .text-success {
-        color: #38a169 !important;
-      }
-      #laporanGridToCapture .text-primary {
-        color: #3182ce !important;
-      }
-      #laporanGridToCapture .text-info {
-        color: #00b5d8 !important;
       }
       #laporanGridToCapture .bg-light {
         background-color: #f7fafc !important;
@@ -11683,112 +11687,115 @@
       }
     </style>
     
-    <div id="laporanGridToCapture" style="position: absolute; left: -9999px; top: -9999px; width: 1200px; background: #ffffff; color: #2d3436; padding: 30px; z-index: -1; box-sizing: border-box;">
-      <table style="width: 100%; border-collapse: collapse; border: none; background: #ffffff;">
-        <tr>
-          <!-- KOLOM KIRI: Ringkasan & Operational Cost (Lebar 48%) -->
-          <td style="width: 48%; vertical-align: top; padding-right: 25px; border: none !important;">
-            <!-- Header Judul -->
-            <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #edf2f7; padding-bottom: 15px;">
-              <h2 style="font-weight: 800; font-size: 1.55rem; color: #1a202c; margin: 0 0 5px 0; letter-spacing: 0.5px;">LAPORAN KEUANGAN PLATARIUM POS</h2>
-              <h5 style="color: #4a5568; font-size: 0.95rem; margin: 0 0 5px 0; font-weight: 600;" id="lapCapPeriode">Periode: -</h5>
-              <p style="color: #a0aec0; font-size: 0.75rem; margin: 0;">Dicetak: <span id="lapCapTime">-</span></p>
-            </div>
+    <!-- Parent container dengan lebar & tinggi 0px, overflow hidden, tapi tetap berada di pohon render viewport -->
+    <div style="position: fixed; left: 0; top: 0; width: 0px; height: 0px; overflow: hidden; z-index: -9999; pointer-events: none;">
+      <div id="laporanGridToCapture" style="width: 1200px; background: #ffffff; color: #2d3436; padding: 30px; box-sizing: border-box;">
+        <table style="width: 100%; border-collapse: collapse; border: none; background: #ffffff;">
+          <tr>
+            <!-- KOLOM KIRI: Ringkasan & Operational Cost (Lebar 48%) -->
+            <td style="width: 48%; vertical-align: top; padding-right: 25px; border: none !important;">
+              <!-- Header Judul -->
+              <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #edf2f7; padding-bottom: 15px;">
+                <h2 style="font-weight: 800; font-size: 1.55rem; color: #1a202c; margin: 0 0 5px 0; letter-spacing: 0.5px;">LAPORAN KEUANGAN PLATARIUM POS</h2>
+                <h5 style="color: #4a5568; font-size: 0.95rem; margin: 0 0 5px 0; font-weight: 600;" id="lapCapPeriode">Periode: -</h5>
+                <p style="color: #a0aec0; font-size: 0.75rem; margin: 0;">Dicetak: <span id="lapCapTime">-</span></p>
+              </div>
 
-            <!-- Grid KPI Cards (3 Kolom x 2 Baris menggunakan standard table) -->
-            <table style="width: 100%; border-collapse: separate !important; border-spacing: 10px !important; margin-bottom: 20px; border: none !important; background: transparent !important;">
-              <tr>
-                <td style="width: 33%; background: #f7fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
-                  <div style="font-size: 0.68rem; color: #718096; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOTAL REVENUE</div>
-                  <div style="font-size: 1.2rem; font-weight: 800; color: #1a202c;" id="lapCapRev">Rp 0</div>
-                </td>
-                <td style="width: 33%; background: #fff5f5; border: 1px solid #fed7d7 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
-                  <div style="font-size: 0.68rem; color: #e53e3e; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOTAL HPP</div>
-                  <div style="font-size: 1.2rem; font-weight: 800; color: #e53e3e;" id="lapCapHPP">Rp 0</div>
-                </td>
-                <td style="width: 33%; background: #f0fff4; border: 1px solid #c6f6d5 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
-                  <div style="font-size: 0.68rem; color: #38a169; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">PROFIT KOTOR</div>
-                  <div style="font-size: 1.2rem; font-weight: 800; color: #38a169;" id="lapCapProfit">Rp 0</div>
-                </td>
-              </tr>
-              <tr>
-                <td style="width: 33%; background: #f7fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
-                  <div style="font-size: 0.68rem; color: #4a5568; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOTAL PESANAN</div>
-                  <div style="font-size: 1.15rem; font-weight: 800; color: #2d3748;" id="lapCapOrders">0</div>
-                </td>
-                <td style="width: 33%; background: #ebf8ff; border: 1px solid #bee3f8 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
-                  <div style="font-size: 0.68rem; color: #3182ce; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOP PRODUK</div>
-                  <div style="font-size: 0.95rem; font-weight: 800; color: #3182ce; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" id="lapCapTopProd">-</div>
-                </td>
-                <td style="width: 33%; background: #faf5ff; border: 1px solid #e9d8fd !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
-                  <div style="font-size: 0.68rem; color: #805ad5; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOP KASIR</div>
-                  <div style="font-size: 1.05rem; font-weight: 800; color: #805ad5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" id="lapCapTopKasir">-</div>
-                </td>
-              </tr>
-            </table>
+              <!-- Grid KPI Cards (3 Kolom x 2 Baris menggunakan standard table) -->
+              <table style="width: 100%; border-collapse: separate !important; border-spacing: 10px !important; margin-bottom: 20px; border: none !important; background: transparent !important;">
+                <tr>
+                  <td style="width: 33%; background: #f7fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
+                    <div style="font-size: 0.68rem; color: #718096; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOTAL REVENUE</div>
+                    <div style="font-size: 1.2rem; font-weight: 800; color: #1a202c;" id="lapCapRev">Rp 0</div>
+                  </td>
+                  <td style="width: 33%; background: #fff5f5; border: 1px solid #fed7d7 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
+                    <div style="font-size: 0.68rem; color: #e53e3e; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOTAL HPP</div>
+                    <div style="font-size: 1.2rem; font-weight: 800; color: #e53e3e;" id="lapCapHPP">Rp 0</div>
+                  </td>
+                  <td style="width: 33%; background: #f0fff4; border: 1px solid #c6f6d5 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
+                    <div style="font-size: 0.68rem; color: #38a169; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">PROFIT KOTOR</div>
+                    <div style="font-size: 1.2rem; font-weight: 800; color: #38a169;" id="lapCapProfit">Rp 0</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="width: 33%; background: #f7fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
+                    <div style="font-size: 0.68rem; color: #4a5568; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOTAL PESANAN</div>
+                    <div style="font-size: 1.15rem; font-weight: 800; color: #2d3748;" id="lapCapOrders">0</div>
+                  </td>
+                  <td style="width: 33%; background: #ebf8ff; border: 1px solid #bee3f8 !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
+                    <div style="font-size: 0.68rem; color: #3182ce; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOP PRODUK</div>
+                    <div style="font-size: 0.95rem; font-weight: 800; color: #3182ce; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" id="lapCapTopProd">-</div>
+                  </td>
+                  <td style="width: 33%; background: #faf5ff; border: 1px solid #e9d8fd !important; border-radius: 12px; padding: 15px; text-align: center; vertical-align: middle;">
+                    <div style="font-size: 0.68rem; color: #805ad5; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 5px;">TOP KASIR</div>
+                    <div style="font-size: 1.05rem; font-weight: 800; color: #805ad5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" id="lapCapTopKasir">-</div>
+                  </td>
+                </tr>
+              </table>
 
-            <!-- Section Operational Cost & Net Profit -->
-            <div id="lapCapOpCostSection" style="background-color: #f7fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px;">
-               <h5 style="font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; font-size: 0.9rem; color: #4a5568; letter-spacing: 0.5px;">
-                 <i class="fas fa-wallet" style="margin-right: 8px; color: #4a5568;"></i>OPERATIONAL COST & NET PROFIT
-               </h5>
-               
-               <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; border: none !important; background: transparent !important;">
-                 <tr>
-                   <td style="width: 50%; vertical-align: top; border: none !important; padding: 0 !important;">
-                      <div style="font-size: 0.68rem; color: #718096; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 3px;">TOTAL OPERATIONAL COST</div>
-                      <div style="font-size: 1.35rem; font-weight: 800; color: #e53e3e;" id="lapCapOpTotalCost">Rp 0</div>
-                   </td>
-                   <td style="width: 50%; text-align: right; vertical-align: top; border: none !important; padding: 0 !important;">
-                      <div style="font-size: 0.68rem; color: #718096; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 3px;">NET PROFIT AKHIR</div>
-                      <div style="font-size: 1.35rem; font-weight: 800;" id="lapCapOpNetProfit">Rp 0</div>
-                   </td>
-                 </tr>
-               </table>
+              <!-- Section Operational Cost & Net Profit -->
+              <div id="lapCapOpCostSection" style="background-color: #f7fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px;">
+                 <h5 style="font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; font-size: 0.9rem; color: #4a5568; letter-spacing: 0.5px;">
+                   <i class="fas fa-wallet" style="margin-right: 8px; color: #4a5568;"></i>OPERATIONAL COST & NET PROFIT
+                 </h5>
+                 
+                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; border: none !important; background: transparent !important;">
+                   <tr>
+                     <td style="width: 50%; vertical-align: top; border: none !important; padding: 0 !important;">
+                        <div style="font-size: 0.68rem; color: #718096; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 3px;">TOTAL OPERATIONAL COST</div>
+                        <div style="font-size: 1.35rem; font-weight: 800; color: #e53e3e;" id="lapCapOpTotalCost">Rp 0</div>
+                     </td>
+                     <td style="width: 50%; text-align: right; vertical-align: top; border: none !important; padding: 0 !important;">
+                        <div style="font-size: 0.68rem; color: #718096; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 3px;">NET PROFIT AKHIR</div>
+                        <div style="font-size: 1.35rem; font-weight: 800;" id="lapCapOpNetProfit">Rp 0</div>
+                     </td>
+                   </tr>
+                 </table>
 
-               <!-- Progress Bar Container -->
-               <div style="height: 20px; border-radius: 10px; background-color: #edf2f7; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 15px; position: relative;">
-                  <div id="lapCapOpProfitBar" style="width: 0%; font-size: 0.72rem; font-weight: 800; line-height: 18px; text-align: center; color: white; background-image: linear-gradient(45deg, rgba(255, 255, 255, .15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%, transparent 75%, transparent); background-size: 1rem 1rem; transition: width .6s ease; height: 100%; display: block;">0%</div>
-               </div>
+                 <!-- Progress Bar Container -->
+                 <div style="height: 20px; border-radius: 10px; background-color: #edf2f7; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 15px; position: relative;">
+                    <div id="lapCapOpProfitBar" style="width: 0%; font-size: 0.72rem; font-weight: 800; line-height: 18px; text-align: center; color: white; background-image: linear-gradient(45deg, rgba(255, 255, 255, .15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%, transparent 75%, transparent); background-size: 1rem 1rem; transition: width .6s ease; height: 100%; display: block;">0%</div>
+                 </div>
 
-               <!-- Cost List Table -->
-               <table style="width: 100%; border-collapse: collapse; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-                  <thead>
-                     <tr style="background-color: #edf2f7; color: #4a5568; font-weight: 800; font-size: 0.72rem; text-align: left;">
-                        <th style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; border-top: none; border-left: none; border-right: none;">Keterangan Cost</th>
-                        <th style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; border-top: none; border-left: none; border-right: none; text-align: right; width: 140px;">Nominal</th>
-                     </tr>
-                  </thead>
-                  <tbody id="lapCapOpCostTableBody" style="font-size: 0.75rem; color: #2d3748;">
-                     <!-- Populated via JS -->
-                  </tbody>
-               </table>
-            </div>
-          </td>
+                 <!-- Cost List Table -->
+                 <table style="width: 100%; border-collapse: collapse; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                    <thead>
+                       <tr style="background-color: #edf2f7; color: #4a5568; font-weight: 800; font-size: 0.72rem; text-align: left;">
+                          <th style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; border-top: none; border-left: none; border-right: none;">Keterangan Cost</th>
+                          <th style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; border-top: none; border-left: none; border-right: none; text-align: right; width: 140px;">Nominal</th>
+                       </tr>
+                    </thead>
+                    <tbody id="lapCapOpCostTableBody" style="font-size: 0.75rem; color: #2d3748;">
+                       <!-- Populated via JS -->
+                    </tbody>
+                 </table>
+              </div>
+            </td>
 
-          <!-- KOLOM KANAN: Rincian Transaksi (Lebar 52%) -->
-          <td style="width: 52%; vertical-align: top; padding-left: 25px; border-left: 2px dashed #edf2f7 !important;">
-            <h5 style="font-weight: 800; border-bottom: 2px solid #edf2f7; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; font-size: 0.9rem; color: #2d3748; letter-spacing: 0.5px;">
-              <i class="fas fa-list-alt" style="margin-right: 8px; color: #c5a059;"></i>Rincian Transaksi
-            </h5>
-            
-            <table style="width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #ffffff;">
-              <thead>
-                 <tr style="background-color: #1a202c; color: #ffffff; font-weight: 700; font-size: 0.72rem; text-align: left;">
-                   <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important;">ID & Waktu</th>
-                   <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important;">Item</th>
-                   <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important; text-align: right; width: 85px;">Total</th>
-                   <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important; text-align: right; width: 85px;">Profit</th>
-                   <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important; text-align: center; width: 70px;">Kasir</th>
-                 </tr>
-              </thead>
-              <tbody id="lapCapTableBody" style="font-size: 0.72rem; color: #2d3748; line-height: 1.35;">
-                 <!-- Populated via JS -->
-              </tbody>
-            </table>
-          </td>
-        </tr>
-      </table>
+            <!-- KOLOM KANAN: Rincian Transaksi (Lebar 52%) -->
+            <td style="width: 52%; vertical-align: top; padding-left: 25px; border-left: 2px dashed #edf2f7 !important;">
+              <h5 style="font-weight: 800; border-bottom: 2px solid #edf2f7; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; font-size: 0.9rem; color: #2d3748; letter-spacing: 0.5px;">
+                <i class="fas fa-list-alt" style="margin-right: 8px; color: #c5a059;"></i>Rincian Transaksi
+              </h5>
+              
+              <table style="width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #ffffff;">
+                <thead>
+                   <tr style="background-color: #1a202c; color: #ffffff; font-weight: 700; font-size: 0.72rem; text-align: left;">
+                     <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important; width: 20%;">ID & Waktu</th>
+                     <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important; width: 40%;">Item</th>
+                     <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important; text-align: right; width: 13%;">Total</th>
+                     <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important; text-align: right; width: 15%;">Profit</th>
+                     <th style="padding: 10px 10px; border-bottom: 1px solid #e2e8f0; color: #ffffff !important; text-align: center; width: 12%;">Kasir</th>
+                   </tr>
+                </thead>
+                <tbody id="lapCapTableBody" style="font-size: 0.72rem; color: #2d3748; line-height: 1.35;">
+                   <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </div>
     </div>
   </body>
 </html>
