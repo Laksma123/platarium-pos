@@ -10565,8 +10565,8 @@
 
             const capDiv = document.getElementById('laporanGridToCapture');
 
-            // Capture dengan scale 4 (sangat tajam, performa aman, anti-hang di WebView)
-            html2canvas(capDiv, { scale: 4, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+            // Capture dengan scale 3 (sangat tajam, performa aman, anti-hang di WebView)
+            html2canvas(capDiv, { scale: 3, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
               // [FIX SCREENSHOT] Kembalikan zoom level APK setelah capture selesai
               document.documentElement.style.zoom = savedZoom;
               
