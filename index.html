@@ -10552,47 +10552,82 @@
         captureTbody.innerHTML = finalClonedRows;
 
         const capDiv = document.getElementById('laporanGridToCapture');
-        html2canvas(capDiv, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
-          const base64Data = canvas.toDataURL('image/jpeg', 0.85);
-
-          let formatNetProfit = netProfit >= 0 ? `Rp ${netProfit.toLocaleString('id-ID', {maximumFractionDigits:0})}` : `- Rp ${Math.abs(netProfit).toLocaleString('id-ID', {maximumFractionDigits:0})}`;
-
-          // === FORMATTING PESAN TELEGRAM ===
-          let captionMsg = `📊 <b>Rekap Laporan Keuangan</b>\n` +
-            `<b>Periode:</b> ${periodStr}\n` +
-            `<b>Total Pendapatan:</b> ${document.getElementById('dashTotalRevenue').innerText}\n` +
-            `<b>Profit Kotor:</b> ${document.getElementById('dashNetProfit').innerText}\n\n` +
-            `<b>Rincian Operational Cost:</b>\n${rincianCost}` +
-            `<b>Total Cost:</b> Rp ${totalCost.toLocaleString('id-ID', {maximumFractionDigits:0})}\n\n` +
-            `<b>Net Profit :</b> ${formatNetProfit}\n`;
-
-          // Cek Mode Saham
-          if (typeof IS_MULTI_OWNER !== 'undefined' && IS_MULTI_OWNER && typeof ADMIN_SHARES_DATA !== 'undefined' && ADMIN_SHARES_DATA.length > 0 && typeof ACTIVE_CASHIER !== 'undefined' && ACTIVE_CASHIER) {
-            let myShare = ADMIN_SHARES_DATA.find(a => a.name === ACTIVE_CASHIER);
-            if (myShare) {
-              let myProfit = (netProfit > 0) ? (netProfit * (myShare.percentage / 100)) : 0;
-              captionMsg += `<b>Pembagian Saham Anda (${myShare.percentage}%):</b> Rp ${myProfit.toLocaleString('id-ID', {maximumFractionDigits:0})}\n`;
+        
+        const captureAction = () => {
+          html2canvas(capDiv, {
+            scale: 2,
+            backgroundColor: "#ffffff",
+            useCORS: true,
+            windowWidth: 1080,
+            width: 1080,
+            onclone: (clonedDoc) => {
+              const el = clonedDoc.getElementById('laporanGridToCapture');
+              if (el) {
+                el.style.position = 'relative';
+                el.style.left = '0';
+                el.style.top = '0';
+                el.style.margin = '0';
+                el.style.padding = '20px';
+                el.style.width = '1080px';
+                el.style.zIndex = '1';
+                if (clonedDoc.fonts && document.fonts) {
+                  document.fonts.forEach(font => {
+                    clonedDoc.fonts.add(font);
+                  });
+                }
+              }
             }
-          }
+          }).then(canvas => {
+            const base64Data = canvas.toDataURL('image/jpeg', 0.85);
 
-          captionMsg += `\n<i>Detail terlampir pada gambar.</i>`;
+            let formatNetProfit = netProfit >= 0 ? `Rp ${netProfit.toLocaleString('id-ID', {maximumFractionDigits:0})}` : `- Rp ${Math.abs(netProfit).toLocaleString('id-ID', {maximumFractionDigits:0})}`;
 
-          // Eksekusi kirim
-          google.script.run.withSuccessHandler(res => {
+            // === FORMATTING PESAN TELEGRAM ===
+            let captionMsg = `📊 <b>Rekap Laporan Keuangan</b>\n` +
+              `<b>Periode:</b> ${periodStr}\n` +
+              `<b>Total Pendapatan:</b> ${document.getElementById('dashTotalRevenue').innerText}\n` +
+              `<b>Profit Kotor:</b> ${document.getElementById('dashNetProfit').innerText}\n\n` +
+              `<b>Rincian Operational Cost:</b>\n${rincianCost}` +
+              `<b>Total Cost:</b> Rp ${totalCost.toLocaleString('id-ID', {maximumFractionDigits:0})}\n\n` +
+              `<b>Net Profit :</b> ${formatNetProfit}\n`;
+
+            // Cek Mode Saham
+            if (typeof IS_MULTI_OWNER !== 'undefined' && IS_MULTI_OWNER && typeof ADMIN_SHARES_DATA !== 'undefined' && ADMIN_SHARES_DATA.length > 0 && typeof ACTIVE_CASHIER !== 'undefined' && ACTIVE_CASHIER) {
+              let myShare = ADMIN_SHARES_DATA.find(a => a.name === ACTIVE_CASHIER);
+              if (myShare) {
+                let myProfit = (netProfit > 0) ? (netProfit * (myShare.percentage / 100)) : 0;
+                captionMsg += `<b>Pembagian Saham Anda (${myShare.percentage}%):</b> Rp ${myProfit.toLocaleString('id-ID', {maximumFractionDigits:0})}\n`;
+              }
+            }
+
+            captionMsg += `\n<i>Detail terlampir pada gambar.</i>`;
+
+            // Eksekusi kirim
+            google.script.run.withSuccessHandler(res => {
+              btn.innerHTML = ogHtml;
+              btn.disabled = false;
+              if(res.status === 'success') {
+                alert("Berhasil mengirim rekap laporan ke Telegram Owner!");
+              } else {
+                alert("Gagal: " + res.message);
+              }
+            }).sendLaporanToTelegram(base64Data, captionMsg);
+
+          }).catch(err => {
             btn.innerHTML = ogHtml;
             btn.disabled = false;
-            if(res.status === 'success') {
-              alert("Berhasil mengirim rekap laporan ke Telegram Owner!");
-            } else {
-              alert("Gagal: " + res.message);
-            }
-          }).sendLaporanToTelegram(base64Data, captionMsg);
+            alert("Gagal memproses screenshot: " + err);
+          });
+        };
 
-        }).catch(err => {
-          btn.innerHTML = ogHtml;
-          btn.disabled = false;
-          alert("Gagal memproses screenshot: " + err);
-        });
+        if (document.fonts) {
+          document.fonts.ready.then(captureAction).catch(err => {
+            console.warn("Fonts ready promise rejected, proceeding with capture", err);
+            captureAction();
+          });
+        } else {
+          captureAction();
+        }
       }
 
       // ==========================================
@@ -11586,7 +11621,7 @@
       </div>
     </div>
 
-    <div id="laporanGridToCapture" class="bg-white p-4" style="position: absolute; left: -9999px; top: -9999px; width: 800px; color: #333; z-index: -1;">
+    <div id="laporanGridToCapture" class="bg-white p-4" style="position: absolute; left: -9999px; top: -9999px; width: 1080px; color: #333; z-index: -1; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; letter-spacing: normal;">
       <div class="text-center mb-4">
          <h2 class="fw-bold mb-1">LAPORAN KEUANGAN PLATARIUM POS</h2>
          <h5 class="text-muted" id="lapCapPeriode">Periode: -</h5>
