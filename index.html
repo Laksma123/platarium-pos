@@ -2663,21 +2663,18 @@
 
         <!-- MODAL SPECIAL PRICE -->
         <style>
-          .sp-slot { width: 80px; height: 80px; border: 2px dashed #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #ccc; cursor: pointer; transition: all 0.2s; position: relative; background: #fff; }
+          .sp-slot { width: 55px; height: 55px; border: 2px dashed #ccc; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #ccc; cursor: pointer; transition: all 0.2s; position: relative; background: #fff; }
           .sp-slot:hover { border-color: #d4af37; color: #d4af37; }
           .sp-slot.active { border: 2px solid #d4af37; color: #d4af37; background: #fffcf5; }
-          .sp-slot.configured { border-style: solid; color: #333; font-size: 0.8rem; font-weight: bold; text-align: center; padding: 5px; line-height: 1.1; flex-direction: column; }
-          .sp-slot .remove-slot { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: #ff4757; color: white; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; z-index: 10; }
+          .sp-slot.configured { border-style: solid; color: #333; font-size: 0.65rem; font-weight: bold; text-align: center; padding: 4px; line-height: 1.1; flex-direction: column; }
+          .sp-slot .remove-slot { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; background: #ff4757; color: white; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; z-index: 10; }
           .sp-slot:hover .remove-slot { opacity: 1; }
-          .sp-slot .slot-title { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+          .sp-slot .slot-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.55rem; }
         </style>
 
         <div id="modalSpecialPrice" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 10500; opacity: 1 !important;">
-          <div class="bg-white rounded-5 shadow-lg d-flex flex-column overflow-hidden" style="width: 98vw; height: 96vh; max-width: 1400px; animation: slideUp 0.3s ease-out;">
-            <div class="bg-dark text-white p-3 d-flex justify-content-between align-items-center">
-              <h5 class="fw-bold m-0"><i class="fas fa-tags text-warning me-2"></i>Setup Special Price (Promo & Diskon)</h5>
-              <button class="btn-close btn-close-white shadow-none" onclick="document.getElementById('modalSpecialPrice').classList.add('d-none')"></button>
-            </div>
+          <div class="modal-wrapper">
+          <div class="bg-white rounded-5 shadow-lg d-flex flex-column overflow-hidden" style="width: 99vw; height: 98vh; max-width: 1600px; animation: slideUp 0.3s ease-out;">
             
             <div class="d-flex flex-column flex-fill overflow-hidden" style="background: #f8f9fa;">
               <!-- Tabs Header -->
@@ -2700,22 +2697,22 @@
                 <div class="tab-pane fade show active h-100" id="sp-dinein" role="tabpanel">
                   <div class="row m-0 h-100">
                     <!-- Left Panel -->
-                    <div class="col-4 p-4 border-end bg-white overflow-auto h-100 pb-5">
-                      <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-layer-group me-2 text-primary"></i>Slot Promo Dine In</h6>
-                      <p class="text-muted small mb-4">Tambahkan slot untuk membuat aturan promo baru. Klik slot untuk mengatur detailnya di panel kanan.</p>
-                      <div class="d-flex flex-wrap gap-3" id="spDineInSlots">
+                    <div class="col-3 p-3 border-end bg-white overflow-auto h-100 pb-5">
+                      <h6 class="fw-bold mb-2 text-dark" style="font-size: 0.8rem;"><i class="fas fa-layer-group me-2 text-primary"></i>Slot Promo Dine In</h6>
+                      <p class="text-muted mb-3" style="font-size: 0.68rem;">Tambahkan slot untuk membuat aturan promo baru. Klik slot untuk mengatur detailnya di panel kanan.</p>
+                      <div class="d-flex flex-wrap gap-2" id="spDineInSlots">
                         <div class="sp-slot active" onclick="activateSpSlot(this, 'dinein')">
                           <i class="fas fa-plus"></i>
                         </div>
                       </div>
                     </div>
                     <!-- Right Panel -->
-                    <div class="col-8 p-0 bg-light d-flex flex-column h-100" id="spDineInConfig" style="opacity: 0.5; pointer-events: none;">
-                      <div class="p-3 border-bottom bg-white d-flex justify-content-between align-items-center">
-                        <h5 class="fw-bold m-0 text-dark" id="spDineInConfigTitle">Pengaturan Slot Promo</h5>
-                        <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
-                          <input class="form-check-input m-0" type="checkbox" role="switch" style="width: 40px; height: 20px; cursor:pointer;" checked>
-                          <label class="form-check-label small fw-bold text-success">Aktif</label>
+                    <div class="col-9 p-0 bg-light d-flex flex-column h-100" id="spDineInConfig" style="opacity: 0.5; pointer-events: none;">
+                      <div class="px-3 py-2 border-bottom bg-white d-flex justify-content-between align-items-center">
+                        <span class="fw-bold m-0 text-dark" id="spDineInConfigTitle" style="font-size: 0.8rem;">Pengaturan Slot Promo</span>
+                        <div class="form-check form-switch m-0 d-flex align-items-center gap-1">
+                          <input class="form-check-input m-0" type="checkbox" role="switch" style="width: 32px; height: 16px; cursor:pointer;" checked>
+                          <label class="form-check-label fw-bold text-success" style="font-size: 0.7rem;">Aktif</label>
                         </div>
                       </div>
                       <div class="p-3 overflow-auto flex-fill pb-4">
@@ -2856,10 +2853,7 @@
                         </div>
                       </div>
                       
-                      <div class="p-3 border-top bg-white d-flex justify-content-end gap-2 mt-auto">
-                        <button class="btn btn-light fw-bold px-4 rounded-pill">Reset</button>
-                        <button class="btn btn-luxury fw-bold px-4 rounded-pill shadow-sm" onclick="saveSpSlot('dinein')">Simpan Pengaturan</button>
-                      </div>
+
                     </div>
                   </div>
                 </div>
@@ -2867,21 +2861,21 @@
                 <!-- TAKEAWAY -->
                 <div class="tab-pane fade h-100" id="sp-takeaway" role="tabpanel">
                   <div class="row m-0 h-100">
-                    <div class="col-4 p-4 border-end bg-white overflow-auto h-100 pb-5">
-                      <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-layer-group me-2 text-primary"></i>Slot Promo Takeaway</h6>
-                      <p class="text-muted small mb-4">Pengaturan slot promo khusus untuk pesanan Takeaway.</p>
-                      <div class="d-flex flex-wrap gap-3" id="spTakeawaySlots">
+                    <div class="col-3 p-3 border-end bg-white overflow-auto h-100 pb-5">
+                      <h6 class="fw-bold mb-2 text-dark" style="font-size: 0.8rem;"><i class="fas fa-layer-group me-2 text-primary"></i>Slot Promo Takeaway</h6>
+                      <p class="text-muted mb-3" style="font-size: 0.68rem;">Pengaturan slot promo khusus untuk pesanan Takeaway.</p>
+                      <div class="d-flex flex-wrap gap-2" id="spTakeawaySlots">
                         <div class="sp-slot active" onclick="activateSpSlot(this, 'takeaway')">
                           <i class="fas fa-plus"></i>
                         </div>
                       </div>
                     </div>
-                    <div class="col-8 p-0 bg-light d-flex flex-column h-100" id="spTakeawayConfig" style="opacity: 0.5; pointer-events: none;">
-                      <div class="p-3 border-bottom bg-white d-flex justify-content-between align-items-center">
-                        <h5 class="fw-bold m-0 text-dark">Pengaturan Slot Promo Takeaway</h5>
-                        <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
-                          <input class="form-check-input m-0" type="checkbox" role="switch" style="width: 40px; height: 20px; cursor:pointer;" checked>
-                          <label class="form-check-label small fw-bold text-success">Aktif</label>
+                    <div class="col-9 p-0 bg-light d-flex flex-column h-100" id="spTakeawayConfig" style="opacity: 0.5; pointer-events: none;">
+                      <div class="px-3 py-2 border-bottom bg-white d-flex justify-content-between align-items-center">
+                        <span class="fw-bold m-0 text-dark" style="font-size: 0.8rem;">Pengaturan Slot Promo Takeaway</span>
+                        <div class="form-check form-switch m-0 d-flex align-items-center gap-1">
+                          <input class="form-check-input m-0" type="checkbox" role="switch" style="width: 32px; height: 16px; cursor:pointer;" checked>
+                          <label class="form-check-label fw-bold text-success" style="font-size: 0.7rem;">Aktif</label>
                         </div>
                       </div>
                       <div class="p-3 overflow-auto flex-fill pb-4">
@@ -3012,10 +3006,7 @@
                           </div>
                         </div>
                       </div>
-                      <div class="p-3 border-top bg-white d-flex justify-content-end gap-2 mt-auto">
-                        <button class="btn btn-light fw-bold px-4 rounded-pill">Reset</button>
-                        <button class="btn btn-luxury fw-bold px-4 rounded-pill shadow-sm" onclick="saveSpSlot('takeaway')">Simpan Pengaturan</button>
-                      </div>
+
                     </div>
                   </div>
                 </div>
@@ -3030,6 +3021,23 @@
                 </div>
               </div>
             </div>
+          </div>
+
+          <div class="modal-outside-buttons">
+            <button class="btn-outside-circle btn-batal" onclick="document.getElementById('modalSpecialPrice').classList.add('d-none')" title="Tutup">
+               <div class="icon-wrapper">
+                 <i class="fas fa-times icon-primary"></i>
+                 <i class="fas fa-redo icon-secondary"></i>
+               </div>
+            </button>
+            <button class="btn-outside-circle btn-simpan" id="btnSaveSpecialPrice" onclick="saveActiveSpSlot()" title="Simpan">
+               <div class="icon-wrapper">
+                 <i class="fas fa-save icon-primary"></i>
+                 <i class="fas fa-redo icon-secondary"></i>
+                 <i class="fas fa-spinner fa-spin icon-saving"></i>
+               </div>
+            </button>
+          </div>
           </div>
         </div>
 
@@ -13628,14 +13636,22 @@
         if(target) target.style.display = 'block';
       }
 
+      function saveActiveSpSlot() {
+        // Deteksi tab yang aktif saat ini
+        const dineinTab = document.getElementById('sp-dinein');
+        const tabContext = (dineinTab && dineinTab.classList.contains('show')) ? 'dinein' : 'takeaway';
+        saveSpSlot(tabContext);
+      }
+
       function saveSpSlot(tabContext) {
         const slotsContainer = document.getElementById(tabContext === 'dinein' ? 'spDineInSlots' : 'spTakeawaySlots');
         const activeSlot = slotsContainer.querySelector('.sp-slot.active');
         if(activeSlot && activeSlot.classList.contains('configured')) {
-          const btn = event.currentTarget;
-          const oldText = btn.innerHTML;
-          btn.innerHTML = '<i class="fas fa-check me-2"></i>Tersimpan';
-          btn.classList.replace('btn-luxury', 'btn-success');
+          const btn = document.getElementById('btnSaveSpecialPrice');
+          if (btn) {
+            btn.classList.add('saving-active');
+            btn.disabled = true;
+          }
           
           const inputName = document.getElementById('sp' + (tabContext === 'dinein' ? 'DineIn' : 'Takeaway') + 'LabelName');
           if(inputName && inputName.value.trim() !== '') {
@@ -13643,9 +13659,11 @@
           }
 
           setTimeout(() => {
-            btn.innerHTML = oldText;
-            btn.classList.replace('btn-success', 'btn-luxury');
-          }, 1500);
+            if (btn) {
+              btn.classList.remove('saving-active');
+              btn.disabled = false;
+            }
+          }, 1200);
         }
       }
 
