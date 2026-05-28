@@ -12672,7 +12672,7 @@
                 </div>
 
                 <!-- KOLOM KANAN (SIMULASI RIIL STRUK) -->
-                <div class="col-md-6 ps-md-2">
+                <div class="col-md-6 ps-md-2" id="simulationCol">
                     <!-- Simulasi Standard (non-Debit) -->
                     <div id="standardSimContent" class="premium-receipt-card text-dark">
                         <div class="receipt-logo">
@@ -12820,6 +12820,15 @@
          document.getElementById('debitDualConfigArea').classList.toggle('d-none', !isDebit);
          document.getElementById('standardSimContent').style.display = isDebit ? 'none' : '';
          document.getElementById('debitSimContent').classList.toggle('d-none', !isDebit);
+         
+         const simCol = document.getElementById('simulationCol');
+         if (simCol) {
+           if (isDebit) {
+             simCol.className = 'col-md-12';
+           } else {
+             simCol.className = 'col-md-6 ps-md-2';
+           }
+         }
          
          if (isDebit) {
            // Load data Debit sub-configs
