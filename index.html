@@ -12918,9 +12918,9 @@
            // Load data Debit sub-configs
            const d = pmSettings.DEBIT;
            document.getElementById('pmDebitLabelSama').value = d.bankSama.label || 'BANK SAMA';
-           document.getElementById('pmDebitValueSama').value = d.bankSama.value || 0;
+           document.getElementById('pmDebitValueSama').value = (d.bankSama.value === undefined || isNaN(d.bankSama.value)) ? 0 : d.bankSama.value;
            document.getElementById('pmDebitLabelBeda').value = d.bankBeda.label || 'BANK BEDA';
-           document.getElementById('pmDebitValueBeda').value = d.bankBeda.value || -1;
+           document.getElementById('pmDebitValueBeda').value = (d.bankBeda.value === undefined || isNaN(d.bankBeda.value)) ? -1 : d.bankBeda.value;
            updateDebitSimulation();
          } else {
            const data = pmSettings[methodName];
@@ -12964,7 +12964,8 @@
       }
 
       function changePMValue(direction) {
-          let currentVal = parseFloat(document.getElementById('pmValue').value) || 0;
+          let parsedVal = parseFloat(document.getElementById('pmValue').value);
+          let currentVal = isNaN(parsedVal) ? 0 : parsedVal;
           let isPercent = document.getElementById('pmFeePercent').checked;
           let step = isPercent ? 0.1 : 500;
           let newVal = currentVal + (direction * step);
@@ -12976,7 +12977,8 @@
       // --- DEBIT-SPECIFIC FUNCTIONS ---
       function changeDebitValue(type, direction) {
           const inputId = type === 'sama' ? 'pmDebitValueSama' : 'pmDebitValueBeda';
-          let currentVal = parseFloat(document.getElementById(inputId).value) || 0;
+          let parsedVal = parseFloat(document.getElementById(inputId).value);
+          let currentVal = isNaN(parsedVal) ? 0 : parsedVal;
           let newVal = currentVal + (direction * 0.1);
           newVal = Math.round(newVal * 10) / 10;
           document.getElementById(inputId).value = newVal;
@@ -13128,15 +13130,17 @@
       function savePaymentMethod() {
           // Pastikan data Debit tersimpan dari input
           if (currentPMTab === 'DEBIT') {
+            const parsedSama = parseFloat(document.getElementById('pmDebitValueSama').value);
             pmSettings.DEBIT.bankSama = {
               label: document.getElementById('pmDebitLabelSama').value || 'BANK SAMA',
               feeType: 'percent',
-              value: parseFloat(document.getElementById('pmDebitValueSama').value) || 0
+              value: isNaN(parsedSama) ? 0 : parsedSama
             };
+            const parsedBeda = parseFloat(document.getElementById('pmDebitValueBeda').value);
             pmSettings.DEBIT.bankBeda = {
               label: document.getElementById('pmDebitLabelBeda').value || 'BANK BEDA',
               feeType: 'percent',
-              value: parseFloat(document.getElementById('pmDebitValueBeda').value) || -1
+              value: isNaN(parsedBeda) ? -1 : parsedBeda
             };
           }
 
