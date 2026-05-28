@@ -10559,7 +10559,7 @@
         const savedZoom = document.documentElement.style.zoom;
         document.documentElement.style.zoom = '1';
 
-        html2canvas(capDiv, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+        html2canvas(capDiv, { scale: 3, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
           // [FIX SCREENSHOT] Kembalikan zoom level APK setelah capture selesai
           document.documentElement.style.zoom = savedZoom;
           const base64Data = canvas.toDataURL('image/jpeg', 0.85);
@@ -10845,31 +10845,31 @@
       }
 
       function broadcastSchedule() {
-        const gridElement = document.getElementById('scheduleGridToCapture');
+        const gridElement = document.getElementById('scheduleGridToCaptureTemplate');
         const btn = document.getElementById('btnBroadcastSchedule');
         const originalHtml = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
 
-        // Sembunyikan icon hapus massal
-        document.querySelectorAll('.btn-delete-pill').forEach(el => el.classList.add('d-none'));
+        // 1. Sinkronisasi info text ke template capture offscreen
+        const infoText = document.getElementById('shiftInfoText').innerText;
+        document.getElementById('schedCapInfoText').innerText = infoText;
 
-        // Matikan batasan display/overflow sesaat agar screenshot tidak terpotong (full-height)
-        gridElement.classList.remove('table-responsive', 'overflow-hidden');
-        gridElement.style.height = 'auto';
-        gridElement.style.maxHeight = 'none';
+        // 2. Duplikasi seluruh body tabel shift operasional ke template capture offscreen
+        const capBody = document.getElementById('schedCapGridBody');
+        capBody.innerHTML = document.getElementById('scheduleGridBody').innerHTML;
+
+        // 3. Sembunyikan ikon silang/hapus pill di dalam template capture offscreen
+        capBody.querySelectorAll('.btn-delete-pill').forEach(el => el.style.display = 'none');
 
         // [FIX SCREENSHOT] Simpan zoom level dan reset ke 1 sebelum capture
         const savedZoom = document.documentElement.style.zoom;
         document.documentElement.style.zoom = '1';
 
-        html2canvas(gridElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+        // Capture template offscreen dengan scale: 3 untuk kualitas super tajam
+        html2canvas(gridElement, { scale: 3, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
             // [FIX SCREENSHOT] Kembalikan zoom level APK setelah capture selesai
             document.documentElement.style.zoom = savedZoom;
-            // Restore styling setelah gambar tertangkap
-            gridElement.classList.add('table-responsive', 'overflow-hidden');
-            gridElement.style.height = '';
-            document.querySelectorAll('.btn-delete-pill').forEach(el => el.classList.remove('d-none'));
 
             const base64Data = canvas.toDataURL('image/jpeg', 0.85);
 
@@ -10882,7 +10882,7 @@
             
             const captionMsg = `🗓 <b>Jadwal Shift Operasional Terbaru (${dateStr})</b>\n` + 
                                `<i>Silakan cek gambar di atas untuk detail jadwal shift Anda.</i>\n\n` +
-                               `📌 <b>Info:</b> ${document.getElementById('shiftInfoText').innerText}`;
+                               `📌 <b>Info:</b> ${infoText}`;
 
             google.script.run.withSuccessHandler(res => {
                 btn.innerHTML = originalHtml;
@@ -10896,9 +10896,6 @@
         }).catch(err => {
             // [FIX SCREENSHOT] Pastikan zoom dikembalikan meskipun terjadi error
             document.documentElement.style.zoom = savedZoom;
-            gridElement.classList.add('table-responsive', 'overflow-hidden');
-            gridElement.style.height = '';
-            document.querySelectorAll('.btn-delete-pill').forEach(el => el.classList.remove('d-none'));
             btn.innerHTML = originalHtml;
             btn.disabled = false;
             alert("Gagal memproses screenshot: " + err);
@@ -11695,6 +11692,77 @@
         </thead>
         <tbody id="lapCapTableBody">
         </tbody>
+      </table>
+    </div>
+
+    <!-- Dedicated Capture Template for Staff Schedule Shift (Landscape 1200px wide, dynamic height) -->
+    <div id="scheduleGridToCaptureTemplate" class="bg-white p-4" style="position: absolute; left: -9999px; top: -9999px; width: 1200px; color: #333; z-index: -1;">
+      <style>
+        #scheduleGridToCaptureTemplate {
+          background-color: #ffffff !important;
+          color: #2d3436 !important;
+          font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+        }
+        #scheduleGridToCaptureTemplate table {
+          border-collapse: collapse !important;
+          width: 100% !important;
+          background-color: #ffffff !important;
+        }
+        #scheduleGridToCaptureTemplate th, #scheduleGridToCaptureTemplate td {
+          border: 1px solid #dee2e6 !important;
+          padding: 12px !important;
+          color: #2d3436 !important;
+          background-color: #ffffff !important;
+          vertical-align: middle !important;
+        }
+        #scheduleGridToCaptureTemplate th.table-dark {
+          background-color: #212529 !important;
+          color: #ffffff !important;
+          border-color: #373b3e !important;
+        }
+        #scheduleGridToCaptureTemplate td.bg-light {
+          background-color: #f8f9fa !important;
+        }
+        #scheduleGridToCaptureTemplate th small {
+          color: #a0aec0 !important;
+        }
+        #scheduleGridToCaptureTemplate .shift-dropzone {
+          min-height: 80px !important;
+          background-color: #ffffff !important;
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          justify-content: center !important;
+          gap: 6px !important;
+          padding: 8px !important;
+          height: 100% !important;
+        }
+        #scheduleGridToCaptureTemplate .draggable-pill {
+          font-size: 0.8rem !important;
+          padding: 6px 12px !important;
+          border-radius: 50rem !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          white-space: nowrap !important;
+          font-weight: 600 !important;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
+        }
+        #scheduleGridToCaptureTemplate .btn-delete-pill {
+          display: none !important;
+        }
+      </style>
+      <div class="text-center mb-4">
+         <h2 class="fw-bold mb-1" style="letter-spacing: 1px;">JADWAL OPERASIONAL STAFF</h2>
+         <div class="mt-2">
+             <span id="schedCapInfoText" class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm" style="font-size: 0.85rem; background-color: #ffc107 !important; color: #212529 !important; padding: 0.5rem 1rem !important; border-radius: 50rem !important;">
+                 *Harap hadir 15 menit sebelum shift dimulai.
+             </span>
+         </div>
+      </div>
+      <table class="table table-bordered text-center align-middle m-0" style="table-layout: fixed; width: 100%;">
+         <tbody id="schedCapGridBody">
+         </tbody>
       </table>
     </div>
   </body>
