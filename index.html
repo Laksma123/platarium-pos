@@ -2666,7 +2666,7 @@
           .sp-slot { width: 55px; height: 55px; border: 2px dashed #ccc; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #ccc; cursor: pointer; transition: all 0.2s; position: relative; background: #fff; }
           .sp-slot:hover { border-color: #d4af37; color: #d4af37; }
           .sp-slot.active { border: 2px solid #d4af37; color: #d4af37; background: #fffcf5; }
-          .sp-slot.active .remove-slot { opacity: 1 !important; }
+          .sp-slot.configured .remove-slot { opacity: 1 !important; }
           .sp-slot.configured { border-style: solid; color: #333; font-size: 0.65rem; font-weight: bold; text-align: center; padding: 4px; line-height: 1.1; flex-direction: column; }
           .sp-slot .remove-slot { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; background: #ff4757; color: white; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; z-index: 10; }
           .sp-slot:hover .remove-slot { opacity: 1; }
@@ -2806,45 +2806,68 @@
                           <!-- Form Buy X Get Y -->
                           <div class="sp-form-group" id="sp-form-buy_get" style="display:none;">
                             <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-gift text-warning me-2"></i>Beli X Gratis / Tebus Murah Y</h6>
-                            <div class="row g-2 align-items-center">
-                              <div class="col-md-2"><label class="small fw-bold text-dark m-0">SYARAT BELI</label></div>
-                              <div class="col-md-3"><input type="number" class="form-control form-control-sm border-2 fw-bold" placeholder="Qty"></div>
-                              <div class="col-md-7"><select id="spDineInBuyGetConditionMenuSelect" class="form-select form-select-sm border-2 fw-bold"><option value="">-- Pilih Menu --</option></select></div>
-                              
-                              <div class="col-12 border-bottom my-1"></div>
-                              
-                              <div class="col-md-2"><label class="small fw-bold text-success m-0">MENDAPAT</label></div>
-                              <div class="col-md-2" style="max-width: 80px;"><input type="number" class="form-control form-control-sm border-2 fw-bold" placeholder="Qty"></div>
-                              <div class="col-md-8 flex-fill">
-                                <div class="d-flex align-items-center gap-2">
-                                  <select id="spDineInBuyGetRewardMenuSelect" class="form-select form-select-sm border-2 fw-bold"><option value="">-- Menu Reward --</option></select>
-                                  <div class="input-group input-group-sm">
-                                    <span class="input-group-text bg-light border-2 small">Tebus Rp</span>
-                                    <input type="number" class="form-control border-2 fw-bold text-success" placeholder="0 (Gratis)">
-                                  </div>
+                            
+                            <!-- Syarat Beli Section -->
+                            <div class="mb-3">
+                              <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="small fw-bold text-dark m-0">SYARAT BELI (Semua harus terpenuhi)</label>
+                                <button type="button" class="btn btn-link btn-xs text-decoration-none fw-bold p-0 text-primary" onclick="addSpSyaratRow(this)"><i class="fas fa-plus me-1"></i>Tambah Syarat</button>
+                              </div>
+                              <div class="sp-syarat-container d-flex flex-column gap-2">
+                                <div class="d-flex align-items-center gap-2 sp-syarat-row">
+                                  <input type="number" class="form-control form-control-sm border-2 fw-bold sp-syarat-qty" placeholder="Qty" style="max-width: 80px;" value="1">
+                                  <select class="form-select form-select-sm border-2 fw-bold sp-syarat-menu flex-fill"><option value="">-- Pilih Menu --</option></select>
+                                  <button type="button" class="btn btn-outline-danger btn-sm px-2 py-1 sp-btn-delete-row" onclick="removeSpRow(this)" style="display: none;"><i class="fas fa-times"></i></button>
                                 </div>
                               </div>
                             </div>
-                            <button class="btn btn-outline-primary btn-sm mt-2 fw-bold rounded-pill w-100"><i class="fas fa-plus me-1"></i> Tambah Menu Reward Lain</button>
+                            
+                            <div class="border-bottom my-2"></div>
+                            
+                            <!-- Mendapat Section -->
+                            <div class="mb-2">
+                              <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="small fw-bold text-success m-0">MENDAPAT / TEBUS MURAH</label>
+                                <button type="button" class="btn btn-link btn-xs text-decoration-none fw-bold p-0 text-success" onclick="addSpRewardRow(this)"><i class="fas fa-plus me-1"></i>Tambah Reward</button>
+                              </div>
+                              <div class="sp-reward-container d-flex flex-column gap-2">
+                                <div class="d-flex align-items-center gap-2 sp-reward-row">
+                                  <input type="number" class="form-control form-control-sm border-2 fw-bold sp-reward-qty" placeholder="Qty" style="max-width: 80px;" value="1">
+                                  <select class="form-select form-select-sm border-2 fw-bold sp-reward-menu flex-fill"><option value="">-- Menu Reward --</option></select>
+                                  <div class="input-group input-group-sm" style="max-width: 180px;">
+                                    <span class="input-group-text bg-light border-2 small">Tebus Rp</span>
+                                    <input type="number" class="form-control border-2 fw-bold text-success sp-reward-price" placeholder="0 (Gratis)" value="0">
+                                  </div>
+                                  <button type="button" class="btn btn-outline-danger btn-sm px-2 py-1 sp-btn-delete-row" onclick="removeSpRow(this)" style="display: none;"><i class="fas fa-times"></i></button>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                           <!-- Form Min Purchase -->
                           <div class="sp-form-group" id="sp-form-min_purchase" style="display:none;">
                             <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-cart-arrow-down text-dark me-2"></i>Total Belanja Minimal -> Reward</h6>
-                            <div class="row g-2 align-items-center">
-                              <div class="col-md-5">
-                                <label class="small fw-bold text-muted mb-1">Minimal Belanja (Rp)</label>
-                                <input type="number" class="form-control form-control-sm border-2 fw-bold text-danger" placeholder="100000">
+                            <div class="mb-3">
+                              <label class="small fw-bold text-muted mb-1">Minimal Belanja (Rp)</label>
+                              <input type="number" class="form-control form-control-sm border-2 fw-bold text-danger sp-min-purchase-amount" placeholder="100000" value="100000">
+                            </div>
+                            
+                            <div class="border-bottom my-2"></div>
+                            
+                            <!-- Mendapat Section -->
+                            <div class="mb-2">
+                              <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="small fw-bold text-success m-0">MENDAPAT / TEBUS MURAH</label>
+                                <button type="button" class="btn btn-link btn-xs text-decoration-none fw-bold p-0 text-success" onclick="addSpRewardRow(this)"><i class="fas fa-plus me-1"></i>Tambah Reward</button>
                               </div>
-                              <div class="col-12 border-bottom my-1"></div>
-                              <div class="col-md-2"><label class="small fw-bold text-success m-0">MENDAPAT</label></div>
-                              <div class="col-md-2" style="max-width: 80px;"><input type="number" class="form-control form-control-sm border-2 fw-bold" placeholder="Qty"></div>
-                              <div class="col-md-8 flex-fill">
-                                <div class="d-flex align-items-center gap-2">
-                                  <select id="spDineInMinPurchaseRewardMenuSelect" class="form-select form-select-sm border-2 fw-bold"><option value="">-- Menu Reward --</option></select>
-                                  <div class="input-group input-group-sm">
+                              <div class="sp-reward-container d-flex flex-column gap-2">
+                                <div class="d-flex align-items-center gap-2 sp-reward-row">
+                                  <input type="number" class="form-control form-control-sm border-2 fw-bold sp-reward-qty" placeholder="Qty" style="max-width: 80px;" value="1">
+                                  <select class="form-select form-select-sm border-2 fw-bold sp-reward-menu flex-fill"><option value="">-- Menu Reward --</option></select>
+                                  <div class="input-group input-group-sm" style="max-width: 180px;">
                                     <span class="input-group-text bg-light border-2 small">Tebus Rp</span>
-                                    <input type="number" class="form-control border-2 fw-bold text-success" placeholder="0 (Gratis)">
+                                    <input type="number" class="form-control border-2 fw-bold text-success sp-reward-price" placeholder="0 (Gratis)" value="0">
                                   </div>
+                                  <button type="button" class="btn btn-outline-danger btn-sm px-2 py-1 sp-btn-delete-row" onclick="removeSpRow(this)" style="display: none;"><i class="fas fa-times"></i></button>
                                 </div>
                               </div>
                             </div>
@@ -2964,43 +2987,68 @@
                           <!-- Form Buy X Get Y -->
                           <div class="sp-form-group" id="sp-form-buy_get" style="display:none;">
                             <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-gift text-warning me-2"></i>Beli X Gratis / Tebus Murah Y</h6>
-                            <div class="row g-2 align-items-center">
-                              <div class="col-md-2"><label class="small fw-bold text-dark m-0">SYARAT BELI</label></div>
-                              <div class="col-md-3"><input type="number" class="form-control form-control-sm border-2 fw-bold" placeholder="Qty"></div>
-                              <div class="col-md-7"><select id="spTakeawayBuyGetConditionMenuSelect" class="form-select form-select-sm border-2 fw-bold"><option value="">-- Pilih Menu --</option></select></div>
-                              <div class="col-12 border-bottom my-1"></div>
-                              <div class="col-md-2"><label class="small fw-bold text-success m-0">MENDAPAT</label></div>
-                              <div class="col-md-2" style="max-width: 80px;"><input type="number" class="form-control form-control-sm border-2 fw-bold" placeholder="Qty"></div>
-                              <div class="col-md-8 flex-fill">
-                                <div class="d-flex align-items-center gap-2">
-                                  <select id="spTakeawayBuyGetRewardMenuSelect" class="form-select form-select-sm border-2 fw-bold"><option value="">-- Menu Reward --</option></select>
-                                  <div class="input-group input-group-sm">
-                                    <span class="input-group-text bg-light border-2 small">Tebus Rp</span>
-                                    <input type="number" class="form-control border-2 fw-bold text-success" placeholder="0 (Gratis)">
-                                  </div>
+                            
+                            <!-- Syarat Beli Section -->
+                            <div class="mb-3">
+                              <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="small fw-bold text-dark m-0">SYARAT BELI (Semua harus terpenuhi)</label>
+                                <button type="button" class="btn btn-link btn-xs text-decoration-none fw-bold p-0 text-primary" onclick="addSpSyaratRow(this)"><i class="fas fa-plus me-1"></i>Tambah Syarat</button>
+                              </div>
+                              <div class="sp-syarat-container d-flex flex-column gap-2">
+                                <div class="d-flex align-items-center gap-2 sp-syarat-row">
+                                  <input type="number" class="form-control form-control-sm border-2 fw-bold sp-syarat-qty" placeholder="Qty" style="max-width: 80px;" value="1">
+                                  <select class="form-select form-select-sm border-2 fw-bold sp-syarat-menu flex-fill"><option value="">-- Pilih Menu --</option></select>
+                                  <button type="button" class="btn btn-outline-danger btn-sm px-2 py-1 sp-btn-delete-row" onclick="removeSpRow(this)" style="display: none;"><i class="fas fa-times"></i></button>
                                 </div>
                               </div>
                             </div>
-                            <button class="btn btn-outline-primary btn-sm mt-2 fw-bold rounded-pill w-100"><i class="fas fa-plus me-1"></i> Tambah Menu Reward Lain</button>
+                            
+                            <div class="border-bottom my-2"></div>
+                            
+                            <!-- Mendapat Section -->
+                            <div class="mb-2">
+                              <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="small fw-bold text-success m-0">MENDAPAT / TEBUS MURAH</label>
+                                <button type="button" class="btn btn-link btn-xs text-decoration-none fw-bold p-0 text-success" onclick="addSpRewardRow(this)"><i class="fas fa-plus me-1"></i>Tambah Reward</button>
+                              </div>
+                              <div class="sp-reward-container d-flex flex-column gap-2">
+                                <div class="d-flex align-items-center gap-2 sp-reward-row">
+                                  <input type="number" class="form-control form-control-sm border-2 fw-bold sp-reward-qty" placeholder="Qty" style="max-width: 80px;" value="1">
+                                  <select class="form-select form-select-sm border-2 fw-bold sp-reward-menu flex-fill"><option value="">-- Menu Reward --</option></select>
+                                  <div class="input-group input-group-sm" style="max-width: 180px;">
+                                    <span class="input-group-text bg-light border-2 small">Tebus Rp</span>
+                                    <input type="number" class="form-control border-2 fw-bold text-success sp-reward-price" placeholder="0 (Gratis)" value="0">
+                                  </div>
+                                  <button type="button" class="btn btn-outline-danger btn-sm px-2 py-1 sp-btn-delete-row" onclick="removeSpRow(this)" style="display: none;"><i class="fas fa-times"></i></button>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                           <!-- Form Min Purchase -->
                           <div class="sp-form-group" id="sp-form-min_purchase" style="display:none;">
                             <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-cart-arrow-down text-dark me-2"></i>Total Belanja Minimal -> Reward</h6>
-                            <div class="row g-2 align-items-center">
-                              <div class="col-md-5">
-                                <label class="small fw-bold text-muted mb-1">Minimal Belanja (Rp)</label>
-                                <input type="number" class="form-control form-control-sm border-2 fw-bold text-danger" placeholder="100000">
+                            <div class="mb-3">
+                              <label class="small fw-bold text-muted mb-1">Minimal Belanja (Rp)</label>
+                              <input type="number" class="form-control form-control-sm border-2 fw-bold text-danger sp-min-purchase-amount" placeholder="100000" value="100000">
+                            </div>
+                            
+                            <div class="border-bottom my-2"></div>
+                            
+                            <!-- Mendapat Section -->
+                            <div class="mb-2">
+                              <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="small fw-bold text-success m-0">MENDAPAT / TEBUS MURAH</label>
+                                <button type="button" class="btn btn-link btn-xs text-decoration-none fw-bold p-0 text-success" onclick="addSpRewardRow(this)"><i class="fas fa-plus me-1"></i>Tambah Reward</button>
                               </div>
-                              <div class="col-12 border-bottom my-1"></div>
-                              <div class="col-md-2"><label class="small fw-bold text-success m-0">MENDAPAT</label></div>
-                              <div class="col-md-2" style="max-width: 80px;"><input type="number" class="form-control form-control-sm border-2 fw-bold" placeholder="Qty"></div>
-                              <div class="col-md-8 flex-fill">
-                                <div class="d-flex align-items-center gap-2">
-                                  <select id="spTakeawayMinPurchaseRewardMenuSelect" class="form-select form-select-sm border-2 fw-bold"><option value="">-- Menu Reward --</option></select>
-                                  <div class="input-group input-group-sm">
+                              <div class="sp-reward-container d-flex flex-column gap-2">
+                                <div class="d-flex align-items-center gap-2 sp-reward-row">
+                                  <input type="number" class="form-control form-control-sm border-2 fw-bold sp-reward-qty" placeholder="Qty" style="max-width: 80px;" value="1">
+                                  <select class="form-select form-select-sm border-2 fw-bold sp-reward-menu flex-fill"><option value="">-- Menu Reward --</option></select>
+                                  <div class="input-group input-group-sm" style="max-width: 180px;">
                                     <span class="input-group-text bg-light border-2 small">Tebus Rp</span>
-                                    <input type="number" class="form-control border-2 fw-bold text-success" placeholder="0 (Gratis)">
+                                    <input type="number" class="form-control border-2 fw-bold text-success sp-reward-price" placeholder="0 (Gratis)" value="0">
                                   </div>
+                                  <button type="button" class="btn btn-outline-danger btn-sm px-2 py-1 sp-btn-delete-row" onclick="removeSpRow(this)" style="display: none;"><i class="fas fa-times"></i></button>
                                 </div>
                               </div>
                             </div>
@@ -13605,29 +13653,83 @@
           }
         });
         
-        // 3. Populate select menu item
-        const itemSelects = [
-          'spDineInItemSelect', 
-          'spTakeawayItemSelect',
-          'spDineInBuyGetConditionMenuSelect',
-          'spDineInBuyGetRewardMenuSelect',
-          'spDineInMinPurchaseRewardMenuSelect',
-          'spTakeawayBuyGetConditionMenuSelect',
-          'spTakeawayBuyGetRewardMenuSelect',
-          'spTakeawayMinPurchaseRewardMenuSelect'
-        ];
-        
+        // 3. Populate select menu item diskon item spesifik
+        const itemSelects = ['spDineInItemSelect', 'spTakeawayItemSelect'];
         itemSelects.forEach(id => {
           const el = document.getElementById(id);
           if (el) {
-            const isConditionSelect = id.includes('ConditionMenuSelect');
-            const defaultText = isConditionSelect ? '-- Pilih Menu --' : '-- Menu Reward --';
-            let html = `<option value="">${defaultText}</option>`;
-            if (isConditionSelect) {
-              html += '<option value="ALL">Semua Menu</option>';
+            el.innerHTML = '<option value="">-- Pilih Menu --</option>' + 
+              PRODUCTS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+          }
+        });
+
+        // 4. Populate semua select di syarat & reward container
+        const syaratSelects = document.querySelectorAll('.sp-syarat-menu');
+        syaratSelects.forEach(el => {
+          el.innerHTML = '<option value="">-- Pilih Menu --</option>' + 
+            '<option value="ALL">Semua Menu</option>' +
+            PRODUCTS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        });
+
+        const rewardSelects = document.querySelectorAll('.sp-reward-menu');
+        rewardSelects.forEach(el => {
+          el.innerHTML = '<option value="">-- Menu Reward --</option>' + 
+            PRODUCTS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        });
+      }
+
+      function addSpSyaratRow(btn) {
+        const container = btn.closest('.sp-form-group').querySelector('.sp-syarat-container');
+        if (!container) return;
+        
+        const template = container.querySelector('.sp-syarat-row');
+        if (!template) return;
+        
+        const newRow = template.cloneNode(true);
+        newRow.querySelector('.sp-syarat-qty').value = 1;
+        newRow.querySelector('.sp-syarat-menu').value = "";
+        
+        container.appendChild(newRow);
+        updateSpDeleteButtons(container, '.sp-syarat-row');
+      }
+
+      function addSpRewardRow(btn) {
+        const container = btn.closest('.sp-form-group').querySelector('.sp-reward-container');
+        if (!container) return;
+        
+        const template = container.querySelector('.sp-reward-row');
+        if (!template) return;
+        
+        const newRow = template.cloneNode(true);
+        newRow.querySelector('.sp-reward-qty').value = 1;
+        newRow.querySelector('.sp-reward-menu').value = "";
+        newRow.querySelector('.sp-reward-price').value = 0;
+        
+        container.appendChild(newRow);
+        updateSpDeleteButtons(container, '.sp-reward-row');
+      }
+
+      function removeSpRow(btn) {
+        const row = btn.closest('.sp-syarat-row, .sp-reward-row');
+        if (!row) return;
+        
+        const container = row.parentElement;
+        const rowSelector = row.classList.contains('sp-syarat-row') ? '.sp-syarat-row' : '.sp-reward-row';
+        
+        row.remove();
+        updateSpDeleteButtons(container, rowSelector);
+      }
+
+      function updateSpDeleteButtons(container, rowSelector) {
+        const rows = container.querySelectorAll(rowSelector);
+        rows.forEach(row => {
+          const deleteBtn = row.querySelector('.sp-btn-delete-row');
+          if (deleteBtn) {
+            if (rows.length > 1) {
+              deleteBtn.style.display = 'block';
+            } else {
+              deleteBtn.style.display = 'none';
             }
-            html += PRODUCTS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-            el.innerHTML = html;
           }
         });
       }
