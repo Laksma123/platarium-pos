@@ -15236,6 +15236,7 @@
         const startTime = document.getElementById(getSpElId(tabContext, 'AutoPlayStartTime'));
         const endTime = document.getElementById(getSpElId(tabContext, 'AutoPlayEndTime'));
 
+        const spModal = document.getElementById('modalSpecialPrice');
         if (startInput && !startInput._flatpickr) {
           flatpickr(startInput, {
             dateFormat: "Y-m-d",
@@ -15243,6 +15244,7 @@
             altFormat: "d-m-Y",
             allowInput: true,
             disableMobile: true,
+            appendTo: spModal,
             onChange: function() {
               onAutoPlayDateChange(tabContext, 'start');
             },
@@ -15258,6 +15260,7 @@
             altFormat: "d-m-Y",
             allowInput: true,
             disableMobile: true,
+            appendTo: spModal,
             onChange: function() {
               onAutoPlayDateChange(tabContext, 'end');
             },
@@ -15273,6 +15276,7 @@
             dateFormat: "H:i",
             time_24hr: true,
             disableMobile: true,
+            appendTo: spModal,
             onChange: checkSpChanges,
             onClose: checkSpChanges
           });
@@ -15284,6 +15288,7 @@
             dateFormat: "H:i",
             time_24hr: true,
             disableMobile: true,
+            appendTo: spModal,
             onChange: checkSpChanges,
             onClose: checkSpChanges
           });
