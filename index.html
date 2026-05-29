@@ -14090,11 +14090,41 @@
         return JSON.stringify(collectAllSpData()) !== spInitialDataString;
       }
 
+      function getActiveSlotIndices() {
+        let activeIndices = {};
+        ['dinein', 'takeaway'].forEach(tab => {
+          const slotsEl = document.getElementById(getSpElId(tab, 'Slots'));
+          if (slotsEl) {
+            const slots = slotsEl.querySelectorAll('.sp-slot');
+            const activeSlot = slotsEl.querySelector('.sp-slot.active');
+            if (activeSlot) {
+              activeIndices[tab] = Array.from(slots).indexOf(activeSlot);
+            }
+          }
+        });
+        document.querySelectorAll('#deliveryTabBar .delivery-tab').forEach(tabEl => {
+          const tabId = tabEl.dataset.tabId;
+          if (tabId) {
+            const num = tabId.split('_')[1];
+            const slotsEl = document.getElementById('spDelivery' + num + 'Slots');
+            if (slotsEl) {
+              const slots = slotsEl.querySelectorAll('.sp-slot');
+              const activeSlot = slotsEl.querySelector('.sp-slot.active');
+              if (activeSlot) {
+                activeIndices[tabId] = Array.from(slots).indexOf(activeSlot);
+              }
+            }
+          }
+        });
+        return activeIndices;
+      }
+
       function revertSpChanges() {
         if (spInitialDataString) {
           let data = [];
           try { data = JSON.parse(spInitialDataString); } catch(e){}
-          loadSpDataFromBackend(data);
+          const activeIndices = getActiveSlotIndices();
+          loadSpDataFromBackend(data, activeIndices);
           checkSpChanges();
         }
       }
@@ -14819,8 +14849,12 @@
       }
 
       // --- LOAD SP DATA FROM BACKEND ---
-      function loadSpDataFromBackend(data) {
+      function loadSpDataFromBackend(data, activeIndices) {
         if (!data || data.length === 0) return;
+        
+        if (!activeIndices) {
+          activeIndices = typeof getActiveSlotIndices === 'function' ? getActiveSlotIndices() : {};
+        }
         
         let deliveryTabs = {};
         let tabData = { 'dinein': [], 'takeaway': [] };
@@ -14912,6 +14946,30 @@
            newPlus.innerHTML = '<i class="fas fa-plus"></i>';
            newPlus.onclick = function() { activateSpSlot(this, tabContext); };
            slotsEl.appendChild(newPlus);
+           
+           // Restore active slot if there was one
+           const activeIdx = activeIndices[tabContext];
+           if (activeIdx !== undefined) {
+             const slots = slotsEl.querySelectorAll('.sp-slot');
+             if (slots[activeIdx]) {
+               slots[activeIdx].classList.add('active');
+               if (slots[activeIdx].classList.contains('configured')) {
+                 loadConfigFromSlot(slots[activeIdx], tabContext);
+                 
+                 // Sync label name input
+                 const titleEl = slots[activeIdx].querySelector('.slot-title');
+                 const inputName = document.getElementById(getSpElId(tabContext, 'LabelName'));
+                 if (inputName && titleEl) {
+                   const text = titleEl.innerText;
+                   inputName.value = text === 'Promo Baru' ? '' : text;
+                 } else if (inputName) {
+                   inputName.value = '';
+                 }
+               }
+             }
+           } else {
+             resetConfigForm(tabContext);
+           }
         });
         
         resetAllSpConfigPanels();
