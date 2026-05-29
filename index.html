@@ -13854,6 +13854,11 @@
         const btnJangan = document.getElementById('btnSpWarnJanganSimpan');
         const btnKembali = document.getElementById('btnSpWarnKembali');
         
+        // Reset disabled states for original buttons before cloning
+        btnSimpan.disabled = false;
+        btnJangan.disabled = false;
+        btnKembali.disabled = false;
+        
         if (context === 'close') {
           btnSimpan.innerText = "Simpan dan Close";
           btnJangan.innerText = "Jangan Simpan dan Close";
@@ -13865,6 +13870,11 @@
         const newBtnSimpan = btnSimpan.cloneNode(true); btnSimpan.parentNode.replaceChild(newBtnSimpan, btnSimpan);
         const newBtnJangan = btnJangan.cloneNode(true); btnJangan.parentNode.replaceChild(newBtnJangan, btnJangan);
         const newBtnKembali = btnKembali.cloneNode(true); btnKembali.parentNode.replaceChild(newBtnKembali, btnKembali);
+        
+        // Force visual & interactive properties of warning overlay
+        warnOverlay.style.pointerEvents = 'auto';
+        warnOverlay.style.zIndex = '10800';
+        warnOverlay.style.opacity = '1';
         
         newBtnKembali.addEventListener('click', () => {
            warnOverlay.classList.add('d-none');
