@@ -86,6 +86,42 @@
         100% { transform: scale(1); opacity: 1; }
       }
 
+      /* Delivery services buttons */
+      .delivery-service-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        background: #f8f9fa;
+        border: 2px solid #dee2e6;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #495057;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      }
+      .delivery-service-btn:hover {
+        background: #e9ecef;
+        border-color: #ced4da;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+      }
+      .delivery-service-btn.active {
+        background: linear-gradient(135deg, #5dade2, #2980b9) !important;
+        color: white !important;
+        border-color: #2980b9 !important;
+        box-shadow: 0 8px 16px rgba(41, 128, 185, 0.3) !important;
+        transform: scale(1.03);
+      }
+      .delivery-service-icon {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
+        border-radius: 4px;
+      }
+
       
       body { 
         background-color: #000000; 
@@ -3806,10 +3842,11 @@
         let tabName = '';
         if (orderType === 'Dine In') tabName = 'dinein';
         else if (orderType === 'Takeaway') tabName = 'takeaway';
+        else if (orderType && orderType.startsWith('delivery_')) tabName = orderType;
         else if (orderType === 'Delivery') tabName = 'delivery';
 
-        // Jika bukan Dine In atau Takeaway, atau config promo kosong, bypass
-        if ((tabName !== 'dinein' && tabName !== 'takeaway') || !SPECIAL_PRICE_CONFIG || SPECIAL_PRICE_CONFIG.length === 0) {
+        // Jika bukan Dine In atau Takeaway atau subtab Delivery, atau config promo kosong, bypass
+        if ((tabName !== 'dinein' && tabName !== 'takeaway' && !tabName.startsWith('delivery_')) || !SPECIAL_PRICE_CONFIG || SPECIAL_PRICE_CONFIG.length === 0) {
           return {
             items: JSON.parse(JSON.stringify(cart)),
             appliedPromos: [],
@@ -3821,6 +3858,9 @@
 
         // Ambil promo yang aktif untuk tab bersangkutan
         const activePromos = SPECIAL_PRICE_CONFIG.filter(p => {
+          if (p.tab === 'delivery') {
+            return p.subTab === tabName && (p.active === true || p.active === 'true' || p.active === 'TRUE');
+          }
           return p.tab === tabName && (p.active === true || p.active === 'true' || p.active === 'TRUE');
         });
 
@@ -4070,8 +4110,13 @@
         const orderTypeEl = document.querySelector('input[name="orderType"]:checked');
         const orderType = orderTypeEl ? orderTypeEl.value : 'Dine In';
 
+        let promoOrderType = orderType;
+        if (orderType === 'Delivery' && window.SELECTED_DELIVERY_SUBTAB) {
+          promoOrderType = window.SELECTED_DELIVERY_SUBTAB;
+        }
+
         // 1. Jalankan kalkulasi mesin promo dinamis
-        const promoResult = applyPOSPromotions(CART, orderType);
+        const promoResult = applyPOSPromotions(CART, promoOrderType);
         
         // Simpan ke level window untuk diakses saat submit pembayaran
         window.CHECKOUT_PROMO_ITEMS = promoResult.items;
@@ -9070,6 +9115,73 @@
           }
         };
       }
+
+      // Delivery Services helper functions for Checkout
+      function getDeliveryServices() {
+        const services = [];
+        const seen = new Set();
+        if (SPECIAL_PRICE_CONFIG) {
+          SPECIAL_PRICE_CONFIG.forEach(item => {
+            if (item.tab === 'delivery' && item.subTab) {
+              if (!seen.has(item.subTab)) {
+                seen.add(item.subTab);
+                services.push({
+                  subTab: item.subTab,
+                  serviceName: item.serviceName || 'Pesan Antar',
+                  serviceIconUrl: item.serviceIconUrl || ''
+                });
+              }
+            }
+          });
+        }
+        return services.sort((a, b) => a.subTab.localeCompare(b.subTab));
+      }
+
+      function renderDeliveryServices() {
+        const container = document.getElementById('deliveryServicesRow');
+        if (!container) return;
+        
+        const services = getDeliveryServices();
+        if (services.length === 0) {
+          container.innerHTML = `<div class="text-muted small py-2 w-100 text-center"><i class="fas fa-info-circle me-1"></i>Belum ada layanan Delivery yang dikonfigurasi.</div>`;
+          window.SELECTED_DELIVERY_SUBTAB = null;
+          return;
+        }
+        
+        container.innerHTML = services.map(s => {
+          const isActive = window.SELECTED_DELIVERY_SUBTAB === s.subTab;
+          const activeClass = isActive ? 'active' : '';
+          const iconHtml = s.serviceIconUrl ? `<img src="${s.serviceIconUrl}" class="delivery-service-icon" alt="">` : `<i class="fas fa-motorcycle"></i>`;
+          return `
+            <button type="button" class="delivery-service-btn ${activeClass}" onclick="selectDeliveryService('${s.subTab}')">
+              ${iconHtml}
+              <span>${s.serviceName}</span>
+            </button>
+          `;
+        }).join('');
+        
+        if (!window.SELECTED_DELIVERY_SUBTAB && services.length > 0) {
+          selectDeliveryService(services[0].subTab);
+        }
+      }
+
+      function selectDeliveryService(subTabId) {
+        window.SELECTED_DELIVERY_SUBTAB = subTabId;
+        renderDeliveryServices();
+        recalculateCheckoutTotal();
+      }
+
+      function handleOrderTypeChange(type) {
+        const container = document.getElementById('deliveryServicesContainer');
+        if (type === 'Delivery') {
+          renderDeliveryServices();
+          if (container) container.classList.remove('d-none');
+        } else {
+          if (container) container.classList.add('d-none');
+          window.SELECTED_DELIVERY_SUBTAB = null;
+        }
+        recalculateCheckoutTotal();
+      }
       
       function processCheckout() {
         if (!ACTIVE_CASHIER) {
@@ -9084,6 +9196,11 @@
         // Reset orderType to Dine In
         const dineInRadio = document.getElementById('typeDineIn');
         if (dineInRadio) dineInRadio.checked = true;
+
+        // Hide delivery services container and reset subtab
+        const container = document.getElementById('deliveryServicesContainer');
+        if (container) container.classList.add('d-none');
+        window.SELECTED_DELIVERY_SUBTAB = null;
 
         // Reset surcharge state
         window.CHECKOUT_SURCHARGE_INFO = null;
@@ -9302,7 +9419,14 @@
         
         // --- ORDER TYPE ---
         const orderTypeEl = document.querySelector('input[name="orderType"]:checked');
-        const orderType = orderTypeEl ? orderTypeEl.value : 'Dine In';
+        let orderType = orderTypeEl ? orderTypeEl.value : 'Dine In';
+        if (orderType === 'Delivery' && window.SELECTED_DELIVERY_SUBTAB) {
+          const services = getDeliveryServices();
+          const currentService = services.find(s => s.subTab === window.SELECTED_DELIVERY_SUBTAB);
+          if (currentService) {
+            orderType = `Delivery - ${currentService.serviceName}`;
+          }
+        }
 
         const transactionData = {
           total: finalTotal, 
@@ -12590,23 +12714,31 @@
               <div class="mb-4">
                 <label class="fw-bold text-muted mb-3" style="font-size: 0.85rem; letter-spacing: 0.8px;">TIPE PESANAN</label>
                 <div class="d-flex gap-2">
-                  <input type="radio" class="btn-check" name="orderType" id="typeDineIn" value="Dine In" checked onchange="recalculateCheckoutTotal()">
+                  <input type="radio" class="btn-check" name="orderType" id="typeDineIn" value="Dine In" checked onchange="handleOrderTypeChange('Dine In')">
                   <label class="btn btn-outline-dark w-100 fw-bold py-3 rounded-4 d-flex flex-column align-items-center justify-content-center gap-2 shadow-sm" for="typeDineIn">
                     <i class="fas fa-chair fs-4"></i>
                     <span style="font-size: 0.9rem;">Dine In</span>
                   </label>
                   
-                  <input type="radio" class="btn-check" name="orderType" id="typeTakeaway" value="Takeaway" onchange="recalculateCheckoutTotal()">
+                  <input type="radio" class="btn-check" name="orderType" id="typeTakeaway" value="Takeaway" onchange="handleOrderTypeChange('Takeaway')">
                   <label class="btn btn-outline-dark w-100 fw-bold py-3 rounded-4 d-flex flex-column align-items-center justify-content-center gap-2 shadow-sm" for="typeTakeaway">
                     <i class="fas fa-shopping-bag fs-4"></i>
                     <span style="font-size: 0.9rem;">Takeaway</span>
                   </label>
                   
-                  <input type="radio" class="btn-check" name="orderType" id="typeDelivery" value="Delivery" onchange="recalculateCheckoutTotal()">
+                  <input type="radio" class="btn-check" name="orderType" id="typeDelivery" value="Delivery" onchange="handleOrderTypeChange('Delivery')">
                   <label class="btn btn-outline-dark w-100 fw-bold py-3 rounded-4 d-flex flex-column align-items-center justify-content-center gap-2 shadow-sm" for="typeDelivery">
                     <i class="fas fa-motorcycle fs-4"></i>
                     <span style="font-size: 0.9rem;">Delivery</span>
                   </label>
+                </div>
+
+                <!-- Dynamic Delivery Sub-tabs Container -->
+                <div id="deliveryServicesContainer" class="d-none mt-3">
+                  <div class="fw-bold text-muted mb-2" style="font-size: 0.75rem; letter-spacing: 0.5px;">LAYANAN DELIVERY</div>
+                  <div class="d-flex flex-wrap gap-2" id="deliveryServicesRow">
+                    <!-- Buttons will be generated dynamically -->
+                  </div>
                 </div>
               </div>
 
