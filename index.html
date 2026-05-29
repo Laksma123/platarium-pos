@@ -3138,7 +3138,7 @@
           </div>
 
           <div class="modal-outside-buttons">
-            <button class="btn-outside-circle btn-batal" onclick="document.getElementById('modalSpecialPrice').classList.add('d-none')" title="Tutup">
+            <button class="btn-outside-circle btn-batal" onclick="closeSpecialPriceModal()" title="Tutup">
                <div class="icon-wrapper">
                  <i class="fas fa-times icon-primary"></i>
                  <i class="fas fa-redo icon-secondary"></i>
@@ -3152,6 +3152,24 @@
                </div>
             </button>
           </div>
+          </div>
+        </div>
+
+        <!-- WARNING MODAL SP -->
+        <div id="modalSpWarning" class="login-overlay d-none" style="background: rgba(0,0,0,0.7); z-index: 10750; align-items:center; justify-content:center; display:flex;">
+          <div class="modal-dialog modal-dialog-centered modal-sm w-100" style="max-width:350px;">
+            <div class="modal-content border-0 rounded-4 shadow-lg w-100 bg-white">
+              <div class="modal-body text-center p-4">
+                <i class="fas fa-exclamation-triangle text-warning mb-3" style="font-size: 3rem;"></i>
+                <h6 class="fw-bold mb-2">Perubahan Belum Disimpan</h6>
+                <p class="text-muted small mb-4">Anda telah merubah beberapa pengaturan, simpan dulu atau batal ubah?</p>
+                <div class="d-flex flex-column gap-2">
+                  <button type="button" class="btn btn-primary fw-bold rounded-pill" id="btnSpWarnSimpan">Simpan</button>
+                  <button type="button" class="btn btn-outline-danger fw-bold rounded-pill" id="btnSpWarnJanganSimpan">Jangan Simpan</button>
+                  <button type="button" class="btn btn-light fw-bold rounded-pill text-dark" id="btnSpWarnKembali">Kembali</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -13718,6 +13736,163 @@
       let deliveryTabCounter = 0;
       let DELIVERY_ICON_UPLOAD_TAB_ID = null; // Track which delivery tab is uploading an icon
 
+      let spInitialDataString = "";
+      let isSpWarningHandled = false;
+
+      // Attach listeners for unsaved changes
+      const _modalSpEl = document.getElementById('modalSpecialPrice');
+      if (_modalSpEl) {
+          _modalSpEl.addEventListener('input', checkSpChanges);
+          _modalSpEl.addEventListener('change', checkSpChanges);
+      }
+      
+      function attachSpTabListeners() {
+        const spTabEls = document.querySelectorAll('button[data-bs-toggle="pill"][data-bs-target^="#sp-"]');
+        spTabEls.forEach(tabEl => {
+          if (tabEl.dataset.spListenerAttached) return;
+          tabEl.dataset.spListenerAttached = 'true';
+          tabEl.addEventListener('hide.bs.tab', function(e) {
+            if (isSpWarningHandled) return;
+            if (hasSpChanges()) {
+              e.preventDefault();
+              showSpWarningModal('navigate', () => {
+                 isSpWarningHandled = true;
+                 bootstrap.Tab.getOrCreateInstance(e.relatedTarget).show();
+                 isSpWarningHandled = false;
+              }, () => {
+                 revertSpChanges();
+                 isSpWarningHandled = true;
+                 bootstrap.Tab.getOrCreateInstance(e.relatedTarget).show();
+                 isSpWarningHandled = false;
+              });
+            }
+          });
+        });
+      }
+      document.addEventListener('DOMContentLoaded', attachSpTabListeners);
+
+      function getCurrentSpTabContext() {
+        const dineinTab = document.getElementById('sp-dinein');
+        const takeawayTab = document.getElementById('sp-takeaway');
+        const deliveryTab = document.getElementById('sp-delivery');
+        
+        if (dineinTab && dineinTab.classList.contains('active')) return 'dinein';
+        if (takeawayTab && takeawayTab.classList.contains('active')) return 'takeaway';
+        if (deliveryTab && deliveryTab.classList.contains('active')) {
+          const activeDeliveryTab = document.querySelector('#deliveryTabBar .delivery-tab.active');
+          return activeDeliveryTab ? activeDeliveryTab.dataset.tabId : 'delivery_1';
+        }
+        return 'dinein';
+      }
+
+      function checkSpChanges() {
+        forceSaveAllActiveConfigs();
+        const currentDataString = JSON.stringify(collectAllSpData());
+        const btnSave = document.getElementById('btnSaveSpecialPrice');
+        if (!btnSave) return;
+        
+        if (currentDataString === spInitialDataString) {
+          btnSave.disabled = true;
+          btnSave.style.opacity = '0.5';
+        } else {
+          btnSave.disabled = false;
+          btnSave.style.opacity = '1';
+        }
+      }
+
+      function forceSaveAllActiveConfigs() {
+        ['dinein', 'takeaway'].forEach(tabCtx => {
+            const slotsEl = document.getElementById(getSpElId(tabCtx, 'Slots'));
+            if (slotsEl) {
+                const activeSlot = slotsEl.querySelector('.sp-slot.active.configured');
+                if (activeSlot) saveConfigToSlot(activeSlot, tabCtx);
+            }
+        });
+        document.querySelectorAll('#deliveryTabBar .delivery-tab').forEach(tabEl => {
+            const tabId = tabEl.dataset.tabId;
+            if (!tabId) return;
+            const num = tabId.split('_')[1];
+            const slotsEl = document.getElementById('spDelivery' + num + 'Slots');
+            if (slotsEl) {
+                const activeSlot = slotsEl.querySelector('.sp-slot.active.configured');
+                if (activeSlot) saveConfigToSlot(activeSlot, tabId);
+            }
+        });
+      }
+
+      function hasSpChanges() {
+        forceSaveAllActiveConfigs();
+        return JSON.stringify(collectAllSpData()) !== spInitialDataString;
+      }
+
+      function revertSpChanges() {
+        if (spInitialDataString) {
+          let data = [];
+          try { data = JSON.parse(spInitialDataString); } catch(e){}
+          loadSpDataFromBackend(data);
+          checkSpChanges();
+        }
+      }
+
+      function closeSpecialPriceModal() {
+        if (hasSpChanges()) {
+            showSpWarningModal('close', () => {
+                document.getElementById('modalSpecialPrice').classList.add('d-none');
+            }, () => {
+                revertSpChanges();
+                document.getElementById('modalSpecialPrice').classList.add('d-none');
+            });
+        } else {
+            document.getElementById('modalSpecialPrice').classList.add('d-none');
+        }
+      }
+
+      function showSpWarningModal(context, onSimpanSuccess, onJanganSimpan) {
+        const warnOverlay = document.getElementById('modalSpWarning');
+        
+        const btnSimpan = document.getElementById('btnSpWarnSimpan');
+        const btnJangan = document.getElementById('btnSpWarnJanganSimpan');
+        const btnKembali = document.getElementById('btnSpWarnKembali');
+        
+        if (context === 'close') {
+          btnSimpan.innerText = "Simpan dan Close";
+          btnJangan.innerText = "Jangan Simpan dan Close";
+        } else {
+          btnSimpan.innerText = "Simpan";
+          btnJangan.innerText = "Jangan Simpan";
+        }
+        
+        const newBtnSimpan = btnSimpan.cloneNode(true); btnSimpan.parentNode.replaceChild(newBtnSimpan, btnSimpan);
+        const newBtnJangan = btnJangan.cloneNode(true); btnJangan.parentNode.replaceChild(newBtnJangan, btnJangan);
+        const newBtnKembali = btnKembali.cloneNode(true); btnKembali.parentNode.replaceChild(newBtnKembali, btnKembali);
+        
+        newBtnKembali.addEventListener('click', () => {
+           warnOverlay.classList.add('d-none');
+        });
+        
+        newBtnJangan.addEventListener('click', () => {
+           warnOverlay.classList.add('d-none');
+           if (onJanganSimpan) onJanganSimpan();
+        });
+        
+        newBtnSimpan.addEventListener('click', () => {
+           newBtnSimpan.disabled = true;
+           newBtnJangan.disabled = true;
+           newBtnKembali.disabled = true;
+           
+           saveSpSlot(getCurrentSpTabContext(), () => {
+              warnOverlay.classList.add('d-none');
+              if (onSimpanSuccess) onSimpanSuccess();
+           }, () => {
+              newBtnSimpan.disabled = false;
+              newBtnJangan.disabled = false;
+              newBtnKembali.disabled = false;
+           });
+        });
+        
+        warnOverlay.classList.remove('d-none');
+      }
+
       // Helper: Map tabContext to element ID prefix
       function getSpElId(ctx, suffix) {
         if (ctx === 'dinein') return 'spDineIn' + suffix;
@@ -13758,6 +13933,7 @@
         container.appendChild(newRow);
         updateSpDeleteButtons(container, '.sp-syarat-row');
         populateSpecialPriceDropdowns();
+        checkSpChanges();
       }
 
       function addSpRewardRow(btn) {
@@ -13772,6 +13948,7 @@
         container.appendChild(newRow);
         updateSpDeleteButtons(container, '.sp-reward-row');
         populateSpecialPriceDropdowns();
+        checkSpChanges();
       }
 
       function removeSpRow(btn) {
@@ -13781,6 +13958,7 @@
         const rowSelector = row.classList.contains('sp-syarat-row') ? '.sp-syarat-row' : '.sp-reward-row';
         row.remove();
         updateSpDeleteButtons(container, rowSelector);
+        checkSpChanges();
       }
 
       function updateSpDeleteButtons(container, rowSelector) {
@@ -13794,14 +13972,33 @@
       }
 
       function openSpecialPriceModal() {
+        attachSpTabListeners();
         populateSpecialPriceDropdowns();
         initDeliveryTabs();
         document.getElementById('modalSpecialPrice').classList.remove('d-none');
+        
+        const modal = document.getElementById('modalSpecialPrice');
+        if (!modal.dataset.liveListenersAttached) {
+            modal.addEventListener('input', checkSpChanges);
+            modal.addEventListener('change', checkSpChanges);
+            modal.dataset.liveListenersAttached = 'true';
+        }
+
         // Load saved data from backend
         google.script.run.withSuccessHandler(function(res) {
           if (res && res.status === 'success' && res.data && res.data.length > 0) {
             loadSpDataFromBackend(res.data);
           }
+          
+          // Hash initial data
+          const tabCtx = getCurrentSpTabContext();
+          const slotsEl = document.getElementById(getSpElId(tabCtx, 'Slots'));
+          if (slotsEl) {
+              const activeSlot = slotsEl.querySelector('.sp-slot.active.configured');
+              if (activeSlot) saveConfigToSlot(activeSlot, tabCtx);
+          }
+          spInitialDataString = JSON.stringify(collectAllSpData());
+          checkSpChanges();
         }).loadSpecialPriceConfig();
       }
 
@@ -13817,7 +14014,7 @@
         }
       }
 
-      function activateSpSlot(element, tabContext) {
+      function proceedActivateSpSlot(element, tabContext) {
         const slotsEl = document.getElementById(getSpElId(tabContext, 'Slots'));
         if (!slotsEl) return;
 
@@ -13845,6 +14042,7 @@
           newPlus.innerHTML = '<i class="fas fa-plus"></i>';
           newPlus.onclick = function() { activateSpSlot(this, tabContext); };
           slotsEl.appendChild(newPlus);
+          setTimeout(checkSpChanges, 50);
         }
 
         // Load config into the right panel form
@@ -13863,6 +14061,29 @@
         }
       }
 
+      function activateSpSlot(element, tabContext) {
+        if (element.classList.contains('active')) return;
+        
+        if (hasSpChanges()) {
+            const parent = element.parentElement;
+            const index = Array.from(parent.children).indexOf(element);
+            
+            showSpWarningModal('navigate', () => {
+                proceedActivateSpSlot(element, tabContext);
+            }, () => {
+                revertSpChanges();
+                const newParent = document.getElementById(getSpElId(tabContext, 'Slots'));
+                if (newParent && newParent.children[index]) {
+                    proceedActivateSpSlot(newParent.children[index], tabContext);
+                } else if (newParent && newParent.children.length > 0) {
+                    proceedActivateSpSlot(newParent.children[0], tabContext);
+                }
+            });
+            return;
+        }
+        proceedActivateSpSlot(element, tabContext);
+      }
+
       function removeSpSlot(btn, tabContext) {
         const slot = btn.parentElement;
         const wasActive = slot.classList.contains('active');
@@ -13874,6 +14095,7 @@
             rightPanel.style.pointerEvents = 'none';
           }
         }
+        checkSpChanges();
       }
 
       function changeSpType(val, tabContext) {
@@ -13885,48 +14107,45 @@
       }
 
       function saveActiveSpSlot() {
-        const dineinTab = document.getElementById('sp-dinein');
-        const takeawayTab = document.getElementById('sp-takeaway');
-        const deliveryTab = document.getElementById('sp-delivery');
-
-        let tabContext;
-        if (dineinTab && dineinTab.classList.contains('show')) {
-          tabContext = 'dinein';
-        } else if (takeawayTab && takeawayTab.classList.contains('show')) {
-          tabContext = 'takeaway';
-        } else if (deliveryTab && deliveryTab.classList.contains('show')) {
-          // Find active delivery sub-tab
-          const activeDeliveryTab = document.querySelector('#deliveryTabBar .delivery-tab.active');
-          tabContext = activeDeliveryTab ? activeDeliveryTab.dataset.tabId : 'delivery_1';
-        } else {
-          tabContext = 'dinein';
-        }
-        saveSpSlot(tabContext);
+        saveSpSlot(getCurrentSpTabContext());
       }
 
-      function saveSpSlot(tabContext) {
+      function saveSpSlot(tabContext, onSuccess, onError) {
         const slotsEl = document.getElementById(getSpElId(tabContext, 'Slots'));
-        if (!slotsEl) return;
+        if (!slotsEl) {
+            if (onSuccess) onSuccess();
+            return;
+        }
+        
         const activeSlot = slotsEl.querySelector('.sp-slot.active');
         if (activeSlot && activeSlot.classList.contains('configured')) {
-          const btn = document.getElementById('btnSaveSpecialPrice');
-          if (btn) { btn.classList.add('saving-active'); btn.disabled = true; }
-
           const inputName = document.getElementById(getSpElId(tabContext, 'LabelName'));
           if (inputName && inputName.value.trim() !== '') {
             activeSlot.querySelector('.slot-title').innerText = inputName.value.trim();
           }
-
-          // Save current form inputs into the active slot's dataset before collecting
           saveConfigToSlot(activeSlot, tabContext);
-
-          // Collect ALL data and save to backend
-          const allData = collectAllSpData();
-          google.script.run.withSuccessHandler(function(res) {
-            if (btn) { btn.classList.remove('saving-active'); btn.disabled = false; }
-            if (res && res.status !== 'success') { console.error('Save SP Error:', res.message); }
-          }).saveSpecialPriceConfig(JSON.stringify(allData));
         }
+
+        const btn = document.getElementById('btnSaveSpecialPrice');
+        if (btn) { btn.classList.add('saving-active'); btn.disabled = true; }
+
+        const allData = collectAllSpData();
+        google.script.run.withSuccessHandler(function(res) {
+          if (btn) { btn.classList.remove('saving-active'); btn.disabled = false; }
+          if (res && res.status !== 'success') { 
+              console.error('Save SP Error:', res.message); 
+              alert('Gagal simpan: ' + res.message);
+              if (onError) onError();
+          } else {
+              spInitialDataString = JSON.stringify(allData);
+              checkSpChanges();
+              if (onSuccess) onSuccess();
+          }
+        }).withFailureHandler(function(err) {
+            if (btn) { btn.classList.remove('saving-active'); btn.disabled = false; }
+            alert('Error koneksi: ' + err);
+            if (onError) onError();
+        }).saveSpecialPriceConfig(JSON.stringify(allData));
       }
 
       function saveConfigToSlot(slot, tabContext) {
@@ -13940,6 +14159,9 @@
         
         const dynConfig = document.getElementById(getSpElId(tabContext, 'DynamicConfig'));
         if (!dynConfig) return;
+        
+        const activeToggle = panel.querySelector('.form-check-input[role="switch"]');
+        config.active = activeToggle ? activeToggle.checked : true;
         
         const activeGroup = dynConfig.querySelector('.sp-form-group[data-form-type="' + config.promoType + '"]') || dynConfig.querySelector('#sp-form-' + config.promoType);
         
@@ -14022,6 +14244,11 @@
             changeSpType(config.promoType, tabContext);
         }
 
+        const activeToggle = panel.querySelector('.form-check-input[role="switch"]');
+        if (activeToggle) {
+            activeToggle.checked = (config.active === true || config.active === "true" || config.active === "TRUE" || config.active === undefined);
+        }
+
         const dynConfig = document.getElementById(getSpElId(tabContext, 'DynamicConfig'));
         if (!dynConfig) return;
         const activeGroup = dynConfig.querySelector('.sp-form-group[data-form-type="' + config.promoType + '"]') || dynConfig.querySelector('#sp-form-' + config.promoType);
@@ -14100,6 +14327,12 @@
             typeSelect.value = 'subtotal';
             changeSpType('subtotal', tabContext);
         }
+        
+        const activeToggle = panel.querySelector('.form-check-input[role="switch"]');
+        if (activeToggle) {
+            activeToggle.checked = true;
+        }
+        
         const dynConfig = document.getElementById(getSpElId(tabContext, 'DynamicConfig'));
         if (!dynConfig) return;
         dynConfig.querySelectorAll('input[type="number"]').forEach(el => el.value = '');
@@ -14181,7 +14414,7 @@
                 minPurchaseAmount: cfg.minPurchaseAmount || '',
                 serviceName: serviceNameInput ? serviceNameInput.value : '',
                 serviceIconUrl: (iconPreview && iconPreview.src && !iconPreview.src.includes('data:')) ? iconPreview.src : '',
-                active: 'true'
+                active: (cfg.active !== undefined && String(cfg.active) === 'false') ? 'false' : 'true'
               });
               slotCount++;
             });
@@ -14367,13 +14600,29 @@
         });
       }
 
-      function activateDeliverySubTab(tabId) {
+      function proceedActivateDeliverySubTab(tabId) {
         document.querySelectorAll('#deliveryTabBar .delivery-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('#deliverySubTabContent .delivery-pane').forEach(p => p.classList.remove('active'));
         const tab = document.querySelector(`#deliveryTabBar .delivery-tab[data-tab-id="${tabId}"]`);
         const pane = document.getElementById('pane-' + tabId);
         if (tab) tab.classList.add('active');
         if (pane) pane.classList.add('active');
+      }
+
+      function activateDeliverySubTab(tabId) {
+        const tab = document.querySelector(`#deliveryTabBar .delivery-tab[data-tab-id="${tabId}"]`);
+        if (tab && tab.classList.contains('active')) return;
+        
+        if (hasSpChanges()) {
+            showSpWarningModal('navigate', () => {
+                proceedActivateDeliverySubTab(tabId);
+            }, () => {
+                revertSpChanges();
+                proceedActivateDeliverySubTab(tabId);
+            });
+            return;
+        }
+        proceedActivateDeliverySubTab(tabId);
       }
 
       function removeDeliverySubTab(tabId) {
