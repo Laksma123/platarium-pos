@@ -4122,7 +4122,15 @@
         window.CHECKOUT_PROMO_ITEMS = promoResult.items;
         window.CHECKOUT_APPLIED_PROMOS = promoResult.appliedPromos;
         
+        // Hitung raw subtotal sebelum promo
+        const rawSubtotal = CART.reduce((sum, item) => sum + (getCartItemTotalPrice(item)), 0);
+        window.CHECKOUT_RAW_SUBTOTAL = rawSubtotal;
+        
         let subtotal = promoResult.finalSubtotal;
+        
+        // Hitung total diskon
+        const promoDiscount = Math.max(0, rawSubtotal - subtotal);
+        window.CHECKOUT_PROMO_DISCOUNT = promoDiscount;
         
         // Hitung pajak PPN (jika aktif) pada subtotal setelah diskon promo
         let activeTaxAmount = 0;
@@ -4166,6 +4174,56 @@
 
         // 3. Tampilkan total akhir pembayaran
         document.getElementById('payTotalText').innerText = 'Rp ' + window.CHECKOUT_ADJUSTED_TOTAL.toLocaleString(undefined, {maximumFractionDigits:0});
+        
+        // Update visual breakdown
+        const subtotalEl = document.getElementById('checkoutSubtotalText');
+        if (subtotalEl) {
+          subtotalEl.innerText = 'Rp ' + rawSubtotal.toLocaleString(undefined, {maximumFractionDigits:0});
+        }
+        
+        const discRow = document.getElementById('checkoutDiscountRow');
+        const discText = document.getElementById('checkoutDiscountText');
+        if (discRow && discText) {
+          if (promoDiscount > 0) {
+            discText.innerText = '-Rp ' + promoDiscount.toLocaleString(undefined, {maximumFractionDigits:0});
+            discRow.classList.remove('d-none');
+          } else {
+            discRow.classList.add('d-none');
+          }
+        }
+        
+        const taxRow = document.getElementById('checkoutTaxRow');
+        const taxText = document.getElementById('checkoutTaxText');
+        const taxPercentSpan = document.getElementById('checkoutTaxPercent');
+        if (taxRow && taxText && taxPercentSpan) {
+          if (activeTaxAmount > 0) {
+            taxPercentSpan.innerText = TAX_PERCENTAGE;
+            taxText.innerText = 'Rp ' + activeTaxAmount.toLocaleString(undefined, {maximumFractionDigits:0});
+            taxRow.classList.remove('d-none');
+          } else {
+            taxRow.classList.add('d-none');
+          }
+        }
+        
+        const scRow = document.getElementById('checkoutSurchargeRow');
+        const scText = document.getElementById('checkoutSurchargeText');
+        const scLabel = document.getElementById('checkoutSurchargeLabel');
+        if (scRow && scText && scLabel) {
+          if (window.CHECKOUT_SURCHARGE_INFO && window.CHECKOUT_SURCHARGE_INFO.feeAmount !== 0) {
+            const info = window.CHECKOUT_SURCHARGE_INFO;
+            scLabel.innerText = `(${info.label})`;
+            const sign = info.feeAmount > 0 ? '+Rp ' : '-Rp ';
+            scText.innerText = sign + Math.abs(info.feeAmount).toLocaleString(undefined, {maximumFractionDigits:0});
+            scRow.classList.remove('d-none');
+          } else {
+            scRow.classList.add('d-none');
+          }
+        }
+        
+        const finalTotalEl = document.getElementById('checkoutFinalTotalText');
+        if (finalTotalEl) {
+          finalTotalEl.innerText = 'Rp ' + window.CHECKOUT_ADJUSTED_TOTAL.toLocaleString(undefined, {maximumFractionDigits:0});
+        }
         
         // 4. Hitung Uang Kembalian
         calculateChange();
@@ -9439,7 +9497,10 @@
           addonNotes: finalAddonNotes,
           surchargeInfo: surchargeInfo,
           appliedPromos: window.CHECKOUT_APPLIED_PROMOS || [],
-          orderType: orderType
+          orderType: orderType,
+          subtotal: window.CHECKOUT_RAW_SUBTOTAL || 0,
+          promoDiscount: window.CHECKOUT_PROMO_DISCOUNT || 0,
+          taxAmount: window.CHECKOUT_PROMO_TAX_AMOUNT || 0
         };
 
         google.script.run.withSuccessHandler(res => {
@@ -11537,13 +11598,30 @@
           pushTxt('-'.repeat(maxChars));
         }
         
-        // D2. Surcharge/Potongan Bank
-        const sc = transactionData.surchargeInfo;
-        if (sc && sc.feeAmount !== 0) {
-          if (sc.effect === 'add') {
-            pushTxt(padText(`Surcharge (${sc.label}):`, '+' + Math.abs(sc.feeAmount).toLocaleString('id-ID'), maxChars));
-          }
+        // D4. Rincian Perhitungan (Subtotal -> Promo -> Tax -> Surcharge -> Total)
+        const printSubtotal = transactionData.subtotal || transactionData.items.reduce((sum, item) => {
+          const price = item.customPrice !== undefined ? item.customPrice : item.price;
+          return sum + (price * item.qty);
+        }, 0);
+        pushTxt(padText('Subtotal:', printSubtotal.toLocaleString('id-ID'), maxChars));
+        
+        const printDiscount = transactionData.promoDiscount || 0;
+        if (printDiscount > 0) {
+          pushTxt(padText('Diskon/Promo:', '-' + printDiscount.toLocaleString('id-ID'), maxChars));
         }
+        
+        const printTax = transactionData.taxAmount || 0;
+        if (printTax > 0) {
+          const taxPct = (typeof TAX_PERCENTAGE !== 'undefined') ? TAX_PERCENTAGE : 0;
+          pushTxt(padText(`PPN (${taxPct}%):`, '+' + printTax.toLocaleString('id-ID'), maxChars));
+        }
+        
+        const sc = transactionData.surchargeInfo;
+        if (sc && sc.feeAmount !== 0 && sc.effect === 'add') {
+          pushTxt(padText(`Surcharge (${sc.label}):`, '+' + Math.abs(sc.feeAmount).toLocaleString('id-ID'), maxChars));
+        }
+        
+        pushTxt('-'.repeat(maxChars));
         
         bytes.push(...cmd.boldOn);
         pushTxt(padText('TOTAL:', transactionData.total.toLocaleString('id-ID'), maxChars));
@@ -12804,6 +12882,31 @@
                 <div id="checkoutPromoContainer" class="d-none mt-2">
                   <div class="d-flex flex-wrap gap-2 justify-content-center" id="checkoutPromoBadges">
                     <!-- Badges will be generated dynamically -->
+                  </div>
+                </div>
+                
+                <!-- Checkout Calculation Breakdown -->
+                <div id="checkoutBreakdownContainer" class="bg-white p-3 rounded-4 shadow-sm mt-3 border text-start" style="font-size: 0.85rem;">
+                  <div class="d-flex justify-content-between mb-2 text-muted fw-semibold">
+                    <span>Subtotal</span>
+                    <span id="checkoutSubtotalText">Rp 0</span>
+                  </div>
+                  <div id="checkoutDiscountRow" class="d-flex justify-content-between mb-2 text-danger fw-bold d-none">
+                    <span>Promo / Diskon</span>
+                    <span id="checkoutDiscountText">-Rp 0</span>
+                  </div>
+                  <div id="checkoutTaxRow" class="d-flex justify-content-between mb-2 text-warning-emphasis fw-semibold d-none">
+                    <span>PPN (<span id="checkoutTaxPercent">0</span>%)</span>
+                    <span id="checkoutTaxText">Rp 0</span>
+                  </div>
+                  <div id="checkoutSurchargeRow" class="d-flex justify-content-between mb-2 text-primary fw-semibold d-none">
+                    <span>Surcharge <span id="checkoutSurchargeLabel"></span></span>
+                    <span id="checkoutSurchargeText">Rp 0</span>
+                  </div>
+                  <hr class="my-2" style="border-top: 1px dashed #dee2e6; opacity: 1;">
+                  <div class="d-flex justify-content-between fw-bold text-dark fs-6">
+                    <span>Total Akhir</span>
+                    <span id="checkoutFinalTotalText">Rp 0</span>
                   </div>
                 </div>
               </div>
