@@ -2569,7 +2569,7 @@
                     <label class="btn btn-outline-warning w-100 fw-bold py-2 rounded-3" for="posKitchen" style="--bs-btn-color: #9e6f00; --bs-btn-border-color: #9e6f00;">KITCHEN</label>
                     
                     <input type="radio" class="btn-check" name="newPPos" id="posBar" value="BAR">
-                    <label class="btn btn-outline-info w-100 fw-bold py-2 rounded-3" for="posBar" style="--bs-btn-color: #0c5460; --bs-btn-border-color: #0c5460;">BARISTA</label>
+                    <label class="btn btn-outline-info w-100 fw-bold py-2 rounded-3" for="posBar" style="--bs-btn-color: #0c5460; --bs-btn-border-color: #0c5460;">BAR</label>
                   </div>
                 </div>
 
@@ -2622,6 +2622,47 @@
             <div class="d-flex gap-2">
               <button class="btn btn-light w-100 rounded-pill fw-bold" onclick="document.getElementById('modalQuickPrice').classList.add('d-none')">Batal</button>
               <button class="btn btn-success w-100 rounded-pill fw-bold shadow-sm" id="btnSaveQuickPrice" onclick="executeQuickPriceEdit()">Simpan</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="modalEditCategory" class="login-overlay d-none" style="background: rgba(0,0,0,0.8); z-index: 10500; opacity: 1 !important;">
+          <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column" style="width: 90%; max-width: 400px; animation: slideUp 0.3s ease-out;">
+            <h5 class="fw-bold mb-3 border-bottom pb-2"><i class="fas fa-edit text-warning me-2"></i>Ubah Kategori & Pos</h5>
+            
+            <input type="hidden" id="editCatProductId">
+            
+            <div class="mb-3">
+              <label class="small fw-bold text-muted">MENU</label>
+              <div class="fw-bold text-dark fs-6" id="editCatProductName">Nama Menu</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="small fw-bold text-muted">KATEGORI</label>
+              <select id="editPCategorySelect" class="form-select fw-bold mb-2 border-2" onchange="handleEditCategorySelectChange()">
+                <!-- Populated dynamically -->
+              </select>
+              <div id="editCategoryInputContainer" class="d-none">
+                <input type="text" id="editCategoryNameInput" class="form-control fw-bold border-2" placeholder="Ketik nama kategori baru...">
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="small fw-bold text-muted d-block mb-2">POS KERJA / DIKERJAKAN OLEH</label>
+              <div class="d-flex gap-2">
+                <input type="radio" class="btn-check" name="editPPosRadio" id="editPosKitchen" value="KITCHEN">
+                <label class="btn btn-outline-warning w-100 fw-bold py-2 rounded-3" for="editPosKitchen" style="--bs-btn-color: #9e6f00; --bs-btn-border-color: #9e6f00;">KITCHEN</label>
+                
+                <input type="radio" class="btn-check" name="editPPosRadio" id="editPosBar" value="BAR">
+                <label class="btn btn-outline-info w-100 fw-bold py-2 rounded-3" for="editPosBar" style="--bs-btn-color: #0c5460; --bs-btn-border-color: #0c5460;">BAR</label>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button class="btn btn-light w-100 rounded-pill fw-bold" onclick="closeEditCategoryModal()">Batal</button>
+              <button class="btn btn-success w-100 rounded-pill fw-bold shadow-sm" id="btnSaveEditCategory" onclick="executeCategoryAndPosEdit()">
+                <span id="btnSaveEditCategoryText">Simpan</span>
+              </button>
             </div>
           </div>
         </div>
@@ -7832,7 +7873,15 @@
                 </button>
               </div>
             </td>
-            <td><span class="badge bg-light text-dark border shadow-sm">${p.category}</span> <span class="badge ${p.posKerja === 'BAR' ? 'bg-info' : 'bg-warning'} text-dark shadow-sm ms-1" style="font-size: 0.6rem;">${p.posKerja || ''}</span></td>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <span class="badge bg-light text-dark border shadow-sm">${p.category}</span>
+                <span class="badge ${p.posKerja === 'BAR' ? 'bg-info' : 'bg-warning'} text-dark shadow-sm" style="font-size: 0.6rem;">${p.posKerja || ''}</span>
+                <button class="btn btn-sm btn-light rounded-circle shadow-sm border text-primary" style="width: 24px; height: 24px; padding: 0; flex-shrink: 0;" onclick="openEditCategoryModal('${p.id}', '${p.name.replace(/'/g, "\\'")}', '${p.category.replace(/'/g, "\\'")}', '${p.posKerja || ''}')" title="Ubah Kategori & Pos Kerja">
+                  <i class="fas fa-pencil-alt" style="font-size: 0.65rem;"></i>
+                </button>
+              </div>
+            </td>
             <td class="text-center">
               <button class="btn btn-outline-warning btn-sm rounded-pill fw-bold border-2" onclick="openRecipeSettings('${p.id}', '${p.name}')">
                 <i class="fas fa-list me-1"></i> Resep
@@ -12989,6 +13038,125 @@
                   alert(res.message);
               }
           }).updateProductPrice(id, newPrice);
+      }
+
+      function openEditCategoryModal(id, name, currentCategory, currentPos) {
+          document.getElementById('editCatProductId').value = id;
+          document.getElementById('editCatProductName').innerText = name;
+          
+          populateEditCategorySelect(currentCategory);
+          
+          const posKitchen = document.getElementById('editPosKitchen');
+          const posBar = document.getElementById('editPosBar');
+          if (currentPos === 'BAR') {
+              posBar.checked = true;
+          } else {
+              posKitchen.checked = true;
+          }
+          
+          document.getElementById('modalEditCategory').classList.remove('d-none');
+      }
+
+      function populateEditCategorySelect(selectedCategory) {
+          const select = document.getElementById('editPCategorySelect');
+          if (!select) return;
+
+          const uniqueCategories = [...new Set(PRODUCTS.map(p => p.category))].filter(Boolean);
+          uniqueCategories.sort((a, b) => a.localeCompare(b));
+
+          let html = `
+            <option value="" disabled>Pilih Kategori...</option>
+            <option value="NEW_CATEGORY" class="text-primary fw-bold">[+] Buat Kategori Baru...</option>
+          `;
+
+          uniqueCategories.forEach(cat => {
+            html += `<option value="${cat}">${cat}</option>`;
+          });
+
+          select.innerHTML = html;
+          
+          if (uniqueCategories.includes(selectedCategory)) {
+              select.value = selectedCategory;
+          } else if (selectedCategory) {
+              const newOpt = document.createElement('option');
+              newOpt.value = selectedCategory;
+              newOpt.text = selectedCategory;
+              select.appendChild(newOpt);
+              select.value = selectedCategory;
+          } else {
+              select.value = "";
+          }
+
+          const container = document.getElementById('editCategoryInputContainer');
+          if (container) container.classList.add('d-none');
+          const input = document.getElementById('editCategoryNameInput');
+          if (input) input.value = '';
+      }
+
+      function handleEditCategorySelectChange() {
+          const select = document.getElementById('editPCategorySelect');
+          const container = document.getElementById('editCategoryInputContainer');
+          const input = document.getElementById('editCategoryNameInput');
+
+          if (select && select.value === 'NEW_CATEGORY') {
+              if (container) container.classList.remove('d-none');
+              if (input) {
+                  input.value = '';
+                  input.focus();
+              }
+          } else {
+              if (container) container.classList.add('d-none');
+              if (input) input.value = '';
+          }
+      }
+
+      function closeEditCategoryModal() {
+          document.getElementById('modalEditCategory').classList.add('d-none');
+      }
+
+      function executeCategoryAndPosEdit() {
+          const id = document.getElementById('editCatProductId').value;
+          
+          const catSelect = document.getElementById('editPCategorySelect');
+          let cat = catSelect.value;
+          if (cat === 'NEW_CATEGORY') {
+              cat = document.getElementById('editCategoryNameInput').value.trim();
+              if (!cat) return alert("Masukkan nama kategori baru!");
+          }
+          
+          const posKerja = document.querySelector('input[name="editPPosRadio"]:checked')?.value;
+          
+          if(!id || !cat || !posKerja) return alert("Kategori dan Pos Kerja wajib diisi!");
+          
+          const btn = document.getElementById('btnSaveEditCategory');
+          const btnText = document.getElementById('btnSaveEditCategoryText');
+          
+          btnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+          btn.disabled = true;
+
+          google.script.run.withSuccessHandler(res => {
+              btnText.innerHTML = 'Simpan';
+              btn.disabled = false;
+              if(res.status === 'success') {
+                  document.getElementById('modalEditCategory').classList.add('d-none');
+                  
+                  const prodIndex = PRODUCTS.findIndex(p => p.id === id);
+                  if(prodIndex > -1) {
+                      PRODUCTS[prodIndex].category = cat;
+                      PRODUCTS[prodIndex].posKerja = posKerja;
+                  }
+                  
+                  renderProductTable();
+                  updateCategoryDropdown();
+                  renderProductGrid();
+                  
+                  if (typeof triggerAuditLog === 'function') {
+                      triggerAuditLog("UPDATE KATEGORI", `Merubah kategori & pos kerja menu ID ${id} menjadi Kategori: ${cat}, Pos: ${posKerja}`);
+                  }
+              } else {
+                  alert(res.message);
+              }
+          }).updateProductCategoryAndPos(id, cat, posKerja);
       }
     </script>
 
