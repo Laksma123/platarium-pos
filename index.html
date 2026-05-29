@@ -2951,7 +2951,7 @@
                                   <option value="today">HARI INI</option>
                                   <option value="specific">Tanggal Tertentu</option>
                                 </select>
-                                <input type="date" id="spDineInAutoPlayStartDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" onchange="onAutoPlayDateChange('dinein', 'start')">
+                                <input type="text" id="spDineInAutoPlayStartDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" placeholder="Pilih Tanggal Mulai" readonly>
                               </div>
                               <div class="col-6">
                                 <label class="small fw-bold text-muted mb-1">Berakhir</label>
@@ -2959,7 +2959,7 @@
                                   <option value="today">HARI INI</option>
                                   <option value="specific">Tanggal Tertentu</option>
                                 </select>
-                                <input type="date" id="spDineInAutoPlayEndDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" onchange="onAutoPlayDateChange('dinein', 'end')">
+                                <input type="text" id="spDineInAutoPlayEndDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" placeholder="Pilih Tanggal Selesai" readonly>
                               </div>
                             </div>
                             
@@ -2974,9 +2974,9 @@
                               <div class="col-6" id="spDineInAutoPlayTimeManualCol" style="display:none;">
                                 <label class="small fw-bold text-muted mb-1">Sampai Jam / Durasi</label>
                                 <div class="d-flex align-items-center gap-1">
-                                  <input type="time" id="spDineInAutoPlayStartTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" onchange="checkSpChanges()">
+                                  <input type="text" id="spDineInAutoPlayStartTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" placeholder="Mulai" readonly onchange="checkSpChanges()">
                                   <span class="small fw-bold text-muted">-</span>
-                                  <input type="time" id="spDineInAutoPlayEndTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" onchange="checkSpChanges()">
+                                  <input type="text" id="spDineInAutoPlayEndTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" placeholder="Sampai" readonly onchange="checkSpChanges()">
                                 </div>
                               </div>
                             </div>
@@ -3003,7 +3003,7 @@
                                   <option value="today">HARI INI</option>
                                   <option value="specific">Tanggal Tertentu</option>
                                 </select>
-                                <input type="date" id="spTakeawayAutoPlayStartDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" onchange="onAutoPlayDateChange('takeaway', 'start')">
+                                <input type="text" id="spTakeawayAutoPlayStartDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" placeholder="Pilih Tanggal Mulai" readonly>
                               </div>
                               <div class="col-6">
                                 <label class="small fw-bold text-muted mb-1">Berakhir</label>
@@ -3011,7 +3011,7 @@
                                   <option value="today">HARI INI</option>
                                   <option value="specific">Tanggal Tertentu</option>
                                 </select>
-                                <input type="date" id="spTakeawayAutoPlayEndDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" onchange="onAutoPlayDateChange('takeaway', 'end')">
+                                <input type="text" id="spTakeawayAutoPlayEndDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" placeholder="Pilih Tanggal Selesai" readonly>
                               </div>
                             </div>
                             
@@ -3026,9 +3026,9 @@
                               <div class="col-6" id="spTakeawayAutoPlayTimeManualCol" style="display:none;">
                                 <label class="small fw-bold text-muted mb-1">Sampai Jam / Durasi</label>
                                 <div class="d-flex align-items-center gap-1">
-                                  <input type="time" id="spTakeawayAutoPlayStartTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" onchange="checkSpChanges()">
+                                  <input type="text" id="spTakeawayAutoPlayStartTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" placeholder="Mulai" readonly onchange="checkSpChanges()">
                                   <span class="small fw-bold text-muted">-</span>
-                                  <input type="time" id="spTakeawayAutoPlayEndTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" onchange="checkSpChanges()">
+                                  <input type="text" id="spTakeawayAutoPlayEndTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" placeholder="Sampai" readonly onchange="checkSpChanges()">
                                 </div>
                               </div>
                             </div>
@@ -3720,6 +3720,7 @@
       let ATTENDANCE_LOGS = []; // Menampung data absensi dari server
       let TRANSACTIONS_DATA = [];
       let ATTENDANCE_DATA = [];
+      let SPECIAL_PRICE_CONFIG = [];
       let SYNC_INTERVAL = null;
       let MANUAL_BASKET = [];
       let NEXT_MANUAL_ID = "";
@@ -6010,6 +6011,18 @@
             if (['MONITOR', 'KITCHEN', 'BARISTA'].includes(USER_ROLE)) renderMonitorUI();
             renderMonitorUI(); // Memperbarui Tab Order untuk semua role yang memiliki akses
           }).getAllTransactionData();
+
+          google.script.run.withSuccessHandler(function(spRes) {
+            if (spRes && spRes.status === 'success' && spRes.data) {
+              SPECIAL_PRICE_CONFIG = spRes.data;
+              const spModal = document.getElementById('modalSpecialPrice');
+              if (spModal && !spModal.classList.contains('d-none')) {
+                if (!hasSpChanges()) {
+                  loadSpDataFromBackend(spRes.data);
+                }
+              }
+            }
+          }).loadSpecialPriceConfig();
 
           google.script.run.withSuccessHandler(data => {
             ATTENDANCE_DATA = data;
@@ -14455,6 +14468,8 @@
             } catch(e) {}
         }
 
+        initAutoPlayPickers(tabContext);
+
         let autoPlay = config.autoPlayConfig || {
           enabled: false, startType: 'today', startDate: '', endType: 'today', endDate: '', timeType: 'fullday', startTime: '00:00', endTime: '00:00'
         };
@@ -14472,7 +14487,11 @@
         
         const autoPlayStartDate = panel.querySelector('input[id*="AutoPlayStartDate"]');
         if (autoPlayStartDate) {
-          autoPlayStartDate.value = autoPlay.startDate || '';
+          if (autoPlayStartDate._flatpickr) {
+            autoPlayStartDate._flatpickr.setDate(autoPlay.startDate || '');
+          } else {
+            autoPlayStartDate.value = autoPlay.startDate || '';
+          }
           autoPlayStartDate.classList.toggle('d-none', autoPlay.startType !== 'specific');
         }
         
@@ -14481,7 +14500,14 @@
         
         const autoPlayEndDate = panel.querySelector('input[id*="AutoPlayEndDate"]');
         if (autoPlayEndDate) {
-          autoPlayEndDate.value = autoPlay.endDate || '';
+          if (autoPlayEndDate._flatpickr) {
+            autoPlayEndDate._flatpickr.setDate(autoPlay.endDate || '');
+            if (autoPlay.startDate) {
+              autoPlayEndDate._flatpickr.set('minDate', autoPlay.startDate);
+            }
+          } else {
+            autoPlayEndDate.value = autoPlay.endDate || '';
+          }
           autoPlayEndDate.classList.toggle('d-none', autoPlay.endType !== 'specific');
         }
         
@@ -14494,10 +14520,22 @@
         }
         
         const autoPlayStartTime = panel.querySelector('input[id*="AutoPlayStartTime"]');
-        if (autoPlayStartTime) autoPlayStartTime.value = autoPlay.startTime || '00:00';
+        if (autoPlayStartTime) {
+          if (autoPlayStartTime._flatpickr) {
+            autoPlayStartTime._flatpickr.setDate(autoPlay.startTime || '00:00');
+          } else {
+            autoPlayStartTime.value = autoPlay.startTime || '00:00';
+          }
+        }
         
         const autoPlayEndTime = panel.querySelector('input[id*="AutoPlayEndTime"]');
-        if (autoPlayEndTime) autoPlayEndTime.value = autoPlay.endTime || '00:00';
+        if (autoPlayEndTime) {
+          if (autoPlayEndTime._flatpickr) {
+            autoPlayEndTime._flatpickr.setDate(autoPlay.endTime || '00:00');
+          } else {
+            autoPlayEndTime.value = autoPlay.endTime || '00:00';
+          }
+        }
         
         toggleAutoPlayUI(tabContext);
       }
@@ -14549,13 +14587,21 @@
         if (autoPlayStartType) autoPlayStartType.value = 'today';
         
         const autoPlayStartDate = panel.querySelector('input[id*="AutoPlayStartDate"]');
-        if (autoPlayStartDate) { autoPlayStartDate.value = ''; autoPlayStartDate.classList.add('d-none'); }
+        if (autoPlayStartDate) {
+          if (autoPlayStartDate._flatpickr) autoPlayStartDate._flatpickr.clear();
+          else autoPlayStartDate.value = '';
+          autoPlayStartDate.classList.add('d-none');
+        }
         
         const autoPlayEndType = panel.querySelector('select[id*="AutoPlayEndType"]');
         if (autoPlayEndType) autoPlayEndType.value = 'today';
         
         const autoPlayEndDate = panel.querySelector('input[id*="AutoPlayEndDate"]');
-        if (autoPlayEndDate) { autoPlayEndDate.value = ''; autoPlayEndDate.classList.add('d-none'); }
+        if (autoPlayEndDate) {
+          if (autoPlayEndDate._flatpickr) autoPlayEndDate._flatpickr.clear();
+          else autoPlayEndDate.value = '';
+          autoPlayEndDate.classList.add('d-none');
+        }
         
         const autoPlayTimeType = panel.querySelector('select[id*="AutoPlayTimeType"]');
         if (autoPlayTimeType) autoPlayTimeType.value = 'fullday';
@@ -14564,10 +14610,16 @@
         if (manualCol) manualCol.style.display = 'none';
         
         const autoPlayStartTime = panel.querySelector('input[id*="AutoPlayStartTime"]');
-        if (autoPlayStartTime) autoPlayStartTime.value = '00:00';
+        if (autoPlayStartTime) {
+          if (autoPlayStartTime._flatpickr) autoPlayStartTime._flatpickr.setDate('00:00');
+          else autoPlayStartTime.value = '00:00';
+        }
         
         const autoPlayEndTime = panel.querySelector('input[id*="AutoPlayEndTime"]');
-        if (autoPlayEndTime) autoPlayEndTime.value = '00:00';
+        if (autoPlayEndTime) {
+          if (autoPlayEndTime._flatpickr) autoPlayEndTime._flatpickr.setDate('00:00');
+          else autoPlayEndTime.value = '00:00';
+        }
         
         toggleAutoPlayUI(tabContext);
       }
@@ -15062,7 +15114,7 @@
                         <option value="today">HARI INI</option>
                         <option value="specific">Tanggal Tertentu</option>
                       </select>
-                      <input type="date" id="\${prefix}AutoPlayStartDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" onchange="onAutoPlayDateChange('\${tabId}', 'start')">
+                      <input type="text" id="\${prefix}AutoPlayStartDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" placeholder="Pilih Tanggal Mulai" readonly>
                     </div>
                     <div class="col-6">
                       <label class="small fw-bold text-muted mb-1">Berakhir</label>
@@ -15070,7 +15122,7 @@
                         <option value="today">HARI INI</option>
                         <option value="specific">Tanggal Tertentu</option>
                       </select>
-                      <input type="date" id="\${prefix}AutoPlayEndDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" onchange="onAutoPlayDateChange('\${tabId}', 'end')">
+                      <input type="text" id="\${prefix}AutoPlayEndDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" placeholder="Pilih Tanggal Selesai" readonly>
                     </div>
                   </div>
                   
@@ -15085,9 +15137,9 @@
                     <div class="col-6" id="\${prefix}AutoPlayTimeManualCol" style="display:none;">
                       <label class="small fw-bold text-muted mb-1">Sampai Jam / Durasi</label>
                       <div class="d-flex align-items-center gap-1">
-                        <input type="time" id="\${prefix}AutoPlayStartTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" onchange="checkSpChanges()">
+                        <input type="text" id="\${prefix}AutoPlayStartTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" placeholder="Mulai" readonly>
                         <span class="small fw-bold text-muted">-</span>
-                        <input type="time" id="\${prefix}AutoPlayEndTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" onchange="checkSpChanges()">
+                        <input type="text" id="\${prefix}AutoPlayEndTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" placeholder="Sampai" readonly>
                       </div>
                     </div>
                   </div>
@@ -15099,6 +15151,67 @@
       }
 
       // --- AUTOPLAY CONTROLLERS ---
+      // --- AUTOPLAY PICKER INITIALIZER (FLATPICKR) ---
+      function initAutoPlayPickers(tabContext) {
+        const startInput = document.getElementById(getSpElId(tabContext, 'AutoPlayStartDate'));
+        const endInput = document.getElementById(getSpElId(tabContext, 'AutoPlayEndDate'));
+        const startTime = document.getElementById(getSpElId(tabContext, 'AutoPlayStartTime'));
+        const endTime = document.getElementById(getSpElId(tabContext, 'AutoPlayEndTime'));
+
+        if (startInput && !startInput._flatpickr) {
+          flatpickr(startInput, {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d-m-Y",
+            allowInput: true,
+            disableMobile: true,
+            onChange: function() {
+              onAutoPlayDateChange(tabContext, 'start');
+            },
+            onClose: function() {
+              onAutoPlayDateChange(tabContext, 'start');
+            }
+          });
+        }
+        if (endInput && !endInput._flatpickr) {
+          flatpickr(endInput, {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d-m-Y",
+            allowInput: true,
+            disableMobile: true,
+            onChange: function() {
+              onAutoPlayDateChange(tabContext, 'end');
+            },
+            onClose: function() {
+              onAutoPlayDateChange(tabContext, 'end');
+            }
+          });
+        }
+        if (startTime && !startTime._flatpickr) {
+          flatpickr(startTime, {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true,
+            disableMobile: true,
+            onChange: checkSpChanges,
+            onClose: checkSpChanges
+          });
+        }
+        if (endTime && !endTime._flatpickr) {
+          flatpickr(endTime, {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true,
+            disableMobile: true,
+            onChange: checkSpChanges,
+            onClose: checkSpChanges
+          });
+        }
+      }
+
       function toggleAutoPlayUI(tabContext) {
         const toggle = document.getElementById(getSpElId(tabContext, 'AutoPlayToggle'));
         const content = document.getElementById(getSpElId(tabContext, 'AutoPlayContent'));
@@ -15106,6 +15219,7 @@
           if (toggle.checked) {
             content.style.opacity = '1';
             content.style.pointerEvents = 'auto';
+            initAutoPlayPickers(tabContext);
           } else {
             content.style.opacity = '0.4';
             content.style.pointerEvents = 'none';
@@ -15119,20 +15233,35 @@
         const dateInput = document.getElementById(getSpElId(tabContext, dateField === 'start' ? 'AutoPlayStartDate' : 'AutoPlayEndDate'));
         
         if (typeSelect && dateInput) {
+          initAutoPlayPickers(tabContext);
           if (typeSelect.value === 'specific') {
             dateInput.classList.remove('d-none');
+            if (dateInput._flatpickr && dateInput._flatpickr.altInput) {
+              dateInput._flatpickr.altInput.classList.remove('d-none');
+            }
             // Show picker automatically
             setTimeout(() => {
-              try { dateInput.showPicker(); } catch(e) { dateInput.focus(); }
+              if (dateInput._flatpickr) {
+                dateInput._flatpickr.open();
+              } else {
+                try { dateInput.focus(); } catch(e) {}
+              }
             }, 100);
           } else {
             dateInput.classList.add('d-none');
-            dateInput.value = '';
+            if (dateInput._flatpickr) {
+              if (dateInput._flatpickr.altInput) {
+                dateInput._flatpickr.altInput.classList.add('d-none');
+              }
+              dateInput._flatpickr.clear();
+            } else {
+              dateInput.value = '';
+            }
           }
         }
         checkSpChanges();
       }
-
+ 
       function onAutoPlayDateChange(tabContext, dateField) {
         if (dateField === 'start') {
           const startDateInput = document.getElementById(getSpElId(tabContext, 'AutoPlayStartDate'));
@@ -15140,19 +15269,38 @@
           const endDateInput = document.getElementById(getSpElId(tabContext, 'AutoPlayEndDate'));
           
           if (startDateInput && endTypeSelect && endDateInput) {
+            initAutoPlayPickers(tabContext);
             const startDateVal = startDateInput.value;
-            endDateInput.min = startDateVal;
+            
+            if (endDateInput._flatpickr) {
+              endDateInput._flatpickr.set('minDate', startDateVal);
+            } else {
+              endDateInput.min = startDateVal;
+            }
             
             // Auto switch end type to specific (Traveloka checkout style)
             endTypeSelect.value = 'specific';
             endDateInput.classList.remove('d-none');
+            if (endDateInput._flatpickr && endDateInput._flatpickr.altInput) {
+              endDateInput._flatpickr.altInput.classList.remove('d-none');
+            }
             
-            if (!endDateInput.value || endDateInput.value < startDateVal) {
-              endDateInput.value = startDateVal;
+            let curEndVal = endDateInput.value;
+            if (!curEndVal || curEndVal < startDateVal) {
+              curEndVal = startDateVal;
+              if (endDateInput._flatpickr) {
+                endDateInput._flatpickr.setDate(startDateVal);
+              } else {
+                endDateInput.value = startDateVal;
+              }
             }
             
             setTimeout(() => {
-              try { endDateInput.showPicker(); } catch(e) { endDateInput.focus(); }
+              if (endDateInput._flatpickr) {
+                endDateInput._flatpickr.open();
+              } else {
+                try { endDateInput.focus(); } catch(e) {}
+              }
             }, 150);
           }
         }
@@ -15163,12 +15311,17 @@
         const typeSelect = document.getElementById(getSpElId(tabContext, 'AutoPlayTimeType'));
         const manualCol = document.getElementById(getSpElId(tabContext, 'AutoPlayTimeManualCol'));
         if (typeSelect && manualCol) {
+          initAutoPlayPickers(tabContext);
           if (typeSelect.value === 'manual') {
             manualCol.style.display = 'block';
             const startTimeInput = document.getElementById(getSpElId(tabContext, 'AutoPlayStartTime'));
             if (startTimeInput) {
               setTimeout(() => {
-                try { startTimeInput.showPicker(); } catch(e) { startTimeInput.focus(); }
+                if (startTimeInput._flatpickr) {
+                  startTimeInput._flatpickr.open();
+                } else {
+                  try { startTimeInput.focus(); } catch(e) {}
+                }
               }, 100);
             }
           } else {
