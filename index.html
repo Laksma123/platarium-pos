@@ -81,6 +81,19 @@
         gap: 4px;
         animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       }
+      .promo-badge-checkout-semi {
+        background: rgba(243, 156, 18, 0.1) !important;
+        color: #d35400 !important;
+        border: 1px solid rgba(243, 156, 18, 0.3) !important;
+        font-size: 0.75rem;
+        font-weight: bold;
+        padding: 6px 12px;
+        border-radius: 50px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
       @keyframes popIn {
         0% { transform: scale(0.8); opacity: 0; }
         100% { transform: scale(1); opacity: 1; }
@@ -4229,20 +4242,189 @@
         calculateChange();
         
         // 5. Tampilkan indikator badge promo yang berhasil lolos syarat
-        updateCheckoutPromoBadgeUI(promoResult.appliedPromos);
+        const clues = getCheckoutPromoClues(CART, promoOrderType);
+        updateCheckoutPromoBadgeUI(clues);
       }
 
-      function updateCheckoutPromoBadgeUI(appliedPromos) {
+      function getCheckoutPromoClues(cart, orderType) {
+        let tabName = '';
+        if (orderType === 'Dine In') tabName = 'dinein';
+        else if (orderType === 'Takeaway') tabName = 'takeaway';
+        else if (orderType && orderType.startsWith('delivery_')) tabName = orderType;
+        else if (orderType === 'Delivery') tabName = 'delivery';
+
+        if ((tabName !== 'dinein' && tabName !== 'takeaway' && !tabName.startsWith('delivery_')) || !SPECIAL_PRICE_CONFIG || SPECIAL_PRICE_CONFIG.length === 0) {
+          return [];
+        }
+
+        const activePromos = SPECIAL_PRICE_CONFIG.filter(p => {
+          if (p.tab === 'delivery') {
+            return p.subTab === tabName && (p.active === true || p.active === 'true' || p.active === 'TRUE');
+          }
+          return p.tab === tabName && (p.active === true || p.active === 'true' || p.active === 'TRUE');
+        });
+
+        let clues = [];
+
+        function getProductCategory(item) {
+          const prod = PRODUCTS.find(p => String(p.id) === String(item.id) || p.name === item.name);
+          return prod ? prod.category : 'Lainnya';
+        }
+
+        function findProductName(idOrName) {
+          const prod = PRODUCTS.find(p => String(p.id) === String(idOrName) || p.name === idOrName);
+          return prod ? prod.name : idOrName;
+        }
+
+        let rawSubtotal = cart.reduce((sum, i) => sum + ((i.customPrice !== undefined ? i.customPrice : i.price) * i.qty), 0);
+
+        activePromos.forEach(promo => {
+          const promoType = promo.promoType;
+          
+          if (promoType === 'item') {
+            const target = promo.itemTarget;
+            const match = cart.find(item => String(item.id) === String(target) || item.name === target);
+            if (match) {
+              const discVal = parseFloat(promo.discountValue) || 0;
+              const formattedDisc = (promo.discountForm === 'percent' || promo.discountForm === '%') ? `${discVal}%` : `Rp ${discVal.toLocaleString('id-ID')}`;
+              clues.push({
+                text: `Diskon ${formattedDisc} untuk ${findProductName(target)}!`,
+                status: 'fulfilled'
+              });
+            }
+          } else if (promoType === 'category') {
+            const target = promo.categoryTarget;
+            const hasCat = cart.some(item => getProductCategory(item) === target);
+            if (hasCat) {
+              const discVal = parseFloat(promo.discountValue) || 0;
+              const formattedDisc = (promo.discountForm === 'percent' || promo.discountForm === '%') ? `${discVal}%` : `Rp ${discVal.toLocaleString('id-ID')}`;
+              clues.push({
+                text: `Diskon ${formattedDisc} untuk kategori ${target}!`,
+                status: 'fulfilled'
+              });
+            }
+          } else if (promoType === 'all_menu') {
+            if (cart.length > 0) {
+              const discVal = parseFloat(promo.discountValue) || 0;
+              const formattedDisc = (promo.discountForm === 'percent' || promo.discountForm === '%') ? `${discVal}%` : `Rp ${discVal.toLocaleString('id-ID')}`;
+              clues.push({
+                text: `Diskon ${formattedDisc} untuk semua menu!`,
+                status: 'fulfilled'
+              });
+            }
+          } else if (promoType === 'subtotal') {
+            const minAmt = parseFloat(promo.minPurchaseAmount) || 0;
+            if (rawSubtotal >= minAmt) {
+              const discVal = parseFloat(promo.discountValue) || 0;
+              const formattedDisc = (promo.discountForm === 'percent' || promo.discountForm === '%') ? `${discVal}%` : `Rp ${discVal.toLocaleString('id-ID')}`;
+              clues.push({
+                text: `Diskon ${formattedDisc} belanja tercapai!`,
+                status: 'fulfilled'
+              });
+            }
+          } else if (promoType === 'min_purchase') {
+            const minAmt = parseFloat(promo.minPurchaseAmount) || 0;
+            if (rawSubtotal >= minAmt) {
+              let buyGetData = null;
+              try {
+                buyGetData = typeof promo.buyGetData === 'string' ? JSON.parse(promo.buyGetData) : promo.buyGetData;
+              } catch (e) {}
+              if (buyGetData && buyGetData.rewards && buyGetData.rewards.length > 0) {
+                buyGetData.rewards.forEach(reward => {
+                  const rewQty = parseInt(reward.qty) || 0;
+                  const rewItem = reward.item;
+                  const rewPrice = parseFloat(reward.price) || 0;
+                  
+                  const match = cart.find(item => String(item.id) === String(rewItem) || item.name === rewItem);
+                  const isFree = rewPrice === 0;
+                  const rewardText = isFree ? 'gratis' : `Rp ${rewPrice.toLocaleString('id-ID')}`;
+
+                  if (match && match.qty >= rewQty) {
+                    clues.push({
+                      text: `Tebus murah ${rewQty}x ${findProductName(rewItem)} seharga ${rewardText} berhasil!`,
+                      status: 'fulfilled'
+                    });
+                  } else {
+                    const currentQty = match ? match.qty : 0;
+                    const missingQty = Math.max(0, rewQty - currentQty);
+                    clues.push({
+                      text: `Masukkan ${missingQty}x ${findProductName(rewItem)} untuk tebus murah seharga ${rewardText}!`,
+                      status: 'semi-fulfilled'
+                    });
+                  }
+                });
+              }
+            }
+          } else if (promoType === 'buy_get') {
+            let buyGetData = null;
+            try {
+              buyGetData = typeof promo.buyGetData === 'string' ? JSON.parse(promo.buyGetData) : promo.buyGetData;
+            } catch (e) {}
+            if (buyGetData) {
+              // Cek apakah semua requirement terpenuhi
+              let reqsMet = true;
+              if (buyGetData.reqs && buyGetData.reqs.length > 0) {
+                buyGetData.reqs.forEach(req => {
+                  const reqQty = parseInt(req.qty) || 0;
+                  const reqItem = req.item;
+                  const match = cart.find(item => String(item.id) === String(reqItem) || item.name === reqItem);
+                  if (!match || match.qty < reqQty) {
+                    reqsMet = false;
+                  }
+                });
+              } else {
+                reqsMet = false;
+              }
+
+              if (reqsMet) {
+                if (buyGetData.rewards && buyGetData.rewards.length > 0) {
+                  buyGetData.rewards.forEach(reward => {
+                    const rewQty = parseInt(reward.qty) || 0;
+                    const rewItem = reward.item;
+                    const rewPrice = parseFloat(reward.price) || 0;
+                    
+                    const match = cart.find(item => String(item.id) === String(rewItem) || item.name === rewItem);
+                    const isFree = rewPrice === 0;
+                    const rewardText = isFree ? 'gratis' : `Rp ${rewPrice.toLocaleString('id-ID')}`;
+
+                    if (match && match.qty >= rewQty) {
+                      clues.push({
+                        text: `Pembeli dapat gratis ${rewQty}x ${findProductName(rewItem)}!`,
+                        status: 'fulfilled'
+                      });
+                    } else {
+                      const currentQty = match ? match.qty : 0;
+                      const missingQty = Math.max(0, rewQty - currentQty);
+                      clues.push({
+                        text: `Masukkan ${missingQty}x ${findProductName(rewItem)} sebagai reward gratis!`,
+                        status: 'semi-fulfilled'
+                      });
+                    }
+                  });
+                }
+              }
+            }
+          }
+        });
+
+        return clues;
+      }
+
+      function updateCheckoutPromoBadgeUI(promoClues) {
         const container = document.getElementById('checkoutPromoContainer');
         const badgeList = document.getElementById('checkoutPromoBadges');
         if (!container || !badgeList) return;
 
-        if (appliedPromos && appliedPromos.length > 0) {
-          badgeList.innerHTML = appliedPromos.map(name => `
-            <span class="promo-badge-checkout">
-              <i class="fas fa-gift me-1"></i> ${name}
-            </span>
-          `).join('');
+        if (promoClues && promoClues.length > 0) {
+          badgeList.innerHTML = promoClues.map(clue => {
+            const badgeClass = clue.status === 'fulfilled' ? 'promo-badge-checkout' : 'promo-badge-checkout-semi';
+            const iconClass = clue.status === 'fulfilled' ? 'fa-gift' : 'fa-info-circle';
+            return `
+              <span class="${badgeClass}">
+                <i class="fas ${iconClass} me-1"></i> ${clue.text}
+              </span>
+            `;
+          }).join('');
           container.classList.remove('d-none');
         } else {
           badgeList.innerHTML = '';
