@@ -2671,6 +2671,65 @@
           .sp-slot .remove-slot { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; background: #ff4757; color: white; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; z-index: 10; }
           .sp-slot:hover .remove-slot { opacity: 1; }
           .sp-slot .slot-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.55rem; }
+
+          /* --- DELIVERY BROWSER-STYLE TABS --- */
+          .delivery-tab-bar {
+            display: flex; align-items: flex-end; background: #e8e8e8; padding: 6px 6px 0 6px;
+            border-bottom: 1px solid #ccc; gap: 2px; overflow-x: auto; scrollbar-width: none; flex-shrink: 0;
+          }
+          .delivery-tab-bar::-webkit-scrollbar { display: none; }
+          .delivery-tab {
+            padding: 7px 14px 7px 14px; background: #d8d8d8; border: 1px solid #bbb;
+            border-bottom: none; border-radius: 8px 8px 0 0; cursor: pointer;
+            font-size: 0.72rem; font-weight: 600; color: #666; display: flex;
+            align-items: center; gap: 8px; white-space: nowrap; transition: all 0.15s;
+            position: relative; min-width: 80px; max-width: 200px;
+          }
+          .delivery-tab:hover { background: #e8e8e8; color: #333; }
+          .delivery-tab.active {
+            background: #fff; color: #2d3436; border-color: #ccc;
+            border-top: 2.5px solid var(--primary-gold); z-index: 2;
+            margin-bottom: -1px; padding-bottom: 8px;
+          }
+          .delivery-tab .delivery-tab-close {
+            width: 16px; height: 16px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-size: 9px;
+            color: #999; transition: all 0.15s; flex-shrink: 0;
+          }
+          .delivery-tab .delivery-tab-close:hover { background: #ff4757; color: #fff; }
+          .delivery-tab-icon {
+            width: 18px; height: 18px; border-radius: 4px; object-fit: cover;
+            border: 1px solid #ddd; flex-shrink: 0;
+          }
+          .delivery-tab-add {
+            padding: 7px 12px; background: transparent; border: 1px dashed #bbb;
+            border-bottom: none; border-radius: 8px 8px 0 0; cursor: pointer;
+            font-size: 0.8rem; color: #999; transition: all 0.15s; flex-shrink: 0;
+          }
+          .delivery-tab-add:hover { background: #d8d8d8; color: var(--primary-gold); border-color: var(--primary-gold); }
+          .delivery-pane { display: none; height: 100%; }
+          .delivery-pane.active { display: block; }
+
+          /* --- DELIVERY ICON UPLOAD AREA --- */
+          .delivery-icon-upload-area {
+            width: 100%; aspect-ratio: 1/1; max-width: 120px; border: 2px dashed #ccc;
+            border-radius: 12px; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; transition: all 0.2s; overflow: hidden; background: #fafafa;
+          }
+          .delivery-icon-upload-area:hover { border-color: var(--primary-gold); background: #fffcf5; }
+          .delivery-icon-placeholder {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            color: #bbb; font-size: 0.65rem; font-weight: 600;
+          }
+          .delivery-icon-preview { position: relative; width: 100%; height: 100%; }
+          .delivery-icon-preview img { width: 100%; height: 100%; object-fit: cover; }
+          .delivery-icon-preview .delivery-icon-actions {
+            position: absolute; bottom: 0; left: 0; right: 0; padding: 4px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.6));
+            display: flex; gap: 4px; justify-content: center; opacity: 0; transition: opacity 0.2s;
+          }
+          .delivery-icon-upload-area:hover .delivery-icon-actions { opacity: 1; }
+          .delivery-icon-actions .btn { font-size: 0.6rem !important; padding: 2px 6px !important; color: #fff !important; }
         </style>
 
         <div id="modalSpecialPrice" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 10500; opacity: 1 !important;">
@@ -2933,6 +2992,9 @@
                                 <label class="small fw-bold text-muted mb-1">Nilai Diskon</label>
                                 <input type="number" class="form-control border-2 fw-bold form-control-sm" placeholder="0">
                               </div>
+                              <div class="col-12 mt-2">
+                                <div class="alert alert-info py-1 px-2 small m-0"><i class="fas fa-info-circle me-1"></i>Jika Tax ON, diskon diterapkan ke subtotal sebelum ditambah Tax.</div>
+                              </div>
                             </div>
                           </div>
                           <!-- Form All Menu -->
@@ -3062,10 +3124,15 @@
 
                 <!-- DELIVERY -->
                 <div class="tab-pane fade h-100" id="sp-delivery" role="tabpanel">
-                  <div class="h-100 d-flex flex-column align-items-center justify-content-center text-center p-5 bg-white">
-                    <i class="fas fa-motorcycle fa-4x mb-4 text-muted" style="opacity: 0.3;"></i>
-                    <h4 class="fw-bold text-dark">Fitur Delivery Masih Kosong</h4>
-                    <p class="text-muted">Tab ini disediakan untuk pengaturan lanjutan Promo atau Delivery Price di masa mendatang.</p>
+                  <div class="d-flex flex-column h-100">
+                    <!-- Browser-style sub-tab bar -->
+                    <div class="delivery-tab-bar" id="deliveryTabBar">
+                      <!-- Generated by JS: initDeliveryTabs() -->
+                    </div>
+                    <!-- Sub-tab content container -->
+                    <div class="flex-fill overflow-hidden position-relative" id="deliverySubTabContent" style="background: #f8f9fa;">
+                      <!-- Generated by JS: addDeliverySubTab() -->
+                    </div>
                   </div>
                 </div>
               </div>
@@ -7029,6 +7096,21 @@
           document.getElementById('tempImgPreview').innerHTML = `<img src="${base64Data}" style="width:100%; height:100%; object-fit:cover;">`;
           btn.disabled = false;
           cancelCrop();
+        }
+        else if (CURRENT_UPLOAD_ID === 'SERVICE_ICON') {
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> MENYIMPAN...';
+          const tabId = DELIVERY_ICON_UPLOAD_TAB_ID;
+          google.script.run.withSuccessHandler(res => {
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-check me-2"></i> SIMPAN FOTO';
+            if (res.status === 'success' && res.url) {
+              const area = document.querySelector('#pane-' + tabId + ' .delivery-icon-upload-area');
+              if (area) setDeliveryIconPreview(area, res.url);
+              cancelCrop();
+            } else {
+              alert(res.message || 'Gagal upload icon.');
+            }
+            DELIVERY_ICON_UPLOAD_TAB_ID = null;
+          }).uploadServiceIcon(base64Data, 'cropped_' + SELECTED_FILE_NAME, tabId);
         } 
         else if (CURRENT_UPLOAD_ID === 'LOGO' || CURRENT_UPLOAD_ID === 'WALLPAPER') {
           btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> MENYIMPAN...';
@@ -13637,85 +13719,70 @@
       }
 
       // --- SPECIAL PRICE / PROMO MODAL LOGIC ---
+      let deliveryTabCounter = 0;
+      let DELIVERY_ICON_UPLOAD_TAB_ID = null; // Track which delivery tab is uploading an icon
+
+      // Helper: Map tabContext to element ID prefix
+      function getSpElId(ctx, suffix) {
+        if (ctx === 'dinein') return 'spDineIn' + suffix;
+        if (ctx === 'takeaway') return 'spTakeaway' + suffix;
+        // delivery_1, delivery_2, etc. -> spDelivery1, spDelivery2
+        return 'spDelivery' + ctx.split('_')[1] + suffix;
+      }
+
       function populateSpecialPriceDropdowns() {
         if (!PRODUCTS || PRODUCTS.length === 0) return;
-        
-        // 1. Ambil kategori unik dari data produk
         const uniqueCategories = [...new Set(PRODUCTS.map(p => p.category))].filter(Boolean);
-        
-        // 2. Populate select kategori
-        const catSelects = ['spDineInCatSelect', 'spTakeawayCatSelect'];
-        catSelects.forEach(id => {
-          const el = document.getElementById(id);
-          if (el) {
-            el.innerHTML = '<option value="">-- Pilih Kategori --</option>' + 
-              uniqueCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
-          }
-        });
-        
-        // 3. Populate select menu item diskon item spesifik
-        const itemSelects = ['spDineInItemSelect', 'spTakeawayItemSelect'];
-        itemSelects.forEach(id => {
-          const el = document.getElementById(id);
-          if (el) {
-            el.innerHTML = '<option value="">-- Pilih Menu --</option>' + 
-              PRODUCTS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-          }
-        });
+        const catOptionsHtml = '<option value="">-- Pilih Kategori --</option>' + uniqueCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+        const itemOptionsHtml = '<option value="">-- Pilih Menu --</option>' + PRODUCTS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        const syaratOptionsHtml = '<option value="">-- Pilih Menu --</option><option value="ALL">Semua Menu</option>' + PRODUCTS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        const rewardOptionsHtml = '<option value="">-- Menu Reward --</option>' + PRODUCTS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
 
-        // 4. Populate semua select di syarat & reward container
-        const syaratSelects = document.querySelectorAll('.sp-syarat-menu');
-        syaratSelects.forEach(el => {
-          el.innerHTML = '<option value="">-- Pilih Menu --</option>' + 
-            '<option value="ALL">Semua Menu</option>' +
-            PRODUCTS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-        });
+        // Populate static tabs (Dine In & Takeaway)
+        ['spDineInCatSelect', 'spTakeawayCatSelect'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = catOptionsHtml; });
+        ['spDineInItemSelect', 'spTakeawayItemSelect'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = itemOptionsHtml; });
 
-        const rewardSelects = document.querySelectorAll('.sp-reward-menu');
-        rewardSelects.forEach(el => {
-          el.innerHTML = '<option value="">-- Menu Reward --</option>' + 
-            PRODUCTS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-        });
+        // Populate all dynamic selects (including delivery panes)
+        document.querySelectorAll('.sp-syarat-menu').forEach(el => { el.innerHTML = syaratOptionsHtml; });
+        document.querySelectorAll('.sp-reward-menu').forEach(el => { el.innerHTML = rewardOptionsHtml; });
+
+        // Populate delivery tab cat/item selects
+        document.querySelectorAll('[id^="spDelivery"][id$="CatSelect"]').forEach(el => { el.innerHTML = catOptionsHtml; });
+        document.querySelectorAll('[id^="spDelivery"][id$="ItemSelect"]').forEach(el => { el.innerHTML = itemOptionsHtml; });
       }
 
       function addSpSyaratRow(btn) {
         const container = btn.closest('.sp-form-group').querySelector('.sp-syarat-container');
         if (!container) return;
-        
         const template = container.querySelector('.sp-syarat-row');
         if (!template) return;
-        
         const newRow = template.cloneNode(true);
         newRow.querySelector('.sp-syarat-qty').value = 1;
         newRow.querySelector('.sp-syarat-menu').value = "";
-        
         container.appendChild(newRow);
         updateSpDeleteButtons(container, '.sp-syarat-row');
+        populateSpecialPriceDropdowns();
       }
 
       function addSpRewardRow(btn) {
         const container = btn.closest('.sp-form-group').querySelector('.sp-reward-container');
         if (!container) return;
-        
         const template = container.querySelector('.sp-reward-row');
         if (!template) return;
-        
         const newRow = template.cloneNode(true);
         newRow.querySelector('.sp-reward-qty').value = 1;
         newRow.querySelector('.sp-reward-menu').value = "";
         newRow.querySelector('.sp-reward-price').value = 0;
-        
         container.appendChild(newRow);
         updateSpDeleteButtons(container, '.sp-reward-row');
+        populateSpecialPriceDropdowns();
       }
 
       function removeSpRow(btn) {
         const row = btn.closest('.sp-syarat-row, .sp-reward-row');
         if (!row) return;
-        
         const container = row.parentElement;
         const rowSelector = row.classList.contains('sp-syarat-row') ? '.sp-syarat-row' : '.sp-reward-row';
-        
         row.remove();
         updateSpDeleteButtons(container, rowSelector);
       }
@@ -13725,24 +13792,26 @@
         rows.forEach(row => {
           const deleteBtn = row.querySelector('.sp-btn-delete-row');
           if (deleteBtn) {
-            if (rows.length > 1) {
-              deleteBtn.style.display = 'block';
-            } else {
-              deleteBtn.style.display = 'none';
-            }
+            deleteBtn.style.display = rows.length > 1 ? 'block' : 'none';
           }
         });
       }
 
       function openSpecialPriceModal() {
         populateSpecialPriceDropdowns();
+        initDeliveryTabs();
         document.getElementById('modalSpecialPrice').classList.remove('d-none');
+        // Load saved data from backend
+        google.script.run.withSuccessHandler(function(res) {
+          if (res && res.status === 'success' && res.data && res.data.length > 0) {
+            loadSpDataFromBackend(res.data);
+          }
+        }).loadSpecialPriceConfig();
       }
 
       function syncSpSlotLabel(val, tabContext) {
-        const slotsContainer = document.getElementById(tabContext === 'dinein' ? 'spDineInSlots' : 'spTakeawaySlots');
+        const slotsContainer = document.getElementById(getSpElId(tabContext, 'Slots'));
         if (!slotsContainer) return;
-        
         const activeSlot = slotsContainer.querySelector('.sp-slot.active');
         if (activeSlot && activeSlot.classList.contains('configured')) {
           const titleEl = activeSlot.querySelector('.slot-title');
@@ -13753,29 +13822,31 @@
       }
 
       function activateSpSlot(element, tabContext) {
-        const slots = document.getElementById(tabContext === 'dinein' ? 'spDineInSlots' : 'spTakeawaySlots').querySelectorAll('.sp-slot');
-        slots.forEach(slot => slot.classList.remove('active'));
-        
+        const slotsEl = document.getElementById(getSpElId(tabContext, 'Slots'));
+        if (!slotsEl) return;
+        slotsEl.querySelectorAll('.sp-slot').forEach(slot => slot.classList.remove('active'));
         element.classList.add('active');
-        
-        const rightPanel = document.getElementById(tabContext === 'dinein' ? 'spDineInConfig' : 'spTakeawayConfig');
-        rightPanel.style.opacity = '1';
-        rightPanel.style.pointerEvents = 'auto';
 
-        if(element.innerHTML.includes('fa-plus')) {
+        const rightPanel = document.getElementById(getSpElId(tabContext, 'Config'));
+        if (rightPanel) {
+          rightPanel.style.opacity = '1';
+          rightPanel.style.pointerEvents = 'auto';
+        }
+
+        if (element.innerHTML.includes('fa-plus')) {
           element.innerHTML = '<span class="slot-title mt-1">Promo Baru</span><div class="remove-slot" onclick="event.stopPropagation(); removeSpSlot(this, \'' + tabContext + '\')"><i class="fas fa-times"></i></div>';
           element.classList.add('configured');
-          
+
           const newPlus = document.createElement('div');
           newPlus.className = 'sp-slot';
           newPlus.innerHTML = '<i class="fas fa-plus"></i>';
           newPlus.onclick = function() { activateSpSlot(this, tabContext); };
-          document.getElementById(tabContext === 'dinein' ? 'spDineInSlots' : 'spTakeawaySlots').appendChild(newPlus);
+          slotsEl.appendChild(newPlus);
         }
 
-        // Sinkronisasi Nama Label Promo ke Input Field
+        // Sync label name input
         const titleEl = element.querySelector('.slot-title');
-        const inputName = document.getElementById('sp' + (tabContext === 'dinein' ? 'DineIn' : 'Takeaway') + 'LabelName');
+        const inputName = document.getElementById(getSpElId(tabContext, 'LabelName'));
         if (inputName && titleEl) {
           const text = titleEl.innerText;
           inputName.value = text === 'Promo Baru' ? '' : text;
@@ -13786,55 +13857,482 @@
 
       function removeSpSlot(btn, tabContext) {
         const slot = btn.parentElement;
+        const wasActive = slot.classList.contains('active');
         slot.remove();
-        if(slot.classList.contains('active')) {
-          const rightPanel = document.getElementById(tabContext === 'dinein' ? 'spDineInConfig' : 'spTakeawayConfig');
-          rightPanel.style.opacity = '0.5';
-          rightPanel.style.pointerEvents = 'none';
+        if (wasActive) {
+          const rightPanel = document.getElementById(getSpElId(tabContext, 'Config'));
+          if (rightPanel) {
+            rightPanel.style.opacity = '0.5';
+            rightPanel.style.pointerEvents = 'none';
+          }
         }
       }
 
       function changeSpType(val, tabContext) {
-        const containerId = tabContext === 'dinein' ? 'spDineInDynamicConfig' : 'spTakeawayDynamicConfig';
-        const container = document.getElementById(containerId);
-        if(!container) return;
-        
-        const groups = container.querySelectorAll('.sp-form-group');
-        groups.forEach(g => g.style.display = 'none');
-        
-        const target = container.querySelector('#sp-form-' + val);
-        if(target) target.style.display = 'block';
+        const container = document.getElementById(getSpElId(tabContext, 'DynamicConfig'));
+        if (!container) return;
+        container.querySelectorAll('.sp-form-group').forEach(g => g.style.display = 'none');
+        const target = container.querySelector('#sp-form-' + val) || container.querySelector('[data-form-type="' + val + '"]');
+        if (target) target.style.display = 'block';
       }
 
       function saveActiveSpSlot() {
-        // Deteksi tab yang aktif saat ini
         const dineinTab = document.getElementById('sp-dinein');
-        const tabContext = (dineinTab && dineinTab.classList.contains('show')) ? 'dinein' : 'takeaway';
+        const takeawayTab = document.getElementById('sp-takeaway');
+        const deliveryTab = document.getElementById('sp-delivery');
+
+        let tabContext;
+        if (dineinTab && dineinTab.classList.contains('show')) {
+          tabContext = 'dinein';
+        } else if (takeawayTab && takeawayTab.classList.contains('show')) {
+          tabContext = 'takeaway';
+        } else if (deliveryTab && deliveryTab.classList.contains('show')) {
+          // Find active delivery sub-tab
+          const activeDeliveryTab = document.querySelector('#deliveryTabBar .delivery-tab.active');
+          tabContext = activeDeliveryTab ? activeDeliveryTab.dataset.tabId : 'delivery_1';
+        } else {
+          tabContext = 'dinein';
+        }
         saveSpSlot(tabContext);
       }
 
       function saveSpSlot(tabContext) {
-        const slotsContainer = document.getElementById(tabContext === 'dinein' ? 'spDineInSlots' : 'spTakeawaySlots');
-        const activeSlot = slotsContainer.querySelector('.sp-slot.active');
-        if(activeSlot && activeSlot.classList.contains('configured')) {
+        const slotsEl = document.getElementById(getSpElId(tabContext, 'Slots'));
+        if (!slotsEl) return;
+        const activeSlot = slotsEl.querySelector('.sp-slot.active');
+        if (activeSlot && activeSlot.classList.contains('configured')) {
           const btn = document.getElementById('btnSaveSpecialPrice');
-          if (btn) {
-            btn.classList.add('saving-active');
-            btn.disabled = true;
-          }
-          
-          const inputName = document.getElementById('sp' + (tabContext === 'dinein' ? 'DineIn' : 'Takeaway') + 'LabelName');
-          if(inputName && inputName.value.trim() !== '') {
-             activeSlot.querySelector('.slot-title').innerText = inputName.value.trim();
+          if (btn) { btn.classList.add('saving-active'); btn.disabled = true; }
+
+          const inputName = document.getElementById(getSpElId(tabContext, 'LabelName'));
+          if (inputName && inputName.value.trim() !== '') {
+            activeSlot.querySelector('.slot-title').innerText = inputName.value.trim();
           }
 
-          setTimeout(() => {
-            if (btn) {
-              btn.classList.remove('saving-active');
-              btn.disabled = false;
-            }
-          }, 1200);
+          // Collect ALL data and save to backend
+          const allData = collectAllSpData();
+          google.script.run.withSuccessHandler(function(res) {
+            if (btn) { btn.classList.remove('saving-active'); btn.disabled = false; }
+            if (res && res.status !== 'success') { console.error('Save SP Error:', res.message); }
+          }).saveSpecialPriceConfig(JSON.stringify(allData));
         }
+      }
+
+      // --- COLLECT ALL SP DATA FOR SAVING ---
+      function collectAllSpData() {
+        let allData = [];
+        // Collect from Dine In and Takeaway
+        ['dinein', 'takeaway'].forEach(function(tab) {
+          const slotsEl = document.getElementById(getSpElId(tab, 'Slots'));
+          if (!slotsEl) return;
+          const configuredSlots = slotsEl.querySelectorAll('.sp-slot.configured');
+          configuredSlots.forEach(function(slot, idx) {
+            const titleEl = slot.querySelector('.slot-title');
+            allData.push({
+              tab: tab, subTab: '', slotIndex: idx,
+              labelName: titleEl ? titleEl.innerText : 'Promo Baru',
+              promoType: '', discountForm: '', discountValue: '',
+              categoryTarget: '', itemTarget: '', buyGetData: '',
+              minPurchaseAmount: '', serviceName: '', serviceIconUrl: '',
+              active: 'true'
+            });
+          });
+        });
+        // Collect from Delivery sub-tabs
+        document.querySelectorAll('#deliveryTabBar .delivery-tab').forEach(function(tabEl) {
+          const tabId = tabEl.dataset.tabId;
+          if (!tabId) return;
+          const num = tabId.split('_')[1];
+          const serviceNameInput = document.querySelector('#pane-' + tabId + ' .delivery-service-name');
+          const iconPreview = document.querySelector('#pane-' + tabId + ' .delivery-icon-preview img');
+          const slotsEl = document.getElementById('spDelivery' + num + 'Slots');
+          let slotCount = 0;
+          if (slotsEl) {
+            const configuredSlots = slotsEl.querySelectorAll('.sp-slot.configured');
+            configuredSlots.forEach(function(slot, idx) {
+              const titleEl = slot.querySelector('.slot-title');
+              allData.push({
+                tab: 'delivery', subTab: tabId, slotIndex: idx,
+                labelName: titleEl ? titleEl.innerText : 'Promo Baru',
+                promoType: '', discountForm: '', discountValue: '',
+                categoryTarget: '', itemTarget: '', buyGetData: '',
+                minPurchaseAmount: '',
+                serviceName: serviceNameInput ? serviceNameInput.value : '',
+                serviceIconUrl: (iconPreview && iconPreview.src && !iconPreview.src.includes('data:')) ? iconPreview.src : '',
+                active: 'true'
+              });
+              slotCount++;
+            });
+          }
+          // If no configured slots, still save delivery tab meta
+          if (slotCount === 0) {
+            allData.push({
+              tab: 'delivery', subTab: tabId, slotIndex: -1,
+              labelName: '', promoType: '', discountForm: '', discountValue: '',
+              categoryTarget: '', itemTarget: '', buyGetData: '',
+              minPurchaseAmount: '',
+              serviceName: serviceNameInput ? serviceNameInput.value : '',
+              serviceIconUrl: (iconPreview && iconPreview.src && !iconPreview.src.includes('data:')) ? iconPreview.src : '',
+              active: 'true'
+            });
+          }
+        });
+        return allData;
+      }
+
+      // --- LOAD SP DATA FROM BACKEND ---
+      function loadSpDataFromBackend(data) {
+        if (!data || data.length === 0) return;
+        // Group delivery tabs
+        let deliveryTabs = {};
+        data.forEach(function(item) {
+          if (item.tab === 'delivery' && item.subTab) {
+            if (!deliveryTabs[item.subTab]) deliveryTabs[item.subTab] = [];
+            deliveryTabs[item.subTab].push(item);
+          }
+        });
+        // Recreate delivery sub-tabs from saved data
+        const tabBar = document.getElementById('deliveryTabBar');
+        const content = document.getElementById('deliverySubTabContent');
+        if (tabBar && content && Object.keys(deliveryTabs).length > 0) {
+          tabBar.innerHTML = '';
+          content.innerHTML = '';
+          deliveryTabCounter = 0;
+          let first = true;
+          Object.keys(deliveryTabs).sort().forEach(function(subTabId) {
+            const items = deliveryTabs[subTabId];
+            const serviceName = items[0].serviceName || '';
+            const serviceIconUrl = items[0].serviceIconUrl || '';
+            deliveryTabCounter++;
+            const tabId = 'delivery_' + deliveryTabCounter;
+            const label = serviceName || ('Pesan Antar ' + deliveryTabCounter);
+            createDeliveryTabElement(tabId, label, first, serviceIconUrl);
+            createDeliveryPaneElement(tabId);
+            // Set service name and icon
+            const nameInput = document.querySelector('#pane-' + tabId + ' .delivery-service-name');
+            if (nameInput && serviceName) nameInput.value = serviceName;
+            if (serviceIconUrl) {
+              const area = document.querySelector('#pane-' + tabId + ' .delivery-icon-upload-area');
+              if (area) setDeliveryIconPreview(area, serviceIconUrl);
+            }
+            first = false;
+          });
+          // Add the + tab
+          const addTab = document.createElement('div');
+          addTab.className = 'delivery-tab-add';
+          addTab.innerHTML = '<i class="fas fa-plus"></i>';
+          addTab.onclick = addDeliverySubTab;
+          tabBar.appendChild(addTab);
+          populateSpecialPriceDropdowns();
+        }
+      }
+
+      // --- DELIVERY TAB MANAGEMENT ---
+      function initDeliveryTabs() {
+        const tabBar = document.getElementById('deliveryTabBar');
+        const content = document.getElementById('deliverySubTabContent');
+        if (!tabBar || !content) return;
+        // Only init if empty
+        if (tabBar.children.length > 0) return;
+        deliveryTabCounter = 0;
+        addDeliverySubTab();
+      }
+
+      function addDeliverySubTab() {
+        const tabBar = document.getElementById('deliveryTabBar');
+        const content = document.getElementById('deliverySubTabContent');
+        if (!tabBar || !content) return;
+        if (deliveryTabCounter >= 10) { alert('Maksimal 10 tab Delivery.'); return; }
+
+        deliveryTabCounter++;
+        const tabId = 'delivery_' + deliveryTabCounter;
+        const label = 'Pesan Antar ' + deliveryTabCounter;
+        const isFirst = deliveryTabCounter === 1;
+
+        // Deactivate all existing tabs
+        tabBar.querySelectorAll('.delivery-tab').forEach(t => t.classList.remove('active'));
+        content.querySelectorAll('.delivery-pane').forEach(p => p.classList.remove('active'));
+
+        createDeliveryTabElement(tabId, label, true, '');
+        createDeliveryPaneElement(tabId);
+
+        // Ensure + button is at the end
+        let addBtn = tabBar.querySelector('.delivery-tab-add');
+        if (addBtn) addBtn.remove();
+        addBtn = document.createElement('div');
+        addBtn.className = 'delivery-tab-add';
+        addBtn.innerHTML = '<i class="fas fa-plus"></i>';
+        addBtn.onclick = addDeliverySubTab;
+        tabBar.appendChild(addBtn);
+
+        populateSpecialPriceDropdowns();
+      }
+
+      function createDeliveryTabElement(tabId, label, isActive, iconUrl) {
+        const tabBar = document.getElementById('deliveryTabBar');
+        const tab = document.createElement('div');
+        tab.className = 'delivery-tab' + (isActive ? ' active' : '');
+        tab.dataset.tabId = tabId;
+        const num = parseInt(tabId.split('_')[1]);
+        let iconHtml = iconUrl ? `<img src="${iconUrl}" class="delivery-tab-icon" alt="">` : '';
+        let closeHtml = num > 1 ? `<span class="delivery-tab-close" onclick="event.stopPropagation(); removeDeliverySubTab('${tabId}')"><i class="fas fa-times"></i></span>` : '';
+        tab.innerHTML = iconHtml + '<span class="delivery-tab-label">' + label + '</span>' + closeHtml;
+        tab.onclick = function(e) { if (!e.target.closest('.delivery-tab-close')) activateDeliverySubTab(tabId); };
+        // Insert before + button
+        const addBtn = tabBar.querySelector('.delivery-tab-add');
+        if (addBtn) tabBar.insertBefore(tab, addBtn);
+        else tabBar.appendChild(tab);
+      }
+
+      function createDeliveryPaneElement(tabId) {
+        const content = document.getElementById('deliverySubTabContent');
+        const pane = document.createElement('div');
+        pane.className = 'delivery-pane active';
+        pane.id = 'pane-' + tabId;
+        pane.innerHTML = generateDeliveryPaneHTML(tabId);
+        content.appendChild(pane);
+        // Deactivate other panes
+        content.querySelectorAll('.delivery-pane').forEach(p => {
+          if (p.id !== 'pane-' + tabId) p.classList.remove('active');
+        });
+      }
+
+      function activateDeliverySubTab(tabId) {
+        document.querySelectorAll('#deliveryTabBar .delivery-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('#deliverySubTabContent .delivery-pane').forEach(p => p.classList.remove('active'));
+        const tab = document.querySelector(`#deliveryTabBar .delivery-tab[data-tab-id="${tabId}"]`);
+        const pane = document.getElementById('pane-' + tabId);
+        if (tab) tab.classList.add('active');
+        if (pane) pane.classList.add('active');
+      }
+
+      function removeDeliverySubTab(tabId) {
+        const allTabs = document.querySelectorAll('#deliveryTabBar .delivery-tab');
+        if (allTabs.length <= 1) return; // Keep at least one
+        const tab = document.querySelector(`#deliveryTabBar .delivery-tab[data-tab-id="${tabId}"]`);
+        const pane = document.getElementById('pane-' + tabId);
+        const wasActive = tab && tab.classList.contains('active');
+        if (tab) tab.remove();
+        if (pane) pane.remove();
+        if (wasActive) {
+          const firstTab = document.querySelector('#deliveryTabBar .delivery-tab');
+          if (firstTab) activateDeliverySubTab(firstTab.dataset.tabId);
+        }
+      }
+
+      function onDeliveryServiceNameInput(input) {
+        const tabId = input.dataset.tabId;
+        if (!tabId) return;
+        const tab = document.querySelector(`#deliveryTabBar .delivery-tab[data-tab-id="${tabId}"]`);
+        if (tab) {
+          const labelEl = tab.querySelector('.delivery-tab-label');
+          if (labelEl) {
+            labelEl.innerText = input.value.trim() !== '' ? input.value.trim() : ('Pesan Antar ' + tabId.split('_')[1]);
+          }
+        }
+      }
+
+      // --- DELIVERY ICON UPLOAD ---
+      function triggerDeliveryIconUpload(area) {
+        const tabId = area.dataset.tabId;
+        const fileInput = area.parentElement.querySelector('.delivery-icon-file-input');
+        if (fileInput) { fileInput.value = ''; fileInput.click(); }
+      }
+
+      function handleDeliveryIconFile(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const tabId = input.dataset.tabId;
+        DELIVERY_ICON_UPLOAD_TAB_ID = tabId;
+        CURRENT_UPLOAD_ID = 'SERVICE_ICON';
+        SELECTED_FILE_NAME = file.name;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const imageElement = document.getElementById('imageToCrop');
+          imageElement.src = e.target.result;
+
+          const modal = document.getElementById('modalCrop');
+          document.body.appendChild(modal);
+          modal.classList.remove('d-none');
+          modal.style.display = "flex";
+
+          if (CROPPER) { CROPPER.destroy(); }
+          const cropContainer = imageElement.parentElement;
+          cropContainer.classList.remove('cropper-circle');
+
+          setTimeout(() => {
+            CROPPER = new Cropper(imageElement, {
+              aspectRatio: 1 / 1,
+              viewMode: 1,
+              dragMode: 'move',
+              autoCropArea: 1,
+              restore: false,
+              guides: true,
+              center: true,
+              highlight: false,
+              cropBoxMovable: false,
+              cropBoxResizable: false,
+              toggleDragModeOnDblclick: false,
+              ready: function() { initZoomSlider(); }
+            });
+          }, 150);
+        };
+        reader.readAsDataURL(file);
+        input.value = '';
+      }
+
+      function removeDeliveryIcon(area) {
+        const placeholder = area.querySelector('.delivery-icon-placeholder');
+        const preview = area.querySelector('.delivery-icon-preview');
+        if (placeholder) placeholder.style.display = 'flex';
+        if (preview) { preview.style.display = 'none'; preview.querySelector('img').src = ''; }
+        // Remove icon from tab
+        const tabId = area.dataset.tabId;
+        const tab = document.querySelector(`#deliveryTabBar .delivery-tab[data-tab-id="${tabId}"]`);
+        if (tab) {
+          const iconImg = tab.querySelector('.delivery-tab-icon');
+          if (iconImg) iconImg.remove();
+        }
+      }
+
+      function setDeliveryIconPreview(area, url) {
+        const placeholder = area.querySelector('.delivery-icon-placeholder');
+        const preview = area.querySelector('.delivery-icon-preview');
+        if (placeholder) placeholder.style.display = 'none';
+        if (preview) { preview.style.display = 'block'; preview.querySelector('img').src = url; }
+        // Update tab icon
+        const tabId = area.dataset.tabId;
+        const tab = document.querySelector(`#deliveryTabBar .delivery-tab[data-tab-id="${tabId}"]`);
+        if (tab) {
+          let iconImg = tab.querySelector('.delivery-tab-icon');
+          if (!iconImg) {
+            iconImg = document.createElement('img');
+            iconImg.className = 'delivery-tab-icon';
+            tab.insertBefore(iconImg, tab.firstChild);
+          }
+          iconImg.src = url;
+        }
+      }
+
+      // --- DELIVERY PANE HTML GENERATOR ---
+      function generateDeliveryPaneHTML(tabId) {
+        const num = tabId.split('_')[1];
+        const prefix = 'spDelivery' + num;
+        return `
+        <div class="row m-0 h-100">
+          <div class="col-3 p-3 border-end bg-white overflow-auto h-100 pb-5">
+            <div class="mb-3">
+              <label class="small fw-bold text-muted mb-1"><i class="fas fa-concierge-bell me-1 text-success"></i>NAMA SERVICE</label>
+              <input type="text" class="form-control border-2 fw-bold text-dark form-control-sm py-2 delivery-service-name"
+                     placeholder="Grabfood, Gofood, Shopeefood"
+                     data-tab-id="${tabId}"
+                     oninput="onDeliveryServiceNameInput(this)">
+            </div>
+            <div class="mb-3">
+              <label class="small fw-bold text-muted mb-1"><i class="fas fa-image me-1 text-info"></i>ICON SERVICE</label>
+              <div class="delivery-icon-upload-area" data-tab-id="${tabId}" onclick="triggerDeliveryIconUpload(this)">
+                <div class="delivery-icon-placeholder">
+                  <i class="fas fa-cloud-upload-alt fa-2x mb-1"></i>
+                  <span>Upload Logo</span>
+                </div>
+                <div class="delivery-icon-preview" style="display:none;">
+                  <img src="" alt="icon">
+                  <div class="delivery-icon-actions">
+                    <button class="btn btn-xs btn-light rounded-pill" onclick="event.stopPropagation(); triggerDeliveryIconUpload(this.closest('.delivery-icon-upload-area'))">
+                      <i class="fas fa-sync-alt me-1"></i>Replace
+                    </button>
+                    <button class="btn btn-xs btn-outline-danger rounded-pill" onclick="event.stopPropagation(); removeDeliveryIcon(this.closest('.delivery-icon-upload-area'))">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <input type="file" class="delivery-icon-file-input" accept="image/*" data-tab-id="${tabId}" style="display:none;" onchange="handleDeliveryIconFile(this)">
+            </div>
+            <h6 class="fw-bold mb-2 text-dark" style="font-size: 0.8rem;"><i class="fas fa-layer-group me-2 text-primary"></i>Slot Promo Delivery</h6>
+            <p class="text-muted mb-3" style="font-size: 0.68rem;">Tambahkan slot untuk membuat aturan promo baru.</p>
+            <div class="d-flex flex-wrap gap-2" id="${prefix}Slots">
+              <div class="sp-slot active" onclick="activateSpSlot(this, '${tabId}')">
+                <i class="fas fa-plus"></i>
+              </div>
+            </div>
+          </div>
+          <div class="col-9 p-0 bg-light d-flex flex-column h-100" id="${prefix}Config" style="opacity: 0.5; pointer-events: none;">
+            <div class="px-3 py-2 border-bottom bg-white d-flex justify-content-between align-items-center">
+              <span class="fw-bold m-0 text-dark" id="${prefix}ConfigTitle" style="font-size: 0.8rem;">Pengaturan Slot Promo</span>
+              <div class="form-check form-switch m-0 d-flex align-items-center gap-1">
+                <input class="form-check-input m-0" type="checkbox" role="switch" style="width: 32px; height: 16px; cursor:pointer;" checked>
+                <label class="form-check-label fw-bold text-success" style="font-size: 0.7rem;">Aktif</label>
+              </div>
+            </div>
+            <div class="p-3 overflow-auto flex-fill pb-4">
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="small fw-bold text-muted mb-1">NAMA LABEL PROMO (Struk)</label>
+                  <input type="text" id="${prefix}LabelName" class="form-control border-2 fw-bold text-dark form-control-sm py-2" placeholder="Contoh: Promo Delivery" oninput="syncSpSlotLabel(this.value, '${tabId}')">
+                </div>
+                <div class="col-md-6">
+                  <label class="small fw-bold text-muted mb-1">TIPE PROMO / DISKON</label>
+                  <select class="form-select fw-bold border-2 shadow-sm form-select-sm py-2" onchange="changeSpType(this.value, '${tabId}')">
+                    <option value="subtotal">Discount Subtotal Bayar</option>
+                    <option value="all_menu">Discount ALL MENU</option>
+                    <option value="category">Discount Per KATEGORI</option>
+                    <option value="item">Discount Per ITEM</option>
+                    <option value="buy_get">Beli [X] Gratis / Tebus Murah [Y]</option>
+                    <option value="min_purchase">Total Belanja Minimal -> Gratis/Tebus</option>
+                  </select>
+                </div>
+              </div>
+              <div id="${prefix}DynamicConfig" class="bg-white p-3 rounded-4 shadow-sm border mb-2">
+                <div class="sp-form-group" data-form-type="subtotal" style="display:block;">
+                  <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-percent text-danger me-2"></i>Diskon Subtotal Bayar</h6>
+                  <div class="row g-2">
+                    <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Bentuk Diskon</label><select class="form-select border-2 fw-bold form-select-sm"><option value="percent">Persentase (%)</option><option value="nominal">Nominal (Rp)</option></select></div>
+                    <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Nilai Diskon</label><input type="number" class="form-control border-2 fw-bold form-control-sm" placeholder="0"></div>
+                    <div class="col-12 mt-2"><div class="alert alert-info py-1 px-2 small m-0"><i class="fas fa-info-circle me-1"></i>Jika Tax ON, diskon diterapkan ke subtotal sebelum ditambah Tax.</div></div>
+                  </div>
+                </div>
+                <div class="sp-form-group" data-form-type="all_menu" style="display:none;">
+                  <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-boxes text-success me-2"></i>Diskon Semua Menu</h6>
+                  <div class="row g-2"><div class="col-md-6"><label class="small fw-bold text-muted mb-1">Diskon Per Item</label><div class="input-group input-group-sm"><select class="form-select border-2 fw-bold" style="max-width:80px;"><option>%</option><option>Rp</option></select><input type="number" class="form-control border-2 fw-bold" placeholder="0"></div></div></div>
+                </div>
+                <div class="sp-form-group" data-form-type="category" style="display:none;">
+                  <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-list text-info me-2"></i>Diskon Kategori Tertentu</h6>
+                  <div class="row g-2">
+                    <div class="col-6"><label class="small fw-bold text-muted mb-1">Pilih Kategori</label><select id="${prefix}CatSelect" class="form-select border-2 fw-bold form-select-sm"><option value="">-- Pilih Kategori --</option></select></div>
+                    <div class="col-6"><label class="small fw-bold text-muted mb-1">Diskon</label><div class="input-group input-group-sm"><select class="form-select border-2 fw-bold" style="max-width:80px;"><option>%</option><option>Rp</option></select><input type="number" class="form-control border-2 fw-bold" placeholder="0"></div></div>
+                  </div>
+                </div>
+                <div class="sp-form-group" data-form-type="item" style="display:none;">
+                  <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-coffee text-primary me-2"></i>Diskon Item Spesifik</h6>
+                  <div class="row g-2">
+                    <div class="col-6"><label class="small fw-bold text-muted mb-1">Pilih Menu</label><select id="${prefix}ItemSelect" class="form-select border-2 fw-bold form-select-sm"><option value="">-- Pilih Menu --</option></select></div>
+                    <div class="col-6"><label class="small fw-bold text-muted mb-1">Diskon</label><div class="input-group input-group-sm"><select class="form-select border-2 fw-bold" style="max-width:80px;"><option>%</option><option>Rp</option></select><input type="number" class="form-control border-2 fw-bold" placeholder="0"></div></div>
+                  </div>
+                </div>
+                <div class="sp-form-group" data-form-type="buy_get" style="display:none;">
+                  <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-gift text-warning me-2"></i>Beli X Gratis / Tebus Murah Y</h6>
+                  <div class="mb-3"><div class="d-flex justify-content-between align-items-center mb-1"><label class="small fw-bold text-dark m-0">SYARAT BELI</label><button type="button" class="btn btn-link btn-xs text-decoration-none fw-bold p-0 text-primary" onclick="addSpSyaratRow(this)"><i class="fas fa-plus me-1"></i>Tambah</button></div>
+                    <div class="sp-syarat-container d-flex flex-column gap-2"><div class="d-flex align-items-center gap-2 sp-syarat-row"><input type="number" class="form-control form-control-sm border-2 fw-bold sp-syarat-qty" placeholder="Qty" style="max-width: 80px;" value="1"><select class="form-select form-select-sm border-2 fw-bold sp-syarat-menu flex-fill"><option value="">-- Pilih Menu --</option></select><button type="button" class="btn btn-outline-danger btn-sm px-2 py-1 sp-btn-delete-row" onclick="removeSpRow(this)" style="display: none;"><i class="fas fa-times"></i></button></div></div>
+                  </div>
+                  <div class="border-bottom my-2"></div>
+                  <div class="mb-2"><div class="d-flex justify-content-between align-items-center mb-1"><label class="small fw-bold text-success m-0">MENDAPAT / TEBUS MURAH</label><button type="button" class="btn btn-link btn-xs text-decoration-none fw-bold p-0 text-success" onclick="addSpRewardRow(this)"><i class="fas fa-plus me-1"></i>Tambah</button></div>
+                    <div class="sp-reward-container d-flex flex-column gap-2"><div class="d-flex align-items-center gap-2 sp-reward-row"><input type="number" class="form-control form-control-sm border-2 fw-bold sp-reward-qty" placeholder="Qty" style="max-width: 80px;" value="1"><select class="form-select form-select-sm border-2 fw-bold sp-reward-menu flex-fill"><option value="">-- Menu Reward --</option></select><div class="input-group input-group-sm" style="max-width: 180px;"><span class="input-group-text bg-light border-2 small">Tebus Rp</span><input type="number" class="form-control border-2 fw-bold text-success sp-reward-price" placeholder="0 (Gratis)" value="0"></div><button type="button" class="btn btn-outline-danger btn-sm px-2 py-1 sp-btn-delete-row" onclick="removeSpRow(this)" style="display: none;"><i class="fas fa-times"></i></button></div></div>
+                  </div>
+                </div>
+                <div class="sp-form-group" data-form-type="min_purchase" style="display:none;">
+                  <h6 class="fw-bold border-bottom pb-2 mb-2"><i class="fas fa-cart-arrow-down text-dark me-2"></i>Total Belanja Minimal -> Reward</h6>
+                  <div class="mb-3"><label class="small fw-bold text-muted mb-1">Minimal Belanja (Rp)</label><input type="number" class="form-control form-control-sm border-2 fw-bold text-danger sp-min-purchase-amount" placeholder="100000" value="100000"></div>
+                  <div class="border-bottom my-2"></div>
+                  <div class="mb-2"><div class="d-flex justify-content-between align-items-center mb-1"><label class="small fw-bold text-success m-0">MENDAPAT / TEBUS MURAH</label><button type="button" class="btn btn-link btn-xs text-decoration-none fw-bold p-0 text-success" onclick="addSpRewardRow(this)"><i class="fas fa-plus me-1"></i>Tambah</button></div>
+                    <div class="sp-reward-container d-flex flex-column gap-2"><div class="d-flex align-items-center gap-2 sp-reward-row"><input type="number" class="form-control form-control-sm border-2 fw-bold sp-reward-qty" placeholder="Qty" style="max-width: 80px;" value="1"><select class="form-select form-select-sm border-2 fw-bold sp-reward-menu flex-fill"><option value="">-- Menu Reward --</option></select><div class="input-group input-group-sm" style="max-width: 180px;"><span class="input-group-text bg-light border-2 small">Tebus Rp</span><input type="number" class="form-control border-2 fw-bold text-success sp-reward-price" placeholder="0 (Gratis)" value="0"></div><button type="button" class="btn btn-outline-danger btn-sm px-2 py-1 sp-btn-delete-row" onclick="removeSpRow(this)" style="display: none;"><i class="fas fa-times"></i></button></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>`;
       }
 
       // --- HELPER: Hitung surcharge untuk metode bayar tertentu ---
