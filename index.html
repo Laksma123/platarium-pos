@@ -31,6 +31,61 @@
         --top-header-height: 60px;
         --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
+
+      /* Premium Styling for Order Type Buttons in Checkout Modal */
+      input[name="orderType"].btn-check:checked + label[for="typeDineIn"] {
+        background: linear-gradient(135deg, #e1b382, #c5a059) !important;
+        color: white !important;
+        border-color: #c5a059 !important;
+        box-shadow: 0 8px 20px rgba(197, 160, 89, 0.4) !important;
+        transform: translateY(-3px) scale(1.02);
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      input[name="orderType"].btn-check:checked + label[for="typeTakeaway"] {
+        background: linear-gradient(135deg, #ffaa6b, #e67e22) !important;
+        color: white !important;
+        border-color: #e67e22 !important;
+        box-shadow: 0 8px 20px rgba(230, 126, 34, 0.4) !important;
+        transform: translateY(-3px) scale(1.02);
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      input[name="orderType"].btn-check:checked + label[for="typeDelivery"] {
+        background: linear-gradient(135deg, #5dade2, #2980b9) !important;
+        color: white !important;
+        border-color: #2980b9 !important;
+        box-shadow: 0 8px 20px rgba(41, 128, 185, 0.4) !important;
+        transform: translateY(-3px) scale(1.02);
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      /* Hover & Unchecked States transition for Order Type buttons */
+      input[name="orderType"].btn-check + label {
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      input[name="orderType"].btn-check + label:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      }
+
+      /* Applied checkout promo badges styles */
+      .promo-badge-checkout {
+        background: rgba(39, 174, 96, 0.1) !important;
+        color: #27ae60 !important;
+        border: 1px solid rgba(39, 174, 96, 0.3) !important;
+        font-size: 0.75rem;
+        font-weight: bold;
+        padding: 6px 12px;
+        border-radius: 50px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      @keyframes popIn {
+        0% { transform: scale(0.8); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+
       
       body { 
         background-color: #000000; 
@@ -3743,6 +3798,355 @@
       let TRANSACTIONS_DATA = [];
       let ATTENDANCE_DATA = [];
       let SPECIAL_PRICE_CONFIG = [];
+
+      // ==========================================
+      // POS DYNAMIC PROMOTION & CHEKOUT ENGINE
+      // ==========================================
+      function applyPOSPromotions(cart, orderType) {
+        let tabName = '';
+        if (orderType === 'Dine In') tabName = 'dinein';
+        else if (orderType === 'Takeaway') tabName = 'takeaway';
+        else if (orderType === 'Delivery') tabName = 'delivery';
+
+        // Jika bukan Dine In atau Takeaway, atau config promo kosong, bypass
+        if ((tabName !== 'dinein' && tabName !== 'takeaway') || !SPECIAL_PRICE_CONFIG || SPECIAL_PRICE_CONFIG.length === 0) {
+          return {
+            items: JSON.parse(JSON.stringify(cart)),
+            appliedPromos: [],
+            subtotalDiscount: 0,
+            totalDiscount: 0,
+            finalSubtotal: cart.reduce((sum, i) => sum + ((i.customPrice !== undefined ? i.customPrice : i.price) * i.qty), 0)
+          };
+        }
+
+        // Ambil promo yang aktif untuk tab bersangkutan
+        const activePromos = SPECIAL_PRICE_CONFIG.filter(p => {
+          return p.tab === tabName && (p.active === true || p.active === 'true' || p.active === 'TRUE');
+        });
+
+        if (activePromos.length === 0) {
+          return {
+            items: JSON.parse(JSON.stringify(cart)),
+            appliedPromos: [],
+            subtotalDiscount: 0,
+            totalDiscount: 0,
+            finalSubtotal: cart.reduce((sum, i) => sum + ((i.customPrice !== undefined ? i.customPrice : i.price) * i.qty), 0)
+          };
+        }
+
+        // Clone item untuk mencegah modifikasi data CART asli
+        let processedItems = JSON.parse(JSON.stringify(cart));
+        let appliedPromos = [];
+        let itemDiscountsNominal = 0;
+
+        function getProductCategory(item) {
+          const prod = PRODUCTS.find(p => String(p.id) === String(item.id) || p.name === item.name);
+          return prod ? prod.category : 'Lainnya';
+        }
+
+        function findMasterProduct(idOrName) {
+          return PRODUCTS.find(p => String(p.id) === String(idOrName) || p.name === idOrName);
+        }
+
+        // Langkah 1: Terapkan promo level Item, Kategori, dan All Menu
+        activePromos.forEach(promo => {
+          const promoType = promo.promoType;
+          const discountVal = parseFloat(promo.discountValue) || 0;
+          if (discountVal <= 0) return;
+
+          let promoApplied = false;
+
+          if (promoType === 'item') {
+            const target = promo.itemTarget;
+            processedItems.forEach(item => {
+              if (String(item.id) === String(target) || item.name === target) {
+                let disc = 0;
+                const basePrice = item.price;
+                if (promo.discountForm === 'percent' || promo.discountForm === '%') {
+                  disc = basePrice * (discountVal / 100);
+                } else {
+                  disc = discountVal;
+                }
+                item.customPrice = Math.max(0, (item.customPrice !== undefined ? item.customPrice : basePrice) - disc);
+                itemDiscountsNominal += (disc * item.qty);
+                promoApplied = true;
+              }
+            });
+          } else if (promoType === 'category') {
+            const target = promo.categoryTarget;
+            processedItems.forEach(item => {
+              const cat = getProductCategory(item);
+              if (cat === target) {
+                let disc = 0;
+                const basePrice = item.price;
+                if (promo.discountForm === 'percent' || promo.discountForm === '%') {
+                  disc = basePrice * (discountVal / 100);
+                } else {
+                  disc = discountVal;
+                }
+                item.customPrice = Math.max(0, (item.customPrice !== undefined ? item.customPrice : basePrice) - disc);
+                itemDiscountsNominal += (disc * item.qty);
+                promoApplied = true;
+              }
+            });
+          } else if (promoType === 'all_menu') {
+            processedItems.forEach(item => {
+              let disc = 0;
+              const basePrice = item.price;
+              if (promo.discountForm === 'percent' || promo.discountForm === '%') {
+                disc = basePrice * (discountVal / 100);
+              } else {
+                disc = discountVal;
+              }
+              item.customPrice = Math.max(0, (item.customPrice !== undefined ? item.customPrice : basePrice) - disc);
+              itemDiscountsNominal += (disc * item.qty);
+              promoApplied = true;
+            });
+          }
+
+          if (promoApplied) {
+            if (!appliedPromos.includes(promo.labelName)) {
+              appliedPromos.push(promo.labelName);
+            }
+          }
+        });
+
+        // Hitung subtotal setelah potongan item-level
+        let subtotal = processedItems.reduce((sum, item) => {
+          const price = item.customPrice !== undefined ? item.customPrice : item.price;
+          return sum + (price * item.qty);
+        }, 0);
+
+        // Langkah 2: Terapkan promo 'buy_get' (Beli X Gratis Y)
+        activePromos.forEach(promo => {
+          if (promo.promoType !== 'buy_get') return;
+          let buyGetData = null;
+          try {
+            buyGetData = typeof promo.buyGetData === 'string' ? JSON.parse(promo.buyGetData) : promo.buyGetData;
+          } catch (e) { return; }
+          if (!buyGetData || !buyGetData.rewards || buyGetData.rewards.length === 0) return;
+
+          // Cek kelayakan syarat
+          let reqsMet = true;
+          if (buyGetData.reqs && buyGetData.reqs.length > 0) {
+            buyGetData.reqs.forEach(req => {
+              const reqQty = parseInt(req.qty) || 0;
+              const reqItem = req.item;
+              const match = processedItems.find(item => String(item.id) === String(reqItem) || item.name === reqItem);
+              if (!match || match.qty < reqQty) {
+                reqsMet = false;
+              }
+            });
+          }
+
+          if (reqsMet) {
+            buyGetData.rewards.forEach(reward => {
+              const rewQty = parseInt(reward.qty) || 0;
+              const rewItem = reward.item;
+              const rewPrice = parseFloat(reward.price) || 0;
+
+              const match = processedItems.find(item => String(item.id) === String(rewItem) || item.name === rewItem);
+              if (match) {
+                const currentPrice = match.customPrice !== undefined ? match.customPrice : match.price;
+                const discountPerItem = Math.max(0, currentPrice - rewPrice);
+                const applicableQty = Math.min(match.qty, rewQty);
+                
+                match.customPrice = Math.max(0, currentPrice - (discountPerItem * applicableQty / match.qty));
+                itemDiscountsNominal += (discountPerItem * applicableQty);
+              } else {
+                const masterProduct = findMasterProduct(rewItem);
+                if (masterProduct) {
+                  processedItems.push({
+                    id: masterProduct.id,
+                    name: `${masterProduct.name} (Promo Gift)`,
+                    price: masterProduct.price,
+                    qty: rewQty,
+                    customPrice: rewPrice,
+                    customNote: `Promo: ${promo.labelName}`
+                  });
+                }
+              }
+            });
+
+            if (!appliedPromos.includes(promo.labelName)) {
+              appliedPromos.push(promo.labelName);
+            }
+          }
+        });
+
+        // Hitung ulang subtotal setelah buy_get
+        subtotal = processedItems.reduce((sum, item) => {
+          const price = item.customPrice !== undefined ? item.customPrice : item.price;
+          return sum + (price * item.qty);
+        }, 0);
+
+        // Langkah 3: Terapkan promo 'min_purchase' (Tebus Murah)
+        activePromos.forEach(promo => {
+          if (promo.promoType !== 'min_purchase') return;
+          const minAmt = parseFloat(promo.minPurchaseAmount) || 0;
+          if (subtotal < minAmt) return;
+
+          let buyGetData = null;
+          try {
+            buyGetData = typeof promo.buyGetData === 'string' ? JSON.parse(promo.buyGetData) : promo.buyGetData;
+          } catch (e) { return; }
+          if (!buyGetData || !buyGetData.rewards || buyGetData.rewards.length === 0) return;
+
+          buyGetData.rewards.forEach(reward => {
+            const rewQty = parseInt(reward.qty) || 0;
+            const rewItem = reward.item;
+            const rewPrice = parseFloat(reward.price) || 0;
+
+            const match = processedItems.find(item => String(item.id) === String(rewItem) || item.name === rewItem);
+            if (match) {
+              const currentPrice = match.customPrice !== undefined ? match.customPrice : match.price;
+              const discountPerItem = Math.max(0, currentPrice - rewPrice);
+              const applicableQty = Math.min(match.qty, rewQty);
+              
+              match.customPrice = Math.max(0, currentPrice - (discountPerItem * applicableQty / match.qty));
+              itemDiscountsNominal += (discountPerItem * applicableQty);
+            } else {
+              const masterProduct = findMasterProduct(rewItem);
+              if (masterProduct) {
+                processedItems.push({
+                  id: masterProduct.id,
+                  name: `${masterProduct.name} (Promo Gift)`,
+                  price: masterProduct.price,
+                  qty: rewQty,
+                  customPrice: rewPrice,
+                  customNote: `Promo: ${promo.labelName}`
+                });
+              }
+            }
+          });
+
+          if (!appliedPromos.includes(promo.labelName)) {
+            appliedPromos.push(promo.labelName);
+          }
+        });
+
+        // Hitung ulang subtotal setelah min_purchase
+        subtotal = processedItems.reduce((sum, item) => {
+          const price = item.customPrice !== undefined ? item.customPrice : item.price;
+          return sum + (price * item.qty);
+        }, 0);
+
+        // Langkah 4: Terapkan diskon tingkat subtotal
+        let subtotalDiscount = 0;
+        activePromos.forEach(promo => {
+          if (promo.promoType !== 'subtotal') return;
+          const minAmt = parseFloat(promo.minPurchaseAmount) || 0;
+          if (minAmt > 0 && subtotal < minAmt) return;
+
+          const discountVal = parseFloat(promo.discountValue) || 0;
+          if (discountVal <= 0) return;
+
+          let disc = 0;
+          if (promo.discountForm === 'percent' || promo.discountForm === '%') {
+            disc = subtotal * (discountVal / 100);
+          } else {
+            disc = discountVal;
+          }
+
+          subtotalDiscount += disc;
+
+          if (!appliedPromos.includes(promo.labelName)) {
+            appliedPromos.push(promo.labelName);
+          }
+        });
+
+        subtotal = Math.max(0, subtotal - subtotalDiscount);
+
+        return {
+          items: processedItems,
+          appliedPromos: appliedPromos,
+          subtotalDiscount: subtotalDiscount,
+          totalDiscount: itemDiscountsNominal + subtotalDiscount,
+          finalSubtotal: subtotal
+        };
+      }
+
+      function recalculateCheckoutTotal() {
+        const orderTypeEl = document.querySelector('input[name="orderType"]:checked');
+        const orderType = orderTypeEl ? orderTypeEl.value : 'Dine In';
+
+        // 1. Jalankan kalkulasi mesin promo dinamis
+        const promoResult = applyPOSPromotions(CART, orderType);
+        
+        // Simpan ke level window untuk diakses saat submit pembayaran
+        window.CHECKOUT_PROMO_ITEMS = promoResult.items;
+        window.CHECKOUT_APPLIED_PROMOS = promoResult.appliedPromos;
+        
+        let subtotal = promoResult.finalSubtotal;
+        
+        // Hitung pajak PPN (jika aktif) pada subtotal setelah diskon promo
+        let activeTaxAmount = 0;
+        let baseTotal = subtotal;
+        if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
+          activeTaxAmount = subtotal * (TAX_PERCENTAGE / 100);
+          baseTotal = subtotal + activeTaxAmount;
+        }
+        
+        window.CHECKOUT_PROMO_TAX_AMOUNT = activeTaxAmount;
+        window.CHECKOUT_PROMO_BASE_TOTAL = baseTotal;
+
+        // 2. Tambah Surcharge Pembayaran Nontunai
+        const methodEl = document.querySelector('input[name="payMethod"]:checked');
+        const method = methodEl ? methodEl.value : 'CASH';
+
+        if (method === 'CASH') {
+          window.CHECKOUT_SURCHARGE_INFO = null;
+          window.CHECKOUT_ADJUSTED_TOTAL = baseTotal;
+        } else {
+          let bankType = null;
+          const bankTypeEl = document.querySelector('input[name="bankType"]:checked');
+          if (bankTypeEl) bankType = bankTypeEl.value;
+          
+          const sc = calculateSurchargeForMethod(method, bankType);
+          const fee = sc.isPercent ? (baseTotal * sc.absVal / 100) : sc.absVal;
+          const feeAmount = sc.effect === 'add' ? fee : -fee;
+          const adjustedTotal = sc.effect === 'add' ? baseTotal + fee : baseTotal;
+          
+          window.CHECKOUT_SURCHARGE_INFO = {
+            bankType: bankType,
+            feeType: sc.feeType,
+            rawValue: sc.rawValue,
+            feeAmount: Math.round(feeAmount),
+            effect: sc.effect,
+            label: sc.label,
+            baseTotal: baseTotal
+          };
+          window.CHECKOUT_ADJUSTED_TOTAL = Math.round(adjustedTotal);
+        }
+
+        // 3. Tampilkan total akhir pembayaran
+        document.getElementById('payTotalText').innerText = 'Rp ' + window.CHECKOUT_ADJUSTED_TOTAL.toLocaleString(undefined, {maximumFractionDigits:0});
+        
+        // 4. Hitung Uang Kembalian
+        calculateChange();
+        
+        // 5. Tampilkan indikator badge promo yang berhasil lolos syarat
+        updateCheckoutPromoBadgeUI(promoResult.appliedPromos);
+      }
+
+      function updateCheckoutPromoBadgeUI(appliedPromos) {
+        const container = document.getElementById('checkoutPromoContainer');
+        const badgeList = document.getElementById('checkoutPromoBadges');
+        if (!container || !badgeList) return;
+
+        if (appliedPromos && appliedPromos.length > 0) {
+          badgeList.innerHTML = appliedPromos.map(name => `
+            <span class="promo-badge-checkout">
+              <i class="fas fa-gift me-1"></i> ${name}
+            </span>
+          `).join('');
+          container.classList.remove('d-none');
+        } else {
+          badgeList.innerHTML = '';
+          container.classList.add('d-none');
+        }
+      }
+
       let SYNC_INTERVAL = null;
       let MANUAL_BASKET = [];
       let NEXT_MANUAL_ID = "";
@@ -8677,14 +9081,20 @@
         // [PERBAIKAN] Sembunyikan cart mobile sebelum membuka popup payment
         toggleMobileCart(false);
         
+        // Reset orderType to Dine In
+        const dineInRadio = document.getElementById('typeDineIn');
+        if (dineInRadio) dineInRadio.checked = true;
+
         // Reset surcharge state
         window.CHECKOUT_SURCHARGE_INFO = null;
         window.CHECKOUT_ADJUSTED_TOTAL = CURRENT_TOTAL;
         
-        document.getElementById('payTotalText').innerText = 'Rp ' + CURRENT_TOTAL.toLocaleString(undefined, {maximumFractionDigits:0});
         document.getElementById('inputCashAmount').value = '';
         document.getElementById('payChangeText').innerText = 'Rp 0';
         document.getElementById('payCash').checked = true;
+        
+        // Initial recalculation (triggers promo + base total updates)
+        recalculateCheckoutTotal();
         togglePayInput();
 
         document.getElementById('modalPayment').style.display = 'flex';
@@ -8699,10 +9109,6 @@
         
         if (isCash) {
           document.getElementById('inputCashAmount').focus();
-          // Reset surcharge for CASH
-          window.CHECKOUT_SURCHARGE_INFO = null;
-          window.CHECKOUT_ADJUSTED_TOTAL = CURRENT_TOTAL;
-          document.getElementById('payTotalText').innerText = 'Rp ' + CURRENT_TOTAL.toLocaleString(undefined, {maximumFractionDigits:0});
         } else {
           const qrisArea = document.getElementById('qrisInfoArea');
           let isCard = (method === 'DEBIT');
@@ -8750,48 +9156,15 @@
               <p class="text-muted m-0 fw-semibold mt-2" style="font-size: 0.88rem;">${msgHtml}</p>
             `;
           }
-          
-          // Hitung surcharge untuk metode non-CASH
-          updateCheckoutTotalWithSurcharge();
         }
+        
+        // Panggil kalkulasi ulang terintegrasi dengan promo & surcharge
+        recalculateCheckoutTotal();
       }
 
       // --- FUNGSI BARU: Hitung dan tampilkan total dengan surcharge di modal checkout ---
       function updateCheckoutTotalWithSurcharge() {
-        const method = document.querySelector('input[name="payMethod"]:checked').value;
-        if (method === 'CASH') {
-          window.CHECKOUT_SURCHARGE_INFO = null;
-          window.CHECKOUT_ADJUSTED_TOTAL = CURRENT_TOTAL;
-          document.getElementById('payTotalText').innerText = 'Rp ' + CURRENT_TOTAL.toLocaleString(undefined, {maximumFractionDigits:0});
-          return;
-        }
-        
-        let bankType = null;
-        const bankTypeEl = document.querySelector('input[name="bankType"]:checked');
-        if (bankTypeEl) bankType = bankTypeEl.value;
-        
-        const sc = calculateSurchargeForMethod(method, bankType);
-        const fee = sc.isPercent ? (CURRENT_TOTAL * sc.absVal / 100) : sc.absVal;
-        const feeAmount = sc.effect === 'add' ? fee : -fee;
-        
-        // Surcharge (add): total naik. Potong (cut): total tetap.
-        const adjustedTotal = sc.effect === 'add' ? CURRENT_TOTAL + fee : CURRENT_TOTAL;
-        
-        window.CHECKOUT_SURCHARGE_INFO = {
-          bankType: bankType,
-          feeType: sc.feeType,
-          rawValue: sc.rawValue,
-          feeAmount: Math.round(feeAmount),
-          effect: sc.effect,
-          label: sc.label,
-          baseTotal: CURRENT_TOTAL
-        };
-        window.CHECKOUT_ADJUSTED_TOTAL = Math.round(adjustedTotal);
-        
-        document.getElementById('payTotalText').innerText = 'Rp ' + window.CHECKOUT_ADJUSTED_TOTAL.toLocaleString(undefined, {maximumFractionDigits:0});
-        
-        // Update kembalian jika CASH input sudah terisi
-        calculateChange();
+        recalculateCheckoutTotal();
       }
 
       function calculateChange() {
@@ -8854,7 +9227,8 @@
 
         // --- ANALISIS STRUKTUR PRICE ADJUSTMENT NOTES ---
         let priceNotesArr = [];
-        CART.forEach(item => {
+        const baseItems = window.CHECKOUT_PROMO_ITEMS || CART;
+        baseItems.forEach(item => {
           if (item.individualAddons && item.individualAddons.length === item.qty) {
             item.individualAddons.forEach((addon, idx) => {
               if (addon.customPrice !== undefined && addon.customPrice !== item.price) {
@@ -8869,14 +9243,14 @@
         });
 
         if (window.CUSTOM_CART_SUBTOTAL !== undefined && window.CUSTOM_CART_SUBTOTAL !== null) {
-          let computedSubtotalWithItems = CART.reduce((sum, item) => sum + getCartItemTotalPrice(item), 0);
+          let computedSubtotalWithItems = baseItems.reduce((sum, item) => sum + getCartItemTotalPrice(item), 0);
           priceNotesArr.push(`Sub Total Overridden: Dari Rp ${computedSubtotalWithItems.toLocaleString()} diganti menjadi Rp ${window.CUSTOM_CART_SUBTOTAL.toLocaleString()}`);
         }
         let finalPriceNotes = priceNotesArr.join(' | ');
 
         // --- ANALISIS STRUKTUR ADD-ON NOTES ---
         let addonNotesArr = [];
-        CART.forEach(item => {
+        baseItems.forEach(item => {
           if (item.individualAddons && item.individualAddons.length === item.qty) {
             item.individualAddons.forEach((addon, idx) => {
               if (hasChangesForConfig(addon, item.price)) {
@@ -8903,7 +9277,7 @@
 
         // --- PECAH ITEM INDIVIDUAL UNTUK SAVING & STOCK DEDUCTION ---
         const processedItems = [];
-        CART.forEach(item => {
+        baseItems.forEach(item => {
           if (item.individualAddons && item.individualAddons.length === item.qty) {
             item.individualAddons.forEach((addon, idx) => {
               const individualItem = {
@@ -8925,6 +9299,10 @@
 
         // --- SURCHARGE INFO ---
         const surchargeInfo = window.CHECKOUT_SURCHARGE_INFO || null;
+        
+        // --- ORDER TYPE ---
+        const orderTypeEl = document.querySelector('input[name="orderType"]:checked');
+        const orderType = orderTypeEl ? orderTypeEl.value : 'Dine In';
 
         const transactionData = {
           total: finalTotal, 
@@ -8935,14 +9313,16 @@
           cashier: finalCashierName,
           priceNotes: finalPriceNotes,
           addonNotes: finalAddonNotes,
-          surchargeInfo: surchargeInfo
+          surchargeInfo: surchargeInfo,
+          appliedPromos: window.CHECKOUT_APPLIED_PROMOS || [],
+          orderType: orderType
         };
 
         google.script.run.withSuccessHandler(res => {
           btn.disabled = false;
           btn.innerText = 'BAYAR SEKARANG';
           if(res.status === 'success') {
-            const itemDetails = CART.map(i => `${i.name} (x${i.qty})`).join(', ');
+            const itemDetails = baseItems.map(i => `${i.name} (x${i.qty})`).join(', ');
             let auditLogMessage = `Menyimpan transaksi POS Utama senilai Rp ${finalTotal.toLocaleString()} dengan item: [ ${itemDetails} ]`;
             if (finalPriceNotes) {
               auditLogMessage += ` | Catatan Harga: ${finalPriceNotes}`;
@@ -11002,6 +11382,9 @@
         pushTxt(`ID   : ${transactionData.orderId || 'ORD-NEW'}`);
         pushTxt(`Kasir: ${transactionData.cashier || 'Admin'}`);
         pushTxt(`Waktu: ${new Date().toLocaleString('id-ID')}`);
+        if (transactionData.orderType) {
+          pushTxt(`Tipe : ${transactionData.orderType}`);
+        }
         pushTxt('-'.repeat(maxChars));
 
         // D. Item
@@ -11018,6 +11401,17 @@
         });
 
         pushTxt('-'.repeat(maxChars));
+        
+        // D3. Promo Terapan
+        if (transactionData.appliedPromos && transactionData.appliedPromos.length > 0) {
+          bytes.push(...cmd.boldOn);
+          pushTxt("PROMO TERAPKAN:");
+          bytes.push(...cmd.boldOff);
+          transactionData.appliedPromos.forEach(pName => {
+            pushTxt(`* ${pName}`);
+          });
+          pushTxt('-'.repeat(maxChars));
+        }
         
         // D2. Surcharge/Potongan Bank
         const sc = transactionData.surchargeInfo;
@@ -12196,19 +12590,19 @@
               <div class="mb-4">
                 <label class="fw-bold text-muted mb-3" style="font-size: 0.85rem; letter-spacing: 0.8px;">TIPE PESANAN</label>
                 <div class="d-flex gap-2">
-                  <input type="radio" class="btn-check" name="orderType" id="typeDineIn" value="Dine In" checked>
+                  <input type="radio" class="btn-check" name="orderType" id="typeDineIn" value="Dine In" checked onchange="recalculateCheckoutTotal()">
                   <label class="btn btn-outline-dark w-100 fw-bold py-3 rounded-4 d-flex flex-column align-items-center justify-content-center gap-2 shadow-sm" for="typeDineIn">
                     <i class="fas fa-chair fs-4"></i>
                     <span style="font-size: 0.9rem;">Dine In</span>
                   </label>
                   
-                  <input type="radio" class="btn-check" name="orderType" id="typeTakeaway" value="Takeaway">
+                  <input type="radio" class="btn-check" name="orderType" id="typeTakeaway" value="Takeaway" onchange="recalculateCheckoutTotal()">
                   <label class="btn btn-outline-dark w-100 fw-bold py-3 rounded-4 d-flex flex-column align-items-center justify-content-center gap-2 shadow-sm" for="typeTakeaway">
                     <i class="fas fa-shopping-bag fs-4"></i>
                     <span style="font-size: 0.9rem;">Takeaway</span>
                   </label>
                   
-                  <input type="radio" class="btn-check" name="orderType" id="typeDelivery" value="Delivery">
+                  <input type="radio" class="btn-check" name="orderType" id="typeDelivery" value="Delivery" onchange="recalculateCheckoutTotal()">
                   <label class="btn btn-outline-dark w-100 fw-bold py-3 rounded-4 d-flex flex-column align-items-center justify-content-center gap-2 shadow-sm" for="typeDelivery">
                     <i class="fas fa-motorcycle fs-4"></i>
                     <span style="font-size: 0.9rem;">Delivery</span>
@@ -12274,6 +12668,12 @@
               <div class="text-center border-bottom pb-3 mb-4">
                 <h6 class="text-muted mb-2 fw-bold" style="font-size: 0.85rem; letter-spacing: 1px;">TOTAL TAGIHAN</h6>
                 <h1 class="fw-extrabold m-0 text-dark" id="payTotalText" style="font-size: 2.2rem; letter-spacing: -0.5px;">Rp 0</h1>
+                <!-- Dynamic Applied Promos Container -->
+                <div id="checkoutPromoContainer" class="d-none mt-2">
+                  <div class="d-flex flex-wrap gap-2 justify-content-center" id="checkoutPromoBadges">
+                    <!-- Badges will be generated dynamically -->
+                  </div>
+                </div>
               </div>
 
               <!-- Input Tunai / Area Non-Tunai -->
