@@ -14293,11 +14293,10 @@
             modal.dataset.liveListenersAttached = 'true';
         }
 
-        // Lock UI during backend loading to prevent race conditions
+        // Lock UI during backend loading to prevent race conditions (without visual dimming)
         const wrapper = modal.querySelector('.modal-wrapper');
         if (wrapper) {
             wrapper.style.pointerEvents = 'none';
-            wrapper.style.opacity = '0.6';
         }
 
         spInitialDataString = JSON.stringify(collectAllSpData());
@@ -14307,7 +14306,6 @@
         google.script.run.withSuccessHandler(function(res) {
           if (wrapper) {
               wrapper.style.pointerEvents = 'auto';
-              wrapper.style.opacity = '1';
           }
           if (res && res.status === 'success' && res.data && res.data.length > 0) {
             loadSpDataFromBackend(res.data);
@@ -14327,7 +14325,6 @@
         }).withFailureHandler(function(err) {
           if (wrapper) {
               wrapper.style.pointerEvents = 'auto';
-              wrapper.style.opacity = '1';
           }
           console.error("Gagal memuat konfigurasi Special Price:", err);
           loadSpDataFromBackend([]);
@@ -14687,7 +14684,7 @@
         const autoPlayStartDate = panel.querySelector('input[id*="AutoPlayStartDate"]');
         if (autoPlayStartDate) {
           if (autoPlayStartDate._flatpickr) {
-            autoPlayStartDate._flatpickr.setDate(autoPlay.startDate || '');
+            autoPlayStartDate._flatpickr.setDate(autoPlay.startDate || '', false);
           } else {
             autoPlayStartDate.value = autoPlay.startDate || '';
           }
@@ -14696,7 +14693,7 @@
         const autoPlayEndDate = panel.querySelector('input[id*="AutoPlayEndDate"]');
         if (autoPlayEndDate) {
           if (autoPlayEndDate._flatpickr) {
-            autoPlayEndDate._flatpickr.setDate(autoPlay.endDate || '');
+            autoPlayEndDate._flatpickr.setDate(autoPlay.endDate || '', false);
             if (autoPlay.startDate) {
               autoPlayEndDate._flatpickr.set('minDate', autoPlay.startDate);
             }
@@ -14708,7 +14705,7 @@
         const autoPlayStartTime = panel.querySelector('input[id*="AutoPlayStartTime"]');
         if (autoPlayStartTime) {
           if (autoPlayStartTime._flatpickr) {
-            autoPlayStartTime._flatpickr.setDate(autoPlay.startTime || '00:00');
+            autoPlayStartTime._flatpickr.setDate(autoPlay.startTime || '00:00', false);
           } else {
             autoPlayStartTime.value = autoPlay.startTime || '00:00';
           }
@@ -14717,7 +14714,7 @@
         const autoPlayEndTime = panel.querySelector('input[id*="AutoPlayEndTime"]');
         if (autoPlayEndTime) {
           if (autoPlayEndTime._flatpickr) {
-            autoPlayEndTime._flatpickr.setDate(autoPlay.endTime || '00:00');
+            autoPlayEndTime._flatpickr.setDate(autoPlay.endTime || '00:00', false);
           } else {
             autoPlayEndTime.value = autoPlay.endTime || '00:00';
           }
@@ -14777,25 +14774,25 @@
         
         const autoPlayStartDate = panel.querySelector('input[id*="AutoPlayStartDate"]');
         if (autoPlayStartDate) {
-          if (autoPlayStartDate._flatpickr) autoPlayStartDate._flatpickr.clear();
+          if (autoPlayStartDate._flatpickr) autoPlayStartDate._flatpickr.clear(false);
           else autoPlayStartDate.value = '';
         }
         
         const autoPlayEndDate = panel.querySelector('input[id*="AutoPlayEndDate"]');
         if (autoPlayEndDate) {
-          if (autoPlayEndDate._flatpickr) autoPlayEndDate._flatpickr.clear();
+          if (autoPlayEndDate._flatpickr) autoPlayEndDate._flatpickr.clear(false);
           else autoPlayEndDate.value = '';
         }
         
         const autoPlayStartTime = panel.querySelector('input[id*="AutoPlayStartTime"]');
         if (autoPlayStartTime) {
-          if (autoPlayStartTime._flatpickr) autoPlayStartTime._flatpickr.setDate('00:00');
+          if (autoPlayStartTime._flatpickr) autoPlayStartTime._flatpickr.setDate('00:00', false);
           else autoPlayStartTime.value = '00:00';
         }
         
         const autoPlayEndTime = panel.querySelector('input[id*="AutoPlayEndTime"]');
         if (autoPlayEndTime) {
-          if (autoPlayEndTime._flatpickr) autoPlayEndTime._flatpickr.setDate('00:00');
+          if (autoPlayEndTime._flatpickr) autoPlayEndTime._flatpickr.setDate('00:00', false);
           else autoPlayEndTime.value = '00:00';
         }
         
@@ -15378,7 +15375,7 @@
             dateFormat: "Y-m-d",
             altInput: true,
             altFormat: "d-m-Y",
-            allowInput: true,
+            allowInput: false,
             disableMobile: true,
             onChange: function() {
               onAutoPlayDateChange(tabContext, 'start');
@@ -15393,7 +15390,7 @@
             dateFormat: "Y-m-d",
             altInput: true,
             altFormat: "d-m-Y",
-            allowInput: true,
+            allowInput: false,
             disableMobile: true,
             onChange: function() {
               onAutoPlayDateChange(tabContext, 'end');
@@ -15465,7 +15462,7 @@
             if (!curEndVal || curEndVal < startDateVal) {
               curEndVal = startDateVal;
               if (endDateInput._flatpickr) {
-                endDateInput._flatpickr.setDate(startDateVal);
+                endDateInput._flatpickr.setDate(startDateVal, false);
               } else {
                 endDateInput.value = startDateVal;
               }
