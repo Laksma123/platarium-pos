@@ -2930,6 +2930,110 @@
                             </div>
                           </div>
                         </div>
+
+                        <!-- Auto-Play Config -->
+                        <div class="bg-white p-3 rounded-4 shadow-sm border mt-3 mb-2">
+                          <div class="d-flex justify-content-between align-items-center pb-2 border-bottom mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                              <i class="fas fa-play-circle text-primary fs-5"></i>
+                              <h6 class="fw-bold m-0 text-dark" style="font-size: 0.85rem;">Auto-Play Promo</h6>
+                            </div>
+                            <div class="form-check form-switch m-0">
+                              <input class="form-check-input" type="checkbox" role="switch" id="spDineInAutoPlayToggle" style="width: 40px; height: 20px; cursor:pointer;" onchange="toggleAutoPlayUI('dinein')">
+                            </div>
+                          </div>
+                          
+                          <div id="spDineInAutoPlayContent" style="transition: all 0.3s ease;">
+                            <div class="row g-2 mb-2">
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Dimulai</label>
+                                <select id="spDineInAutoPlayStartType" class="form-select form-select-sm border-2 fw-bold text-dark" onchange="onAutoPlayDateTypeChange('dinein', 'start')">
+                                  <option value="today">HARI INI</option>
+                                  <option value="specific">Tanggal Tertentu</option>
+                                </select>
+                                <input type="date" id="spDineInAutoPlayStartDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" onchange="onAutoPlayDateChange('dinein', 'start')">
+                              </div>
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Berakhir</label>
+                                <select id="spDineInAutoPlayEndType" class="form-select form-select-sm border-2 fw-bold text-dark" onchange="onAutoPlayDateTypeChange('dinein', 'end')">
+                                  <option value="today">HARI INI</option>
+                                  <option value="specific">Tanggal Tertentu</option>
+                                </select>
+                                <input type="date" id="spDineInAutoPlayEndDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" onchange="onAutoPlayDateChange('dinein', 'end')">
+                              </div>
+                            </div>
+                            
+                            <div class="row g-2">
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Dari Jam</label>
+                                <select id="spDineInAutoPlayTimeType" class="form-select form-select-sm border-2 fw-bold text-dark" onchange="onAutoPlayTimeTypeChange('dinein')">
+                                  <option value="fullday">Fullday (00:00 - 00:00)</option>
+                                  <option value="manual">Tentukan Manual</option>
+                                </select>
+                              </div>
+                              <div class="col-6" id="spDineInAutoPlayTimeManualCol" style="display:none;">
+                                <label class="small fw-bold text-muted mb-1">Sampai Jam / Durasi</label>
+                                <div class="d-flex align-items-center gap-1">
+                                  <input type="time" id="spDineInAutoPlayStartTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" onchange="checkSpChanges()">
+                                  <span class="small fw-bold text-muted">-</span>
+                                  <input type="time" id="spDineInAutoPlayEndTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" onchange="checkSpChanges()">
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Auto-Play Config -->
+                        <div class="bg-white p-3 rounded-4 shadow-sm border mt-3 mb-2">
+                          <div class="d-flex justify-content-between align-items-center pb-2 border-bottom mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                              <i class="fas fa-play-circle text-primary fs-5"></i>
+                              <h6 class="fw-bold m-0 text-dark" style="font-size: 0.85rem;">Auto-Play Promo</h6>
+                            </div>
+                            <div class="form-check form-switch m-0">
+                              <input class="form-check-input" type="checkbox" role="switch" id="spTakeawayAutoPlayToggle" style="width: 40px; height: 20px; cursor:pointer;" onchange="toggleAutoPlayUI('takeaway')">
+                            </div>
+                          </div>
+                          
+                          <div id="spTakeawayAutoPlayContent" style="transition: all 0.3s ease;">
+                            <div class="row g-2 mb-2">
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Dimulai</label>
+                                <select id="spTakeawayAutoPlayStartType" class="form-select form-select-sm border-2 fw-bold text-dark" onchange="onAutoPlayDateTypeChange('takeaway', 'start')">
+                                  <option value="today">HARI INI</option>
+                                  <option value="specific">Tanggal Tertentu</option>
+                                </select>
+                                <input type="date" id="spTakeawayAutoPlayStartDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" onchange="onAutoPlayDateChange('takeaway', 'start')">
+                              </div>
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Berakhir</label>
+                                <select id="spTakeawayAutoPlayEndType" class="form-select form-select-sm border-2 fw-bold text-dark" onchange="onAutoPlayDateTypeChange('takeaway', 'end')">
+                                  <option value="today">HARI INI</option>
+                                  <option value="specific">Tanggal Tertentu</option>
+                                </select>
+                                <input type="date" id="spTakeawayAutoPlayEndDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" onchange="onAutoPlayDateChange('takeaway', 'end')">
+                              </div>
+                            </div>
+                            
+                            <div class="row g-2">
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Dari Jam</label>
+                                <select id="spTakeawayAutoPlayTimeType" class="form-select form-select-sm border-2 fw-bold text-dark" onchange="onAutoPlayTimeTypeChange('takeaway')">
+                                  <option value="fullday">Fullday (00:00 - 00:00)</option>
+                                  <option value="manual">Tentukan Manual</option>
+                                </select>
+                              </div>
+                              <div class="col-6" id="spTakeawayAutoPlayTimeManualCol" style="display:none;">
+                                <label class="small fw-bold text-muted mb-1">Sampai Jam / Durasi</label>
+                                <div class="d-flex align-items-center gap-1">
+                                  <input type="time" id="spTakeawayAutoPlayStartTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" onchange="checkSpChanges()">
+                                  <span class="small fw-bold text-muted">-</span>
+                                  <input type="time" id="spTakeawayAutoPlayEndTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" onchange="checkSpChanges()">
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                       
 
@@ -14175,6 +14279,26 @@
         
         const activeToggle = panel.querySelector('.form-check-input[role="switch"]');
         config.active = activeToggle ? activeToggle.checked : true;
+
+        const autoPlayToggle = panel.querySelector('.form-check-input[id*="AutoPlayToggle"]');
+        const autoPlayStartType = panel.querySelector('select[id*="AutoPlayStartType"]');
+        const autoPlayStartDate = panel.querySelector('input[id*="AutoPlayStartDate"]');
+        const autoPlayEndType = panel.querySelector('select[id*="AutoPlayEndType"]');
+        const autoPlayEndDate = panel.querySelector('input[id*="AutoPlayEndDate"]');
+        const autoPlayTimeType = panel.querySelector('select[id*="AutoPlayTimeType"]');
+        const autoPlayStartTime = panel.querySelector('input[id*="AutoPlayStartTime"]');
+        const autoPlayEndTime = panel.querySelector('input[id*="AutoPlayEndTime"]');
+
+        config.autoPlayConfig = {
+          enabled: autoPlayToggle ? autoPlayToggle.checked : false,
+          startType: autoPlayStartType ? autoPlayStartType.value : 'today',
+          startDate: autoPlayStartDate ? autoPlayStartDate.value : '',
+          endType: autoPlayEndType ? autoPlayEndType.value : 'today',
+          endDate: autoPlayEndDate ? autoPlayEndDate.value : '',
+          timeType: autoPlayTimeType ? autoPlayTimeType.value : 'fullday',
+          startTime: autoPlayStartTime ? autoPlayStartTime.value : '00:00',
+          endTime: autoPlayEndTime ? autoPlayEndTime.value : '00:00'
+        };
         
         const activeGroup = dynConfig.querySelector('.sp-form-group[data-form-type="' + config.promoType + '"]') || dynConfig.querySelector('#sp-form-' + config.promoType);
         
@@ -14330,6 +14454,52 @@
                 }
             } catch(e) {}
         }
+
+        let autoPlay = config.autoPlayConfig || {
+          enabled: false, startType: 'today', startDate: '', endType: 'today', endDate: '', timeType: 'fullday', startTime: '00:00', endTime: '00:00'
+        };
+        if (typeof autoPlay === 'string') {
+          try { autoPlay = JSON.parse(autoPlay); } catch(e){
+            autoPlay = { enabled: false, startType: 'today', startDate: '', endType: 'today', endDate: '', timeType: 'fullday', startTime: '00:00', endTime: '00:00' };
+          }
+        }
+        
+        const autoPlayToggle = panel.querySelector('.form-check-input[id*="AutoPlayToggle"]');
+        if (autoPlayToggle) autoPlayToggle.checked = !!autoPlay.enabled;
+        
+        const autoPlayStartType = panel.querySelector('select[id*="AutoPlayStartType"]');
+        if (autoPlayStartType) autoPlayStartType.value = autoPlay.startType || 'today';
+        
+        const autoPlayStartDate = panel.querySelector('input[id*="AutoPlayStartDate"]');
+        if (autoPlayStartDate) {
+          autoPlayStartDate.value = autoPlay.startDate || '';
+          autoPlayStartDate.classList.toggle('d-none', autoPlay.startType !== 'specific');
+        }
+        
+        const autoPlayEndType = panel.querySelector('select[id*="AutoPlayEndType"]');
+        if (autoPlayEndType) autoPlayEndType.value = autoPlay.endType || 'today';
+        
+        const autoPlayEndDate = panel.querySelector('input[id*="AutoPlayEndDate"]');
+        if (autoPlayEndDate) {
+          autoPlayEndDate.value = autoPlay.endDate || '';
+          autoPlayEndDate.classList.toggle('d-none', autoPlay.endType !== 'specific');
+        }
+        
+        const autoPlayTimeType = panel.querySelector('select[id*="AutoPlayTimeType"]');
+        if (autoPlayTimeType) autoPlayTimeType.value = autoPlay.timeType || 'fullday';
+        
+        const manualCol = panel.querySelector('[id*="AutoPlayTimeManualCol"]');
+        if (manualCol) {
+          manualCol.style.display = autoPlay.timeType === 'manual' ? 'block' : 'none';
+        }
+        
+        const autoPlayStartTime = panel.querySelector('input[id*="AutoPlayStartTime"]');
+        if (autoPlayStartTime) autoPlayStartTime.value = autoPlay.startTime || '00:00';
+        
+        const autoPlayEndTime = panel.querySelector('input[id*="AutoPlayEndTime"]');
+        if (autoPlayEndTime) autoPlayEndTime.value = autoPlay.endTime || '00:00';
+        
+        toggleAutoPlayUI(tabContext);
       }
 
       function resetConfigForm(tabContext) {
@@ -14371,6 +14541,35 @@
            const btn = container.querySelector('.sp-btn-delete-row');
            if (btn) btn.style.display = 'none';
         });
+
+        const autoPlayToggle = panel.querySelector('.form-check-input[id*="AutoPlayToggle"]');
+        if (autoPlayToggle) autoPlayToggle.checked = false;
+        
+        const autoPlayStartType = panel.querySelector('select[id*="AutoPlayStartType"]');
+        if (autoPlayStartType) autoPlayStartType.value = 'today';
+        
+        const autoPlayStartDate = panel.querySelector('input[id*="AutoPlayStartDate"]');
+        if (autoPlayStartDate) { autoPlayStartDate.value = ''; autoPlayStartDate.classList.add('d-none'); }
+        
+        const autoPlayEndType = panel.querySelector('select[id*="AutoPlayEndType"]');
+        if (autoPlayEndType) autoPlayEndType.value = 'today';
+        
+        const autoPlayEndDate = panel.querySelector('input[id*="AutoPlayEndDate"]');
+        if (autoPlayEndDate) { autoPlayEndDate.value = ''; autoPlayEndDate.classList.add('d-none'); }
+        
+        const autoPlayTimeType = panel.querySelector('select[id*="AutoPlayTimeType"]');
+        if (autoPlayTimeType) autoPlayTimeType.value = 'fullday';
+        
+        const manualCol = panel.querySelector('[id*="AutoPlayTimeManualCol"]');
+        if (manualCol) manualCol.style.display = 'none';
+        
+        const autoPlayStartTime = panel.querySelector('input[id*="AutoPlayStartTime"]');
+        if (autoPlayStartTime) autoPlayStartTime.value = '00:00';
+        
+        const autoPlayEndTime = panel.querySelector('input[id*="AutoPlayEndTime"]');
+        if (autoPlayEndTime) autoPlayEndTime.value = '00:00';
+        
+        toggleAutoPlayUI(tabContext);
       }
 
       // --- COLLECT ALL SP DATA FOR SAVING ---
@@ -14396,7 +14595,8 @@
               buyGetData: cfg.buyGetData || '',
               minPurchaseAmount: cfg.minPurchaseAmount || '',
               serviceName: '', serviceIconUrl: '',
-              active: 'true'
+              active: (cfg.active === false || String(cfg.active) === 'false') ? 'false' : 'true',
+              autoPlayConfig: cfg.autoPlayConfig ? JSON.stringify(cfg.autoPlayConfig) : ''
             });
           });
         });
@@ -14427,7 +14627,8 @@
                 minPurchaseAmount: cfg.minPurchaseAmount || '',
                 serviceName: serviceNameInput ? serviceNameInput.value : '',
                 serviceIconUrl: (iconPreview && iconPreview.src && !iconPreview.src.includes('data:')) ? iconPreview.src : '',
-                active: (cfg.active !== undefined && String(cfg.active) === 'false') ? 'false' : 'true'
+                active: (cfg.active === false || String(cfg.active) === 'false') ? 'false' : 'true',
+                autoPlayConfig: cfg.autoPlayConfig ? JSON.stringify(cfg.autoPlayConfig) : ''
               });
               slotCount++;
             });
@@ -14441,7 +14642,8 @@
               minPurchaseAmount: '',
               serviceName: serviceNameInput ? serviceNameInput.value : '',
               serviceIconUrl: (iconPreview && iconPreview.src && !iconPreview.src.includes('data:')) ? iconPreview.src : '',
-              active: 'true'
+              active: 'true',
+              autoPlayConfig: ''
             });
           }
         });
@@ -14521,6 +14723,10 @@
                slot.className = 'sp-slot configured';
                slot.innerHTML = '<span class="slot-title mt-1">' + item.labelName + '</span><div class="remove-slot" onclick="event.stopPropagation(); removeSpSlot(this, \'' + tabContext + '\')"><i class="fas fa-times"></i></div>';
                
+               let apCfg = null;
+               if (item.autoPlayConfig) {
+                 try { apCfg = JSON.parse(item.autoPlayConfig); } catch(e){}
+               }
                const config = {
                    promoType: item.promoType,
                    discountForm: item.discountForm,
@@ -14528,7 +14734,9 @@
                    categoryTarget: item.categoryTarget,
                    itemTarget: item.itemTarget,
                    buyGetData: item.buyGetData,
-                   minPurchaseAmount: item.minPurchaseAmount
+                   minPurchaseAmount: item.minPurchaseAmount,
+                   active: (item.active === 'false' || item.active === false) ? false : true,
+                   autoPlayConfig: apCfg
                };
                slot.dataset.config = JSON.stringify(config);
                slot.onclick = function() { activateSpSlot(this, tabContext); };
@@ -14833,9 +15041,145 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Auto-Play Config -->
+              <div class="bg-white p-3 rounded-4 shadow-sm border mt-3 mb-2">
+                <div class="d-flex justify-content-between align-items-center pb-2 border-bottom mb-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="fas fa-play-circle text-primary fs-5"></i>
+                    <h6 class="fw-bold m-0 text-dark" style="font-size: 0.85rem;">Auto-Play Promo</h6>
+                  </div>
+                  <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" role="switch" id="\${prefix}AutoPlayToggle" style="width: 40px; height: 20px; cursor:pointer;" onchange="toggleAutoPlayUI('\${tabId}')">
+                  </div>
+                </div>
+                
+                <div id="\${prefix}AutoPlayContent" style="transition: all 0.3s ease;">
+                  <div class="row g-2 mb-2">
+                    <div class="col-6">
+                      <label class="small fw-bold text-muted mb-1">Dimulai</label>
+                      <select id="\${prefix}AutoPlayStartType" class="form-select form-select-sm border-2 fw-bold text-dark" onchange="onAutoPlayDateTypeChange('\${tabId}', 'start')">
+                        <option value="today">HARI INI</option>
+                        <option value="specific">Tanggal Tertentu</option>
+                      </select>
+                      <input type="date" id="\${prefix}AutoPlayStartDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" onchange="onAutoPlayDateChange('\${tabId}', 'start')">
+                    </div>
+                    <div class="col-6">
+                      <label class="small fw-bold text-muted mb-1">Berakhir</label>
+                      <select id="\${prefix}AutoPlayEndType" class="form-select form-select-sm border-2 fw-bold text-dark" onchange="onAutoPlayDateTypeChange('\${tabId}', 'end')">
+                        <option value="today">HARI INI</option>
+                        <option value="specific">Tanggal Tertentu</option>
+                      </select>
+                      <input type="date" id="\${prefix}AutoPlayEndDate" class="form-control form-control-sm border-2 mt-1 fw-bold text-dark d-none" onchange="onAutoPlayDateChange('\${tabId}', 'end')">
+                    </div>
+                  </div>
+                  
+                  <div class="row g-2">
+                    <div class="col-6">
+                      <label class="small fw-bold text-muted mb-1">Dari Jam</label>
+                      <select id="\${prefix}AutoPlayTimeType" class="form-select form-select-sm border-2 fw-bold text-dark" onchange="onAutoPlayTimeTypeChange('\${tabId}')">
+                        <option value="fullday">Fullday (00:00 - 00:00)</option>
+                        <option value="manual">Tentukan Manual</option>
+                      </select>
+                    </div>
+                    <div class="col-6" id="\${prefix}AutoPlayTimeManualCol" style="display:none;">
+                      <label class="small fw-bold text-muted mb-1">Sampai Jam / Durasi</label>
+                      <div class="d-flex align-items-center gap-1">
+                        <input type="time" id="\${prefix}AutoPlayStartTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" onchange="checkSpChanges()">
+                        <span class="small fw-bold text-muted">-</span>
+                        <input type="time" id="\${prefix}AutoPlayEndTime" class="form-control form-control-sm border-2 fw-bold text-dark" value="00:00" onchange="checkSpChanges()">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>`;
+      }
+
+      // --- AUTOPLAY CONTROLLERS ---
+      function toggleAutoPlayUI(tabContext) {
+        const toggle = document.getElementById(getSpElId(tabContext, 'AutoPlayToggle'));
+        const content = document.getElementById(getSpElId(tabContext, 'AutoPlayContent'));
+        if (toggle && content) {
+          if (toggle.checked) {
+            content.style.opacity = '1';
+            content.style.pointerEvents = 'auto';
+          } else {
+            content.style.opacity = '0.4';
+            content.style.pointerEvents = 'none';
+          }
+        }
+        checkSpChanges();
+      }
+
+      function onAutoPlayDateTypeChange(tabContext, dateField) {
+        const typeSelect = document.getElementById(getSpElId(tabContext, dateField === 'start' ? 'AutoPlayStartType' : 'AutoPlayEndType'));
+        const dateInput = document.getElementById(getSpElId(tabContext, dateField === 'start' ? 'AutoPlayStartDate' : 'AutoPlayEndDate'));
+        
+        if (typeSelect && dateInput) {
+          if (typeSelect.value === 'specific') {
+            dateInput.classList.remove('d-none');
+            // Show picker automatically
+            setTimeout(() => {
+              try { dateInput.showPicker(); } catch(e) { dateInput.focus(); }
+            }, 100);
+          } else {
+            dateInput.classList.add('d-none');
+            dateInput.value = '';
+          }
+        }
+        checkSpChanges();
+      }
+
+      function onAutoPlayDateChange(tabContext, dateField) {
+        if (dateField === 'start') {
+          const startDateInput = document.getElementById(getSpElId(tabContext, 'AutoPlayStartDate'));
+          const endTypeSelect = document.getElementById(getSpElId(tabContext, 'AutoPlayEndType'));
+          const endDateInput = document.getElementById(getSpElId(tabContext, 'AutoPlayEndDate'));
+          
+          if (startDateInput && endTypeSelect && endDateInput) {
+            const startDateVal = startDateInput.value;
+            endDateInput.min = startDateVal;
+            
+            // Auto switch end type to specific (Traveloka checkout style)
+            endTypeSelect.value = 'specific';
+            endDateInput.classList.remove('d-none');
+            
+            if (!endDateInput.value || endDateInput.value < startDateVal) {
+              endDateInput.value = startDateVal;
+            }
+            
+            setTimeout(() => {
+              try { endDateInput.showPicker(); } catch(e) { endDateInput.focus(); }
+            }, 150);
+          }
+        }
+        checkSpChanges();
+      }
+
+      function onAutoPlayTimeTypeChange(tabContext) {
+        const typeSelect = document.getElementById(getSpElId(tabContext, 'AutoPlayTimeType'));
+        const manualCol = document.getElementById(getSpElId(tabContext, 'AutoPlayTimeManualCol'));
+        if (typeSelect && manualCol) {
+          if (typeSelect.value === 'manual') {
+            manualCol.style.display = 'block';
+            const startTimeInput = document.getElementById(getSpElId(tabContext, 'AutoPlayStartTime'));
+            if (startTimeInput) {
+              setTimeout(() => {
+                try { startTimeInput.showPicker(); } catch(e) { startTimeInput.focus(); }
+              }, 100);
+            }
+          } else {
+            manualCol.style.display = 'none';
+          }
+        }
+        checkSpChanges();
+      }
+
+      function loadSpecialPriceSettings() {
+        console.log("Special Price Settings initialized successfully.");
       }
 
       // --- HELPER: Hitung surcharge untuk metode bayar tertentu ---
