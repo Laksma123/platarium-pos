@@ -7272,7 +7272,10 @@
               toggleDragModeOnDblclick: false,
               ready: function() {
                 // Ambil rasio awal saat gambar pertama kali selesai dimuat dan disesuaikan
-                const initialRatio = CROPPER.getImageData().ratio;
+                const imageData = CROPPER.getImageData();
+                const initialRatio = (imageData && imageData.width && imageData.naturalWidth)
+                  ? (imageData.width / imageData.naturalWidth)
+                  : 1.0;
                 CROPPER.initialRatio = initialRatio;
                 initZoomSlider();
               },
@@ -8643,14 +8646,14 @@
         }).deleteProductImage(pid);
       }
 
-      // Inisialisasi Slider saat upload file terpilih dengan batas relatif 20% - 200% dari rasio awal
+      // Inisialisasi Slider saat upload file terpilih dengan batas relatif 5% - 300% dari rasio awal
       function initZoomSlider() {
         const slider = document.getElementById('zoomSlider');
         if (!CROPPER || !CROPPER.initialRatio) return;
         
-        // Atur min, max, step secara statis/relatif agar mudah dipahami (20% hingga 200%)
-        slider.min = '0.20';
-        slider.max = '2.00';
+        // Atur min, max, step secara statis/relatif agar mudah dipahami (5% hingga 300%)
+        slider.min = '0.05';
+        slider.max = '3.00';
         slider.step = '0.01';
         slider.value = '1.00'; // Mulai dari 100% (fit aslinya)
         
