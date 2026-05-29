@@ -14704,6 +14704,12 @@
       function resetConfigForm(tabContext) {
         const panel = document.getElementById(getSpElId(tabContext, 'Config'));
         if (!panel) return;
+        
+        const labelNameInput = document.getElementById(getSpElId(tabContext, 'LabelName'));
+        if (labelNameInput) {
+            labelNameInput.value = '';
+        }
+        
         const typeSelect = panel.querySelector('select[onchange*="changeSpType"]');
         if (typeSelect) {
             typeSelect.value = 'subtotal';
@@ -14871,34 +14877,40 @@
         // Recreate delivery sub-tabs from saved data
         const tabBar = document.getElementById('deliveryTabBar');
         const content = document.getElementById('deliverySubTabContent');
-        if (tabBar && content && Object.keys(deliveryTabs).length > 0) {
+        if (tabBar && content) {
           tabBar.innerHTML = '';
           content.innerHTML = '';
           deliveryTabCounter = 0;
-          let first = true;
-          Object.keys(deliveryTabs).sort().forEach(function(subTabId) {
-            const items = deliveryTabs[subTabId];
-            deliveryTabCounter++;
-            const tabId = 'delivery_' + deliveryTabCounter;
-            
-            items.forEach(i => i.subTab = tabId);
-            tabData[tabId] = items;
-            
-            const serviceName = items[0].serviceName || '';
-            const serviceIconUrl = items[0].serviceIconUrl || '';
-            const label = serviceName || ('Pesan Antar ' + deliveryTabCounter);
-            
-            createDeliveryTabElement(tabId, label, first, serviceIconUrl);
-            createDeliveryPaneElement(tabId);
-            
-            const nameInput = document.querySelector('#pane-' + tabId + ' .delivery-service-name');
-            if (nameInput && serviceName) nameInput.value = serviceName;
-            if (serviceIconUrl) {
-              const area = document.querySelector('#pane-' + tabId + ' .delivery-icon-upload-area');
-              if (area) setDeliveryIconPreview(area, serviceIconUrl);
-            }
-            first = false;
-          });
+          
+          if (Object.keys(deliveryTabs).length > 0) {
+            let first = true;
+            Object.keys(deliveryTabs).sort().forEach(function(subTabId) {
+              const items = deliveryTabs[subTabId];
+              deliveryTabCounter++;
+              const tabId = 'delivery_' + deliveryTabCounter;
+              
+              items.forEach(i => i.subTab = tabId);
+              tabData[tabId] = items;
+              
+              const serviceName = items[0].serviceName || '';
+              const serviceIconUrl = items[0].serviceIconUrl || '';
+              const label = serviceName || ('Pesan Antar ' + deliveryTabCounter);
+              
+              createDeliveryTabElement(tabId, label, first, serviceIconUrl);
+              createDeliveryPaneElement(tabId);
+              
+              const nameInput = document.querySelector('#pane-' + tabId + ' .delivery-service-name');
+              if (nameInput && serviceName) nameInput.value = serviceName;
+              if (serviceIconUrl) {
+                const area = document.querySelector('#pane-' + tabId + ' .delivery-icon-upload-area');
+                if (area) setDeliveryIconPreview(area, serviceIconUrl);
+              }
+              first = false;
+            });
+          } else {
+            // Re-initialize default first delivery tab
+            addDeliverySubTab();
+          }
           
           const addTab = document.createElement('div');
           addTab.className = 'delivery-tab-add';
@@ -14911,14 +14923,12 @@
         // Recreate slots for all tabs
         Object.keys(tabData).forEach(function(tabContext) {
            const items = tabData[tabContext];
-           if (!items || items.length === 0) return;
-           
            const slotsEl = document.getElementById(getSpElId(tabContext, 'Slots'));
            if (!slotsEl) return;
            
            slotsEl.innerHTML = '';
            
-           const validItems = items.filter(i => i.slotIndex !== -1 && i.labelName);
+           const validItems = (items || []).filter(i => i.slotIndex !== -1 && i.labelName);
            
            validItems.forEach(item => {
                const slot = document.createElement('div');
@@ -14949,23 +14959,34 @@
            
            // Restore active slot if there was one
            const activeIdx = activeIndices[tabContext];
+           let slotToActivate = null;
+           const configuredSlots = slotsEl.querySelectorAll('.sp-slot.configured');
+           
            if (activeIdx !== undefined) {
-             const slots = slotsEl.querySelectorAll('.sp-slot');
-             if (slots[activeIdx]) {
-               slots[activeIdx].classList.add('active');
-               if (slots[activeIdx].classList.contains('configured')) {
-                 loadConfigFromSlot(slots[activeIdx], tabContext);
-                 
-                 // Sync label name input
-                 const titleEl = slots[activeIdx].querySelector('.slot-title');
-                 const inputName = document.getElementById(getSpElId(tabContext, 'LabelName'));
-                 if (inputName && titleEl) {
-                   const text = titleEl.innerText;
-                   inputName.value = text === 'Promo Baru' ? '' : text;
-                 } else if (inputName) {
-                   inputName.value = '';
-                 }
-               }
+             const allSlots = slotsEl.querySelectorAll('.sp-slot');
+             if (allSlots[activeIdx] && allSlots[activeIdx].classList.contains('configured')) {
+               slotToActivate = allSlots[activeIdx];
+             }
+           }
+           
+           if (!slotToActivate && configuredSlots.length > 0) {
+             slotToActivate = configuredSlots[0];
+           }
+           
+           slotsEl.querySelectorAll('.sp-slot').forEach(s => s.classList.remove('active'));
+           
+           if (slotToActivate) {
+             slotToActivate.classList.add('active');
+             loadConfigFromSlot(slotToActivate, tabContext);
+             
+             // Sync label name input
+             const titleEl = slotToActivate.querySelector('.slot-title');
+             const inputName = document.getElementById(getSpElId(tabContext, 'LabelName'));
+             if (inputName && titleEl) {
+               const text = titleEl.innerText;
+               inputName.value = text === 'Promo Baru' ? '' : text;
+             } else if (inputName) {
+               inputName.value = '';
              }
            } else {
              resetConfigForm(tabContext);
