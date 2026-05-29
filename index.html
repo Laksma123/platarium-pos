@@ -842,13 +842,40 @@
 
       /* Thermal Printer & Nota Design Styles */
       .receipt-textarea:focus { outline: 1px dashed var(--primary-gold); background: #fffcf5; }
-      .group-hover-edit { position: relative; border-radius: 8px; transition: 0.2s; padding: 5px; }
-      .group-hover-edit:hover { border: 1px dashed var(--primary-gold) !important; background: rgba(197, 160, 89, 0.05); }
+      .group-hover-edit {
+        position: relative;
+        border-radius: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 8px;
+        border: 1.5px dashed transparent !important;
+      }
+      .group-hover-edit:hover {
+        border: 1.5px dashed var(--primary-gold, #d4af37) !important;
+        background: rgba(197, 160, 89, 0.06);
+        box-shadow: 0 4px 15px rgba(197, 160, 89, 0.15);
+      }
       .group-hover-edit .edit-overlay { 
         display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.5); 
         color: white; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; border-radius: 5px; 
       }
       .group-hover-edit:hover .edit-overlay { display: flex; }
+
+      /* Deteksi Perangkat Mobile Tanpa Mouse (Touch-only) */
+      @media (hover: none), (pointer: coarse) {
+        .group-hover-edit {
+          border: 1.5px dashed var(--primary-gold, #d4af37) !important;
+          background: rgba(197, 160, 89, 0.04);
+          box-shadow: 0 2px 8px rgba(197, 160, 89, 0.05);
+        }
+        /* Di mobile, sembunyikan edit-overlay penuh agar tidak menutupi preview text/logo secara default */
+        .group-hover-edit .edit-overlay {
+          display: none !important;
+        }
+        /* Hanya tampilkan saat aktif ditekan/disentuh */
+        .group-hover-edit:active .edit-overlay {
+          display: flex !important;
+        }
+      }
 
       /* ========================================= */
       /* TAMBAHAN UI SCHEDULING PILLS              */
