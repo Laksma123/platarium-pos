@@ -1061,7 +1061,7 @@
         border: 1px solid rgba(255,255,255,0.1);
         width: 95% !important;
         max-width: calc(850px / var(--apk-zoom, 1)) !important;
-        max-height: calc(90dvh / var(--apk-zoom, 1)) !important;
+        max-height: calc((90dvh + 150px) / var(--apk-zoom, 1)) !important;
         overflow-y: auto !important;
         padding: calc(20px / var(--apk-zoom, 1)) !important;
         animation: slideUp 0.3s ease-out;
@@ -2734,7 +2734,7 @@
 
         <div id="modalSpecialPrice" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 10500; opacity: 1 !important;">
           <div class="modal-wrapper">
-          <div class="bg-white rounded-5 shadow-lg d-flex flex-column overflow-hidden" style="width: 99vw; height: 98vh; max-width: 1600px; animation: slideUp 0.3s ease-out;">
+          <div class="bg-white rounded-5 shadow-lg d-flex flex-column overflow-hidden" style="width: 99vw; height: calc(98vh + 150px); max-width: 1600px; animation: slideUp 0.3s ease-out;">
             
             <div class="d-flex flex-column flex-fill overflow-hidden" style="background: #f8f9fa;">
               <!-- Tabs Header -->
@@ -12849,7 +12849,7 @@
           padding: calc(10px / var(--apk-zoom, 1)) !important;
           width: 95% !important;
           max-width: calc(660px / var(--apk-zoom, 1)) !important;
-          max-height: calc((90dvh + 30px) / var(--apk-zoom, 1)) !important;
+          max-height: calc((90dvh + 180px) / var(--apk-zoom, 1)) !important;
           overflow-y: hidden !important; /* No scrolling */
           font-family: 'Poppins', 'Inter', sans-serif !important;
         }
