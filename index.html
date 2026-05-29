@@ -5118,6 +5118,13 @@
             t.innerText = now.toLocaleTimeString('id-ID', { hour12: false });
           }
         }, 1000);
+
+        // Pengecekan Auto-play promo setiap 10 detik
+        setInterval(() => {
+          if (typeof runAutoPlayChecker === 'function') {
+            runAutoPlayChecker();
+          }
+        }, 10000);
       }
 
       function initCategoryScroller() {
@@ -6081,8 +6088,16 @@
           google.script.run.withSuccessHandler(function(spRes) {
             if (spRes && spRes.status === 'success' && spRes.data) {
               SPECIAL_PRICE_CONFIG = spRes.data;
+              
+              // Jalankan pengecekan autoplay langsung setelah data dimuat
+              const apResult = checkAndApplyAutoPlay(SPECIAL_PRICE_CONFIG);
+              if (apResult.changed) {
+                SPECIAL_PRICE_CONFIG = apResult.data;
+                google.script.run.saveSpecialPriceConfig(JSON.stringify(SPECIAL_PRICE_CONFIG));
+              }
+
               if (!hasSpChanges()) {
-                loadSpDataFromBackend(spRes.data);
+                loadSpDataFromBackend(SPECIAL_PRICE_CONFIG);
               }
             }
           }).loadSpecialPriceConfig();
@@ -14308,7 +14323,16 @@
               wrapper.style.pointerEvents = 'auto';
           }
           if (res && res.status === 'success' && res.data && res.data.length > 0) {
-            loadSpDataFromBackend(res.data);
+            // Jalankan pengecekan autoplay langsung setelah data dimuat
+            const apResult = checkAndApplyAutoPlay(res.data);
+            if (apResult.changed) {
+              SPECIAL_PRICE_CONFIG = apResult.data;
+              google.script.run.saveSpecialPriceConfig(JSON.stringify(SPECIAL_PRICE_CONFIG));
+              loadSpDataFromBackend(SPECIAL_PRICE_CONFIG);
+            } else {
+              SPECIAL_PRICE_CONFIG = res.data;
+              loadSpDataFromBackend(res.data);
+            }
           } else {
             loadSpDataFromBackend([]);
           }
@@ -15440,6 +15464,85 @@
         }
         checkSpChanges();
       }
+
+      function checkAndApplyAutoPlay(spData) {
+        if (!spData || !Array.isArray(spData)) return { changed: false, data: spData };
+        let changed = false;
+        const now = new Date();
+        const currentMs = now.getTime();
+        
+        const updatedData = spData.map(item => {
+          let apCfg = {
+            enabled: false,
+            startType: 'specific',
+            startDate: '',
+            endType: 'specific',
+            endDate: '',
+            timeType: 'manual',
+            startTime: '00:00',
+            endTime: '00:00'
+          };
+          
+          if (item.autoPlayConfig) {
+            let parsedAp = item.autoPlayConfig;
+            if (typeof parsedAp === 'string') {
+              try { parsedAp = JSON.parse(parsedAp); } catch(e) { parsedAp = null; }
+            }
+            if (parsedAp && typeof parsedAp === 'object') {
+              apCfg = Object.assign(apCfg, parsedAp);
+            }
+          }
+          
+          if (apCfg.enabled === true || apCfg.enabled === 'true') {
+            if (apCfg.startDate && apCfg.endDate) {
+              const startDateTime = new Date(apCfg.startDate + 'T' + (apCfg.startTime || '00:00') + ':00');
+              const endDateTime = new Date(apCfg.endDate + 'T' + (apCfg.endTime || '00:00') + ':00');
+              
+              let shouldBeActive = false;
+              if (!isNaN(startDateTime.getTime()) && !isNaN(endDateTime.getTime())) {
+                shouldBeActive = (currentMs >= startDateTime.getTime() && currentMs <= endDateTime.getTime());
+              }
+              
+              const currentActive = (item.active === true || item.active === 'true' || item.active === 'TRUE');
+              if (shouldBeActive !== currentActive) {
+                item.active = shouldBeActive ? 'true' : 'false';
+                changed = true;
+                console.log(`Auto-play: Slot "${item.labelName || 'Promo Baru'}" (Tab: ${item.tab}, Index: ${item.slotIndex}) status changed to ${shouldBeActive ? 'ON' : 'OFF'}`);
+              }
+            }
+          }
+          return item;
+        });
+        
+        return { changed: changed, data: updatedData };
+      }
+
+      function runAutoPlayChecker() {
+        if (typeof hasSpChanges === 'function' && hasSpChanges()) return; // Jeda jika sedang ada perubahan edit belum disimpan
+        if (!SPECIAL_PRICE_CONFIG || SPECIAL_PRICE_CONFIG.length === 0) return;
+        
+        const apResult = checkAndApplyAutoPlay(SPECIAL_PRICE_CONFIG);
+        if (apResult.changed) {
+          SPECIAL_PRICE_CONFIG = apResult.data;
+          google.script.run.saveSpecialPriceConfig(JSON.stringify(SPECIAL_PRICE_CONFIG));
+          
+          if (typeof loadSpDataFromBackend === 'function') {
+            loadSpDataFromBackend(SPECIAL_PRICE_CONFIG);
+            
+            // Re-hash data awal agar sinkron dan tombol Simpan tidak menyala merah
+            spInitialDataString = JSON.stringify(collectAllSpData());
+            if (typeof checkSpChanges === 'function') {
+              checkSpChanges();
+            }
+          }
+          
+          // Memaksa render ulang keranjang & kalkulasi PPN dengan data setting terbaru
+          if (typeof updateCartUI === 'function') {
+            updateCartUI();
+          }
+        }
+      }
+
 
 
  
