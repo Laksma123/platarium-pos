@@ -13820,6 +13820,13 @@
       function activateSpSlot(element, tabContext) {
         const slotsEl = document.getElementById(getSpElId(tabContext, 'Slots'));
         if (!slotsEl) return;
+
+        // Save previous active slot config if exists
+        const currentActive = slotsEl.querySelector('.sp-slot.active');
+        if (currentActive && currentActive !== element && currentActive.classList.contains('configured')) {
+            saveConfigToSlot(currentActive, tabContext);
+        }
+
         slotsEl.querySelectorAll('.sp-slot').forEach(slot => slot.classList.remove('active'));
         element.classList.add('active');
 
@@ -13838,6 +13845,11 @@
           newPlus.innerHTML = '<i class="fas fa-plus"></i>';
           newPlus.onclick = function() { activateSpSlot(this, tabContext); };
           slotsEl.appendChild(newPlus);
+        }
+
+        // Load config into the right panel form
+        if (element.classList.contains('configured')) {
+            loadConfigFromSlot(element, tabContext);
         }
 
         // Sync label name input
@@ -13905,6 +13917,9 @@
             activeSlot.querySelector('.slot-title').innerText = inputName.value.trim();
           }
 
+          // Save current form inputs into the active slot's dataset before collecting
+          saveConfigToSlot(activeSlot, tabContext);
+
           // Collect ALL data and save to backend
           const allData = collectAllSpData();
           google.script.run.withSuccessHandler(function(res) {
@@ -13912,6 +13927,204 @@
             if (res && res.status !== 'success') { console.error('Save SP Error:', res.message); }
           }).saveSpecialPriceConfig(JSON.stringify(allData));
         }
+      }
+
+      function saveConfigToSlot(slot, tabContext) {
+        if (!slot || !slot.classList.contains('configured')) return;
+        const panel = document.getElementById(getSpElId(tabContext, 'Config'));
+        if (!panel) return;
+        
+        let config = {};
+        const typeSelect = panel.querySelector('select[onchange*="changeSpType"]');
+        config.promoType = typeSelect ? typeSelect.value : 'subtotal';
+        
+        const dynConfig = document.getElementById(getSpElId(tabContext, 'DynamicConfig'));
+        if (!dynConfig) return;
+        
+        const activeGroup = dynConfig.querySelector('.sp-form-group[data-form-type="' + config.promoType + '"]') || dynConfig.querySelector('#sp-form-' + config.promoType);
+        
+        config.discountForm = '';
+        config.discountValue = '';
+        config.categoryTarget = '';
+        config.itemTarget = '';
+        config.buyGetData = '';
+        config.minPurchaseAmount = '';
+
+        if (!activeGroup) {
+            // fallback
+        } else if (config.promoType === 'subtotal') {
+            const selects = activeGroup.querySelectorAll('select');
+            const inputs = activeGroup.querySelectorAll('input[type="number"]');
+            config.discountForm = selects[0] ? selects[0].value : '';
+            config.discountValue = inputs[0] ? inputs[0].value : '';
+        } else if (config.promoType === 'all_menu') {
+            const selects = activeGroup.querySelectorAll('select');
+            const inputs = activeGroup.querySelectorAll('input[type="number"]');
+            config.discountForm = selects[0] && selects[0].value.includes('%') ? 'percent' : 'nominal';
+            config.discountValue = inputs[0] ? inputs[0].value : '';
+        } else if (config.promoType === 'category') {
+            const selects = activeGroup.querySelectorAll('select');
+            const inputs = activeGroup.querySelectorAll('input[type="number"]');
+            config.categoryTarget = selects[0] ? selects[0].value : '';
+            config.discountForm = selects[1] && selects[1].value.includes('%') ? 'percent' : 'nominal';
+            config.discountValue = inputs[0] ? inputs[0].value : '';
+        } else if (config.promoType === 'item') {
+            const selects = activeGroup.querySelectorAll('select');
+            const inputs = activeGroup.querySelectorAll('input[type="number"]');
+            config.itemTarget = selects[0] ? selects[0].value : '';
+            config.discountForm = selects[1] && selects[1].value.includes('%') ? 'percent' : 'nominal';
+            config.discountValue = inputs[0] ? inputs[0].value : '';
+        } else if (config.promoType === 'buy_get') {
+            let reqs = [];
+            activeGroup.querySelectorAll('.sp-syarat-row').forEach(row => {
+               const qty = row.querySelector('.sp-syarat-qty').value;
+               const item = row.querySelector('.sp-syarat-menu').value;
+               if (qty && item) reqs.push({qty: qty, item: item});
+            });
+            let rewards = [];
+            activeGroup.querySelectorAll('.sp-reward-row').forEach(row => {
+               const qty = row.querySelector('.sp-reward-qty').value;
+               const item = row.querySelector('.sp-reward-menu').value;
+               const price = row.querySelector('.sp-reward-price').value;
+               if (qty && item) rewards.push({qty: qty, item: item, price: price});
+            });
+            config.buyGetData = JSON.stringify({reqs: reqs, rewards: rewards});
+        } else if (config.promoType === 'min_purchase') {
+            const minInput = activeGroup.querySelector('.sp-min-purchase-amount');
+            config.minPurchaseAmount = minInput ? minInput.value : '';
+            let rewards = [];
+            activeGroup.querySelectorAll('.sp-reward-row').forEach(row => {
+               const qty = row.querySelector('.sp-reward-qty').value;
+               const item = row.querySelector('.sp-reward-menu').value;
+               const price = row.querySelector('.sp-reward-price').value;
+               if (qty && item) rewards.push({qty: qty, item: item, price: price});
+            });
+            config.buyGetData = JSON.stringify({reqs: [], rewards: rewards});
+        }
+        
+        slot.dataset.config = JSON.stringify(config);
+      }
+
+      function loadConfigFromSlot(slot, tabContext) {
+        const panel = document.getElementById(getSpElId(tabContext, 'Config'));
+        if (!panel) return;
+        let configStr = slot.dataset.config;
+        if (!configStr) {
+           resetConfigForm(tabContext);
+           return;
+        }
+        let config = {};
+        try { config = JSON.parse(configStr); } catch(e){}
+
+        const typeSelect = panel.querySelector('select[onchange*="changeSpType"]');
+        if (typeSelect && config.promoType) {
+            typeSelect.value = config.promoType;
+            changeSpType(config.promoType, tabContext);
+        }
+
+        const dynConfig = document.getElementById(getSpElId(tabContext, 'DynamicConfig'));
+        if (!dynConfig) return;
+        const activeGroup = dynConfig.querySelector('.sp-form-group[data-form-type="' + config.promoType + '"]') || dynConfig.querySelector('#sp-form-' + config.promoType);
+        if (!activeGroup) return;
+
+        if (config.promoType === 'subtotal') {
+            const selects = activeGroup.querySelectorAll('select');
+            const inputs = activeGroup.querySelectorAll('input[type="number"]');
+            if (selects[0]) selects[0].value = config.discountForm || 'percent';
+            if (inputs[0]) inputs[0].value = config.discountValue || '';
+        } else if (config.promoType === 'all_menu') {
+            const selects = activeGroup.querySelectorAll('select');
+            const inputs = activeGroup.querySelectorAll('input[type="number"]');
+            if (selects[0]) selects[0].value = (config.discountForm === 'percent') ? '%' : 'Rp';
+            if (inputs[0]) inputs[0].value = config.discountValue || '';
+        } else if (config.promoType === 'category') {
+            const selects = activeGroup.querySelectorAll('select');
+            const inputs = activeGroup.querySelectorAll('input[type="number"]');
+            if (selects[0]) selects[0].value = config.categoryTarget || '';
+            if (selects[1]) selects[1].value = (config.discountForm === 'percent') ? '%' : 'Rp';
+            if (inputs[0]) inputs[0].value = config.discountValue || '';
+        } else if (config.promoType === 'item') {
+            const selects = activeGroup.querySelectorAll('select');
+            const inputs = activeGroup.querySelectorAll('input[type="number"]');
+            if (selects[0]) selects[0].value = config.itemTarget || '';
+            if (selects[1]) selects[1].value = (config.discountForm === 'percent') ? '%' : 'Rp';
+            if (inputs[0]) inputs[0].value = config.discountValue || '';
+        } else if (config.promoType === 'buy_get' || config.promoType === 'min_purchase') {
+            if (config.promoType === 'min_purchase') {
+                const minInput = activeGroup.querySelector('.sp-min-purchase-amount');
+                if (minInput) minInput.value = config.minPurchaseAmount || '';
+            }
+
+            try {
+                let data = JSON.parse(config.buyGetData);
+                if (config.promoType === 'buy_get' && data.reqs) {
+                    const reqContainer = activeGroup.querySelector('.sp-syarat-container');
+                    if (reqContainer) {
+                        const tmpl = reqContainer.querySelector('.sp-syarat-row').cloneNode(true);
+                        reqContainer.innerHTML = ''; 
+                        data.reqs.forEach(r => {
+                            const row = tmpl.cloneNode(true);
+                            row.querySelector('.sp-syarat-qty').value = r.qty;
+                            row.querySelector('.sp-syarat-menu').value = r.item;
+                            reqContainer.appendChild(row);
+                        });
+                        if (data.reqs.length === 0) reqContainer.appendChild(tmpl);
+                        updateSpDeleteButtons(reqContainer, '.sp-syarat-row');
+                    }
+                }
+                if (data.rewards) {
+                    const rewContainer = activeGroup.querySelector('.sp-reward-container');
+                    if (rewContainer) {
+                        const tmpl = rewContainer.querySelector('.sp-reward-row').cloneNode(true);
+                        rewContainer.innerHTML = '';
+                        data.rewards.forEach(r => {
+                            const row = tmpl.cloneNode(true);
+                            row.querySelector('.sp-reward-qty').value = r.qty;
+                            row.querySelector('.sp-reward-menu').value = r.item;
+                            row.querySelector('.sp-reward-price').value = r.price;
+                            rewContainer.appendChild(row);
+                        });
+                        if (data.rewards.length === 0) rewContainer.appendChild(tmpl);
+                        updateSpDeleteButtons(rewContainer, '.sp-reward-row');
+                    }
+                }
+            } catch(e) {}
+        }
+      }
+
+      function resetConfigForm(tabContext) {
+        const panel = document.getElementById(getSpElId(tabContext, 'Config'));
+        if (!panel) return;
+        const typeSelect = panel.querySelector('select[onchange*="changeSpType"]');
+        if (typeSelect) {
+            typeSelect.value = 'subtotal';
+            changeSpType('subtotal', tabContext);
+        }
+        const dynConfig = document.getElementById(getSpElId(tabContext, 'DynamicConfig'));
+        if (!dynConfig) return;
+        dynConfig.querySelectorAll('input[type="number"]').forEach(el => el.value = '');
+        dynConfig.querySelectorAll('select').forEach(el => {
+           if (el.options.length > 0) el.selectedIndex = 0;
+        });
+        
+        const minPurch = dynConfig.querySelector('.sp-min-purchase-amount');
+        if (minPurch) minPurch.value = '100000';
+
+        dynConfig.querySelectorAll('.sp-syarat-container, .sp-reward-container').forEach(container => {
+           const rows = container.querySelectorAll('.sp-syarat-row, .sp-reward-row');
+           for (let i = 1; i < rows.length; i++) rows[i].remove();
+           const firstRow = rows[0];
+           if (firstRow) {
+               const qty = firstRow.querySelector('input[type="number"]');
+               if (qty && !qty.classList.contains('sp-reward-price')) qty.value = '1';
+               const price = firstRow.querySelector('.sp-reward-price');
+               if (price) price.value = '0';
+               const sel = firstRow.querySelector('select');
+               if (sel) sel.value = '';
+           }
+           const btn = container.querySelector('.sp-btn-delete-row');
+           if (btn) btn.style.display = 'none';
+        });
       }
 
       // --- COLLECT ALL SP DATA FOR SAVING ---
@@ -13924,12 +14137,19 @@
           const configuredSlots = slotsEl.querySelectorAll('.sp-slot.configured');
           configuredSlots.forEach(function(slot, idx) {
             const titleEl = slot.querySelector('.slot-title');
+            let cfg = {};
+            try { cfg = JSON.parse(slot.dataset.config || '{}'); } catch(e){}
             allData.push({
               tab: tab, subTab: '', slotIndex: idx,
               labelName: titleEl ? titleEl.innerText : 'Promo Baru',
-              promoType: '', discountForm: '', discountValue: '',
-              categoryTarget: '', itemTarget: '', buyGetData: '',
-              minPurchaseAmount: '', serviceName: '', serviceIconUrl: '',
+              promoType: cfg.promoType || '',
+              discountForm: cfg.discountForm || '',
+              discountValue: cfg.discountValue || '',
+              categoryTarget: cfg.categoryTarget || '',
+              itemTarget: cfg.itemTarget || '',
+              buyGetData: cfg.buyGetData || '',
+              minPurchaseAmount: cfg.minPurchaseAmount || '',
+              serviceName: '', serviceIconUrl: '',
               active: 'true'
             });
           });
@@ -13947,12 +14167,18 @@
             const configuredSlots = slotsEl.querySelectorAll('.sp-slot.configured');
             configuredSlots.forEach(function(slot, idx) {
               const titleEl = slot.querySelector('.slot-title');
+              let cfg = {};
+              try { cfg = JSON.parse(slot.dataset.config || '{}'); } catch(e){}
               allData.push({
                 tab: 'delivery', subTab: tabId, slotIndex: idx,
                 labelName: titleEl ? titleEl.innerText : 'Promo Baru',
-                promoType: '', discountForm: '', discountValue: '',
-                categoryTarget: '', itemTarget: '', buyGetData: '',
-                minPurchaseAmount: '',
+                promoType: cfg.promoType || '',
+                discountForm: cfg.discountForm || '',
+                discountValue: cfg.discountValue || '',
+                categoryTarget: cfg.categoryTarget || '',
+                itemTarget: cfg.itemTarget || '',
+                buyGetData: cfg.buyGetData || '',
+                minPurchaseAmount: cfg.minPurchaseAmount || '',
                 serviceName: serviceNameInput ? serviceNameInput.value : '',
                 serviceIconUrl: (iconPreview && iconPreview.src && !iconPreview.src.includes('data:')) ? iconPreview.src : '',
                 active: 'true'
@@ -13979,14 +14205,19 @@
       // --- LOAD SP DATA FROM BACKEND ---
       function loadSpDataFromBackend(data) {
         if (!data || data.length === 0) return;
-        // Group delivery tabs
+        
         let deliveryTabs = {};
+        let tabData = { 'dinein': [], 'takeaway': [] };
+        
         data.forEach(function(item) {
           if (item.tab === 'delivery' && item.subTab) {
             if (!deliveryTabs[item.subTab]) deliveryTabs[item.subTab] = [];
             deliveryTabs[item.subTab].push(item);
+          } else if (item.tab === 'dinein' || item.tab === 'takeaway') {
+            tabData[item.tab].push(item);
           }
         });
+
         // Recreate delivery sub-tabs from saved data
         const tabBar = document.getElementById('deliveryTabBar');
         const content = document.getElementById('deliverySubTabContent');
@@ -13997,14 +14228,19 @@
           let first = true;
           Object.keys(deliveryTabs).sort().forEach(function(subTabId) {
             const items = deliveryTabs[subTabId];
-            const serviceName = items[0].serviceName || '';
-            const serviceIconUrl = items[0].serviceIconUrl || '';
             deliveryTabCounter++;
             const tabId = 'delivery_' + deliveryTabCounter;
+            
+            items.forEach(i => i.subTab = tabId);
+            tabData[tabId] = items;
+            
+            const serviceName = items[0].serviceName || '';
+            const serviceIconUrl = items[0].serviceIconUrl || '';
             const label = serviceName || ('Pesan Antar ' + deliveryTabCounter);
+            
             createDeliveryTabElement(tabId, label, first, serviceIconUrl);
             createDeliveryPaneElement(tabId);
-            // Set service name and icon
+            
             const nameInput = document.querySelector('#pane-' + tabId + ' .delivery-service-name');
             if (nameInput && serviceName) nameInput.value = serviceName;
             if (serviceIconUrl) {
@@ -14013,7 +14249,7 @@
             }
             first = false;
           });
-          // Add the + tab
+          
           const addTab = document.createElement('div');
           addTab.className = 'delivery-tab-add';
           addTab.innerHTML = '<i class="fas fa-plus"></i>';
@@ -14021,6 +14257,44 @@
           tabBar.appendChild(addTab);
           populateSpecialPriceDropdowns();
         }
+
+        // Recreate slots for all tabs
+        Object.keys(tabData).forEach(function(tabContext) {
+           const items = tabData[tabContext];
+           if (!items || items.length === 0) return;
+           
+           const slotsEl = document.getElementById(getSpElId(tabContext, 'Slots'));
+           if (!slotsEl) return;
+           
+           slotsEl.innerHTML = '';
+           
+           const validItems = items.filter(i => i.slotIndex !== -1 && i.labelName);
+           
+           validItems.forEach(item => {
+               const slot = document.createElement('div');
+               slot.className = 'sp-slot configured';
+               slot.innerHTML = '<span class="slot-title mt-1">' + item.labelName + '</span><div class="remove-slot" onclick="event.stopPropagation(); removeSpSlot(this, \'' + tabContext + '\')"><i class="fas fa-times"></i></div>';
+               
+               const config = {
+                   promoType: item.promoType,
+                   discountForm: item.discountForm,
+                   discountValue: item.discountValue,
+                   categoryTarget: item.categoryTarget,
+                   itemTarget: item.itemTarget,
+                   buyGetData: item.buyGetData,
+                   minPurchaseAmount: item.minPurchaseAmount
+               };
+               slot.dataset.config = JSON.stringify(config);
+               slot.onclick = function() { activateSpSlot(this, tabContext); };
+               slotsEl.appendChild(slot);
+           });
+           
+           const newPlus = document.createElement('div');
+           newPlus.className = 'sp-slot';
+           newPlus.innerHTML = '<i class="fas fa-plus"></i>';
+           newPlus.onclick = function() { activateSpSlot(this, tabContext); };
+           slotsEl.appendChild(newPlus);
+        });
       }
 
       // --- DELIVERY TAB MANAGEMENT ---
