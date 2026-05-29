@@ -2797,7 +2797,7 @@
                       <div class="px-3 py-2 border-bottom bg-white d-flex justify-content-between align-items-center">
                         <span class="fw-bold m-0 text-dark" id="spDineInConfigTitle" style="font-size: 0.8rem;">Pengaturan Slot Promo</span>
                         <div class="form-check form-switch m-0 d-flex align-items-center gap-1">
-                          <input class="form-check-input m-0" type="checkbox" role="switch" style="width: 32px; height: 16px; cursor:pointer;" checked>
+                          <input class="form-check-input m-0" type="checkbox" role="switch" style="width: 32px; height: 16px; cursor:pointer;">
                           <label class="form-check-label fw-bold text-success" style="font-size: 0.7rem;">Aktif</label>
                         </div>
                       </div>
@@ -3031,7 +3031,7 @@
                       <div class="px-3 py-2 border-bottom bg-white d-flex justify-content-between align-items-center">
                         <span class="fw-bold m-0 text-dark" style="font-size: 0.8rem;">Pengaturan Slot Promo Takeaway</span>
                         <div class="form-check form-switch m-0 d-flex align-items-center gap-1">
-                          <input class="form-check-input m-0" type="checkbox" role="switch" style="width: 32px; height: 16px; cursor:pointer;" checked>
+                          <input class="form-check-input m-0" type="checkbox" role="switch" style="width: 32px; height: 16px; cursor:pointer;">
                           <label class="form-check-label fw-bold text-success" style="font-size: 0.7rem;">Aktif</label>
                         </div>
                       </div>
@@ -14764,7 +14764,7 @@
         
         const activeToggle = panel.querySelector('.form-check-input[role="switch"]');
         if (activeToggle) {
-            activeToggle.checked = true;
+            activeToggle.checked = false;
         }
         
         const dynConfig = document.getElementById(getSpElId(tabContext, 'DynamicConfig'));
@@ -15272,7 +15272,7 @@
             <div class="px-3 py-2 border-bottom bg-white d-flex justify-content-between align-items-center">
               <span class="fw-bold m-0 text-dark" id="${prefix}ConfigTitle" style="font-size: 0.8rem;">Pengaturan Slot Promo</span>
               <div class="form-check form-switch m-0 d-flex align-items-center gap-1">
-                <input class="form-check-input m-0" type="checkbox" role="switch" style="width: 32px; height: 16px; cursor:pointer;" checked>
+                <input class="form-check-input m-0" type="checkbox" role="switch" style="width: 32px; height: 16px; cursor:pointer;">
                 <label class="form-check-label fw-bold text-success" style="font-size: 0.7rem;">Aktif</label>
               </div>
             </div>
@@ -15515,6 +15515,14 @@
                 item.active = shouldBeActive ? 'true' : 'false';
                 changed = true;
                 console.log(`Auto-play: Slot "${item.labelName || 'Promo Baru'}" (Tab: ${item.tab}, Index: ${item.slotIndex}) status changed to ${shouldBeActive ? 'ON' : 'OFF'}`);
+              }
+
+              // Jika masa promo telah lewat (selesai), matikan juga Autoplay toggle agar tidak bocor logika dan rapi secara visual
+              if (!isNaN(endDateTime.getTime()) && currentMs > endDateTime.getTime()) {
+                apCfg.enabled = false;
+                item.autoPlayConfig = JSON.stringify(apCfg);
+                changed = true;
+                console.log(`Auto-play: Slot "${item.labelName || 'Promo Baru'}" has completed. Auto-play toggle turned OFF.`);
               }
             }
           }
