@@ -3156,7 +3156,7 @@
         </div>
 
         <!-- WARNING MODAL SP -->
-        <div id="modalSpWarning" class="login-overlay d-none" style="background: rgba(0,0,0,0.7); z-index: 10750; align-items:center; justify-content:center; display:flex;">
+        <div id="modalSpWarning" class="login-overlay d-none" style="background: rgba(0,0,0,0.7); z-index: 10750; align-items:center; justify-content:center; display:flex; opacity: 1 !important;">
           <div class="modal-dialog modal-dialog-centered modal-sm w-100" style="max-width:350px;">
             <div class="modal-content border-0 rounded-4 shadow-lg w-100 bg-white">
               <div class="modal-body text-center p-4">
@@ -13983,6 +13983,9 @@
             modal.addEventListener('change', checkSpChanges);
             modal.dataset.liveListenersAttached = 'true';
         }
+
+        spInitialDataString = JSON.stringify(collectAllSpData());
+        checkSpChanges();
 
         // Load saved data from backend
         google.script.run.withSuccessHandler(function(res) {
