@@ -3007,53 +3007,7 @@
                           </div>
                         </div>
 
-                        <!-- Auto-Play Config -->
-                        <div class="bg-white p-3 rounded-4 shadow-sm border mt-3 mb-2">
-                          <div class="d-flex justify-content-between align-items-center pb-2 border-bottom mb-3">
-                            <div class="d-flex align-items-center gap-2">
-                              <i class="fas fa-play-circle text-primary fs-5"></i>
-                              <h6 class="fw-bold m-0 text-dark" style="font-size: 0.85rem;">Auto-Play Promo</h6>
-                            </div>
-                            <div class="form-check form-switch m-0">
-                              <input class="form-check-input" type="checkbox" role="switch" id="spTakeawayAutoPlayToggle" style="width: 40px; height: 20px; cursor:pointer;" onchange="toggleAutoPlayUI('takeaway')">
-                            </div>
-                          </div>
-                          
-                          <div id="spTakeawayAutoPlayContent" style="transition: all 0.3s ease;">
-                            <div class="row g-2 mb-2">
-                              <div class="col-6">
-                                <label class="small fw-bold text-muted mb-1">Dimulai Tanggal</label>
-                                <div class="input-group input-group-sm border border-2 rounded-3 overflow-hidden">
-                                  <span class="input-group-text bg-white border-0 px-2"><i class="fas fa-calendar-alt text-primary"></i></span>
-                                  <input type="text" id="spTakeawayAutoPlayStartDate" class="form-control border-0 fw-bold text-dark bg-white px-1 shadow-none" placeholder="Pilih Tanggal" readonly>
-                                </div>
-                              </div>
-                              <div class="col-6">
-                                <label class="small fw-bold text-muted mb-1">Berakhir Tanggal</label>
-                                <div class="input-group input-group-sm border border-2 rounded-3 overflow-hidden">
-                                  <span class="input-group-text bg-white border-0 px-2"><i class="fas fa-calendar-alt text-primary"></i></span>
-                                  <input type="text" id="spTakeawayAutoPlayEndDate" class="form-control border-0 fw-bold text-dark bg-white px-1 shadow-none" placeholder="Pilih Tanggal" readonly>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="row g-2 mt-2">
-                              <div class="col-6">
-                                <label class="small fw-bold text-muted mb-1">Dari Jam</label>
-                                <div class="input-group input-group-sm border border-2 rounded-3 overflow-hidden">
-                                  <span class="input-group-text bg-white border-0 px-2"><i class="fas fa-clock text-primary"></i></span>
-                                  <input type="text" id="spTakeawayAutoPlayStartTime" class="form-control border-0 fw-bold text-dark text-center px-1 bg-white shadow-none" value="00:00" placeholder="00:00" readonly onchange="checkSpChanges()">
-                                </div>
-                              </div>
-                              <div class="col-6">
-                                <label class="small fw-bold text-muted mb-1">Sampai Jam</label>
-                                <div class="input-group input-group-sm border border-2 rounded-3 overflow-hidden">
-                                  <span class="input-group-text bg-white border-0 px-2"><i class="fas fa-clock text-primary"></i></span>
-                                  <input type="text" id="spTakeawayAutoPlayEndTime" class="form-control border-0 fw-bold text-dark text-center px-1 bg-white shadow-none" value="00:00" placeholder="00:00" readonly onchange="checkSpChanges()">
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+
                       </div>
                       
 
@@ -3233,6 +3187,54 @@
                                     <input type="number" class="form-control border-2 fw-bold text-success sp-reward-price" placeholder="0 (Gratis)" value="0">
                                   </div>
                                   <button type="button" class="btn btn-outline-danger btn-sm px-2 py-1 sp-btn-delete-row" onclick="removeSpRow(this)" style="display: none;"><i class="fas fa-times"></i></button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Auto-Play Config -->
+                        <div class="bg-white p-3 rounded-4 shadow-sm border mt-3 mb-2">
+                          <div class="d-flex justify-content-between align-items-center pb-2 border-bottom mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                              <i class="fas fa-play-circle text-primary fs-5"></i>
+                              <h6 class="fw-bold m-0 text-dark" style="font-size: 0.85rem;">Auto-Play Promo</h6>
+                            </div>
+                            <div class="form-check form-switch m-0">
+                              <input class="form-check-input" type="checkbox" role="switch" id="spTakeawayAutoPlayToggle" style="width: 40px; height: 20px; cursor:pointer;" onchange="toggleAutoPlayUI('takeaway')">
+                            </div>
+                          </div>
+                          
+                          <div id="spTakeawayAutoPlayContent" style="transition: all 0.3s ease;">
+                            <div class="row g-2 mb-2">
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Dimulai Tanggal</label>
+                                <div class="input-group input-group-sm border border-2 rounded-3 overflow-hidden">
+                                  <span class="input-group-text bg-white border-0 px-2"><i class="fas fa-calendar-alt text-primary"></i></span>
+                                  <input type="text" id="spTakeawayAutoPlayStartDate" class="form-control border-0 fw-bold text-dark bg-white px-1 shadow-none" placeholder="Pilih Tanggal" readonly>
+                                </div>
+                              </div>
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Berakhir Tanggal</label>
+                                <div class="input-group input-group-sm border border-2 rounded-3 overflow-hidden">
+                                  <span class="input-group-text bg-white border-0 px-2"><i class="fas fa-calendar-alt text-primary"></i></span>
+                                  <input type="text" id="spTakeawayAutoPlayEndDate" class="form-control border-0 fw-bold text-dark bg-white px-1 shadow-none" placeholder="Pilih Tanggal" readonly>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row g-2 mt-2">
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Dari Jam</label>
+                                <div class="input-group input-group-sm border border-2 rounded-3 overflow-hidden">
+                                  <span class="input-group-text bg-white border-0 px-2"><i class="fas fa-clock text-primary"></i></span>
+                                  <input type="text" id="spTakeawayAutoPlayStartTime" class="form-control border-0 fw-bold text-dark text-center px-1 bg-white shadow-none" value="00:00" placeholder="00:00" readonly onchange="checkSpChanges()">
+                                </div>
+                              </div>
+                              <div class="col-6">
+                                <label class="small fw-bold text-muted mb-1">Sampai Jam</label>
+                                <div class="input-group input-group-sm border border-2 rounded-3 overflow-hidden">
+                                  <span class="input-group-text bg-white border-0 px-2"><i class="fas fa-clock text-primary"></i></span>
+                                  <input type="text" id="spTakeawayAutoPlayEndTime" class="form-control border-0 fw-bold text-dark text-center px-1 bg-white shadow-none" value="00:00" placeholder="00:00" readonly onchange="checkSpChanges()">
                                 </div>
                               </div>
                             </div>
@@ -14651,6 +14653,7 @@
           else autoPlayEndTime.value = '00:00';
         }
         
+        initAutoPlayPickers(tabContext);
         toggleAutoPlayUI(tabContext);
       }
 
