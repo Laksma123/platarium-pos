@@ -14975,7 +14975,7 @@
               const label = serviceName || ('Pesan Antar ' + deliveryTabCounter);
               
               createDeliveryTabElement(tabId, label, first, serviceIconUrl);
-              createDeliveryPaneElement(tabId);
+              createDeliveryPaneElement(tabId, first);
               
               const nameInput = document.querySelector('#pane-' + tabId + ' .delivery-service-name');
               if (nameInput && serviceName) nameInput.value = serviceName;
@@ -15101,7 +15101,7 @@
         content.querySelectorAll('.delivery-pane').forEach(p => p.classList.remove('active'));
 
         createDeliveryTabElement(tabId, label, true, '');
-        createDeliveryPaneElement(tabId);
+        createDeliveryPaneElement(tabId, true);
 
         // Ensure + button is at the end
         let addBtn = tabBar.querySelector('.delivery-tab-add');
@@ -15131,17 +15131,19 @@
         else tabBar.appendChild(tab);
       }
 
-      function createDeliveryPaneElement(tabId) {
+      function createDeliveryPaneElement(tabId, isActive) {
         const content = document.getElementById('deliverySubTabContent');
         const pane = document.createElement('div');
-        pane.className = 'delivery-pane active';
+        pane.className = 'delivery-pane' + (isActive ? ' active' : '');
         pane.id = 'pane-' + tabId;
         pane.innerHTML = generateDeliveryPaneHTML(tabId);
         content.appendChild(pane);
         // Deactivate other panes
-        content.querySelectorAll('.delivery-pane').forEach(p => {
-          if (p.id !== 'pane-' + tabId) p.classList.remove('active');
-        });
+        if (isActive) {
+          content.querySelectorAll('.delivery-pane').forEach(p => {
+            if (p.id !== 'pane-' + tabId) p.classList.remove('active');
+          });
+        }
       }
 
       function proceedActivateDeliverySubTab(tabId) {
