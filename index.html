@@ -14013,22 +14013,25 @@
         spTabEls.forEach(tabEl => {
           if (tabEl.dataset.spListenerAttached) return;
           tabEl.dataset.spListenerAttached = 'true';
-          tabEl.addEventListener('hide.bs.tab', function(e) {
+          
+          tabEl.addEventListener('click', function(e) {
             if (isSpWarningHandled) return;
             if (hasSpChanges()) {
               e.preventDefault();
+              e.stopPropagation(); // Blokir Bootstrap agar tidak langsung pindah tab
               showSpWarningModal('navigate', () => {
                  isSpWarningHandled = true;
-                 bootstrap.Tab.getOrCreateInstance(e.relatedTarget).show();
+                 bootstrap.Tab.getOrCreateInstance(tabEl).show();
                  isSpWarningHandled = false;
               }, () => {
                  revertSpChanges();
                  isSpWarningHandled = true;
-                 bootstrap.Tab.getOrCreateInstance(e.relatedTarget).show();
+                 bootstrap.Tab.getOrCreateInstance(tabEl).show();
                  isSpWarningHandled = false;
               });
             }
           });
+
           tabEl.addEventListener('shown.bs.tab', function(e) {
             updateSpConfigPanelState();
           });
@@ -14290,13 +14293,26 @@
             modal.dataset.liveListenersAttached = 'true';
         }
 
+        // Lock UI during backend loading to prevent race conditions
+        const wrapper = modal.querySelector('.modal-wrapper');
+        if (wrapper) {
+            wrapper.style.pointerEvents = 'none';
+            wrapper.style.opacity = '0.6';
+        }
+
         spInitialDataString = JSON.stringify(collectAllSpData());
         checkSpChanges();
 
         // Load saved data from backend
         google.script.run.withSuccessHandler(function(res) {
+          if (wrapper) {
+              wrapper.style.pointerEvents = 'auto';
+              wrapper.style.opacity = '1';
+          }
           if (res && res.status === 'success' && res.data && res.data.length > 0) {
             loadSpDataFromBackend(res.data);
+          } else {
+            loadSpDataFromBackend([]);
           }
           
           // Hash initial data
@@ -14306,6 +14322,15 @@
               const activeSlot = slotsEl.querySelector('.sp-slot.active.configured');
               if (activeSlot) saveConfigToSlot(activeSlot, tabCtx);
           }
+          spInitialDataString = JSON.stringify(collectAllSpData());
+          checkSpChanges();
+        }).withFailureHandler(function(err) {
+          if (wrapper) {
+              wrapper.style.pointerEvents = 'auto';
+              wrapper.style.opacity = '1';
+          }
+          console.error("Gagal memuat konfigurasi Special Price:", err);
+          loadSpDataFromBackend([]);
           spInitialDataString = JSON.stringify(collectAllSpData());
           checkSpChanges();
         }).loadSpecialPriceConfig();
@@ -14856,7 +14881,7 @@
 
       // --- LOAD SP DATA FROM BACKEND ---
       function loadSpDataFromBackend(data, activeIndices) {
-        if (!data || data.length === 0) return;
+        if (!data) data = [];
         
         if (!activeIndices) {
           activeIndices = typeof getActiveSlotIndices === 'function' ? getActiveSlotIndices() : {};
