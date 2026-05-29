@@ -1920,9 +1920,9 @@
                       <i class="fab fa-telegram-plane me-2"></i>Kirim Telegram
                   </button>
 
-                  <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
+                  <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; max-width: 220px; height: 38px;">
                     <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-calendar-day me-1"></i>Mulai</span>
-                    <input type="text" id="schedStartDate" class="form-control border-0 shadow-none bg-white px-2" style="font-size: 0.85rem;" placeholder="Pilih Tanggal" readonly>
+                    <input type="text" id="schedStartDate" class="form-control border-0 shadow-none bg-white px-2" style="font-size: 0.85rem; max-width: 110px;" placeholder="Pilih Tanggal" readonly>
                   </div>
                   <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
                     <span class="input-group-text bg-light border-0 fw-bold small text-muted">Rentang</span>
@@ -2138,7 +2138,7 @@
                 <option value="OVO">OVO</option>
                 <option value="GOPAY">GOPAY</option>
               </select>
-              <div class="d-flex align-items-center">
+              <div class="d-flex align-items-center" id="revFilterWrapper" style="position: relative;">
                 <select id="revFilter" class="form-select form-select-sm w-auto fw-bold border-2 rounded-pill shadow-sm" style="cursor:pointer; height: 38px;" onchange="handleRevFilterChange(this)">
                   <option value="today">Hari Ini</option>
                   <option value="month" selected>Bulan Ini</option>
@@ -2147,7 +2147,7 @@
                   <option value="all">Semua Waktu</option>
                 </select>
                 
-                <input type="text" id="customDateFilter" style="display:none; width:0; height:0; border:none; padding:0;">
+                <input type="text" id="customDateFilter" style="position:absolute; bottom:0; right:0; width:1px; height:1px; border:none; padding:0; opacity:0; pointer-events:none;">
                 <div id="customDateLabel" class="input-group input-group-sm ms-2 d-none shadow-sm rounded-pill overflow-hidden border border-2 border-primary" style="width: auto; height: 38px; cursor:pointer;" onclick="CUSTOM_DATEPICKER.open()">
                   <span class="input-group-text bg-white border-0"><i class="fas fa-calendar-alt text-primary"></i></span>
                   <div class="form-control border-0 bg-white fw-bold text-dark d-flex align-items-center px-2" style="font-size: 0.85rem;" id="customDateText"></div>
@@ -9605,6 +9605,8 @@
             CUSTOM_DATEPICKER = flatpickr("#customDateFilter", {
               dateFormat: "d/m/Y", 
               disableMobile: true, // Memaksa UI kalender seragam, mencegah bentrok dengan UI default HP
+              appendTo: document.getElementById('revFilterWrapper'),
+              positionElement: document.getElementById('revFilter'),
               onChange: function(selectedDates, dateStr, instance) {
                 if (dateStr) {
                   SELECTED_CUSTOM_DATE = dateStr;
@@ -14372,11 +14374,11 @@
 
         config.autoPlayConfig = {
           enabled: autoPlayToggle ? autoPlayToggle.checked : false,
-          startType: 'specific',
+          startType: (function() { const sel = panel.querySelector('select[id*="AutoPlayStartType"]'); return sel ? sel.value : 'specific'; })(),
           startDate: autoPlayStartDate ? autoPlayStartDate.value : '',
-          endType: 'specific',
+          endType: (function() { const sel = panel.querySelector('select[id*="AutoPlayEndType"]'); return sel ? sel.value : 'specific'; })(),
           endDate: autoPlayEndDate ? autoPlayEndDate.value : '',
-          timeType: 'manual',
+          timeType: (function() { const sel = panel.querySelector('select[id*="AutoPlayTimeType"]'); return sel ? sel.value : 'manual'; })(),
           startTime: autoPlayStartTime ? autoPlayStartTime.value : '00:00',
           endTime: autoPlayEndTime ? autoPlayEndTime.value : '00:00'
         };
@@ -15236,7 +15238,6 @@
         const startTime = document.getElementById(getSpElId(tabContext, 'AutoPlayStartTime'));
         const endTime = document.getElementById(getSpElId(tabContext, 'AutoPlayEndTime'));
 
-        const spModal = document.getElementById('modalSpecialPrice');
         if (startInput && !startInput._flatpickr) {
           flatpickr(startInput, {
             dateFormat: "Y-m-d",
@@ -15244,7 +15245,6 @@
             altFormat: "d-m-Y",
             allowInput: true,
             disableMobile: true,
-            appendTo: spModal,
             onChange: function() {
               onAutoPlayDateChange(tabContext, 'start');
             },
@@ -15260,7 +15260,6 @@
             altFormat: "d-m-Y",
             allowInput: true,
             disableMobile: true,
-            appendTo: spModal,
             onChange: function() {
               onAutoPlayDateChange(tabContext, 'end');
             },
@@ -15276,7 +15275,6 @@
             dateFormat: "H:i",
             time_24hr: true,
             disableMobile: true,
-            appendTo: spModal,
             onChange: checkSpChanges,
             onClose: checkSpChanges
           });
@@ -15288,11 +15286,57 @@
             dateFormat: "H:i",
             time_24hr: true,
             disableMobile: true,
-            appendTo: spModal,
             onChange: checkSpChanges,
             onClose: checkSpChanges
           });
         }
+      }
+
+      // --- AUTOPLAY DATE/TIME TYPE CHANGE HANDLERS ---
+      function onAutoPlayDateTypeChange(tabContext, dateField) {
+        const suffix = dateField === 'start' ? 'AutoPlayStartType' : 'AutoPlayEndType';
+        const dateSuffix = dateField === 'start' ? 'AutoPlayStartDate' : 'AutoPlayEndDate';
+        const selectEl = document.getElementById(getSpElId(tabContext, suffix));
+        const dateInput = document.getElementById(getSpElId(tabContext, dateSuffix));
+        if (!selectEl || !dateInput) return;
+
+        if (selectEl.value === 'specific') {
+          dateInput.classList.remove('d-none');
+          initAutoPlayPickers(tabContext);
+          // Otomatis buka kalender saat dipilih "Tanggal Tertentu"
+          setTimeout(function() {
+            if (dateInput._flatpickr) dateInput._flatpickr.open();
+          }, 100);
+        } else {
+          dateInput.classList.add('d-none');
+          if (dateInput._flatpickr) dateInput._flatpickr.clear();
+        }
+        checkSpChanges();
+      }
+
+      function onAutoPlayTimeTypeChange(tabContext) {
+        const timeType = document.getElementById(getSpElId(tabContext, 'AutoPlayTimeType'));
+        const manualCol = document.getElementById(getSpElId(tabContext, 'AutoPlayTimeManualCol'));
+        if (!timeType || !manualCol) return;
+
+        if (timeType.value === 'manual') {
+          manualCol.style.display = '';
+          initAutoPlayPickers(tabContext);
+        } else {
+          manualCol.style.display = 'none';
+          // Reset waktu ke fullday
+          const startTime = document.getElementById(getSpElId(tabContext, 'AutoPlayStartTime'));
+          const endTime = document.getElementById(getSpElId(tabContext, 'AutoPlayEndTime'));
+          if (startTime) {
+            if (startTime._flatpickr) startTime._flatpickr.setDate('00:00');
+            else startTime.value = '00:00';
+          }
+          if (endTime) {
+            if (endTime._flatpickr) endTime._flatpickr.setDate('00:00');
+            else endTime.value = '00:00';
+          }
+        }
+        checkSpChanges();
       }
 
       function toggleAutoPlayUI(tabContext) {
