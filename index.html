@@ -14893,16 +14893,46 @@
         const rewardOptionsHtml = '<option value="">-- Menu Reward --</option>' + PRODUCTS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
 
         // Populate static tabs (Dine In & Takeaway)
-        ['spDineInCatSelect', 'spTakeawayCatSelect'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = catOptionsHtml; });
-        ['spDineInItemSelect', 'spTakeawayItemSelect'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = itemOptionsHtml; });
+        ['spDineInCatSelect', 'spTakeawayCatSelect'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            const val = el.value;
+            el.innerHTML = catOptionsHtml;
+            el.value = val;
+          }
+        });
+        ['spDineInItemSelect', 'spTakeawayItemSelect'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            const val = el.value;
+            el.innerHTML = itemOptionsHtml;
+            el.value = val;
+          }
+        });
 
         // Populate all dynamic selects (including delivery panes)
-        document.querySelectorAll('.sp-syarat-menu').forEach(el => { el.innerHTML = syaratOptionsHtml; });
-        document.querySelectorAll('.sp-reward-menu').forEach(el => { el.innerHTML = rewardOptionsHtml; });
+        document.querySelectorAll('.sp-syarat-menu').forEach(el => {
+          const val = el.value;
+          el.innerHTML = syaratOptionsHtml;
+          el.value = val;
+        });
+        document.querySelectorAll('.sp-reward-menu').forEach(el => {
+          const val = el.value;
+          el.innerHTML = rewardOptionsHtml;
+          el.value = val;
+        });
 
         // Populate delivery tab cat/item selects
-        document.querySelectorAll('[id^="spDelivery"][id$="CatSelect"]').forEach(el => { el.innerHTML = catOptionsHtml; });
-        document.querySelectorAll('[id^="spDelivery"][id$="ItemSelect"]').forEach(el => { el.innerHTML = itemOptionsHtml; });
+        document.querySelectorAll('[id^="spDelivery"][id$="CatSelect"]').forEach(el => {
+          const val = el.value;
+          el.innerHTML = catOptionsHtml;
+          el.value = val;
+        });
+        document.querySelectorAll('[id^="spDelivery"][id$="ItemSelect"]').forEach(el => {
+          const val = el.value;
+          el.innerHTML = itemOptionsHtml;
+          el.value = val;
+        });
       }
 
       function addSpSyaratRow(btn) {
@@ -14915,7 +14945,6 @@
         newRow.querySelector('.sp-syarat-menu').value = "";
         container.appendChild(newRow);
         updateSpDeleteButtons(container, '.sp-syarat-row');
-        populateSpecialPriceDropdowns();
         checkSpChanges();
       }
 
@@ -14930,7 +14959,6 @@
         newRow.querySelector('.sp-reward-price').value = 0;
         container.appendChild(newRow);
         updateSpDeleteButtons(container, '.sp-reward-row');
-        populateSpecialPriceDropdowns();
         checkSpChanges();
       }
 
