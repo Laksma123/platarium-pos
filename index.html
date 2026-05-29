@@ -1797,8 +1797,6 @@
               </table>
             </div>
           </div>
-
-          <input type="file" id="imageInput" style="display:none;" accept="image/*" onchange="uploadSelectedFile(event)">
         </div>
 
         <div id="view-absensi" class="app-view p-4" style="display:none;">
@@ -12530,8 +12528,6 @@
           </div>
         </div>
 
-        <input type="file" id="notaLogoInput" style="display:none;" accept="image/jpeg, image/png" onchange="previewNotaLogo(event)">
-
         <div class="flex-shrink-0 pt-3 border-top mt-3 d-flex gap-2">
           <button class="btn btn-light w-100 py-3 rounded-pill fw-bold" onclick="closeDesignNotaModal()">KEMBALI</button>
           <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="saveDesignNota(this)">SIMPAN DESIGN</button>
@@ -14133,70 +14129,33 @@
       }
 
       // --- DELIVERY ICON UPLOAD ---
-      function triggerDeliveryIconUpload(area) {
-        if (!area) return;
-        const targetArea = area.closest('.delivery-icon-upload-area') || area;
-        const tabId = targetArea.getAttribute('data-tab-id') || targetArea.dataset.tabId;
-        const fileInput = document.querySelector(`.delivery-icon-file-input[data-tab-id="${tabId}"]`);
-        if (fileInput) { 
-          const originalDisplay = fileInput.style.display;
-          fileInput.style.display = 'block';
-          fileInput.value = ''; 
-          fileInput.click(); 
-          setTimeout(() => { fileInput.style.display = originalDisplay; }, 100);
-        } else {
-          // Fallback ke pencarian sibling
-          const siblingInput = targetArea.querySelector('.delivery-icon-file-input') || (targetArea.parentElement ? targetArea.parentElement.querySelector('.delivery-icon-file-input') : null);
-          if (siblingInput) {
-            siblingInput.value = '';
-            siblingInput.click();
-          } else {
-            console.error("File input tidak ditemukan untuk tab ID:", tabId);
-          }
-        }
-      }
-
-      function handleDeliveryIconFile(input) {
-        const file = input.files[0];
-        if (!file) return;
-        const tabId = input.dataset.tabId;
-        DELIVERY_ICON_UPLOAD_TAB_ID = tabId;
-        CURRENT_UPLOAD_ID = 'SERVICE_ICON';
-        SELECTED_FILE_NAME = file.name;
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const imageElement = document.getElementById('imageToCrop');
-          imageElement.src = e.target.result;
-
-          const modal = document.getElementById('modalCrop');
-          document.body.appendChild(modal);
-          modal.classList.remove('d-none');
-          modal.style.display = "flex";
-
-          if (CROPPER) { CROPPER.destroy(); }
-          const cropContainer = imageElement.parentElement;
-          cropContainer.classList.remove('cropper-circle');
-
-          setTimeout(() => {
-            CROPPER = new Cropper(imageElement, {
-              aspectRatio: 1 / 1,
-              viewMode: 1,
-              dragMode: 'move',
-              autoCropArea: 1,
-              restore: false,
-              guides: true,
-              center: true,
-              highlight: false,
-              cropBoxMovable: false,
-              cropBoxResizable: false,
-              toggleDragModeOnDblclick: false,
-              ready: function() { initZoomSlider(); }
-            });
-          }, 150);
+      function openDeliveryIconManager(tabId) {
+        document.body.appendChild(document.getElementById('modalConfigPreview'));
+        const area = document.querySelector('#pane-' + tabId + ' .delivery-icon-upload-area');
+        const imgPreview = document.getElementById('imgConfigPreview');
+        const wrapper = imgPreview.parentElement;
+        
+        const previewEl = area.querySelector('.delivery-icon-preview');
+        const isSet = previewEl && previewEl.style.display !== 'none';
+        const currentSrc = isSet ? previewEl.querySelector('img').src : 'https://via.placeholder.com/300x300?text=KOSONG';
+        
+        imgPreview.src = currentSrc;
+        imgPreview.style.borderRadius = '8px'; 
+        wrapper.style.aspectRatio = '1/1';
+        
+        document.getElementById('txtConfigTitle').innerText = 'Logo Delivery Service';
+        
+        document.getElementById('btnDeleteConfig').onclick = () => {
+          removeDeliveryIcon(area);
+          closeConfigPreview();
         };
-        reader.readAsDataURL(file);
-        input.value = '';
+        document.getElementById('btnReplaceConfig').onclick = () => { 
+          closeConfigPreview(); 
+          DELIVERY_ICON_UPLOAD_TAB_ID = tabId;
+          triggerUpload('SERVICE_ICON'); 
+        };
+        
+        document.getElementById('modalConfigPreview').style.display = 'flex';
       }
 
       function removeDeliveryIcon(area) {
@@ -14204,9 +14163,6 @@
         const preview = area.querySelector('.delivery-icon-preview');
         if (placeholder) placeholder.style.display = 'flex';
         if (preview) { preview.style.display = 'none'; preview.querySelector('img').src = ''; }
-        // Tampilkan kembali input file transparan agar menutupi area upload
-        const fileInput = area.querySelector('.delivery-icon-file-input');
-        if (fileInput) { fileInput.style.display = 'block'; }
         // Remove icon from tab
         const tabId = area.dataset.tabId;
         const tab = document.querySelector(`#deliveryTabBar .delivery-tab[data-tab-id="${tabId}"]`);
@@ -14221,9 +14177,6 @@
         const preview = area.querySelector('.delivery-icon-preview');
         if (placeholder) placeholder.style.display = 'none';
         if (preview) { preview.style.display = 'block'; preview.querySelector('img').src = url; }
-        // Sembunyikan input file transparan agar tidak menghalangi tombol aksi di atas preview
-        const fileInput = area.querySelector('.delivery-icon-file-input');
-        if (fileInput) { fileInput.style.display = 'none'; }
         // Update tab icon
         const tabId = area.dataset.tabId;
         const tab = document.querySelector(`#deliveryTabBar .delivery-tab[data-tab-id="${tabId}"]`);
@@ -14254,24 +14207,14 @@
             </div>
             <div class="mb-3">
               <label class="small fw-bold text-muted mb-1"><i class="fas fa-image me-1 text-info"></i>ICON SERVICE</label>
-              <div class="delivery-icon-upload-area position-relative" data-tab-id="${tabId}">
+              <div class="delivery-icon-upload-area position-relative" data-tab-id="${tabId}" onclick="openDeliveryIconManager('${tabId}')">
                 <div class="delivery-icon-placeholder">
                   <i class="fas fa-cloud-upload-alt fa-2x mb-1"></i>
                   <span>Upload Logo</span>
                 </div>
                 <div class="delivery-icon-preview" style="display:none;">
                   <img src="" alt="icon">
-                  <div class="delivery-icon-actions" style="z-index:10;">
-                    <button class="btn btn-xs btn-light rounded-pill" onclick="event.stopPropagation(); triggerDeliveryIconUpload(this.closest('.delivery-icon-upload-area'))">
-                      <i class="fas fa-sync-alt me-1"></i>Replace
-                    </button>
-                    <button class="btn btn-xs btn-outline-danger rounded-pill" onclick="event.stopPropagation(); removeDeliveryIcon(this.closest('.delivery-icon-upload-area'))">
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </div>
                 </div>
-                <!-- Input file transparan diletakkan langsung di dalam container agar langsung menerima klik fisik user natively -->
-                <input type="file" class="delivery-icon-file-input" accept="image/*" data-tab-id="${tabId}" style="position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 5;" onchange="handleDeliveryIconFile(this)">
               </div>
             </div>
             <h6 class="fw-bold mb-2 text-dark" style="font-size: 0.8rem;"><i class="fas fa-layer-group me-2 text-primary"></i>Slot Promo Delivery</h6>
@@ -14393,6 +14336,9 @@
           isPercent: isPercent
         };
       }
+      loadSpecialPriceSettings();
     </script>
+    <input type="file" id="imageInput" style="position: absolute; width: 1px; height: 1px; top: -9999px; opacity: 0.01; z-index: -1;" accept="image/*" onchange="uploadSelectedFile(event)">
+    <input type="file" id="notaLogoInput" style="position: absolute; width: 1px; height: 1px; top: -9999px; opacity: 0.01; z-index: -1;" accept="image/jpeg, image/png" onchange="previewNotaLogo(event)">
   </body>
 </html>
