@@ -7249,8 +7249,8 @@
             aspectR = 1/1;
             cropContainer.classList.add('cropper-circle'); 
           } else if (CURRENT_UPLOAD_ID === 'WALLPAPER') {
-            // [PERBAIKAN] Rasio mengikuti dimensi layar device secara dinamis (portrait/landscape otomatis)
-            aspectR = window.innerWidth / window.innerHeight; 
+            // [PERBAIKAN] Menggunakan rasio landscape tablet standar (4:3)
+            aspectR = 4 / 3; 
             cropContainer.classList.remove('cropper-circle');
           } else {
             aspectR = 1/1; 
@@ -7260,7 +7260,7 @@
           setTimeout(() => {
             CROPPER = new Cropper(imageElement, {
               aspectRatio: aspectR,
-              viewMode: 1, 
+              viewMode: 0, // Menggunakan viewMode 0 agar zoom out tidak kaku dan gambar bisa dikecilkan melampaui area potong
               dragMode: 'move',
               autoCropArea: 1,
               restore: false,
@@ -7271,7 +7271,21 @@
               cropBoxResizable: false,
               toggleDragModeOnDblclick: false,
               ready: function() {
+                // Ambil rasio awal saat gambar pertama kali selesai dimuat dan disesuaikan
+                const initialRatio = CROPPER.getImageData().ratio;
+                CROPPER.initialRatio = initialRatio;
                 initZoomSlider();
+              },
+              zoom: function(event) {
+                // Sinkronisasi slider HANYA jika di-zoom lewat gesture / pinch (originalEvent ada)
+                // Ini mencegah feedback loop yang membuat slider macet/mati saat digeser secara manual
+                if (event.detail.originalEvent) {
+                  const slider = document.getElementById('zoomSlider');
+                  if (slider && CROPPER && CROPPER.initialRatio) {
+                    const relativeRatio = event.detail.ratio / CROPPER.initialRatio;
+                    slider.value = relativeRatio.toFixed(6);
+                  }
+                }
               }
             });
           }, 150);
@@ -7380,7 +7394,7 @@
         
         imgPreview.src = currentSrc;
         imgPreview.style.borderRadius = '8px'; 
-        wrapper.style.aspectRatio = '16/9'; // Ubah rasio wrapper menjadi landscape secara dinamis
+        wrapper.style.aspectRatio = '4/3'; // Menggunakan rasio landscape tablet standar (4:3)
         
         document.getElementById('txtConfigTitle').innerText = 'Wallpaper Login Screen';
         
@@ -8629,17 +8643,25 @@
         }).deleteProductImage(pid);
       }
 
-      // Inisialisasi Slider saat upload file terpilih
+      // Inisialisasi Slider saat upload file terpilih dengan batas relatif 20% - 200% dari rasio awal
       function initZoomSlider() {
         const slider = document.getElementById('zoomSlider');
-        slider.value = 1; // Reset ke default
+        if (!CROPPER || !CROPPER.initialRatio) return;
         
-        slider.addEventListener('input', function() {
-          if (CROPPER) {
-            // Mengubah nilai slider menjadi skala zoom cropper
-            CROPPER.zoomTo(parseFloat(this.value));
+        // Atur min, max, step secara statis/relatif agar mudah dipahami (20% hingga 200%)
+        slider.min = '0.20';
+        slider.max = '2.00';
+        slider.step = '0.01';
+        slider.value = '1.00'; // Mulai dari 100% (fit aslinya)
+        
+        // Gunakan .oninput untuk menghindari tumpukan event listener
+        slider.oninput = function() {
+          if (CROPPER && CROPPER.initialRatio) {
+            // Rasio absolut cropper = rasio_fit_awal * nilai_slider_relatif
+            const absoluteRatio = CROPPER.initialRatio * parseFloat(this.value);
+            CROPPER.zoomTo(absoluteRatio);
           }
-        });
+        };
       }
       
       function processCheckout() {
