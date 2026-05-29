@@ -14391,7 +14391,7 @@
         if (element.innerHTML.includes('fa-plus')) {
           element.innerHTML = '<span class="slot-title mt-1">Promo Baru</span><div class="remove-slot" onclick="event.stopPropagation(); removeSpSlot(this, \'' + tabContext + '\')"><i class="fas fa-times"></i></div>';
           element.classList.add('configured');
-          element.dataset.config = JSON.stringify(getNormalizedSpConfig({}));
+          element.dataset.config = JSON.stringify(getNormalizedSpConfig({ active: false }));
 
           const newPlus = document.createElement('div');
           newPlus.className = 'sp-slot';
@@ -14858,8 +14858,15 @@
           const num = tabId.split('_')[1];
           const serviceNameInput = document.querySelector('#pane-' + tabId + ' .delivery-service-name');
           const iconPreview = document.querySelector('#pane-' + tabId + ' .delivery-icon-preview img');
+          const previewContainer = document.querySelector('#pane-' + tabId + ' .delivery-icon-preview');
           const slotsEl = document.getElementById('spDelivery' + num + 'Slots');
           let slotCount = 0;
+
+          const hasIcon = iconPreview && iconPreview.getAttribute('src') && iconPreview.getAttribute('src').trim() !== '';
+          const isIconVisible = previewContainer && previewContainer.style.display !== 'none';
+          const sIconUrl = (hasIcon && isIconVisible && !iconPreview.src.includes('data:')) ? iconPreview.src : '';
+          const sName = serviceNameInput ? serviceNameInput.value.trim() : '';
+
           if (slotsEl) {
             const configuredSlots = slotsEl.querySelectorAll('.sp-slot.configured');
             configuredSlots.forEach(function(slot, idx) {
@@ -14875,23 +14882,23 @@
                 itemTarget: cfg.itemTarget,
                 buyGetData: cfg.buyGetData,
                 minPurchaseAmount: cfg.minPurchaseAmount,
-                serviceName: serviceNameInput ? serviceNameInput.value : '',
-                serviceIconUrl: (iconPreview && iconPreview.src && !iconPreview.src.includes('data:')) ? iconPreview.src : '',
+                serviceName: sName,
+                serviceIconUrl: sIconUrl,
                 active: cfg.active ? 'true' : 'false',
                 autoPlayConfig: cfg.autoPlayConfig ? JSON.stringify(cfg.autoPlayConfig) : ''
               });
               slotCount++;
             });
           }
-          // If no configured slots, still save delivery tab meta
-          if (slotCount === 0) {
+          // If no configured slots, still save delivery tab meta ONLY if name or icon is set to prevent garbage data
+          if (slotCount === 0 && (sName !== '' || sIconUrl !== '')) {
             allData.push({
               tab: 'delivery', subTab: tabId, slotIndex: -1,
               labelName: '', promoType: '', discountForm: '', discountValue: '',
               categoryTarget: '', itemTarget: '', buyGetData: '',
               minPurchaseAmount: '',
-              serviceName: serviceNameInput ? serviceNameInput.value : '',
-              serviceIconUrl: (iconPreview && iconPreview.src && !iconPreview.src.includes('data:')) ? iconPreview.src : '',
+              serviceName: sName,
+              serviceIconUrl: sIconUrl,
               active: 'true',
               autoPlayConfig: ''
             });
