@@ -3154,12 +3154,7 @@
           </div>
           </div>
         </div>
-        </div>
-        </div>
-        </div>
-        </div>
-        </div>
-        </div>
+
         <!-- WARNING MODAL SP -->
         <div id="modalSpWarning" class="login-overlay d-none" style="background: rgba(0,0,0,0.7); z-index: 10750; align-items:center; justify-content:center; display:flex; opacity: 1 !important;">
           <div class="modal-dialog modal-dialog-centered modal-sm w-100" style="max-width:350px;">
@@ -13858,14 +13853,6 @@
         const btnSimpan = document.getElementById('btnSpWarnSimpan');
         const btnJangan = document.getElementById('btnSpWarnJanganSimpan');
         const btnKembali = document.getElementById('btnSpWarnKembali');
-        
-        warnOverlay.style.pointerEvents = 'auto';
-        warnOverlay.style.zIndex = '10800';
-        warnOverlay.style.opacity = '1';
-        
-        btnSimpan.disabled = false;
-        btnJangan.disabled = false;
-        btnKembali.disabled = false;
         
         if (context === 'close') {
           btnSimpan.innerText = "Simpan dan Close";
