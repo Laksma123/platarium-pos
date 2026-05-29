@@ -2551,13 +2551,13 @@
 
                 <div class="mb-3">
                   <label class="small fw-bold text-muted">KATEGORI</label>
-                  <select id="newPCategory" class="form-select fw-bold">
-                    <option value="Kopi">Kopi</option>
-                    <option value="Wedangan">Wedangan</option>
-                    <option value="Teh">Teh</option>
-                    <option value="Emilan">Emilan</option>
-                    <option value="Best Seller">Best Seller</option>
+                  <select id="newPCategory" class="form-select fw-bold mb-2" onchange="handleCategorySelectChange()">
+                    <option value="" disabled selected>Pilih Kategori...</option>
+                    <option value="NEW_CATEGORY" class="text-primary fw-bold">[+] Buat Kategori Baru...</option>
                   </select>
+                  <div id="newCategoryInputContainer" class="d-none">
+                    <input type="text" id="newCategoryNameInput" class="form-control fw-bold border-2" placeholder="Ketik nama kategori baru...">
+                  </div>
                 </div>
               </div>
 
@@ -7272,8 +7272,52 @@
         }).getProducts();
       }
 
-      // [2026-01-16] Logika Frontend untuk Tambah & Hapus Produk
+      // [2026-05-30] Logika Dinamis & Pintar Kategori Produk (Kolom D Sheet Products)
+      function populateAddProductCategories() {
+        const select = document.getElementById('newPCategory');
+        if (!select) return;
+
+        // Ambil kategori unik dari PRODUCTS, abaikan kosong/null
+        const uniqueCategories = [...new Set(PRODUCTS.map(p => p.category))].filter(Boolean);
+        uniqueCategories.sort((a, b) => a.localeCompare(b));
+
+        let html = `
+          <option value="" disabled selected>Pilih Kategori...</option>
+          <option value="NEW_CATEGORY" class="text-primary fw-bold">[+] Buat Kategori Baru...</option>
+        `;
+
+        uniqueCategories.forEach(cat => {
+          html += `<option value="${cat}">${cat}</option>`;
+        });
+
+        select.innerHTML = html;
+
+        // Reset input field kategori baru
+        const container = document.getElementById('newCategoryInputContainer');
+        if (container) container.classList.add('d-none');
+        const input = document.getElementById('newCategoryNameInput');
+        if (input) input.value = '';
+      }
+
+      function handleCategorySelectChange() {
+        const select = document.getElementById('newPCategory');
+        const container = document.getElementById('newCategoryInputContainer');
+        const input = document.getElementById('newCategoryNameInput');
+
+        if (select && select.value === 'NEW_CATEGORY') {
+          if (container) container.classList.remove('d-none');
+          if (input) {
+            input.value = '';
+            input.focus();
+          }
+        } else {
+          if (container) container.classList.add('d-none');
+          if (input) input.value = '';
+        }
+      }
+
       function showAddProductModal() {
+        populateAddProductCategories();
         document.getElementById('modalAddProduct').classList.remove('d-none');
       }
 
@@ -7285,7 +7329,13 @@
         const idManual = document.getElementById('newPId').value;
         let name = document.getElementById('newPName').value;
         const price = document.getElementById('newPPrice').value;
-        const cat = document.getElementById('newPCategory').value;
+        
+        const catSelect = document.getElementById('newPCategory');
+        let cat = catSelect.value;
+        if (cat === 'NEW_CATEGORY') {
+          cat = document.getElementById('newCategoryNameInput').value.trim();
+        }
+        
         const isIce = document.getElementById('checkIce').checked;
         const isHot = document.getElementById('checkHot').checked;
         
@@ -7327,6 +7377,10 @@
               
               TEMP_RECIPE_BASKET = []; // Reset keranjang resep
               document.getElementById('newRecipeStatus').innerText = "Belum ada bahan diatur";
+              
+              catSelect.value = '';
+              document.getElementById('newCategoryNameInput').value = '';
+              document.getElementById('newCategoryInputContainer').classList.add('d-none');
               
               closeAddProductModal();
               loadProductsTable(); 
