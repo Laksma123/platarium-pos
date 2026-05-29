@@ -14134,9 +14134,26 @@
 
       // --- DELIVERY ICON UPLOAD ---
       function triggerDeliveryIconUpload(area) {
-        const tabId = area.dataset.tabId;
-        const fileInput = area.parentElement.querySelector('.delivery-icon-file-input');
-        if (fileInput) { fileInput.value = ''; fileInput.click(); }
+        if (!area) return;
+        const targetArea = area.closest('.delivery-icon-upload-area') || area;
+        const tabId = targetArea.getAttribute('data-tab-id') || targetArea.dataset.tabId;
+        const fileInput = document.querySelector(`.delivery-icon-file-input[data-tab-id="${tabId}"]`);
+        if (fileInput) { 
+          const originalDisplay = fileInput.style.display;
+          fileInput.style.display = 'block';
+          fileInput.value = ''; 
+          fileInput.click(); 
+          setTimeout(() => { fileInput.style.display = originalDisplay; }, 100);
+        } else {
+          // Fallback ke pencarian sibling
+          const siblingInput = targetArea.querySelector('.delivery-icon-file-input') || (targetArea.parentElement ? targetArea.parentElement.querySelector('.delivery-icon-file-input') : null);
+          if (siblingInput) {
+            siblingInput.value = '';
+            siblingInput.click();
+          } else {
+            console.error("File input tidak ditemukan untuk tab ID:", tabId);
+          }
+        }
       }
 
       function handleDeliveryIconFile(input) {
@@ -14187,6 +14204,9 @@
         const preview = area.querySelector('.delivery-icon-preview');
         if (placeholder) placeholder.style.display = 'flex';
         if (preview) { preview.style.display = 'none'; preview.querySelector('img').src = ''; }
+        // Tampilkan kembali input file transparan agar menutupi area upload
+        const fileInput = area.querySelector('.delivery-icon-file-input');
+        if (fileInput) { fileInput.style.display = 'block'; }
         // Remove icon from tab
         const tabId = area.dataset.tabId;
         const tab = document.querySelector(`#deliveryTabBar .delivery-tab[data-tab-id="${tabId}"]`);
@@ -14201,6 +14221,9 @@
         const preview = area.querySelector('.delivery-icon-preview');
         if (placeholder) placeholder.style.display = 'none';
         if (preview) { preview.style.display = 'block'; preview.querySelector('img').src = url; }
+        // Sembunyikan input file transparan agar tidak menghalangi tombol aksi di atas preview
+        const fileInput = area.querySelector('.delivery-icon-file-input');
+        if (fileInput) { fileInput.style.display = 'none'; }
         // Update tab icon
         const tabId = area.dataset.tabId;
         const tab = document.querySelector(`#deliveryTabBar .delivery-tab[data-tab-id="${tabId}"]`);
@@ -14231,14 +14254,14 @@
             </div>
             <div class="mb-3">
               <label class="small fw-bold text-muted mb-1"><i class="fas fa-image me-1 text-info"></i>ICON SERVICE</label>
-              <div class="delivery-icon-upload-area" data-tab-id="${tabId}" onclick="triggerDeliveryIconUpload(this)">
+              <div class="delivery-icon-upload-area position-relative" data-tab-id="${tabId}">
                 <div class="delivery-icon-placeholder">
                   <i class="fas fa-cloud-upload-alt fa-2x mb-1"></i>
                   <span>Upload Logo</span>
                 </div>
                 <div class="delivery-icon-preview" style="display:none;">
                   <img src="" alt="icon">
-                  <div class="delivery-icon-actions">
+                  <div class="delivery-icon-actions" style="z-index:10;">
                     <button class="btn btn-xs btn-light rounded-pill" onclick="event.stopPropagation(); triggerDeliveryIconUpload(this.closest('.delivery-icon-upload-area'))">
                       <i class="fas fa-sync-alt me-1"></i>Replace
                     </button>
@@ -14247,8 +14270,9 @@
                     </button>
                   </div>
                 </div>
+                <!-- Input file transparan diletakkan langsung di dalam container agar langsung menerima klik fisik user natively -->
+                <input type="file" class="delivery-icon-file-input" accept="image/*" data-tab-id="${tabId}" style="position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 5;" onchange="handleDeliveryIconFile(this)">
               </div>
-              <input type="file" class="delivery-icon-file-input" accept="image/*" data-tab-id="${tabId}" style="display:none;" onchange="handleDeliveryIconFile(this)">
             </div>
             <h6 class="fw-bold mb-2 text-dark" style="font-size: 0.8rem;"><i class="fas fa-layer-group me-2 text-primary"></i>Slot Promo Delivery</h6>
             <p class="text-muted mb-3" style="font-size: 0.68rem;">Tambahkan slot untuk membuat aturan promo baru.</p>
