@@ -2787,7 +2787,7 @@
                       <h6 class="fw-bold mb-2 text-dark" style="font-size: 0.8rem;"><i class="fas fa-layer-group me-2 text-primary"></i>Slot Promo Dine In</h6>
                       <p class="text-muted mb-3" style="font-size: 0.68rem;">Tambahkan slot untuk membuat aturan promo baru. Klik slot untuk mengatur detailnya di panel kanan.</p>
                       <div class="d-flex flex-wrap gap-2" id="spDineInSlots">
-                        <div class="sp-slot active" onclick="activateSpSlot(this, 'dinein')">
+                        <div class="sp-slot" onclick="activateSpSlot(this, 'dinein')">
                           <i class="fas fa-plus"></i>
                         </div>
                       </div>
@@ -3022,7 +3022,7 @@
                       <h6 class="fw-bold mb-2 text-dark" style="font-size: 0.8rem;"><i class="fas fa-layer-group me-2 text-primary"></i>Slot Promo Takeaway</h6>
                       <p class="text-muted mb-3" style="font-size: 0.68rem;">Pengaturan slot promo khusus untuk pesanan Takeaway.</p>
                       <div class="d-flex flex-wrap gap-2" id="spTakeawaySlots">
-                        <div class="sp-slot active" onclick="activateSpSlot(this, 'takeaway')">
+                        <div class="sp-slot" onclick="activateSpSlot(this, 'takeaway')">
                           <i class="fas fa-plus"></i>
                         </div>
                       </div>
@@ -13927,6 +13927,86 @@
           _modalSpEl.addEventListener('input', checkSpChanges);
           _modalSpEl.addEventListener('change', checkSpChanges);
       }
+
+      function getNormalizedSpConfig(cfg) {
+        if (!cfg) cfg = {};
+        if (typeof cfg === 'string') {
+          try { cfg = JSON.parse(cfg); } catch(e) { cfg = {}; }
+        }
+        
+        let apCfg = {
+          enabled: false,
+          startType: 'specific',
+          startDate: '',
+          endType: 'specific',
+          endDate: '',
+          timeType: 'manual',
+          startTime: '00:00',
+          endTime: '00:00'
+        };
+        if (cfg.autoPlayConfig) {
+          let parsedAp = cfg.autoPlayConfig;
+          if (typeof parsedAp === 'string') {
+            try { parsedAp = JSON.parse(parsedAp); } catch(e) { parsedAp = null; }
+          }
+          if (parsedAp && typeof parsedAp === 'object') {
+            apCfg = Object.assign(apCfg, parsedAp);
+          }
+        }
+        
+        let buyGet = '';
+        if (cfg.buyGetData) {
+          if (typeof cfg.buyGetData === 'object') {
+            buyGet = JSON.stringify(cfg.buyGetData);
+          } else {
+            buyGet = cfg.buyGetData;
+          }
+        }
+
+        return {
+          promoType: cfg.promoType || 'subtotal',
+          discountForm: cfg.discountForm || '',
+          discountValue: cfg.discountValue || '',
+          categoryTarget: cfg.categoryTarget || '',
+          itemTarget: cfg.itemTarget || '',
+          buyGetData: buyGet,
+          minPurchaseAmount: cfg.minPurchaseAmount || '',
+          active: !(cfg.active === false || cfg.active === 'false'),
+          autoPlayConfig: apCfg
+        };
+      }
+
+      function updateSpConfigPanelState(tabContext) {
+        if (!tabContext) tabContext = getCurrentSpTabContext();
+        const slotsEl = document.getElementById(getSpElId(tabContext, 'Slots'));
+        const rightPanel = document.getElementById(getSpElId(tabContext, 'Config'));
+        if (!rightPanel) return;
+        
+        if (!slotsEl) {
+          rightPanel.style.opacity = '0.5';
+          rightPanel.style.pointerEvents = 'none';
+          return;
+        }
+        
+        const activeSlot = slotsEl.querySelector('.sp-slot.active.configured');
+        if (activeSlot) {
+          rightPanel.style.opacity = '1';
+          rightPanel.style.pointerEvents = 'auto';
+        } else {
+          rightPanel.style.opacity = '0.5';
+          rightPanel.style.pointerEvents = 'none';
+        }
+      }
+
+      function resetAllSpConfigPanels() {
+        ['dinein', 'takeaway'].forEach(tabCtx => {
+          updateSpConfigPanelState(tabCtx);
+        });
+        document.querySelectorAll('#deliveryTabBar .delivery-tab').forEach(tabEl => {
+          const tabId = tabEl.dataset.tabId;
+          if (tabId) updateSpConfigPanelState(tabId);
+        });
+      }
       
       function attachSpTabListeners() {
         const spTabEls = document.querySelectorAll('button[data-bs-toggle="pill"][data-bs-target^="#sp-"]');
@@ -13948,6 +14028,9 @@
                  isSpWarningHandled = false;
               });
             }
+          });
+          tabEl.addEventListener('shown.bs.tab', function(e) {
+            updateSpConfigPanelState();
           });
         });
       }
@@ -14167,6 +14250,7 @@
         attachSpTabListeners();
         populateSpecialPriceDropdowns();
         initDeliveryTabs();
+        resetAllSpConfigPanels();
         document.getElementById('modalSpecialPrice').classList.remove('d-none');
         
         const modal = document.getElementById('modalSpecialPrice');
@@ -14231,6 +14315,7 @@
         if (element.innerHTML.includes('fa-plus')) {
           element.innerHTML = '<span class="slot-title mt-1">Promo Baru</span><div class="remove-slot" onclick="event.stopPropagation(); removeSpSlot(this, \'' + tabContext + '\')"><i class="fas fa-times"></i></div>';
           element.classList.add('configured');
+          element.dataset.config = JSON.stringify(getNormalizedSpConfig({}));
 
           const newPlus = document.createElement('div');
           newPlus.className = 'sp-slot';
@@ -14436,7 +14521,7 @@
             config.buyGetData = JSON.stringify({reqs: [], rewards: rewards});
         }
         
-        slot.dataset.config = JSON.stringify(config);
+        slot.dataset.config = JSON.stringify(getNormalizedSpConfig(config));
       }
 
       function loadConfigFromSlot(slot, tabContext) {
@@ -14667,20 +14752,19 @@
           const configuredSlots = slotsEl.querySelectorAll('.sp-slot.configured');
           configuredSlots.forEach(function(slot, idx) {
             const titleEl = slot.querySelector('.slot-title');
-            let cfg = {};
-            try { cfg = JSON.parse(slot.dataset.config || '{}'); } catch(e){}
+            let cfg = getNormalizedSpConfig(slot.dataset.config);
             allData.push({
               tab: tab, subTab: '', slotIndex: idx,
               labelName: titleEl ? titleEl.innerText : 'Promo Baru',
-              promoType: cfg.promoType || '',
-              discountForm: cfg.discountForm || '',
-              discountValue: cfg.discountValue || '',
-              categoryTarget: cfg.categoryTarget || '',
-              itemTarget: cfg.itemTarget || '',
-              buyGetData: cfg.buyGetData || '',
-              minPurchaseAmount: cfg.minPurchaseAmount || '',
+              promoType: cfg.promoType,
+              discountForm: cfg.discountForm,
+              discountValue: cfg.discountValue,
+              categoryTarget: cfg.categoryTarget,
+              itemTarget: cfg.itemTarget,
+              buyGetData: cfg.buyGetData,
+              minPurchaseAmount: cfg.minPurchaseAmount,
               serviceName: '', serviceIconUrl: '',
-              active: (cfg.active === false || String(cfg.active) === 'false') ? 'false' : 'true',
+              active: cfg.active ? 'true' : 'false',
               autoPlayConfig: cfg.autoPlayConfig ? JSON.stringify(cfg.autoPlayConfig) : ''
             });
           });
@@ -14698,21 +14782,20 @@
             const configuredSlots = slotsEl.querySelectorAll('.sp-slot.configured');
             configuredSlots.forEach(function(slot, idx) {
               const titleEl = slot.querySelector('.slot-title');
-              let cfg = {};
-              try { cfg = JSON.parse(slot.dataset.config || '{}'); } catch(e){}
+              let cfg = getNormalizedSpConfig(slot.dataset.config);
               allData.push({
                 tab: 'delivery', subTab: tabId, slotIndex: idx,
                 labelName: titleEl ? titleEl.innerText : 'Promo Baru',
-                promoType: cfg.promoType || '',
-                discountForm: cfg.discountForm || '',
-                discountValue: cfg.discountValue || '',
-                categoryTarget: cfg.categoryTarget || '',
-                itemTarget: cfg.itemTarget || '',
-                buyGetData: cfg.buyGetData || '',
-                minPurchaseAmount: cfg.minPurchaseAmount || '',
+                promoType: cfg.promoType,
+                discountForm: cfg.discountForm,
+                discountValue: cfg.discountValue,
+                categoryTarget: cfg.categoryTarget,
+                itemTarget: cfg.itemTarget,
+                buyGetData: cfg.buyGetData,
+                minPurchaseAmount: cfg.minPurchaseAmount,
                 serviceName: serviceNameInput ? serviceNameInput.value : '',
                 serviceIconUrl: (iconPreview && iconPreview.src && !iconPreview.src.includes('data:')) ? iconPreview.src : '',
-                active: (cfg.active === false || String(cfg.active) === 'false') ? 'false' : 'true',
+                active: cfg.active ? 'true' : 'false',
                 autoPlayConfig: cfg.autoPlayConfig ? JSON.stringify(cfg.autoPlayConfig) : ''
               });
               slotCount++;
@@ -14808,11 +14891,7 @@
                slot.className = 'sp-slot configured';
                slot.innerHTML = '<span class="slot-title mt-1">' + item.labelName + '</span><div class="remove-slot" onclick="event.stopPropagation(); removeSpSlot(this, \'' + tabContext + '\')"><i class="fas fa-times"></i></div>';
                
-               let apCfg = null;
-               if (item.autoPlayConfig) {
-                 try { apCfg = JSON.parse(item.autoPlayConfig); } catch(e){}
-               }
-               const config = {
+               const config = getNormalizedSpConfig({
                    promoType: item.promoType,
                    discountForm: item.discountForm,
                    discountValue: item.discountValue,
@@ -14820,9 +14899,9 @@
                    itemTarget: item.itemTarget,
                    buyGetData: item.buyGetData,
                    minPurchaseAmount: item.minPurchaseAmount,
-                   active: (item.active === 'false' || item.active === false) ? false : true,
-                   autoPlayConfig: apCfg
-               };
+                   active: item.active,
+                   autoPlayConfig: item.autoPlayConfig
+               });
                slot.dataset.config = JSON.stringify(config);
                slot.onclick = function() { activateSpSlot(this, tabContext); };
                slotsEl.appendChild(slot);
@@ -14834,6 +14913,8 @@
            newPlus.onclick = function() { activateSpSlot(this, tabContext); };
            slotsEl.appendChild(newPlus);
         });
+        
+        resetAllSpConfigPanels();
       }
 
       // --- DELIVERY TAB MANAGEMENT ---
@@ -14913,6 +14994,7 @@
         const pane = document.getElementById('pane-' + tabId);
         if (tab) tab.classList.add('active');
         if (pane) pane.classList.add('active');
+        updateSpConfigPanelState(tabId);
       }
 
       function activateDeliverySubTab(tabId) {
@@ -15049,7 +15131,7 @@
             <h6 class="fw-bold mb-2 text-dark" style="font-size: 0.8rem;"><i class="fas fa-layer-group me-2 text-primary"></i>Slot Promo Delivery</h6>
             <p class="text-muted mb-3" style="font-size: 0.68rem;">Tambahkan slot untuk membuat aturan promo baru.</p>
             <div class="d-flex flex-wrap gap-2" id="${prefix}Slots">
-              <div class="sp-slot active" onclick="activateSpSlot(this, '${tabId}')">
+              <div class="sp-slot" onclick="activateSpSlot(this, '${tabId}')">
                 <i class="fas fa-plus"></i>
               </div>
             </div>
