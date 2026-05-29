@@ -2720,7 +2720,7 @@
                         <div class="row g-3 mb-3">
                           <div class="col-md-6">
                             <label class="small fw-bold text-muted mb-1">NAMA LABEL PROMO (Struk)</label>
-                            <input type="text" id="spDineInLabelName" class="form-control border-2 fw-bold text-dark form-control-sm py-2" placeholder="Contoh: Diskon Merdeka 10%">
+                            <input type="text" id="spDineInLabelName" class="form-control border-2 fw-bold text-dark form-control-sm py-2" placeholder="Contoh: Diskon Merdeka 10%" oninput="syncSpSlotLabel(this.value, 'dinein')">
                           </div>
                           <div class="col-md-6">
                             <label class="small fw-bold text-muted mb-1">TIPE PROMO / DISKON</label>
@@ -2904,7 +2904,7 @@
                         <div class="row g-3 mb-3">
                           <div class="col-md-6">
                             <label class="small fw-bold text-muted mb-1">NAMA LABEL PROMO (Struk)</label>
-                            <input type="text" id="spTakeawayLabelName" class="form-control border-2 fw-bold text-dark form-control-sm py-2" placeholder="Contoh: Promo Takeaway">
+                            <input type="text" id="spTakeawayLabelName" class="form-control border-2 fw-bold text-dark form-control-sm py-2" placeholder="Contoh: Promo Takeaway" oninput="syncSpSlotLabel(this.value, 'takeaway')">
                           </div>
                           <div class="col-md-6">
                             <label class="small fw-bold text-muted mb-1">TIPE PROMO / DISKON</label>
@@ -13739,6 +13739,19 @@
         document.getElementById('modalSpecialPrice').classList.remove('d-none');
       }
 
+      function syncSpSlotLabel(val, tabContext) {
+        const slotsContainer = document.getElementById(tabContext === 'dinein' ? 'spDineInSlots' : 'spTakeawaySlots');
+        if (!slotsContainer) return;
+        
+        const activeSlot = slotsContainer.querySelector('.sp-slot.active');
+        if (activeSlot && activeSlot.classList.contains('configured')) {
+          const titleEl = activeSlot.querySelector('.slot-title');
+          if (titleEl) {
+            titleEl.innerText = val.trim() !== '' ? val.trim() : 'Promo Baru';
+          }
+        }
+      }
+
       function activateSpSlot(element, tabContext) {
         const slots = document.getElementById(tabContext === 'dinein' ? 'spDineInSlots' : 'spTakeawaySlots').querySelectorAll('.sp-slot');
         slots.forEach(slot => slot.classList.remove('active'));
@@ -13758,6 +13771,16 @@
           newPlus.innerHTML = '<i class="fas fa-plus"></i>';
           newPlus.onclick = function() { activateSpSlot(this, tabContext); };
           document.getElementById(tabContext === 'dinein' ? 'spDineInSlots' : 'spTakeawaySlots').appendChild(newPlus);
+        }
+
+        // Sinkronisasi Nama Label Promo ke Input Field
+        const titleEl = element.querySelector('.slot-title');
+        const inputName = document.getElementById('sp' + (tabContext === 'dinein' ? 'DineIn' : 'Takeaway') + 'LabelName');
+        if (inputName && titleEl) {
+          const text = titleEl.innerText;
+          inputName.value = text === 'Promo Baru' ? '' : text;
+        } else if (inputName) {
+          inputName.value = '';
         }
       }
 
