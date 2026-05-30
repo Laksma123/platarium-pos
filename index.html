@@ -4703,10 +4703,11 @@
       }
 
       // Sistem Koreksi Drag Dinamis untuk Browser Ter-Zoom (APK)
-      // Catatan: Touch/mouse clientX/clientY dan getBoundingClientRect() di WebView modern (APK)
-      // sudah otomatis dikonversi ke koordinat ruang CSS (ter-zoom). Kita tidak perlu lagi
-      // membaginya secara manual dengan zoom APK karena akan menyebabkan double-scaling (drifting).
-      // Kita cukup memetakan dan memposisikan fallback element secara absolut menggunakan style.left & top dalam ruang koordinat CSS.
+      // Catatan: Touch/mouse clientX/clientY adalah koordinat fisik viewport (unzoomed),
+      // sedangkan getBoundingClientRect() dan style.left/top elemen bekerja di ruang CSS (ter-zoom).
+      // Solusi: Hitung offset jari fisik saat drag dimulai, hitung posisi fisik yang diinginkan saat bergerak,
+      // lalu konversikan posisi fisik tersebut ke ruang CSS dengan membaginya dengan zoom factor sebelum diaplikasikan.
+      // Dengan cara ini, pergerakan drag tetap 1:1 sempurna di bawah jari tanpa ada lag/drift akumulatif pada zoom berapa pun (termasuk 60%, 70%).
       let activeDrag = null;
 
       function handleSortableStartZoomCorrection(evt) {
@@ -4727,10 +4728,14 @@
               }
           }
           
-          // startX dan rect.left sudah berada pada unit CSS pixel ter-zoom yang sama
+          // Konversikan rect.left dan rect.top (dalam CSS) ke piksel viewport fisik (unzoomed)
+          const physicalRectLeft = rect.left * zoom;
+          const physicalRectTop = rect.top * zoom;
+          
           activeDrag = {
-              offsetX: startX - rect.left,
-              offsetY: startY - rect.top,
+              // Offset fisik jari dari pojok kiri-atas elemen (dalam piksel fisik)
+              physicalOffsetX: startX - physicalRectLeft,
+              physicalOffsetY: startY - physicalRectTop,
               zoom: zoom
           };
       }
@@ -4776,6 +4781,8 @@
               clientY = e.clientY;
           }
           
+          const zoom = activeDrag.zoom;
+          
           // Tentukan scaleFactor berdasarkan elemen untuk mengimbangi scale transform visual (animasi melayang)
           let scaleFactor = 1;
           if (fallback.classList.contains('ticket-paper')) {
@@ -4786,12 +4793,17 @@
               scaleFactor = 1.03;
           }
           
-          const newLeft = clientX - activeDrag.offsetX * scaleFactor;
-          const newTop = clientY - activeDrag.offsetY * scaleFactor;
+          // Hitung posisi fisik kiri-atas yang diinginkan di layar (piksel fisik)
+          const desiredPhysicalLeft = clientX - activeDrag.physicalOffsetX * scaleFactor;
+          const desiredPhysicalTop = clientY - activeDrag.physicalOffsetY * scaleFactor;
+          
+          // Konversikan kembali koordinat fisik ke ruang CSS ter-zoom dengan membaginya dengan zoom factor
+          const cssLeft = desiredPhysicalLeft / zoom;
+          const cssTop = desiredPhysicalTop / zoom;
           
           fallback.style.position = 'fixed';
-          fallback.style.left = newLeft + 'px';
-          fallback.style.top = newTop + 'px';
+          fallback.style.left = cssLeft + 'px';
+          fallback.style.top = cssTop + 'px';
           fallback.style.transition = 'none';
       }
 
