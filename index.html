@@ -9812,13 +9812,38 @@
           if (item.individualAddons && item.individualAddons.length === item.qty) {
             item.individualAddons.forEach((addon, idx) => {
               if (addon.customPrice !== undefined && addon.customPrice !== item.price) {
-                priceNotesArr.push(`Menu [${item.name}] #${idx + 1}: Harga diganti dari Rp ${item.price.toLocaleString()} ke Rp ${addon.customPrice.toLocaleString()}`);
+                // Cari apakah di CART asli ada manual customPrice
+                const cartItem = CART.find(c => String(c.id) === String(item.id) && c.name === item.name);
+                let isPromoPrice = true;
+                if (cartItem && cartItem.individualAddons && cartItem.individualAddons[idx]) {
+                  const cartAddon = cartItem.individualAddons[idx];
+                  if (cartAddon.customPrice !== undefined && cartAddon.customPrice === addon.customPrice) {
+                    isPromoPrice = false;
+                  }
+                }
+                
+                if (isPromoPrice) {
+                  priceNotesArr.push(`Promo Menu [${item.name}] #${idx + 1}: Auto Promo Rp ${addon.customPrice.toLocaleString()} (dari Rp ${item.price.toLocaleString()})`);
+                } else {
+                  priceNotesArr.push(`Menu [${item.name}] #${idx + 1}: Harga diganti dari Rp ${item.price.toLocaleString()} ke Rp ${addon.customPrice.toLocaleString()}`);
+                }
               }
             });
           } else if (item.customPrice !== undefined && item.customPrice !== item.price) {
+            // Cari apakah di CART asli ada manual customPrice
+            const cartItem = CART.find(c => String(c.id) === String(item.id) && c.name === item.name);
+            let isPromoPrice = true;
+            if (cartItem && cartItem.customPrice !== undefined && cartItem.customPrice === item.customPrice) {
+              isPromoPrice = false;
+            }
+            
             let oldItemTotal = item.price * item.qty;
             let newItemTotal = item.customPrice * item.qty;
-            priceNotesArr.push(`Menu [${item.name}] x${item.qty}: Harga diganti dari Rp ${item.price.toLocaleString()} ke Rp ${item.customPrice.toLocaleString()} (Total dari Rp ${oldItemTotal.toLocaleString()} menjadi Rp ${newItemTotal.toLocaleString()})`);
+            if (isPromoPrice) {
+              priceNotesArr.push(`Promo Menu [${item.name}] x${item.qty}: Auto Promo Rp ${item.customPrice.toLocaleString()} (dari Rp ${item.price.toLocaleString()})`);
+            } else {
+              priceNotesArr.push(`Menu [${item.name}] x${item.qty}: Harga diganti dari Rp ${item.price.toLocaleString()} ke Rp ${item.customPrice.toLocaleString()} (Total dari Rp ${oldItemTotal.toLocaleString()} menjadi Rp ${newItemTotal.toLocaleString()})`);
+            }
           }
         });
 
@@ -9919,6 +9944,10 @@
             }
             if (finalAddonNotes) {
               auditLogMessage += ` | Catatan Addon: ${finalAddonNotes}`;
+            }
+            // Tambahkan daftar Promo yang terpasang agar tercatat rapi
+            if (window.CHECKOUT_APPLIED_PROMOS && window.CHECKOUT_APPLIED_PROMOS.length > 0) {
+              auditLogMessage += ` | Promo Terpasang: [ ${window.CHECKOUT_APPLIED_PROMOS.join(', ')} ]`;
             }
             // Detail surcharge/potongan bank
             if (surchargeInfo && surchargeInfo.feeAmount !== 0) {
