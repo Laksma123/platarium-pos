@@ -917,6 +917,230 @@
       }
 
       /* ========================================= */
+      /* ENHANCED DYNAMIC SCHEDULING UI            */
+      /* ========================================= */
+      #view-schedule-grid .schedule-controls-wrapper {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        align-items: center;
+      }
+      #view-schedule-grid .schedule-controls-wrapper .control-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: nowrap;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.4);
+        padding: 4px;
+        border-radius: 50rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+      }
+      #view-schedule-grid .schedule-controls-wrapper .btn {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: 'Outfit', 'Inter', sans-serif !important;
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.3px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 38px;
+        padding-left: 1.25rem !important;
+        padding-right: 1.25rem !important;
+        border-radius: 50rem !important;
+      }
+      #view-schedule-grid .schedule-controls-wrapper .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.12) !important;
+      }
+      #view-schedule-grid .schedule-controls-wrapper .btn:active {
+        transform: translateY(0);
+      }
+      #btnSaveBatchSchedule {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+        border: none !important;
+        color: #ffffff !important;
+      }
+      #btnSaveBatchSchedule:hover {
+        background: linear-gradient(135deg, #60a5fa, #2563eb) !important;
+      }
+      #btnBroadcastSchedule {
+        background: linear-gradient(135deg, #10b981, #047857) !important;
+        border: none !important;
+        color: #ffffff !important;
+      }
+      #btnBroadcastSchedule:hover {
+        background: linear-gradient(135deg, #34d399, #059669) !important;
+      }
+      
+      #view-schedule-grid .schedule-controls-wrapper .input-group .btn {
+        height: 100% !important;
+        padding-left: 0.6rem !important;
+        padding-right: 0.6rem !important;
+        box-shadow: none !important;
+        transform: none !important;
+        border-radius: 0 !important;
+      }
+      #view-schedule-grid .schedule-controls-wrapper .input-group .btn:hover {
+        background-color: #f1f5f9 !important;
+      }
+      #view-schedule-grid .schedule-controls-wrapper .input-group {
+        transition: all 0.3s ease;
+        border: 1px solid #e2e8f0 !important;
+      }
+      #view-schedule-grid .schedule-controls-wrapper .input-group:focus-within {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+      }
+
+      /* Sidebar & Robust Layout grid */
+      #staffPillsSource {
+        overflow-y: auto !important;
+        max-height: 320px !important;
+        scrollbar-width: thin;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      #staffPillsSource::-webkit-scrollbar {
+        width: 4px;
+      }
+      #staffPillsSource::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      #staffPillsSource::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+      }
+      
+      @media (min-width: 992px) {
+        #view-schedule-grid .schedule-grid-row {
+          display: flex !important;
+          flex-wrap: nowrap !important;
+          gap: 1.5rem !important;
+        }
+        #view-schedule-grid .schedule-sidebar-col {
+          flex: 0 0 220px !important;
+          width: 220px !important;
+          max-width: 220px !important;
+        }
+        #view-schedule-grid .schedule-table-col {
+          flex: 1 !important;
+          min-width: 0 !important;
+          width: auto !important;
+          max-width: none !important;
+        }
+        #view-schedule-grid .schedule-header-row {
+          display: flex !important;
+          flex-wrap: nowrap !important;
+          gap: 1.5rem !important;
+        }
+        #view-schedule-grid .schedule-sidebar-spacer {
+          flex: 0 0 220px !important;
+          width: 220px !important;
+          max-width: 220px !important;
+        }
+        #view-schedule-grid .schedule-controls-col {
+          flex: 1 !important;
+          min-width: 0 !important;
+          width: auto !important;
+          max-width: none !important;
+        }
+      }
+
+      /* Table Aesthetics */
+      #scheduleGridToCapture {
+        border-radius: 16px !important;
+        border: 1px solid rgba(0, 0, 0, 0.08) !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+      }
+      #scheduleGridToCapture .table-dark {
+        background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+        color: #f8fafc !important;
+        border-bottom: none !important;
+      }
+      #scheduleGridToCapture th {
+        font-family: 'Outfit', 'Inter', sans-serif !important;
+        font-weight: 700 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.8rem !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        vertical-align: middle !important;
+      }
+      #scheduleGridToCapture th small {
+        font-family: 'Inter', sans-serif !important;
+        letter-spacing: 0px;
+        color: #94a3b8 !important;
+      }
+      #scheduleGridToCapture td {
+        border: 1px solid #e2e8f0 !important;
+        transition: background-color 0.2s ease;
+      }
+      #scheduleGridToCapture td.bg-light {
+        background-color: #f8fafc !important;
+        color: #334155 !important;
+        font-weight: 700 !important;
+        font-size: 0.8rem !important;
+      }
+      
+      /* Shift labels left border coloring */
+      .shift-label-pagi {
+        border-left: 5px solid #0ea5e9 !important; /* Sky Blue */
+      }
+      .shift-label-sore {
+        border-left: 5px solid #f97316 !important; /* Orange */
+      }
+      .shift-label-malam {
+        border-left: 5px solid #8b5cf6 !important; /* Violet */
+      }
+
+      /* Dropzone highlight */
+      .shift-dropzone {
+        min-height: 90px !important;
+        background-color: #ffffff;
+        transition: all 0.2s ease;
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px !important;
+        height: 100%;
+        border-radius: 4px;
+      }
+      .shift-dropzone:hover {
+        background-color: #f8fafc !important;
+      }
+      .shift-dropzone.bg-highlight {
+        background-color: #f0fdf4 !important;
+        border: 2px dashed #22c55e !important;
+      }
+
+      /* Pill name truncation safeguard */
+      .draggable-pill .pill-name-text {
+        max-width: 115px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: inline-block;
+        vertical-align: middle;
+      }
+      .shift-dropzone .draggable-pill .pill-name-text {
+        max-width: 80px; /* narrower inside table dropzone cells */
+        font-size: 0.7rem;
+      }
+      .shift-dropzone .draggable-pill {
+        padding: 4px 8px !important;
+        font-size: 0.7rem !important;
+        max-width: 95%;
+      }
+
+
+      /* ========================================= */
       /* ADD-ON FEATURE COSMETIC STYLES            */
       /* ========================================= */
       :root {
@@ -2036,50 +2260,59 @@
           <div class="row g-4" id="staffCardsContainer">
             </div>
           <div id="view-schedule-grid" class="container-fluid mt-5 border-top pt-4 pb-5">
-            <div class="row mb-4">
-              <div class="col-2 d-none d-lg-block"></div>
-              <div class="col-12 col-lg-10 d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="row mb-4 schedule-header-row">
+              <div class="col-2 d-none d-lg-block schedule-sidebar-spacer"></div>
+              <div class="col-12 col-lg-10 d-flex flex-wrap justify-content-between align-items-center gap-3 schedule-controls-col">
                 <div class="mb-3 mb-lg-0">
                   <h4 class="fw-bold m-0 ms-2">Pengaturan Jadwal Dinamis</h4>
                   <p class="text-muted small m-0 ms-2" style="margin-top: 4px !important;">Atur jadwal shift operasional staff dengan drag & drop.</p>
                 </div>
-                <div class="d-flex gap-2 mt-2 mt-lg-0 flex-wrap justify-content-end">
-                  <button class="btn btn-primary rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnSaveBatchSchedule" onclick="executeBatchSaveSchedule()">
-                      <i class="fas fa-save me-2"></i>Save Schedule
-                  </button>
-                  <button class="btn btn-success rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnBroadcastSchedule" onclick="broadcastSchedule()">
-                      <i class="fab fa-telegram-plane me-2"></i>Kirim Telegram
-                  </button>
-
-                  <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; max-width: 220px; height: 38px;">
-                    <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-calendar-day me-1"></i>Mulai</span>
-                    <input type="text" id="schedStartDate" class="form-control border-0 shadow-none bg-white px-2" style="font-size: 0.85rem; max-width: 110px;" placeholder="Pilih Tanggal" readonly>
-                  </div>
-                  <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
-                    <span class="input-group-text bg-light border-0 fw-bold small text-muted">Rentang</span>
-                    <button type="button" class="btn btn-light border-0 px-2 fw-bold" onclick="adjustSchedDayCount(-1)" style="font-size: 0.85rem; background: transparent; color: #636e72;" title="Kurangi Hari"><i class="fas fa-minus" style="font-size: 0.7rem;"></i></button>
-                    <input type="text" id="schedDayCount" class="form-control border-0 shadow-none bg-white px-1 text-center fw-bold" style="font-size: 0.85rem; width: 35px; pointer-events: none;" value="7" readonly>
-                    <button type="button" class="btn btn-light border-0 px-2 fw-bold" onclick="adjustSchedDayCount(1)" style="font-size: 0.85rem; background: transparent; color: #636e72;" title="Tambah Hari"><i class="fas fa-plus" style="font-size: 0.7rem;"></i></button>
-                    <span class="input-group-text bg-light border-0 fw-bold small text-muted">Hari</span>
+                <div class="schedule-controls-wrapper">
+                  <!-- Group 1: Actions -->
+                  <div class="control-group">
+                    <button class="btn btn-primary rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnSaveBatchSchedule" onclick="executeBatchSaveSchedule()">
+                        <i class="fas fa-save me-2"></i>Save Schedule
+                    </button>
+                    <button class="btn btn-success rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnBroadcastSchedule" onclick="broadcastSchedule()">
+                        <i class="fab fa-telegram-plane me-2"></i>Kirim Telegram
+                    </button>
                   </div>
 
-                  <button class="btn btn-light rounded-pill border fw-bold shadow-sm d-flex align-items-center" onclick="openShiftTimeModal()">
-                      <i class="fas fa-clock text-warning me-2"></i>Waktu Shift
-                  </button>
-                  <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
-                    <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-layer-group me-1"></i>Shift/Hari</span>
-                    <select id="shiftCountSelector" class="form-select border-0 shadow-none fw-bold bg-white px-3" style="font-size: 0.85rem; cursor:pointer; padding-right: 2.5rem !important;" onchange="changeShiftCount(this.value)">
-                      <option value="1">1 Shift</option>
-                      <option value="2" selected>2 Shift</option>
-                      <option value="3">3 Shift</option>
-                    </select>
+                  <!-- Group 2: Date & Range -->
+                  <div class="control-group">
+                    <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border m-0" style="width: auto; max-width: 220px; height: 38px;">
+                      <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-calendar-day me-1"></i>Mulai</span>
+                      <input type="text" id="schedStartDate" class="form-control border-0 shadow-none bg-white px-2" style="font-size: 0.85rem; max-width: 110px;" placeholder="Pilih Tanggal" readonly>
+                    </div>
+                    <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border m-0" style="width: auto; height: 38px;">
+                      <span class="input-group-text bg-light border-0 fw-bold small text-muted">Rentang</span>
+                      <button type="button" class="btn btn-light border-0 px-2 fw-bold" onclick="adjustSchedDayCount(-1)" style="font-size: 0.85rem; background: transparent; color: #636e72;" title="Kurangi Hari"><i class="fas fa-minus" style="font-size: 0.7rem;"></i></button>
+                      <input type="text" id="schedDayCount" class="form-control border-0 shadow-none bg-white px-1 text-center fw-bold" style="font-size: 0.85rem; width: 35px; pointer-events: none;" value="7" readonly>
+                      <button type="button" class="btn btn-light border-0 px-2 fw-bold" onclick="adjustSchedDayCount(1)" style="font-size: 0.85rem; background: transparent; color: #636e72;" title="Tambah Hari"><i class="fas fa-plus" style="font-size: 0.7rem;"></i></button>
+                      <span class="input-group-text bg-light border-0 fw-bold small text-muted">Hari</span>
+                    </div>
+                  </div>
+
+                  <!-- Group 3: Shift Config -->
+                  <div class="control-group">
+                    <button class="btn btn-light rounded-pill border fw-bold shadow-sm d-flex align-items-center" onclick="openShiftTimeModal()">
+                        <i class="fas fa-clock text-warning me-2"></i>Waktu Shift
+                    </button>
+                    <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border m-0" style="width: auto; height: 38px;">
+                      <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-layer-group me-1"></i>Shift/Hari</span>
+                      <select id="shiftCountSelector" class="form-select border-0 shadow-none fw-bold bg-white px-3" style="font-size: 0.85rem; cursor:pointer; padding-right: 2.5rem !important;" onchange="changeShiftCount(this.value)">
+                        <option value="1">1 Shift</option>
+                        <option value="2" selected>2 Shift</option>
+                        <option value="3">3 Shift</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="row g-4">
-              <div class="col-2" style="position: sticky; top: 15px; align-self: start; z-index: 10;">
+            <div class="row g-4 schedule-grid-row">
+              <div class="col-2 schedule-sidebar-col" style="position: sticky; top: 15px; align-self: start; z-index: 10;">
                 <div class="bg-light p-3 rounded-4 border shadow-sm d-flex flex-column" style="min-height: 200px;">
                   <h6 class="fw-bold mb-1 small"><i class="fas fa-users text-primary me-1"></i> Staff</h6>
                   <p class="text-muted mb-3" style="font-size: 9px; line-height: 1.2;">Tarik staff ke tabel.</p>
@@ -2089,7 +2322,7 @@
                 </div>
               </div>
 
-              <div class="col-10">
+              <div class="col-10 schedule-table-col">
                 <div id="scheduleGridToCapture" class="table-responsive bg-white p-0 rounded-4 border shadow-sm overflow-hidden" style="scrollbar-width: thin;">
                   <div class="text-center p-3 border-bottom bg-light">
                     <h5 class="fw-bold m-0" style="letter-spacing: 1px;">JADWAL OPERASIONAL STAFF</h5>
@@ -4781,7 +5014,7 @@
             source.innerHTML = activeStaff.map(s => {
               let roleInit = s.role.charAt(0);
               let bgClass = s.role === 'ADMIN' ? 'bg-danger text-white' : (s.role === 'KITCHEN' ? 'bg-warning text-dark' : (s.role === 'BARISTA' ? 'bg-info text-dark' : 'bg-primary text-white'));
-              return `<span class="badge ${bgClass} draggable-pill shadow-sm m-1" data-name="${s.name}" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> ${s.name} (${roleInit})</span>`;
+              return `<span class="badge ${bgClass} draggable-pill shadow-sm m-1" data-name="${s.name}" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i><span class="pill-name-text">${s.name} (${roleInit})</span></span>`;
             }).join('');
 
             SCHEDULE_SORTABLES.push(new Sortable(source, {
@@ -4855,8 +5088,9 @@
 
               // 2. Tulis Slot Shift untuk Batch Minggu Tersebut
               shiftsConfig.forEach(shift => {
+                  let shiftClass = `shift-label-${shift.id}`;
                   rowsHtml += `<tr>
-                      <td class="fw-bold bg-light align-middle text-dark border-bottom-0">
+                      <td class="fw-bold bg-light align-middle text-dark border-bottom-0 ${shiftClass}">
                           ${shift.label}<br><small class="text-muted fw-normal" style="font-size: 0.7rem;">(${shift.time})</small>
                       </td>`;
                   for(let i=0; i<7; i++) {
@@ -4899,7 +5133,7 @@
                           let roleInit = staff ? staff.role.charAt(0) : 'U';
                           let bgClass = staff ? (staff.role === 'ADMIN' ? 'bg-danger text-white' : (staff.role === 'KITCHEN' ? 'bg-warning text-dark' : (staff.role === 'BARISTA' ? 'bg-info text-dark' : 'bg-primary text-white'))) : 'bg-secondary text-white';
                           
-                          dz.innerHTML += `<span class="badge ${bgClass} draggable-pill shadow-sm m-1" data-name="${s.staffName}" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i> ${s.staffName} (${roleInit}) <i class="fas fa-times ms-2 btn-delete-pill" onclick="this.parentElement.remove()" style="cursor:pointer; opacity: 0.7;" title="Hapus"></i></span>`;
+                          dz.innerHTML += `<span class="badge ${bgClass} draggable-pill shadow-sm m-1" data-name="${s.staffName}" style="cursor: grab;"><i class="fas fa-user-circle me-1"></i><span class="pill-name-text">${s.staffName} (${roleInit})</span> <i class="fas fa-times ms-2 btn-delete-pill" onclick="this.parentElement.remove()" style="cursor:pointer; opacity: 0.7;" title="Hapus"></i></span>`;
                       }
                   }
               });
