@@ -15734,6 +15734,11 @@
               alert('Gagal simpan: ' + res.message);
               if (onError) onError();
           } else {
+              try {
+                diffAndLogSpChanges(spInitialDataString, allData);
+              } catch (e) {
+                console.error("Gagal mencatat log audit Special Price:", e);
+              }
               spInitialDataString = JSON.stringify(allData);
               checkSpChanges();
               if (onSuccess) onSuccess();
@@ -16146,6 +16151,165 @@
           }
         });
         return allData;
+      }
+
+      // --- DIFF AND LOG SP CHANGES ---
+      function diffAndLogSpChanges(oldDataStr, newData) {
+        let oldData = [];
+        try {
+          oldData = JSON.parse(oldDataStr) || [];
+        } catch (e) {
+          oldData = [];
+        }
+
+        // 1. TAMBAH/HAPUS SUBTAB TAB DELIVERY
+        let oldSubTabs = {};
+        oldData.forEach(item => {
+          if (item.tab === 'delivery' && item.subTab) {
+            oldSubTabs[item.subTab] = item.serviceName || ('Pesan Antar ' + item.subTab.split('_')[1]);
+          }
+        });
+        let newSubTabs = {};
+        newData.forEach(item => {
+          if (item.tab === 'delivery' && item.subTab) {
+            newSubTabs[item.subTab] = item.serviceName || ('Pesan Antar ' + item.subTab.split('_')[1]);
+          }
+        });
+
+        Object.keys(newSubTabs).forEach(subTabId => {
+          if (!oldSubTabs[subTabId]) {
+            const name = newSubTabs[subTabId];
+            triggerAuditLog("TAMBAH SUBTAB DELIVERY", `Menambahkan subtab Delivery baru: "${name}"`);
+          }
+        });
+
+        Object.keys(oldSubTabs).forEach(subTabId => {
+          if (!newSubTabs[subTabId]) {
+            const name = oldSubTabs[subTabId];
+            triggerAuditLog("HAPUS SUBTAB DELIVERY", `Menghapus subtab Delivery: "${name}"`);
+          }
+        });
+
+        // 2. DETEKSI SLOT PROMO, NILAI PROMO, TOGGLE AKTIF & AUTOPLAY
+        let oldSlotsMap = {};
+        oldData.forEach(item => {
+          if (item.slotIndex !== -1) {
+            const key = `${item.tab}_${item.subTab}_${item.slotIndex}`;
+            oldSlotsMap[key] = item;
+          }
+        });
+
+        let newSlotsMap = {};
+        newData.forEach(item => {
+          if (item.slotIndex !== -1) {
+            const key = `${item.tab}_${item.subTab}_${item.slotIndex}`;
+            newSlotsMap[key] = item;
+          }
+        });
+
+        // Hapus Slot Promo
+        Object.keys(oldSlotsMap).forEach(key => {
+          if (!newSlotsMap[key]) {
+            const oldItem = oldSlotsMap[key];
+            const tabLabel = getSpTabLabel(oldItem.tab, oldItem.subTab, oldData);
+            triggerAuditLog("HAPUS SLOT PROMO", `Menghapus slot promo "${oldItem.labelName || 'Promo Baru'}" di tab ${tabLabel}`);
+          }
+        });
+
+        // Tambah / Ubah Slot Promo
+        Object.keys(newSlotsMap).forEach(key => {
+          const newItem = newSlotsMap[key];
+          const oldItem = oldSlotsMap[key];
+          const tabLabel = getSpTabLabel(newItem.tab, newItem.subTab, newData);
+
+          if (!oldItem) {
+            triggerAuditLog("TAMBAH SLOT PROMO", `Menambahkan slot promo baru "${newItem.labelName || 'Promo Baru'}" di tab ${tabLabel}`);
+          } else {
+            // Perbandingan Nilai Promo
+            let valChanges = [];
+            if (newItem.labelName !== oldItem.labelName) {
+              valChanges.push(`Nama label dari "${oldItem.labelName}" menjadi "${newItem.labelName}"`);
+            }
+            if (newItem.promoType !== oldItem.promoType) {
+              valChanges.push(`Tipe promo dari "${oldItem.promoType}" menjadi "${newItem.promoType}"`);
+            }
+            if (newItem.discountValue !== oldItem.discountValue || newItem.discountForm !== oldItem.discountForm) {
+              const oldVal = oldItem.discountValue + (oldItem.discountForm === 'percent' ? '%' : '');
+              const newVal = newItem.discountValue + (newItem.discountForm === 'percent' ? '%' : '');
+              valChanges.push(`Diskon dari "${oldVal}" menjadi "${newVal}"`);
+            }
+            if (newItem.categoryTarget !== oldItem.categoryTarget) {
+              valChanges.push(`Kategori target dari "${oldItem.categoryTarget || 'Semua'}" menjadi "${newItem.categoryTarget || 'Semua'}"`);
+            }
+            if (newItem.itemTarget !== oldItem.itemTarget) {
+              valChanges.push(`Menu target dari "${oldItem.itemTarget || 'Semua'}" menjadi "${newItem.itemTarget || 'Semua'}"`);
+            }
+            if (newItem.minPurchaseAmount !== oldItem.minPurchaseAmount) {
+              valChanges.push(`Min. Pembelian dari "${oldItem.minPurchaseAmount || '0'}" menjadi "${newItem.minPurchaseAmount || '0'}"`);
+            }
+            if (newItem.buyGetData !== oldItem.buyGetData) {
+              valChanges.push(`Syarat/Reward Buy & Get diubah`);
+            }
+
+            if (valChanges.length > 0) {
+              triggerAuditLog("UBAH NILAI SLOT PROMO", `Mengubah nilai slot promo "${newItem.labelName}" di tab ${tabLabel}. Perubahan: [ ${valChanges.join(', ')} ]`);
+            }
+
+            // Perbandingan Toggle Aktif (ON ke OFF / OFF ke ON)
+            if (oldItem.active === 'true' && newItem.active === 'false') {
+              triggerAuditLog("TOGGLE AKTIF PROMO OFF", `Mengubah status Aktif promo "${newItem.labelName}" di tab ${tabLabel} menjadi OFF`);
+            } else if (oldItem.active === 'false' && newItem.active === 'true') {
+              triggerAuditLog("TOGGLE AKTIF PROMO ON", `Mengubah status Aktif promo "${newItem.labelName}" di tab ${tabLabel} menjadi ON`);
+            }
+
+            // Perbandingan Autoplay
+            let oldAp = {};
+            let newAp = {};
+            try { oldAp = JSON.parse(oldItem.autoPlayConfig) || {}; } catch(e){}
+            try { newAp = JSON.parse(newItem.autoPlayConfig) || {}; } catch(e){}
+
+            // Toggle OFF ke ON Autoplay (atau sebaliknya)
+            if (!oldAp.enabled && newAp.enabled) {
+              triggerAuditLog("TOGGLE AUTOPLAY ON", `Mengubah toggle Autoplay promo "${newItem.labelName}" di tab ${tabLabel} dari OFF menjadi ON`);
+            } else if (oldAp.enabled && !newAp.enabled) {
+              triggerAuditLog("TOGGLE AUTOPLAY OFF", `Mengubah toggle Autoplay promo "${newItem.labelName}" di tab ${tabLabel} dari ON menjadi OFF`);
+            }
+
+            // Perubahan Nilai Autoplay
+            if (newAp.enabled) {
+              let apChanges = [];
+              if (newAp.startDate !== oldAp.startDate) {
+                apChanges.push(`Tanggal Mulai dari "${oldAp.startDate || 'Tidak Diatur'}" menjadi "${newAp.startDate || 'Tidak Diatur'}"`);
+              }
+              if (newAp.endDate !== oldAp.endDate) {
+                apChanges.push(`Tanggal Selesai dari "${oldAp.endDate || 'Tidak Diatur'}" menjadi "${newAp.endDate || 'Tidak Diatur'}"`);
+              }
+              if (newAp.startTime !== oldAp.startTime) {
+                apChanges.push(`Jam Mulai dari "${oldAp.startTime || '00:00'}" menjadi "${newAp.startTime || '00:00'}"`);
+              }
+              if (newAp.endTime !== oldAp.endTime) {
+                apChanges.push(`Jam Selesai dari "${oldAp.endTime || '00:00'}" menjadi "${newAp.endTime || '00:00'}"`);
+              }
+
+              if (apChanges.length > 0) {
+                triggerAuditLog("UBAH NILAI AUTOPLAY", `Mengubah jadwal Autoplay promo "${newItem.labelName}" di tab ${tabLabel}. Perubahan: [ ${apChanges.join(', ')} ]`);
+              }
+            }
+          }
+        });
+      }
+
+      function getSpTabLabel(tab, subTab, dataList) {
+        if (tab === 'dinein') return 'Dine In';
+        if (tab === 'takeaway') return 'Takeaway';
+        if (tab === 'delivery') {
+          const found = dataList.find(i => i.tab === 'delivery' && i.subTab === subTab);
+          if (found && found.serviceName) {
+            return `Delivery (${found.serviceName})`;
+          }
+          return `Delivery (${subTab})`;
+        }
+        return tab;
       }
 
       // --- LOAD SP DATA FROM BACKEND ---
