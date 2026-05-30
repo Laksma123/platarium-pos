@@ -3551,6 +3551,53 @@
           </div>
         </div>
 
+        <!-- CASH ROUNDING STRATEGY ALERT MODAL -->
+        <div id="modalCashRoundAlert" class="login-overlay d-none" style="background: rgba(0,0,0,0.75); z-index: 10800; align-items:center; justify-content:center; display:flex; opacity: 1 !important;">
+          <div class="modal-dialog modal-dialog-centered w-100 mx-3" style="max-width:450px;">
+            <div class="modal-content border-0 rounded-4 shadow-lg w-100 bg-white">
+              <div class="modal-body p-4">
+                <div class="text-center mb-3">
+                  <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2" style="width: 54px; height: 54px; background-color: #fff9db;">
+                    <i class="fas fa-lightbulb text-warning" style="font-size: 1.8rem;"></i>
+                  </div>
+                  <h6 class="fw-bold text-dark m-0">💡 Tips Manajemen Margin &amp; Simulasi</h6>
+                </div>
+                
+                <div class="text-muted small mb-3 lh-base">
+                  <p class="mb-2">Mengaktifkan pembulatan ke bawah berpotensi menimbulkan selisih tipis (defisit) pada total transaksi tunai.</p>
+                  
+                  <div class="p-3 rounded-3 mb-3 border" style="background-color: #f8f9fa;">
+                    <span class="fw-bold text-dark d-block mb-1" style="font-size: 0.75rem;"><i class="fas fa-chart-line text-primary me-1"></i>Rekomendasi Manajemen Harga:</span>
+                    Untuk mengantisipasi selisih kas tanpa mengorbankan profitabilitas, Anda disarankan melakukan penyesuaian harga produk secara merata sebesar <b>Rp500</b> atau <b>Rp1.000</b> melalui menu pengaturan produk.
+                  </div>
+                  
+                  <span class="fw-bold text-dark d-block mb-2" style="font-size: 0.75rem;">Simulasi Strategi Penyesuaian Harga (+Rp500):</span>
+                  
+                  <div class="d-flex flex-column gap-2">
+                    <div class="p-2 border rounded-3 bg-white">
+                      <span class="fw-bold text-primary d-block style" style="font-size: 0.7rem;"><i class="fas fa-credit-card me-1"></i>Skenario A: Transaksi Non-Tunai (QRIS/Debit)</span>
+                      <span class="d-block text-muted" style="font-size: 0.68rem; line-height: 1.3;">• <b>Kondisi:</b> Ditagih presisi sesuai sistem (tanpa pembulatan).</span>
+                      <span class="d-block text-muted" style="font-size: 0.68rem; line-height: 1.3;">• <b>Dampak:</b> Toko mengamankan margin penuh penyesuaian awal (<b>+Rp500</b> per produk) sebagai subsidi silang.</span>
+                    </div>
+                    
+                    <div class="p-2 border rounded-3 bg-white">
+                      <span class="fw-bold text-success d-block" style="font-size: 0.7rem;"><i class="fas fa-coins me-1"></i>Skenario B: Transaksi Tunai (CASH)</span>
+                      <span class="d-block text-muted" style="font-size: 0.68rem; line-height: 1.3;">• <b>Kondisi:</b> Total belanja Rp25.400 dibulatkan ke bawah jadi Rp25.000 (selisih Rp400).</span>
+                      <span class="d-block text-muted" style="font-size: 0.68rem; line-height: 1.3;">• <b>Dampak:</b> Karena harga sudah disesuaikan Rp500 di awal, toko tetap mengamankan profit bersih <b>+Rp100</b> sekaligus meniadakan kendala koin kembalian.</span>
+                    </div>
+                  </div>
+                  
+                  <p class="mt-3 mb-0 text-center fw-bold text-dark" style="font-size: 0.7rem;">Kombinasi strategi ini mempercepat transaksi kasir, menjaga kepuasan pelanggan, dan melindungi arus kas (cash flow) Anda secara optimal!</p>
+                </div>
+                
+                <div class="text-center mt-3">
+                  <button type="button" class="btn btn-dark fw-bold rounded-pill px-4 py-2 w-100" onclick="closeCashRoundAlert()">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div id="view-stock" class="app-view p-4" style="display:none; background: #f8f9fa;">
           <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pt-3 gap-3">
             <div>
@@ -3639,15 +3686,47 @@
                   <i class="fas fa-chevron-down text-muted" id="icon-paymentSettingArea"></i>
                </div>
                <div id="paymentSettingArea" class="d-none mt-3 pt-3 border-top">
-                   <div class="d-flex flex-column gap-2">
-                       <button class="btn btn-dark border-primary w-100 py-2 rounded-pill fw-bold shadow-sm" onclick="openPaymentMethodModal()" style="color: #3498db;">
-                           <i class="fas fa-sliders-h me-2"></i>Metode Bayar
-                       </button>
-                       <button class="btn btn-dark border-primary w-100 py-2 rounded-pill fw-bold shadow-sm" onclick="openSpecialPriceModal()" style="color: #3498db;">
-                           <i class="fas fa-tags me-2"></i>Special Price
-                       </button>
-                   </div>
-               </div>
+                    <div class="d-flex flex-column gap-3 mb-2">
+                        <!-- Pembulatan CASH Section -->
+                        <div class="bg-light p-3 rounded-4 border">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="small fw-bold text-dark"><i class="fas fa-coins text-warning me-2"></i>Pembulatan CASH</span>
+                                <span class="badge bg-dark px-2 py-1 text-warning" style="font-size: 0.65rem;" id="cashRoundStatusBadge">OFF</span>
+                            </div>
+                            
+                            <div class="d-flex flex-column gap-2 mt-2">
+                                <div class="btn-group btn-group-sm w-100" role="group" id="cashRoundGroup" style="border: 2px solid #e2e8f0; border-radius: 20px; overflow: hidden; padding: 2px; background: #fff;">
+                                    <input type="radio" class="btn-check" name="cashRoundMode" id="crModeOff" value="OFF" checked autocomplete="off" onchange="changeCashRoundingMode('OFF', true)">
+                                    <label class="btn btn-sm btn-outline-dark border-0 rounded-pill fw-bold py-2 px-3" for="crModeOff">OFF</label>
+
+                                    <input type="radio" class="btn-check" name="cashRoundMode" id="crMode500" value="500" autocomplete="off" onchange="changeCashRoundingMode('500', true)">
+                                    <label class="btn btn-sm btn-outline-dark border-0 rounded-pill fw-bold py-2 px-3" for="crMode500">500</label>
+
+                                    <input type="radio" class="btn-check" name="cashRoundMode" id="crMode1000" value="1000" autocomplete="off" onchange="changeCashRoundingMode('1000', true)">
+                                    <label class="btn btn-sm btn-outline-dark border-0 rounded-pill fw-bold py-2 px-3" for="crMode1000">1000</label>
+
+                                    <input type="radio" class="btn-check" name="cashRoundMode" id="crModeManual" value="MANUAL" autocomplete="off" onchange="changeCashRoundingMode('MANUAL', true)">
+                                    <label class="btn btn-sm btn-outline-dark border-0 rounded-pill fw-bold py-2 px-3" for="crModeManual">Manual</label>
+                                </div>
+                                
+                                <div id="cashRoundManualInputArea" class="d-none mt-2">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-white border-2 fw-bold text-dark">Rp</span>
+                                        <input type="number" id="cashRoundManualValue" class="form-control border-2 fw-bold text-dark" placeholder="Contoh: 100, 200, 250" onchange="handleCashRoundManualInput()" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                    </div>
+                                    <small class="text-muted d-block mt-1" style="font-size:0.65rem; font-style: italic;">*Ketik nilai pembulatan (misal: 500, 1000)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-dark border-primary w-100 py-2 rounded-pill fw-bold shadow-sm" onclick="openPaymentMethodModal()" style="color: #3498db;">
+                            <i class="fas fa-sliders-h me-2"></i>Metode Bayar
+                        </button>
+                        <button class="btn btn-dark border-primary w-100 py-2 rounded-pill fw-bold shadow-sm" onclick="openSpecialPriceModal()" style="color: #3498db;">
+                            <i class="fas fa-tags me-2"></i>Special Price
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="list-group-item p-3 border-bottom border-light">
@@ -3842,6 +3921,23 @@
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); } }
           
           .stock-low { background: #fff5f5 !important; border-left: 4px solid #ff7675 !important; }
+
+          /* Premium Cash Rounding Toggle Styles */
+          #cashRoundGroup .btn-check + label {
+            color: #4a5568 !important;
+            background-color: transparent !important;
+            border: none !important;
+            font-size: 0.72rem !important;
+            transition: all 0.2s ease !important;
+            border-radius: 20px !important;
+            margin: 1px !important;
+            cursor: pointer;
+          }
+          #cashRoundGroup .btn-check:checked + label {
+            color: #fff !important;
+            background-color: #2d3748 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+          }
         </style>
       </div>
       
@@ -6321,7 +6417,7 @@
       // ==========================================
       // FUNGSI TAB SETTING (TELEGRAM)
       // ==========================================
-      let TELEGRAM_CONFIG = { active: false, token: '', chatAudit: '', chatTrans: '', chatSchedule: '', chatOwner: '' };
+      let TELEGRAM_CONFIG = { active: false, token: '', chatAudit: '', chatTrans: '', chatSchedule: '', chatOwner: '', cashRoundMode: 'OFF', cashRoundManualValue: 0 };
 
       function loadSettingConfig() {
         const btn = document.getElementById('btnSaveSetting');
@@ -6359,6 +6455,7 @@
           toggleTelegramInputs();
           toggleInvoiceInputs();
           updateOwnerSettingUI(res.ownerPass); 
+          updateCashRoundingUI();
 
           if (loadingArea) loadingArea.classList.add('d-none');
           if (contentArea) contentArea.classList.remove('d-none');
@@ -6512,7 +6609,9 @@
           taxActive: document.getElementById('taxToggle') ? document.getElementById('taxToggle').checked : false,
           taxPercent: document.getElementById('settingTaxPercent') ? (Number(document.getElementById('settingTaxPercent').value) || 0) : 0,
           ownerPass: document.getElementById('settingOwnerPass') ? document.getElementById('settingOwnerPass').value : '',
-          isOwner: ACTIVE_CASHIER === 'Owner'
+          isOwner: ACTIVE_CASHIER === 'Owner',
+          cashRoundMode: TELEGRAM_CONFIG.cashRoundMode || 'OFF',
+          cashRoundManualValue: TELEGRAM_CONFIG.cashRoundManualValue || 0
         };
 
         IS_TAX_ACTIVE = TELEGRAM_CONFIG.taxActive;
@@ -6541,6 +6640,95 @@
                   closeTelegramModal();
               }
           }
+        }).saveSettingConfig(TELEGRAM_CONFIG);
+      }
+
+      function changeCashRoundingMode(mode, isUserAction = false) {
+        const prevMode = TELEGRAM_CONFIG.cashRoundMode || 'OFF';
+        TELEGRAM_CONFIG.cashRoundMode = mode;
+        
+        // Update UI
+        updateCashRoundingUI();
+        
+        // Show alert if transitioning from OFF to active
+        if (isUserAction && prevMode === 'OFF' && mode !== 'OFF') {
+          showCashRoundAlert();
+        }
+        
+        if (isUserAction) {
+          saveCashRoundingSettingToServer();
+          const modeLabel = mode === 'MANUAL' ? 'Manual' : mode;
+          triggerAuditLog("SETTING PEMBULATAN CASH", `Mengubah mode pembulatan CASH menjadi ${modeLabel}.`);
+        }
+      }
+      
+      function showCashRoundAlert() {
+        const modal = document.getElementById('modalCashRoundAlert');
+        if (modal) modal.classList.remove('d-none');
+      }
+      
+      function closeCashRoundAlert() {
+        const modal = document.getElementById('modalCashRoundAlert');
+        if (modal) modal.classList.add('d-none');
+      }
+      
+      function updateCashRoundingUI() {
+        const mode = TELEGRAM_CONFIG.cashRoundMode || 'OFF';
+        const manualVal = TELEGRAM_CONFIG.cashRoundManualValue || 0;
+        
+        // Check radio buttons
+        const crOff = document.getElementById('crModeOff');
+        const cr500 = document.getElementById('crMode500');
+        const cr1000 = document.getElementById('crMode1000');
+        const crManual = document.getElementById('crModeManual');
+        
+        if (crOff) crOff.checked = (mode === 'OFF');
+        if (cr500) cr500.checked = (mode === '500');
+        if (cr1000) cr1000.checked = (mode === '1000');
+        if (crManual) crManual.checked = (mode === 'MANUAL');
+        
+        // Update status badge text
+        const badge = document.getElementById('cashRoundStatusBadge');
+        if (badge) {
+          if (mode === 'OFF') {
+            badge.innerText = 'OFF';
+            badge.className = 'badge bg-dark px-2 py-1 text-muted';
+          } else if (mode === 'MANUAL') {
+            badge.innerText = `Rp ${manualVal.toLocaleString('id-ID')}`;
+            badge.className = 'badge bg-warning px-2 py-1 text-dark fw-bold';
+          } else {
+            badge.innerText = `Rp ${parseInt(mode).toLocaleString('id-ID')}`;
+            badge.className = 'badge bg-warning px-2 py-1 text-dark fw-bold';
+          }
+        }
+        
+        // Show/hide manual input area
+        const manualArea = document.getElementById('cashRoundManualInputArea');
+        if (manualArea) {
+          if (mode === 'MANUAL') {
+            manualArea.classList.remove('d-none');
+            const inputVal = document.getElementById('cashRoundManualValue');
+            if (inputVal && manualVal > 0) {
+              inputVal.value = manualVal;
+            }
+          } else {
+            manualArea.classList.add('d-none');
+          }
+        }
+      }
+      
+      function handleCashRoundManualInput() {
+        const inputVal = document.getElementById('cashRoundManualValue');
+        if (inputVal) {
+          TELEGRAM_CONFIG.cashRoundManualValue = parseInt(inputVal.value) || 0;
+          updateCashRoundingUI();
+          saveCashRoundingSettingToServer();
+        }
+      }
+      
+      function saveCashRoundingSettingToServer() {
+        google.script.run.withSuccessHandler(() => {
+          console.log("Cash rounding setting auto-saved on server");
         }).saveSettingConfig(TELEGRAM_CONFIG);
       }
 
@@ -6914,6 +7102,7 @@
               toggleTelegramInputs();
               toggleInvoiceInputs();
               updateOwnerSettingUI(res.ownerPass);
+              updateCashRoundingUI();
           }
 
           // 3. FORCE REFRESH DOM UI (Kalkulasi ulang secara Live)
