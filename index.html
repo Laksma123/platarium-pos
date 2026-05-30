@@ -9885,6 +9885,19 @@
         baseItems.forEach(item => {
           if (item.individualAddons && item.individualAddons.length === item.qty) {
             item.individualAddons.forEach((addon, idx) => {
+              // --- TENTUKAN APAKAH PRICE CHANGE ADALAH PROMO ATAU EDIT MANUAL ---
+              let isPromoPrice = undefined;
+              if (addon.customPrice !== undefined && addon.customPrice !== item.price) {
+                const cartItem = CART.find(c => String(c.id) === String(item.id) && c.name === item.name);
+                isPromoPrice = true;
+                if (cartItem && cartItem.individualAddons && cartItem.individualAddons[idx]) {
+                  const cartAddon = cartItem.individualAddons[idx];
+                  if (cartAddon.customPrice !== undefined && cartAddon.customPrice === addon.customPrice) {
+                    isPromoPrice = false;
+                  }
+                }
+              }
+
               const individualItem = {
                 ...item,
                 name: `${item.name} #${idx + 1}`,
@@ -9892,13 +9905,27 @@
                 customNote: addon.customNote || "",
                 customPrice: addon.customPrice !== undefined ? addon.customPrice : undefined,
                 customRecipe: addon.customRecipe || undefined,
-                originalRecipe: addon.originalRecipe || undefined
+                originalRecipe: addon.originalRecipe || undefined,
+                isPromoPrice: isPromoPrice
               };
               delete individualItem.individualAddons;
               processedItems.push(individualItem);
             });
           } else {
-            processedItems.push(item);
+            // --- TENTUKAN APAKAH PRICE CHANGE ADALAH PROMO ATAU EDIT MANUAL ---
+            let isPromoPrice = undefined;
+            if (item.customPrice !== undefined && item.customPrice !== item.price) {
+              const cartItem = CART.find(c => String(c.id) === String(item.id) && c.name === item.name);
+              isPromoPrice = true;
+              if (cartItem && cartItem.customPrice !== undefined && cartItem.customPrice === item.customPrice) {
+                isPromoPrice = false;
+              }
+            }
+
+            processedItems.push({
+              ...item,
+              isPromoPrice: isPromoPrice
+            });
           }
         });
 
@@ -12014,8 +12041,74 @@
           const qtyPrice = `x${i.qty} @${(itemPrice).toLocaleString('id-ID')}`;
           const subtotal = (i.qty * itemPrice).toLocaleString('id-ID');
           pushTxt(padText(qtyPrice, subtotal, maxChars));
+          
+          // 1. Tampilkan Note Kustom jika ada
           if (i.customNote && i.customNote.trim() !== "") {
-            pushTxt(`  * "${i.customNote}"`);
+            pushTxt(`  * Note: "${i.customNote}"`);
+          }
+
+          // 2. Tampilkan Perubahan Harga (Promo vs Manual)
+          if (i.customPrice !== undefined && i.customPrice !== i.price) {
+            let isPromo = i.isPromoPrice;
+            if (isPromo === undefined) {
+              if (transactionData.priceNotes && transactionData.priceNotes.includes(`Promo Menu [${i.name.split(' #')[0]}]`)) {
+                isPromo = true;
+              } else {
+                isPromo = false;
+              }
+            }
+
+            if (isPromo) {
+              const diffPrice = i.price - i.customPrice;
+              if (diffPrice > 0) {
+                pushTxt(`  * Promo: -Rp ${diffPrice.toLocaleString('id-ID')} (Harga normal Rp ${i.price.toLocaleString('id-ID')})`);
+              } else if (diffPrice < 0) {
+                pushTxt(`  * Promo: +Rp ${Math.abs(diffPrice).toLocaleString('id-ID')} (Harga normal Rp ${i.price.toLocaleString('id-ID')})`);
+              } else {
+                pushTxt(`  * Promo: Harga Khusus`);
+              }
+            } else {
+              pushTxt(`  * Ubah Harga Manual: Rp ${i.customPrice.toLocaleString('id-ID')} (Normal Rp ${i.price.toLocaleString('id-ID')})`);
+            }
+          }
+
+          // 3. Tampilkan Perubahan Bahan (Rubah Bahan)
+          let recipeChanges = [];
+          if (i.customRecipe && i.originalRecipe) {
+            i.customRecipe.forEach(cur => {
+              const orig = i.originalRecipe.find(x => x.id === cur.id);
+              if (orig && cur.qty !== orig.qty) {
+                if (cur.qty === 0 && orig.qty > 0) {
+                  recipeChanges.push(`Tanpa ${cur.name}`);
+                } else if (cur.qty > orig.qty) {
+                  const diff = cur.qty - orig.qty;
+                  recipeChanges.push(`+${diff}${cur.unit || ''} ${cur.name}`);
+                } else if (cur.qty < orig.qty) {
+                  const diff = orig.qty - cur.qty;
+                  recipeChanges.push(`-${diff}${cur.unit || ''} ${cur.name}`);
+                }
+              }
+            });
+          }
+
+          if (recipeChanges.length === 0 && transactionData.addonNotes) {
+            const cleanName = i.name.split(' #')[0];
+            const notes = transactionData.addonNotes.split(' | ');
+            notes.forEach(note => {
+              if (note.includes('[BAHAN]') && note.includes(`Menu [${cleanName}]`)) {
+                const idxOfColon = note.indexOf(':');
+                if (idxOfColon !== -1) {
+                  const detail = note.substring(idxOfColon + 1).trim();
+                  if (detail && detail !== "Custom Recipe" && detail !== "Custom Price") {
+                    recipeChanges.push(detail.replace(/"/g, ''));
+                  }
+                }
+              }
+            });
+          }
+
+          if (recipeChanges.length > 0) {
+            pushTxt(`  * Rubah Bahan: ${recipeChanges.join(', ')}`);
           }
         });
 
