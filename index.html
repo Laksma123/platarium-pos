@@ -9782,6 +9782,17 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Memproses...';
 
+        // --- AMBIL TIPE PESANAN LEBIH AWAL UNTUK MENGHINDARI TDZ/REFERENCEERROR ---
+        const orderTypeEl = document.querySelector('input[name="orderType"]:checked');
+        let orderType = orderTypeEl ? orderTypeEl.value : 'Dine In';
+        if (orderType === 'Delivery' && window.SELECTED_DELIVERY_SUBTAB) {
+          const services = getDeliveryServices();
+          const currentService = services.find(s => s.subTab === window.SELECTED_DELIVERY_SUBTAB);
+          if (currentService) {
+            orderType = `Delivery - ${currentService.serviceName}`;
+          }
+        }
+
         let finalCashierName = getFinalCashierName();
         if (USER_ROLE === 'ADMIN') {
           let savedShift = localStorage.getItem('pos_shift_data');
@@ -9942,17 +9953,6 @@
 
         // --- SURCHARGE INFO ---
         const surchargeInfo = window.CHECKOUT_SURCHARGE_INFO || null;
-        
-        // --- ORDER TYPE ---
-        const orderTypeEl = document.querySelector('input[name="orderType"]:checked');
-        let orderTypeVal = orderTypeEl ? orderTypeEl.value : 'Dine In';
-        if (orderTypeVal === 'Delivery' && window.SELECTED_DELIVERY_SUBTAB) {
-          const services = getDeliveryServices();
-          const currentService = services.find(s => s.subTab === window.SELECTED_DELIVERY_SUBTAB);
-          if (currentService) {
-            orderTypeVal = `Delivery - ${currentService.serviceName}`;
-          }
-        }
 
         const transactionData = {
           total: finalTotal, 
@@ -9966,7 +9966,7 @@
           promoNotes: finalPromoNotes,
           surchargeInfo: surchargeInfo,
           appliedPromos: window.CHECKOUT_APPLIED_PROMOS || [],
-          orderType: orderTypeVal,
+          orderType: orderType,
           subtotal: window.CHECKOUT_RAW_SUBTOTAL || 0,
           promoDiscount: window.CHECKOUT_PROMO_DISCOUNT || 0,
           taxAmount: window.CHECKOUT_PROMO_TAX_AMOUNT || 0
