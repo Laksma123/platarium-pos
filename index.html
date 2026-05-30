@@ -776,6 +776,22 @@
         border: 2px solid var(--primary-gold, #c5a059) !important;
         z-index: 10000 !important;
       }
+      /* Efek melayang premium saat scheduling pill di-drag */
+      .draggable-pill.sortable-fallback {
+        transform: scale(1.05) rotate(1deg) !important;
+        transform-origin: top left !important;
+        opacity: 0.9 !important;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2) !important;
+        z-index: 10000 !important;
+      }
+      /* Efek melayang premium saat menu produk Kasir di-drag */
+      .pos-product-card.sortable-fallback {
+        transform: scale(1.03) rotate(-1deg) !important;
+        transform-origin: top left !important;
+        opacity: 0.9 !important;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
+        z-index: 10000 !important;
+      }
 
 
       /* ========================================= */
@@ -4687,9 +4703,10 @@
       }
 
       // Sistem Koreksi Drag Dinamis untuk Browser Ter-Zoom (APK)
-      // Catatan: CSS `zoom` membuat touch clientX/Y melaporkan koordinat fisik viewport,
-      // sedangkan getBoundingClientRect() dan position:fixed left/top bekerja di ruang CSS (ter-zoom).
-      // Solusi: konversi koordinat sentuh fisik → CSS dengan membagi zoom.
+      // Catatan: Touch/mouse clientX/clientY dan getBoundingClientRect() di WebView modern (APK)
+      // sudah otomatis dikonversi ke koordinat ruang CSS (ter-zoom). Kita tidak perlu lagi
+      // membaginya secara manual dengan zoom APK karena akan menyebabkan double-scaling (drifting).
+      // Kita cukup memetakan dan memposisikan fallback element secara absolut menggunakan style.left & top dalam ruang koordinat CSS.
       let activeDrag = null;
 
       function handleSortableStartZoomCorrection(evt) {
@@ -4710,18 +4727,10 @@
               }
           }
           
-          // Konversi posisi sentuh awal dan batas elemen ke koordinat CSS.
-          // rect.left dan rect.top di WebView melaporkan koordinat viewport fisik (device-independent),
-          // sehingga keduanya harus dibagi dengan zoom agar berada di ruang koordinat CSS yang sama.
-          const cssTouchX = startX / zoom;
-          const cssTouchY = startY / zoom;
-          const cssRectLeft = rect.left / zoom;
-          const cssRectTop = rect.top / zoom;
-          
+          // startX dan rect.left sudah berada pada unit CSS pixel ter-zoom yang sama
           activeDrag = {
-              // Offset jari dari pojok kiri-atas pill (dalam ruang CSS)
-              offsetX: cssTouchX - cssRectLeft,
-              offsetY: cssTouchY - cssRectTop,
+              offsetX: startX - rect.left,
+              offsetY: startY - rect.top,
               zoom: zoom
           };
       }
@@ -4757,35 +4766,28 @@
           const fallback = document.querySelector('.sortable-fallback');
           if (!fallback) return;
           
-          const zoom = activeDrag.zoom;
-          // Jangan return early saat zoom === 1 (100%) karena .sortable-fallback memiliki rule
-          // transform: none !important di CSS, yang menonaktifkan translate3d bawaan SortableJS.
-          // Kita harus selalu memposisikan fallback element secara manual menggunakan left & top di semua zoom level.
-          
-          let physicalX = 0;
-          let physicalY = 0;
+          let clientX = 0;
+          let clientY = 0;
           if (e.touches && e.touches.length > 0) {
-              physicalX = e.touches[0].clientX;
-              physicalY = e.touches[0].clientY;
+              clientX = e.touches[0].clientX;
+              clientY = e.touches[0].clientY;
           } else {
-              physicalX = e.clientX;
-              physicalY = e.clientY;
+              clientX = e.clientX;
+              clientY = e.clientY;
           }
           
-          // Konversi koordinat sentuh fisik → CSS, lalu kurangi offset awal
-          // agar pill tetap menempel di posisi jari yang sama
-          const cssX = physicalX / zoom;
-          const cssY = physicalY / zoom;
-          
-          // Sesuaikan offset dengan scale factor 0.9 jika elemen adalah ticket-paper
-          // dan memiliki transform-origin: top left
+          // Tentukan scaleFactor berdasarkan elemen untuk mengimbangi scale transform visual (animasi melayang)
           let scaleFactor = 1;
           if (fallback.classList.contains('ticket-paper')) {
               scaleFactor = 0.9;
+          } else if (fallback.classList.contains('draggable-pill')) {
+              scaleFactor = 1.05;
+          } else if (fallback.classList.contains('pos-product-card')) {
+              scaleFactor = 1.03;
           }
           
-          const newLeft = cssX - activeDrag.offsetX * scaleFactor;
-          const newTop = cssY - activeDrag.offsetY * scaleFactor;
+          const newLeft = clientX - activeDrag.offsetX * scaleFactor;
+          const newTop = clientY - activeDrag.offsetY * scaleFactor;
           
           fallback.style.position = 'fixed';
           fallback.style.left = newLeft + 'px';
