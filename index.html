@@ -9880,6 +9880,17 @@
         });
         let finalAddonNotes = addonNotesArr.join(' | ');
 
+        // --- DETEKSI FULFILLED PROMO UNTUK DETAIL PROMO ---
+        let promoOrderType = orderType;
+        if (orderType.startsWith('Delivery - ') && window.SELECTED_DELIVERY_SUBTAB) {
+          promoOrderType = window.SELECTED_DELIVERY_SUBTAB;
+        } else if (orderType === 'Delivery' && window.SELECTED_DELIVERY_SUBTAB) {
+          promoOrderType = window.SELECTED_DELIVERY_SUBTAB;
+        }
+        const clues = getCheckoutPromoClues(CART, promoOrderType);
+        const fulfilledClues = clues.filter(c => c.status === 'fulfilled').map(c => c.text);
+        let finalPromoNotes = fulfilledClues.join(' | ');
+
         // --- PECAH ITEM INDIVIDUAL UNTUK SAVING & STOCK DEDUCTION ---
         const processedItems = [];
         baseItems.forEach(item => {
@@ -9934,12 +9945,12 @@
         
         // --- ORDER TYPE ---
         const orderTypeEl = document.querySelector('input[name="orderType"]:checked');
-        let orderType = orderTypeEl ? orderTypeEl.value : 'Dine In';
-        if (orderType === 'Delivery' && window.SELECTED_DELIVERY_SUBTAB) {
+        let orderTypeVal = orderTypeEl ? orderTypeEl.value : 'Dine In';
+        if (orderTypeVal === 'Delivery' && window.SELECTED_DELIVERY_SUBTAB) {
           const services = getDeliveryServices();
           const currentService = services.find(s => s.subTab === window.SELECTED_DELIVERY_SUBTAB);
           if (currentService) {
-            orderType = `Delivery - ${currentService.serviceName}`;
+            orderTypeVal = `Delivery - ${currentService.serviceName}`;
           }
         }
 
@@ -9952,9 +9963,10 @@
           cashier: finalCashierName,
           priceNotes: finalPriceNotes,
           addonNotes: finalAddonNotes,
+          promoNotes: finalPromoNotes,
           surchargeInfo: surchargeInfo,
           appliedPromos: window.CHECKOUT_APPLIED_PROMOS || [],
-          orderType: orderType,
+          orderType: orderTypeVal,
           subtotal: window.CHECKOUT_RAW_SUBTOTAL || 0,
           promoDiscount: window.CHECKOUT_PROMO_DISCOUNT || 0,
           taxAmount: window.CHECKOUT_PROMO_TAX_AMOUNT || 0
@@ -9971,6 +9983,9 @@
             }
             if (finalAddonNotes) {
               auditLogMessage += ` | Catatan Addon: ${finalAddonNotes}`;
+            }
+            if (finalPromoNotes) {
+              auditLogMessage += ` | Catatan Promo: ${finalPromoNotes}`;
             }
             // Tambahkan daftar Promo yang terpasang agar tercatat rapi
             if (window.CHECKOUT_APPLIED_PROMOS && window.CHECKOUT_APPLIED_PROMOS.length > 0) {
@@ -10579,6 +10594,11 @@
               noteBadge = `<span class="badge bg-warning text-dark ms-2" style="cursor: pointer; font-size: 0.65rem;" onclick="openDetailNoteModal('${t.orderId}')"><i class="fas fa-info-circle me-1"></i>Detail Note</span>`;
             }
 
+            let promoBadge = '';
+            if (t.promoNotes && t.promoNotes.trim() !== "") {
+              promoBadge = `<span class="badge bg-success text-white ms-2" style="cursor: pointer; font-size: 0.65rem;" onclick="openDetailPromoModal('${t.orderId}')"><i class="fas fa-gift me-1"></i>Detail Promo</span>`;
+            }
+
             let cashierDisplayName = t.cashier || '';
             if (String(cashierDisplayName).includes('(Pengganti)')) {
               cashierDisplayName = `<span class="text-danger fw-bold">${cashierDisplayName}</span>`;
@@ -10591,7 +10611,7 @@
             return `
             <tr class="border-bottom" style="${rowStyle}">
               <td class="ps-4 py-3">
-                <div class="fw-bold text-dark" style="font-size: 0.75rem;">${t.orderId} ${statusBadge}${noteBadge}</div>
+                <div class="fw-bold text-dark" style="font-size: 0.75rem;">${t.orderId} ${statusBadge}${noteBadge}${promoBadge}</div>
                 <div class="text-muted" style="font-size: 0.65rem;">${t.timestamp}</div>
               </td>
               <td>${t.items.map(i => `<div style="font-size:0.7rem;">• ${i.name} x${i.qty}</div>`).join('')}</td>
@@ -12322,6 +12342,7 @@
           // --- EKSTRAK DATA KOMPLIMEN & KATEGORI PRODUK ---
           let komplimenList = [];
           let adjustmentList = [];
+          let promoList = [];
           let itemAgg = {};
           
           // Perhitungan Tax (Pajak)
@@ -12358,6 +12379,14 @@
                 id: t.orderId,
                 priceNotes: t.priceNotes || "",
                 addonNotes: t.addonNotes || ""
+              });
+            }
+
+            let hasPromo = t.promoNotes && t.promoNotes.trim() !== "";
+            if (hasPromo) {
+              promoList.push({
+                id: t.orderId,
+                promoNotes: t.promoNotes || ""
               });
             }
 
@@ -12536,6 +12565,39 @@
               }
               
               if (idx < adjustmentList.length - 1) {
+                pushTxt('. '.repeat(maxChars / 2));
+              } else {
+                pushTxt(''); // Baris kosong pembatas akhir
+              }
+            });
+            pushTxt('-'.repeat(maxChars));
+          }
+
+          // FORMAT PROMO TERPENUHI (FULFILLED)
+          if (promoList.length > 0) {
+            bytes.push(...cmd.boldOn);
+            pushTxt("DAFTAR PROMO TERPENUHI (FULFILLED):");
+            bytes.push(...cmd.boldOff);
+            
+            promoList.forEach((pr, idx) => {
+              pushTxt(`ID Order : ${pr.id}`);
+              
+              if (pr.promoNotes && pr.promoNotes.trim() !== "") {
+                let cleanPromo = pr.promoNotes;
+                let words = `Promo   : ${cleanPromo}`.split(' ');
+                let line = '  ';
+                words.forEach(w => {
+                  if ((line + w).length > maxChars) {
+                    pushTxt(line.trimEnd());
+                    line = '  ' + w + ' ';
+                  } else {
+                    line += w + ' ';
+                  }
+                });
+                if (line.trim().length > 0) pushTxt(line.trimEnd());
+              }
+              
+              if (idx < promoList.length - 1) {
                 pushTxt('. '.repeat(maxChars / 2));
               } else {
                 pushTxt(''); // Baris kosong pembatas akhir
@@ -12770,6 +12832,7 @@
                     return lower.includes('+') || lower.includes('-') || lower.includes('tanpa');
                   });
                 }
+                let hasPromo = t ? (t.promoNotes && t.promoNotes.trim() !== "") : false;
                 let hasAdjustment = hasPriceAdj || hasAddonAdj;
 
                 let rowHtml = '';
@@ -12782,7 +12845,7 @@
                 }
                 rowHtml += '</tr>';
 
-                if (t && hasAdjustment) {
+                if (t && (hasAdjustment || hasPromo)) {
                   // Add Detail Note details sub-row
                   let details = '';
                   if (t.priceNotes && t.priceNotes.trim() !== "") {
@@ -12797,10 +12860,20 @@
                     details += `<div style="color: #198754 !important; font-weight: bold; margin-top: 5px; margin-bottom: 2px; text-align: left !important;"><i class="fas fa-cookie-bite me-1"></i> Perubahan Bahan (Add-on):</div>`;
                     details += `<div style="padding-left: 15px; color: #198754 !important; text-align: left !important;">${cleanNotes}</div>`;
                   }
+                  if (t.promoNotes && t.promoNotes.trim() !== "") {
+                    let cleanPromos = t.promoNotes.split(' | ').map(p => `• ${p}`).join('<br>');
+                    details += `<div style="color: #198754 !important; font-weight: bold; margin-top: 5px; margin-bottom: 2px; text-align: left !important;"><i class="fas fa-gift me-1"></i> Promo Terpenuhi (Fulfilled):</div>`;
+                    details += `<div style="padding-left: 15px; color: #198754 !important; text-align: left !important;">${cleanPromos}</div>`;
+                  }
+
+                  let subRowBg = '#fffdeb';
+                  if (hasPromo && !hasAdjustment) {
+                    subRowBg = '#f0fff4'; // Soft green khas success / promo
+                  }
 
                   rowHtml += `
-                    <tr style="background-color: #fffdeb !important;">
-                      <td colspan="5" class="ps-4 py-2 border-bottom small" style="line-height: 1.4; border-top: none; text-align: left !important; background-color: #fffdeb !important; color: #666 !important;">
+                    <tr style="background-color: ${subRowBg} !important;">
+                      <td colspan="5" class="ps-4 py-2 border-bottom small" style="line-height: 1.4; border-top: none; text-align: left !important; background-color: ${subRowBg} !important; color: #666 !important;">
                         ${details}
                       </td>
                     </tr>
@@ -12962,6 +13035,33 @@
 
       function closeDetailNoteModal() {
         document.getElementById('modalDetailNote').classList.add('d-none');
+      }
+
+      function openDetailPromoModal(orderId) {
+        const t = TRANSACTIONS_DATA.find(x => x.orderId === orderId);
+        if (!t) return;
+
+        document.getElementById('detailPromoOrderId').innerText = t.orderId;
+        document.getElementById('detailPromoTime').innerText = t.timestamp;
+        document.getElementById('detailPromoCashier').innerText = t.cashier || '-';
+
+        // Section 1: Promo Notes
+        const sectionPromo = document.getElementById('sectionPromoNotes');
+        const contentPromo = document.getElementById('contentPromoNotes');
+        if (t.promoNotes && t.promoNotes.trim() !== "") {
+          sectionPromo.classList.remove('d-none');
+          const formatted = t.promoNotes.split(' | ').map(p => `• ${p}`).join('<br>');
+          contentPromo.innerHTML = formatted;
+        } else {
+          sectionPromo.classList.add('d-none');
+          contentPromo.innerHTML = '-';
+        }
+
+        document.getElementById('modalDetailPromo').classList.remove('d-none');
+      }
+
+      function closeDetailPromoModal() {
+        document.getElementById('modalDetailPromo').classList.add('d-none');
       }
 
       // ==========================================
@@ -14164,6 +14264,43 @@
         </div>
 
         <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold" onclick="closeDetailNoteModal()">TUTUP</button>
+      </div>
+    </div>
+
+    <!-- Modal Detail Promo yang Bagus dan Lengkap -->
+    <div id="modalDetailPromo" class="login-overlay d-none" style="background: rgba(0,0,0,0.85); z-index: 11500; opacity: 1 !important;">
+      <div class="bg-white p-4 rounded-5 shadow-lg d-flex flex-column text-start" style="width: 95%; max-width: 450px; animation: slideUp 0.3s ease-out;">
+        <div class="w-100 d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+          <h6 class="fw-bold m-0 text-success"><i class="fas fa-gift me-1"></i> Rincian Detail Promo</h6>
+          <button class="btn-close shadow-none" onclick="closeDetailPromoModal()"></button>
+        </div>
+        
+        <div class="mb-3 bg-light p-3 rounded-4 border">
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="text-muted">ID Transaksi:</span>
+            <span class="fw-bold text-dark" id="detailPromoOrderId">ORD-000</span>
+          </div>
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="text-muted">Waktu:</span>
+            <span class="fw-bold text-dark" id="detailPromoTime">--/--/---- --:--</span>
+          </div>
+          <div class="d-flex justify-content-between small">
+            <span class="text-muted">Kasir:</span>
+            <span class="fw-bold text-dark" id="detailPromoCashier">-</span>
+          </div>
+        </div>
+
+        <div class="flex-fill overflow-auto mb-4" style="max-height: 300px;">
+          <!-- Section 1: Promo Terpenuhi -->
+          <div id="sectionPromoNotes" class="mb-3 d-none">
+            <div class="small fw-bold text-success mb-2"><i class="fas fa-gift me-1"></i> PROMO TERPENUHI (FULFILLED)</div>
+            <div id="contentPromoNotes" class="bg-success bg-opacity-10 text-success p-3 rounded-4 border border-success border-opacity-25 small">
+              -
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold" onclick="closeDetailPromoModal()">TUTUP</button>
       </div>
     </div>
 
