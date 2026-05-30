@@ -916,6 +916,46 @@
         background-color: #f1f8ff !important;
       }
 
+      /* MODERN SCHEDULING UI LAYOUT & ZOOM SCALING OVERRIDES */
+      #staffPillsSource .draggable-pill {
+        width: 100% !important;
+        margin: 2px 0 !important;
+        padding: 10px 14px !important;
+        border-radius: 12px !important;
+        font-size: 0.8rem !important;
+        justify-content: flex-start !important;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid rgba(0, 0, 0, 0.03) !important;
+        transition: all 0.25s ease;
+      }
+      #staffPillsSource .draggable-pill:hover {
+        transform: translateY(-2.5px) scale(1.02);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1) !important;
+      }
+      .shift-dropzone .draggable-pill {
+        width: auto !important;
+        max-width: 100% !important;
+        margin: 3px !important;
+        padding: 6px 12px !important;
+        border-radius: 10px !important;
+        font-size: 0.72rem !important;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03) !important;
+        justify-content: center !important;
+      }
+      /* Custom styles to prevent flatpickr altInput from breaking layout styles */
+      #schedStartDate + .flatpickr-input {
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        color: #2d3748 !important;
+        max-width: 105px !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 4px !important;
+        cursor: pointer !important;
+      }
+
       /* ========================================= */
       /* ADD-ON FEATURE COSMETIC STYLES            */
       /* ========================================= */
@@ -2036,74 +2076,96 @@
           <div class="row g-4" id="staffCardsContainer">
             </div>
           <div id="view-schedule-grid" class="container-fluid mt-5 border-top pt-4 pb-5">
+            <!-- Redesigned modern, premium control panel card for Scheduling -->
             <div class="row mb-4">
               <div class="col-2 d-none d-lg-block"></div>
-              <div class="col-12 col-lg-10 d-flex flex-wrap justify-content-between align-items-center gap-3">
-                <div class="mb-3 mb-lg-0">
-                  <h4 class="fw-bold m-0 ms-2">Pengaturan Jadwal Dinamis</h4>
-                  <p class="text-muted small m-0 ms-2" style="margin-top: 4px !important;">Atur jadwal shift operasional staff dengan drag & drop.</p>
-                </div>
-                <div class="d-flex gap-2 mt-2 mt-lg-0 flex-wrap justify-content-end">
-                  <button class="btn btn-primary rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnSaveBatchSchedule" onclick="executeBatchSaveSchedule()">
-                      <i class="fas fa-save me-2"></i>Save Schedule
-                  </button>
-                  <button class="btn btn-success rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnBroadcastSchedule" onclick="broadcastSchedule()">
-                      <i class="fab fa-telegram-plane me-2"></i>Kirim Telegram
-                  </button>
-
-                  <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; max-width: 220px; height: 38px;">
-                    <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-calendar-day me-1"></i>Mulai</span>
-                    <input type="text" id="schedStartDate" class="form-control border-0 shadow-none bg-white px-2" style="font-size: 0.85rem; max-width: 110px;" placeholder="Pilih Tanggal" readonly>
-                  </div>
-                  <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
-                    <span class="input-group-text bg-light border-0 fw-bold small text-muted">Rentang</span>
-                    <button type="button" class="btn btn-light border-0 px-2 fw-bold" onclick="adjustSchedDayCount(-1)" style="font-size: 0.85rem; background: transparent; color: #636e72;" title="Kurangi Hari"><i class="fas fa-minus" style="font-size: 0.7rem;"></i></button>
-                    <input type="text" id="schedDayCount" class="form-control border-0 shadow-none bg-white px-1 text-center fw-bold" style="font-size: 0.85rem; width: 35px; pointer-events: none;" value="7" readonly>
-                    <button type="button" class="btn btn-light border-0 px-2 fw-bold" onclick="adjustSchedDayCount(1)" style="font-size: 0.85rem; background: transparent; color: #636e72;" title="Tambah Hari"><i class="fas fa-plus" style="font-size: 0.7rem;"></i></button>
-                    <span class="input-group-text bg-light border-0 fw-bold small text-muted">Hari</span>
-                  </div>
-
-                  <button class="btn btn-light rounded-pill border fw-bold shadow-sm d-flex align-items-center" onclick="openShiftTimeModal()">
-                      <i class="fas fa-clock text-warning me-2"></i>Waktu Shift
-                  </button>
-                  <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
-                    <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-layer-group me-1"></i>Shift/Hari</span>
-                    <select id="shiftCountSelector" class="form-select border-0 shadow-none fw-bold bg-white px-3" style="font-size: 0.85rem; cursor:pointer; padding-right: 2.5rem !important;" onchange="changeShiftCount(this.value)">
-                      <option value="1">1 Shift</option>
-                      <option value="2" selected>2 Shift</option>
-                      <option value="3">3 Shift</option>
-                    </select>
+              <div class="col-12 col-lg-10">
+                <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
+                  <div class="d-flex flex-column flex-xxl-row justify-content-between align-items-start align-items-xxl-center gap-3">
+                    <div>
+                      <h4 class="fw-bold m-0 text-dark d-flex align-items-center">
+                        <i class="fas fa-calendar-alt text-primary me-2"></i>Pengaturan Jadwal Dinamis
+                      </h4>
+                      <p class="text-muted small m-0 mt-1">Atur jadwal shift operasional staff dengan drag & drop.</p>
+                    </div>
+                    
+                    <div class="d-flex flex-wrap align-items-center gap-3 w-100 w-xxl-auto justify-content-start justify-content-xxl-end">
+                      <!-- Config group capsule -->
+                      <div class="d-flex flex-wrap align-items-center gap-2 bg-light p-2 rounded-4 border">
+                        <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; max-width: 220px; height: 38px;">
+                          <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-calendar-day me-1"></i>Mulai</span>
+                          <input type="text" id="schedStartDate" class="form-control border-0 shadow-none bg-white px-2" style="font-size: 0.85rem; max-width: 110px;" placeholder="Pilih Tanggal" readonly>
+                        </div>
+                        <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
+                          <span class="input-group-text bg-light border-0 fw-bold small text-muted">Rentang</span>
+                          <button type="button" class="btn btn-light border-0 px-2 fw-bold" onclick="adjustSchedDayCount(-1)" style="font-size: 0.85rem; background: transparent; color: #636e72;" title="Kurangi Hari"><i class="fas fa-minus" style="font-size: 0.7rem;"></i></button>
+                          <input type="text" id="schedDayCount" class="form-control border-0 shadow-none bg-white px-1 text-center fw-bold" style="font-size: 0.85rem; width: 35px; pointer-events: none;" value="7" readonly>
+                          <button type="button" class="btn btn-light border-0 px-2 fw-bold" onclick="adjustSchedDayCount(1)" style="font-size: 0.85rem; background: transparent; color: #636e72;" title="Tambah Hari"><i class="fas fa-plus" style="font-size: 0.7rem;"></i></button>
+                          <span class="input-group-text bg-light border-0 fw-bold small text-muted">Hari</span>
+                        </div>
+                        <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="width: auto; height: 38px;">
+                          <span class="input-group-text bg-light border-0 fw-bold small text-muted"><i class="fas fa-layer-group me-1"></i>Shift/Hari</span>
+                          <select id="shiftCountSelector" class="form-select border-0 shadow-none fw-bold bg-white px-3" style="font-size: 0.85rem; cursor:pointer; padding-right: 2.5rem !important;" onchange="changeShiftCount(this.value)">
+                            <option value="1">1 Shift</option>
+                            <option value="2" selected>2 Shift</option>
+                            <option value="3">3 Shift</option>
+                          </select>
+                        </div>
+                      </div>
+                      
+                      <!-- Action buttons group -->
+                      <div class="d-flex flex-wrap align-items-center gap-2">
+                        <button class="btn btn-light rounded-pill border fw-bold shadow-sm d-flex align-items-center" onclick="openShiftTimeModal()" style="height: 38px;">
+                            <i class="fas fa-clock text-warning me-2"></i>Waktu Shift
+                        </button>
+                        <button class="btn btn-success rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnBroadcastSchedule" onclick="broadcastSchedule()" style="height: 38px;">
+                            <i class="fab fa-telegram-plane me-2"></i>Kirim Telegram
+                        </button>
+                        <button class="btn btn-primary rounded-pill fw-bold shadow-sm d-flex align-items-center" id="btnSaveBatchSchedule" onclick="executeBatchSaveSchedule()" style="height: 38px;">
+                            <i class="fas fa-save me-2"></i>Save Schedule
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
+            <!-- Redesigned scheduling grid table with integrated staff pills sidebar in equal height card -->
             <div class="row g-4">
-              <div class="col-2" style="position: sticky; top: 15px; align-self: start; z-index: 10;">
-                <div class="bg-light p-3 rounded-4 border shadow-sm d-flex flex-column" style="min-height: 200px;">
-                  <h6 class="fw-bold mb-1 small"><i class="fas fa-users text-primary me-1"></i> Staff</h6>
-                  <p class="text-muted mb-3" style="font-size: 9px; line-height: 1.2;">Tarik staff ke tabel.</p>
-                  
-                  <div id="staffPillsSource" class="d-flex flex-column align-items-center gap-2 p-2 border border-dashed rounded bg-white flex-fill shadow-sm" style="min-height: 120px;">
-                  </div>
-                </div>
-              </div>
+              <div class="col-2 d-none d-lg-block"></div>
+              <div class="col-12 col-lg-10">
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                  <div class="d-flex flex-column flex-md-row align-items-stretch">
+                    <!-- Left Sidebar Pane: Available Staff for scheduling drag-and-drop -->
+                    <div class="bg-light p-3 border-end d-flex flex-column" style="width: 220px; flex-shrink: 0; min-height: 100%;">
+                      <h6 class="fw-bold mb-1 small text-dark d-flex align-items-center"><i class="fas fa-users text-primary me-2"></i>Daftar Staff</h6>
+                      <p class="text-muted mb-3" style="font-size: 0.7rem; line-height: 1.3;">Tarik staff ke kolom jadwal shift di sebelah kanan.</p>
+                      
+                      <!-- Drag pills source element -->
+                      <div id="staffPillsSource" class="d-flex flex-column align-items-stretch gap-2 p-2 border border-dashed rounded bg-white flex-grow-1 shadow-sm overflow-auto" style="min-height: 250px;">
+                      </div>
+                    </div>
 
-              <div class="col-10">
-                <div id="scheduleGridToCapture" class="table-responsive bg-white p-0 rounded-4 border shadow-sm overflow-hidden" style="scrollbar-width: thin;">
-                  <div class="text-center p-3 border-bottom bg-light">
-                    <h5 class="fw-bold m-0" style="letter-spacing: 1px;">JADWAL OPERASIONAL STAFF</h5>
-                    <div class="mt-2">
-                        <span id="shiftInfoText" class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm" style="cursor:pointer; font-size: 0.75rem;" onclick="editShiftInfoText()" title="Klik untuk mengubah pesan">
-                            *Harap hadir 15 menit sebelum shift dimulai.
-                        </span>
+                    <!-- Right Scheduling Table Grid Pane -->
+                    <div class="flex-grow-1 overflow-hidden d-flex flex-column bg-white">
+                      <div id="scheduleGridToCapture" class="table-responsive p-0 overflow-auto flex-fill" style="scrollbar-width: thin; border-radius: 0;">
+                        <div class="text-center p-3 border-bottom bg-light">
+                          <h5 class="fw-bold m-0" style="letter-spacing: 1px;">JADWAL OPERASIONAL STAFF</h5>
+                          <div class="mt-2">
+                              <span id="shiftInfoText" class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm" style="cursor:pointer; font-size: 0.75rem;" onclick="editShiftInfoText()" title="Klik untuk mengubah pesan">
+                                  *Harap hadir 15 menit sebelum shift dimulai.
+                              </span>
+                          </div>
+                        </div>
+
+                        <table class="table table-bordered text-center align-middle m-0" style="table-layout: fixed; min-width: 800px; border: 0;">
+                          <tbody id="scheduleGridBody">
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
-
-                  <table class="table table-bordered text-center align-middle m-0" style="table-layout: fixed; min-width: 800px;">
-                    <tbody id="scheduleGridBody">
-                    </tbody>
-                  </table>
                 </div>
               </div>
             </div>
