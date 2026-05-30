@@ -4269,7 +4269,24 @@
 
       function recalculateCheckoutTotal() {
         const orderTypeEl = document.querySelector('input[name="orderType"]:checked');
-        const orderType = orderTypeEl ? orderTypeEl.value : 'Dine In';
+        
+        // Kunci/aktifkan tombol BAYAR SEKARANG berdasarkan pemilihan tipe pesanan
+        const btnPay = document.getElementById('btnConfirmPay');
+        if (!orderTypeEl) {
+          if (btnPay) {
+            btnPay.disabled = true;
+            btnPay.innerText = 'PILIH TIPE PESANAN';
+          }
+        } else {
+          if (btnPay) {
+            if (!btnPay.innerHTML.includes('fa-spinner') && btnPay.innerText !== 'Memproses...') {
+              btnPay.disabled = false;
+              btnPay.innerText = 'BAYAR SEKARANG';
+            }
+          }
+        }
+
+        const orderType = orderTypeEl ? orderTypeEl.value : '';
 
         let promoOrderType = orderType;
         if (orderType === 'Delivery' && window.SELECTED_DELIVERY_SUBTAB) {
@@ -9656,9 +9673,13 @@
         // [PERBAIKAN] Sembunyikan cart mobile sebelum membuka popup payment
         toggleMobileCart(false);
         
-        // Reset orderType to Dine In
-        const dineInRadio = document.getElementById('typeDineIn');
-        if (dineInRadio) dineInRadio.checked = true;
+        // Kosongkan pilihan tipe pesanan secara default untuk memaksa pemilihan manual
+        const typeDineIn = document.getElementById('typeDineIn');
+        const typeTakeaway = document.getElementById('typeTakeaway');
+        const typeDelivery = document.getElementById('typeDelivery');
+        if (typeDineIn) typeDineIn.checked = false;
+        if (typeTakeaway) typeTakeaway.checked = false;
+        if (typeDelivery) typeDelivery.checked = false;
 
         // Hide delivery services container and reset subtab
         const container = document.getElementById('deliveryServicesContainer');
@@ -9778,13 +9799,19 @@
           return;
         }
 
+        // --- VALIDASI DOUBLE-SAFEGUARD PILIHAN TIPE PESANAN ---
+        const orderTypeEl = document.querySelector('input[name="orderType"]:checked');
+        if (!orderTypeEl) {
+          alert("SILAKAN PILIH TIPE PESANAN TERLEBIH DAHULU!");
+          return;
+        }
+
         const btn = document.getElementById('btnConfirmPay');
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Memproses...';
 
         // --- AMBIL TIPE PESANAN LEBIH AWAL UNTUK MENGHINDARI TDZ/REFERENCEERROR ---
-        const orderTypeEl = document.querySelector('input[name="orderType"]:checked');
-        let orderType = orderTypeEl ? orderTypeEl.value : 'Dine In';
+        let orderType = orderTypeEl.value;
         if (orderType === 'Delivery' && window.SELECTED_DELIVERY_SUBTAB) {
           const services = getDeliveryServices();
           const currentService = services.find(s => s.subTab === window.SELECTED_DELIVERY_SUBTAB);
@@ -13538,7 +13565,7 @@
               <div class="mb-4">
                 <label class="fw-bold text-muted mb-3" style="font-size: 0.85rem; letter-spacing: 0.8px;">TIPE PESANAN</label>
                 <div class="d-flex gap-2">
-                  <input type="radio" class="btn-check" name="orderType" id="typeDineIn" value="Dine In" checked onchange="handleOrderTypeChange('Dine In')">
+                  <input type="radio" class="btn-check" name="orderType" id="typeDineIn" value="Dine In" onchange="handleOrderTypeChange('Dine In')">
                   <label class="btn btn-outline-dark w-100 fw-bold py-3 rounded-4 d-flex flex-column align-items-center justify-content-center gap-2 shadow-sm" for="typeDineIn">
                     <i class="fas fa-chair fs-4"></i>
                     <span style="font-size: 0.9rem;">Dine In</span>
