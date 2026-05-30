@@ -3599,11 +3599,103 @@
                     </div>
                     
                     <div class="text-center mt-2">
-                      <button type="button" class="btn btn-dark fw-bold rounded-pill px-4 py-2 w-100" onclick="closeCashRoundAlert()">Close</button>
-                    </div>
+                      <button type="button" class="btn btn-dark fw-bold rounded-pill px-4 py-2 w-100" onclick="closeCashRoundAlert()">Tutup</button>
+                    </div>     
+
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GLOBAL MARKUP SUGGEST MODAL -->
+        <div id="modalGlobalMarkupSuggest" class="login-overlay d-none" style="background: rgba(0,0,0,0.75); z-index: 10800; align-items:center; justify-content:center; display:flex; opacity: 1 !important;">
+          <div class="modal-dialog modal-dialog-centered w-100 mx-3" style="max-width: 500px;">
+            <div class="modal-content border-0 rounded-4 shadow-lg w-100 bg-white position-relative" style="max-height: 95vh; overflow-y: auto;">
+              <!-- Explicit Close Button -->
+              <button type="button" class="btn-close position-absolute top-0 end-0 m-3 shadow-none border-0" onclick="closeGlobalMarkupSuggest()" aria-label="Close" style="z-index: 10;"></button>
+              
+              <!-- Panel 1: Question and Input Toggles -->
+              <div class="modal-body p-4" id="markupPanelQuestion">
+                <div class="text-center mb-3">
+                  <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2" style="width: 50px; height: 50px; background-color: #e8f5e9;">
+                    <i class="fas fa-magic text-success" style="font-size: 1.6rem;"></i>
+                  </div>
+                  <h5 class="fw-bold text-dark m-0 mt-1">Konfirmasi Markup Global</h5>
+                </div>
+                
+                <p class="text-center text-muted small px-2 mb-4" style="line-height: 1.5; font-size: 0.85rem;">
+                  Otomatis saya tambahkan nominal ini di tab Produk secara global?
+                </p>
+
+                <!-- 2 Toggles / Inputs below -->
+                <div class="row g-2 mb-4">
+                  <!-- Left Option: Active Cash Round value -->
+                  <div class="col-6">
+                    <div class="p-3 rounded-4 border text-center h-100 d-flex flex-column justify-content-between position-relative" id="markupOptRoundCard" onclick="selectMarkupOption('round')" style="cursor: pointer; background-color: #f4fbf7; border: 2px solid #2ecc71 !important; transition: all 0.2s;">
+                      <div class="position-absolute top-0 start-0 m-2">
+                        <input class="form-check-input text-success" type="radio" name="markupOption" id="markupOptRound" checked style="cursor: pointer; transform: scale(1.1);">
+                      </div>
+                      <div class="mt-3">
+                        <span class="d-block text-muted fw-bold mb-1" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px;">Pembulatan Cash</span>
+                        <h4 class="fw-bold text-success m-0" id="markupRoundValText">Rp 0</h4>
+                      </div>
+                      <small class="text-muted d-block mt-2" style="font-size: 0.6rem; line-height: 1.2;">Sesuai setelan aktif</small>
+                    </div>
+                  </div>
+
+                  <!-- Right Option: Custom manual input markup -->
+                  <div class="col-6">
+                    <div class="p-3 rounded-4 border text-center h-100 d-flex flex-column justify-content-between position-relative" id="markupOptManualCard" onclick="selectMarkupOption('manual')" style="cursor: pointer; background-color: #fff; border: 2px solid #e2e8f0; transition: all 0.2s;">
+                      <div class="position-absolute top-0 start-0 m-2">
+                        <input class="form-check-input text-success" type="radio" name="markupOption" id="markupOptManual" style="cursor: pointer; transform: scale(1.1);">
+                      </div>
+                      <div class="mt-3">
+                        <span class="d-block text-muted fw-bold mb-1" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px;">Input Manual</span>
+                        <div class="input-group input-group-sm mt-1 px-1">
+                          <span class="input-group-text bg-white border-2 fw-bold text-dark" style="font-size: 0.75rem; padding: 2px 6px;">Rp</span>
+                          <input type="number" id="markupManualValue" class="form-control border-2 fw-bold text-dark text-center" placeholder="0" style="font-size: 0.8rem; padding: 2px 4px;" oninput="this.value = this.value.replace(/[^0-9]/g, ''); selectMarkupOption('manual');">
+                        </div>
+                      </div>
+                      <small class="text-muted d-block mt-2" style="font-size: 0.6rem; line-height: 1.2;">Markup kustom</small>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row g-2">
+                  <div class="col-6">
+                    <button type="button" class="btn btn-outline-danger fw-bold rounded-pill w-100 py-2" onclick="handleMarkupJangan()">JANGAN</button>
+                  </div>
+                  <div class="col-6">
+                    <button type="button" class="btn btn-success fw-bold rounded-pill w-100 py-2" id="btnMarkupBantu" onclick="handleMarkupBantu()">BANTU</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Panel 2: Warning when click JANGAN -->
+              <div class="modal-body p-4 d-none" id="markupPanelWarning">
+                <div class="text-center mb-3">
+                  <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2" style="width: 50px; height: 50px; background-color: #fff3cd;">
+                    <i class="fas fa-exclamation-triangle text-warning" style="font-size: 1.6rem;"></i>
+                  </div>
+                  <h5 class="fw-bold text-dark m-0 mt-1">Perhatian</h5>
+                </div>
+                
+                <p class="text-center text-muted px-2 mb-4" style="line-height: 1.5; font-size: 0.85rem;">
+                  Jangan lupa ganti manual semua harga global di tab Produk
+                </p>
+
+                <div class="row g-2">
+                  <div class="col-6">
+                    <button type="button" class="btn btn-outline-secondary fw-bold rounded-pill w-100 py-2 text-dark" onclick="handleMarkupKembali()">KEMBALI</button>
+                  </div>
+                  <div class="col-6">
+                    <button type="button" class="btn btn-dark fw-bold rounded-pill w-100 py-2 text-white" id="btnMarkupLanjutManual" onclick="handleMarkupLanjutManual()">LANJUT MANUAL</button>
+                  </div>
+                </div>
+              </div>
+              
             </div>
           </div>
         </div>
@@ -3725,6 +3817,27 @@
                                         <input type="number" id="cashRoundManualValue" class="form-control border-2 fw-bold text-dark" placeholder="Contoh: 100, 200, 250" onchange="handleCashRoundManualInput()" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                     </div>
                                     <small class="text-muted d-block mt-1" style="font-size:0.65rem; font-style: italic;">*Ketik nilai pembulatan (misal: 500, 1000)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Markup Saran Section -->
+                        <div class="bg-light p-3 rounded-4 border" id="markupSaranSection" style="transition: all 0.3s ease;">
+                            <div class="d-flex flex-column gap-2">
+                                <span class="small fw-bold text-dark"><i class="fas fa-magic text-success me-2"></i>Apakah anda mengikuti saran markup harga global menu?</span>
+                                
+                                <div class="d-flex align-items-center justify-content-between gap-2 mt-1">
+                                    <button type="button" class="btn btn-sm btn-outline-primary fw-bold rounded-pill px-3 py-2" id="btnBacaLagiSaran" onclick="showCashRoundAlert()">
+                                        <i class="fas fa-book-open me-1"></i>Baca lagi saran
+                                    </button>
+                                    
+                                    <div class="btn-group btn-group-sm" role="group" id="markupSaranToggleGroup" style="border: 2px solid #e2e8f0; border-radius: 20px; overflow: hidden; padding: 2px; background: #fff; width: 140px;">
+                                        <input type="radio" class="btn-check" name="markupSaranToggle" id="mstIya" value="Iya" autocomplete="off" onchange="handleMarkupSaranToggle('Iya')">
+                                        <label class="btn btn-sm btn-outline-success border-0 rounded-pill fw-bold py-1 px-3" for="mstIya">Iya</label>
+
+                                        <input type="radio" class="btn-check" name="markupSaranToggle" id="mstTidak" value="Tidak" checked autocomplete="off" onchange="handleMarkupSaranToggle('Tidak')">
+                                        <label class="btn btn-sm btn-outline-danger border-0 rounded-pill fw-bold py-1 px-3" for="mstTidak">Tidak</label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -6731,6 +6844,7 @@
             manualArea.classList.add('d-none');
           }
         }
+        updateMarkupSaranSectionVisibility();
       }
       
       function handleCashRoundManualInput() {
@@ -6746,6 +6860,127 @@
         google.script.run.withSuccessHandler(() => {
           console.log("Cash rounding setting auto-saved on server");
         }).saveSettingConfig(TELEGRAM_CONFIG);
+      }
+
+      function getActiveCashRoundValue() {
+        const mode = TELEGRAM_CONFIG.cashRoundMode || 'OFF';
+        if (mode === '500') return 500;
+        if (mode === '1000') return 1000;
+        if (mode === 'MANUAL') return TELEGRAM_CONFIG.cashRoundManualValue || 0;
+        return 0;
+      }
+
+      function handleMarkupSaranToggle(value) {
+        if (value === 'Iya') {
+          const val = getActiveCashRoundValue();
+          const lbl = document.getElementById('markupRoundValText');
+          if (lbl) {
+            lbl.innerText = `Rp ${val.toLocaleString('id-ID')}`;
+          }
+          
+          // Reset selection in modal
+          selectMarkupOption('round');
+          const customVal = document.getElementById('markupManualValue');
+          if (customVal) customVal.value = '';
+          
+          // Show Panel 1 and hide Panel 2
+          const p1 = document.getElementById('markupPanelQuestion');
+          const p2 = document.getElementById('markupPanelWarning');
+          if (p1) p1.classList.remove('d-none');
+          if (p2) p2.classList.add('d-none');
+          
+          const modal = document.getElementById('modalGlobalMarkupSuggest');
+          if (modal) modal.classList.remove('d-none');
+        } else {
+          handleMarkupTidak();
+        }
+      }
+
+      function selectMarkupOption(type) {
+        const roundCard = document.getElementById('markupOptRoundCard');
+        const manualCard = document.getElementById('markupOptManualCard');
+        const roundRadio = document.getElementById('markupOptRound');
+        const manualRadio = document.getElementById('markupOptManual');
+        
+        if (type === 'round') {
+          if (roundRadio) roundRadio.checked = true;
+          if (manualRadio) manualRadio.checked = false;
+          
+          if (roundCard) {
+            roundCard.style.border = '2px solid #2ecc71';
+            roundCard.style.backgroundColor = '#f4fbf7';
+          }
+          if (manualCard) {
+            manualCard.style.border = '2px solid #e2e8f0';
+            manualCard.style.backgroundColor = '#fff';
+          }
+        } else if (type === 'manual') {
+          if (roundRadio) roundRadio.checked = false;
+          if (manualRadio) manualRadio.checked = true;
+          
+          if (roundCard) {
+            roundCard.style.border = '2px solid #e2e8f0';
+            roundCard.style.backgroundColor = '#fff';
+          }
+          if (manualCard) {
+            manualCard.style.border = '2px solid #2ecc71';
+            manualCard.style.backgroundColor = '#f4fbf7';
+          }
+        }
+      }
+
+      function handleMarkupJangan() {
+        const p1 = document.getElementById('markupPanelQuestion');
+        const p2 = document.getElementById('markupPanelWarning');
+        if (p1) p1.classList.add('d-none');
+        if (p2) p2.classList.remove('d-none');
+      }
+
+      function handleMarkupKembali() {
+        const p1 = document.getElementById('markupPanelQuestion');
+        const p2 = document.getElementById('markupPanelWarning');
+        if (p1) p1.classList.remove('d-none');
+        if (p2) p2.classList.add('d-none');
+      }
+
+      function closeGlobalMarkupSuggest() {
+        const modal = document.getElementById('modalGlobalMarkupSuggest');
+        if (modal) modal.classList.add('d-none');
+        
+        // Revert toggle in setting row back to "Tidak"
+        const mstTidak = document.getElementById('mstTidak');
+        if (mstTidak) mstTidak.checked = true;
+      }
+
+      function updateMarkupSaranSectionVisibility() {
+        const mode = TELEGRAM_CONFIG.cashRoundMode || 'OFF';
+        const section = document.getElementById('markupSaranSection');
+        if (section) {
+          if (mode === 'OFF') {
+            section.style.opacity = '0.4';
+            section.style.pointerEvents = 'none';
+            // Revert toggle to "Tidak"
+            const mstTidak = document.getElementById('mstTidak');
+            if (mstTidak) mstTidak.checked = true;
+          } else {
+            section.style.opacity = '1';
+            section.style.pointerEvents = 'auto';
+          }
+        }
+      }
+
+      // Empty functions for BANTU, LANJUT MANUAL, and Tidak toggle
+      function handleMarkupBantu() {
+        // Sementara kosong
+      }
+
+      function handleMarkupLanjutManual() {
+        // Sementara kosong, let's close the modal
+        closeGlobalMarkupSuggest();
+      }
+
+      function handleMarkupTidak() {
+        // Sementara kosong
       }
 
       function toggleTaxSetting(isUserAction = false) {
