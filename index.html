@@ -2526,7 +2526,7 @@
         </div> <!-- Closes #view-manning -->
 
         <!-- DEDICATED SOP VIEW / TAB -->
-        <div id="view-sop" class="app-view p-0" style="display:none; background: #f8fafc; flex-direction: row !important; min-height: calc(100vh - var(--bottom-nav-height) - env(safe-area-inset-bottom) - var(--top-header-height)); padding-bottom: 140px !important; align-items: stretch !important;">
+        <div id="view-sop" class="app-view p-0" style="display:none; background: #f8fafc; flex-direction: row !important; padding-bottom: 120px !important;">
           
           <div id="sopTabLoadingArea" class="text-center py-5 w-100 align-self-center" style="margin-top: 100px;">
             <div class="spinner-border text-warning mb-3" style="width: 3.5rem; height: 3.5rem; border-width: 0.3rem;" role="status"></div>
@@ -2534,7 +2534,7 @@
             <p class="text-muted small">Sinkronisasi data dengan server, mohon tunggu.</p>
           </div>
 
-          <div id="sopTabContentArea" class="d-none w-100 d-flex flex-row" style="align-items: stretch !important; min-height: 100%;">
+          <div id="sopTabContentArea" class="d-none w-100 d-flex flex-row">
             <!-- Left Sidebar: SOP List -->
             <div class="sop-tab-sidebar" style="min-height: 100%;">
               <div class="p-3 border-bottom bg-light">
@@ -6332,6 +6332,9 @@
             <div class="d-flex gap-2">
               <button type="button" id="btnTabDownloadSopPdf-${sop.id}" class="btn btn-danger btn-sm rounded-pill fw-bold d-flex align-items-center" onclick="downloadSOPPDF('${sop.id}')" style="font-size:0.8rem; padding: 8px 16px;">
                 <i class="fas fa-file-pdf me-1"></i>Download PDF
+              </button>
+              <button type="button" id="btnTabSendSopTelegram-${sop.id}" class="btn btn-primary btn-sm rounded-pill fw-bold d-flex align-items-center" onclick="sendSOPTelegram('${sop.id}')" style="font-size:0.8rem; padding: 8px 16px;">
+                <i class="fab fa-telegram-plane me-1"></i>Kirim Telegram
               </button>
             </div>
           </div>
