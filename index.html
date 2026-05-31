@@ -1708,6 +1708,12 @@
         animation: sopSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
 
+      #sopWizardPanel input::placeholder {
+        color: #64748b !important;
+        opacity: 0.6 !important;
+        font-weight: normal !important;
+      }
+
       /* Custom styles for non-sticky checkbox pills in SOP Wizard */
       #sopWizardPanel .sop-checkbox-pill {
         transition: all 0.2s ease !important;
@@ -2653,10 +2659,10 @@
                     <div class="bg-light p-3 rounded-4 border">
                       <span class="small fw-bold text-muted d-block mb-2"><i class="fas fa-copy text-secondary me-1"></i>Klik contoh berikut untuk langsung menyalin:</span>
                       <div class="d-flex flex-wrap gap-2">
-                        <span class="sop-shortcut-badge" onclick="addChecklistRow('Menyalakan mesin kopi & grinder')">💡 Menyalakan mesin kopi & grinder</span>
-                        <span class="sop-shortcut-badge" onclick="addChecklistRow('Memastikan area kasir bersih & rapi')">💡 Memastikan area kasir bersih & rapi</span>
-                        <span class="sop-shortcut-badge" onclick="addChecklistRow('Melakukan cek kebersihan dining table')">💡 Melakukan cek dining table</span>
-                        <span class="sop-shortcut-badge" onclick="addChecklistRow('Briefing pagi bersama tim kitchen')">💡 Briefing pagi bersama tim</span>
+                        <span class="sop-shortcut-badge" onclick="clickChecklistShortcut('Menyalakan mesin kopi & grinder')">💡 Menyalakan mesin kopi & grinder</span>
+                        <span class="sop-shortcut-badge" onclick="clickChecklistShortcut('Memastikan area kasir bersih & rapi')">💡 Memastikan area kasir bersih & rapi</span>
+                        <span class="sop-shortcut-badge" onclick="clickChecklistShortcut('Melakukan cek kebersihan dining table')">💡 Melakukan cek dining table</span>
+                        <span class="sop-shortcut-badge" onclick="clickChecklistShortcut('Briefing pagi bersama tim kitchen')">💡 Briefing pagi bersama tim</span>
                       </div>
                     </div>
                   </div>
@@ -2684,9 +2690,9 @@
                     <div class="bg-light p-3 rounded-4 border">
                       <span class="small fw-bold text-muted d-block mb-2"><i class="fas fa-copy text-secondary me-1"></i>Klik contoh berikut untuk langsung menyalin:</span>
                       <div class="d-flex flex-wrap gap-2">
-                        <span class="sop-shortcut-badge" onclick="addWizardStepRow('Langkah 1: Terima orderan dari kasir & baca catatan dengan teliti')">💡 Langkah 1 Barista</span>
-                        <span class="sop-shortcut-badge" onclick="addWizardStepRow('Langkah 2: Seduh minuman sesuai takaran standard recipe')">💡 Langkah 2 Barista</span>
-                        <span class="sop-shortcut-badge" onclick="addWizardStepRow('Langkah 3: Sajikan minuman dengan ramah (senyum, salam, sapa)')">💡 Langkah 3 Barista</span>
+                        <span class="sop-shortcut-badge" onclick="clickWizardStepShortcut('Langkah 1: Terima orderan dari kasir & baca catatan dengan teliti')">💡 Langkah 1 Barista</span>
+                        <span class="sop-shortcut-badge" onclick="clickWizardStepShortcut('Langkah 2: Seduh minuman sesuai takaran standard recipe')">💡 Langkah 2 Barista</span>
+                        <span class="sop-shortcut-badge" onclick="clickWizardStepShortcut('Langkah 3: Sajikan minuman dengan ramah (senyum, salam, sapa)')">💡 Langkah 3 Barista</span>
                       </div>
                     </div>
                   </div>
@@ -2726,9 +2732,9 @@
                     <div class="bg-light p-3 rounded-4 border">
                       <span class="small fw-bold text-muted d-block mb-2"><i class="fas fa-copy text-secondary me-1"></i>Klik contoh berikut untuk langsung menyalin:</span>
                       <div class="d-flex flex-wrap gap-2">
-                        <span class="sop-shortcut-badge" onclick="addEmergencyRow('Ada komplain rasa makanan dari pelanggan', 'Minta maaf dengan tulus, ambil makanan lama, dan minta kitchen masak ulang secepatnya')">💡 Jika Komplain Makanan</span>
-                        <span class="sop-shortcut-badge" onclick="addEmergencyRow('Mesin espresso mati mendadak atau grinder eror', 'Periksa stop kontak listrik, matikan sementara menu espresso di kasir, dan laporkan supervisor')">💡 Jika Mesin Eror</span>
-                        <span class="sop-shortcut-badge" onclick="addEmergencyRow('Terjadi selisih uang kas kecil di laci kasir', 'Catat detail transaksi manual dan segera koordinasikan dengan bagian keuangan/Owner')">💡 Jika Selisih Kasir</span>
+                        <span class="sop-shortcut-badge" onclick="clickEmergencyShortcut('Ada komplain rasa makanan dari pelanggan', 'Minta maaf dengan tulus, ambil makanan lama, dan minta kitchen masak ulang secepatnya')">💡 Jika Komplain Makanan</span>
+                        <span class="sop-shortcut-badge" onclick="clickEmergencyShortcut('Mesin espresso mati mendadak atau grinder eror', 'Periksa stop kontak listrik, matikan sementara menu espresso di kasir, dan laporkan supervisor')">💡 Jika Mesin Eror</span>
+                        <span class="sop-shortcut-badge" onclick="clickEmergencyShortcut('Terjadi selisih uang kas kecil di laci kasir', 'Catat detail transaksi manual dan segera koordinasikan dengan bagian keuangan/Owner')">💡 Jika Selisih Kasir</span>
                       </div>
                     </div>
                   </div>
@@ -10588,8 +10594,6 @@
           
           btn.disabled = false;
           cancelCrop();
-          
-          document.getElementById('modalSOPRowPreview').style.display = 'flex';
         }
         else {
           btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Mengupdate...';
@@ -10653,6 +10657,64 @@
             fileInput.value = '';
             fileInput.click();
           }
+        }
+      }
+
+      function clickChecklistShortcut(val) {
+        const container = document.getElementById('wizardChecklistContainer');
+        const rows = container.querySelectorAll('.dynamic-row-input');
+        let emptyRowInput = null;
+        for (let row of rows) {
+          const input = row.querySelector('input[type="text"]');
+          if (input && input.value.trim() === "") {
+            emptyRowInput = input;
+            break;
+          }
+        }
+        if (emptyRowInput) {
+          emptyRowInput.value = val;
+        } else {
+          addChecklistRow(val);
+        }
+      }
+
+      function clickWizardStepShortcut(val) {
+        const container = document.getElementById('wizardStepsContainer');
+        const rows = container.querySelectorAll('.dynamic-row-input');
+        let emptyRowInput = null;
+        for (let row of rows) {
+          const input = row.querySelector('input[type="text"]');
+          if (input && input.value.trim() === "") {
+            emptyRowInput = input;
+            break;
+          }
+        }
+        if (emptyRowInput) {
+          emptyRowInput.value = val;
+        } else {
+          addWizardStepRow(val);
+        }
+      }
+
+      function clickEmergencyShortcut(ifVal, thenVal) {
+        const container = document.getElementById('wizardEmergencyContainer');
+        const cards = container.querySelectorAll('.card');
+        let emptyCard = null;
+        for (let card of cards) {
+          const inputs = card.querySelectorAll('input[type="text"]');
+          if (inputs.length >= 2) {
+            if (inputs[0].value.trim() === "" && inputs[1].value.trim() === "") {
+              emptyCard = card;
+              break;
+            }
+          }
+        }
+        if (emptyCard) {
+          const inputs = emptyCard.querySelectorAll('input[type="text"]');
+          inputs[0].value = ifVal;
+          inputs[1].value = thenVal;
+        } else {
+          addEmergencyRow(ifVal, thenVal);
         }
       }
 
