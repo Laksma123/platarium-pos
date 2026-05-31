@@ -6284,6 +6284,18 @@
         document.body.appendChild(overlay);
       }
 
+      function waitImagesToLoad(container) {
+        const imgs = container.querySelectorAll('img');
+        const promises = Array.from(imgs).map(img => {
+          if (img.complete) return Promise.resolve();
+          return new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = resolve; // resolve on error too so it doesn't block forever
+          });
+        });
+        return Promise.all(promises);
+      }
+
       function generateSOPCaptureHtml(sop) {
         const positions = Array.isArray(sop.posisi) ? sop.posisi.join(", ") : String(sop.posisi);
         const date = sop.tanggal || "-";
@@ -6431,16 +6443,14 @@
         }
         
         generateSOPCaptureHtml(sop);
+        const capDiv = document.getElementById('sopCaptureContainer');
         
-        setTimeout(() => {
-          const capDiv = document.getElementById('sopCaptureContainer');
-          
-          html2canvas(capDiv, { scale: 4, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+        waitImagesToLoad(capDiv).then(() => {
+          html2canvas(capDiv, { scale: 2.5, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
             document.documentElement.style.zoom = savedZoom;
-            
             if (overlay) overlay.classList.add('d-none');
             
-            const base64Data = canvas.toDataURL('image/jpeg', 0.9);
+            const base64Data = canvas.toDataURL('image/jpeg', 0.85);
             const posisiLabel = Array.isArray(sop.posisi) ? sop.posisi.join(", ") : String(sop.posisi);
             
             const captionMsg = `📋 <b>Standard Operasional Prosedur (SOP)</b>\n` +
@@ -6456,6 +6466,10 @@
               } else {
                 alert("Gagal mengirim Telegram: " + res.message);
               }
+            }).withFailureHandler(err => {
+              btn.innerHTML = ogHtml;
+              btn.disabled = false;
+              alert("Server Error: Gagal mengirim Telegram. Hubungi tim IT.");
             }).sendScheduleToTelegram(base64Data, captionMsg);
             
           }).catch(err => {
@@ -6465,7 +6479,13 @@
             btn.disabled = false;
             alert("Gagal memproses screenshot SOP: " + err);
           });
-        }, 300);
+        }).catch(imgErr => {
+          document.documentElement.style.zoom = savedZoom;
+          if (overlay) overlay.classList.add('d-none');
+          btn.innerHTML = ogHtml;
+          btn.disabled = false;
+          alert("Gagal memuat gambar-gambar SOP.");
+        });
       }
 
       function downloadSOPPDF(sopId) {
@@ -6482,17 +6502,20 @@
         }
         
         generateSOPCaptureHtml(sop);
+        const capDiv = document.getElementById('sopCaptureContainer');
         
-        setTimeout(() => {
-          const capDiv = document.getElementById('sopCaptureContainer');
-          
-          html2canvas(capDiv, { scale: 4, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+        waitImagesToLoad(capDiv).then(() => {
+          html2canvas(capDiv, { scale: 2.5, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
             document.documentElement.style.zoom = savedZoom;
-            
             if (overlay) overlay.classList.add('d-none');
             
-            const imgData = canvas.toDataURL('image/jpeg', 1.0);
-            const { jsPDF } = window.jspdf;
+            const imgData = canvas.toDataURL('image/jpeg', 0.9);
+            const jsPDF = window.jspdf ? (window.jspdf.jsPDF || window.jspdf) : window.jsPDF;
+            
+            if (!jsPDF) {
+              alert("Gagal: Pustaka PDF (jsPDF) tidak dapat dimuat.");
+              return;
+            }
             
             const canvasWidth = canvas.width;
             const canvasHeight = canvas.height;
@@ -6515,9 +6538,13 @@
           }).catch(err => {
             document.documentElement.style.zoom = savedZoom;
             if (overlay) overlay.classList.add('d-none');
-            alert("Gagal membuat dokumen PDF: " + err);
+            alert("Gagal memproses PDF: " + err);
           });
-        }, 300);
+        }).catch(imgErr => {
+          document.documentElement.style.zoom = savedZoom;
+          if (overlay) overlay.classList.add('d-none');
+          alert("Gagal memuat gambar untuk ekspor PDF.");
+        });
       }
 
       function startSOPWizard(existingSopId = "") {
