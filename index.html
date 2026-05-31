@@ -4627,6 +4627,19 @@
             scRow.classList.add('d-none');
           }
         }
+
+        // Tampilkan potongan pembulatan ke bawah khusus metode bayar CASH
+        const roundingDiff = (method === 'CASH') ? (Math.round(baseTotal) - window.CHECKOUT_ADJUSTED_TOTAL) : 0;
+        const roundRow = document.getElementById('checkoutRoundingRow');
+        const roundText = document.getElementById('checkoutRoundingText');
+        if (roundRow && roundText) {
+          if (roundingDiff > 0) {
+            roundText.innerText = '-Rp ' + roundingDiff.toLocaleString(undefined, {maximumFractionDigits:0});
+            roundRow.classList.remove('d-none');
+          } else {
+            roundRow.classList.add('d-none');
+          }
+        }
         
         const finalTotalEl = document.getElementById('checkoutFinalTotalText');
         if (finalTotalEl) {
@@ -14126,6 +14139,10 @@
                   <div id="checkoutSurchargeRow" class="d-flex justify-content-between mb-2 text-primary fw-semibold d-none">
                     <span>Surcharge <span id="checkoutSurchargeLabel"></span></span>
                     <span id="checkoutSurchargeText">Rp 0</span>
+                  </div>
+                  <div id="checkoutRoundingRow" class="d-flex justify-content-between mb-2 text-success fw-semibold d-none">
+                    <span>Pembulatan CASH</span>
+                    <span id="checkoutRoundingText">-Rp 0</span>
                   </div>
                   <hr class="my-2" style="border-top: 1px dashed #dee2e6; opacity: 1;">
                   <div class="d-flex justify-content-between fw-bold text-dark fs-6">
