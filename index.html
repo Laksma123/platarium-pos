@@ -6965,13 +6965,29 @@
         if (p2) p2.classList.add('d-none');
       }
 
-      function closeGlobalMarkupSuggest() {
+      function getSelectedMarkupValue() {
+        const isRoundChecked = document.getElementById('markupOptRound') && document.getElementById('markupOptRound').checked;
+        if (isRoundChecked) {
+          return getActiveCashRoundValue();
+        } else {
+          const manualInput = document.getElementById('markupManualValue');
+          return manualInput ? (Number(manualInput.value) || 0) : 0;
+        }
+      }
+
+      function closeGlobalMarkupSuggest(keepIya = false) {
         const modal = document.getElementById('modalGlobalMarkupSuggest');
         if (modal) modal.classList.add('d-none');
         
-        // Revert toggle in setting row back to "Tidak"
-        const mstTidak = document.getElementById('mstTidak');
-        if (mstTidak) mstTidak.checked = true;
+        if (!keepIya) {
+          // Revert toggle in setting row back to "Tidak"
+          const mstTidak = document.getElementById('mstTidak');
+          if (mstTidak) mstTidak.checked = true;
+        } else {
+          // Keep toggle in setting row at "Iya"
+          const mstIya = document.getElementById('mstIya');
+          if (mstIya) mstIya.checked = true;
+        }
       }
 
       function updateMarkupSaranSectionVisibility() {
@@ -6993,12 +7009,54 @@
 
       // Empty functions for BANTU, LANJUT MANUAL, and Tidak toggle
       function handleMarkupBantu() {
-        // Sementara kosong
+        const val = getSelectedMarkupValue();
+        if (val <= 0) {
+          alert('Nilai markup tidak valid atau 0. Silakan tentukan nilai markup terlebih dahulu.');
+          return;
+        }
+
+        const btn = document.getElementById('btnMarkupBantu');
+        const originalText = btn ? btn.innerHTML : 'BANTU';
+        if (btn) {
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memproses...';
+        }
+
+        google.script.run
+        .withSuccessHandler(res => {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+          }
+          if (res && res.status === 'success') {
+            // Close modal keeping toggle at "Iya"
+            closeGlobalMarkupSuggest(true);
+            
+            // Reload products in frontend POS UI
+            loadProducts();
+            
+            // Trigger audit log
+            if (typeof triggerAuditLog === 'function') {
+              triggerAuditLog("GLOBAL MARKUP SUGGEST", `Menerapkan markup harga global sebesar Rp ${val.toLocaleString('id-ID')} ke seluruh produk.`);
+            }
+            
+            alert(`Berhasil menambahkan markup harga sebesar Rp ${val.toLocaleString('id-ID')} ke seluruh produk secara global!`);
+          } else {
+            alert('Gagal menerapkan markup: ' + (res ? res.message : 'Terjadi kesalahan sistem'));
+          }
+        })
+        .withFailureHandler(err => {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+          }
+          alert('Terjadi kesalahan koneksi server: ' + err.message);
+        })
+        .applyGlobalProductMarkup(val);
       }
 
       function handleMarkupLanjutManual() {
-        // Sementara kosong, let's close the modal
-        closeGlobalMarkupSuggest();
+        closeGlobalMarkupSuggest(true);
       }
 
       function handleMarkupTidak() {
