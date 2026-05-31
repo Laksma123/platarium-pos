@@ -14861,6 +14861,8 @@
       }
 
       function openThermalSettingModal() {
+        document.getElementById('printerTargetSelection').value = 'kasir';
+        loadPrinterSettingsByTarget();
         document.getElementById('modalThermalSetting').classList.remove('d-none');
       }
 
@@ -15036,14 +15038,52 @@
       let BLUETOOTH_CHARACTERISTIC = null;
 
       // 1. Fungsi Menyimpan Konfigurasi Perangkat
+      function togglePrinterConnectionUI() {
+        const type = document.getElementById('printerConnectionType').value;
+        const addressContainer = document.getElementById('printerAddressContainer');
+        if (type === 'usb' || type === 'lan') {
+          addressContainer.style.display = 'block';
+        } else {
+          addressContainer.style.display = 'none';
+        }
+      }
+
+      function loadPrinterSettingsByTarget() {
+        const target = document.getElementById('printerTargetSelection').value;
+        
+        const type = localStorage.getItem(`pos_printer_${target}_type`) || 'bluetooth';
+        const size = localStorage.getItem(`pos_printer_${target}_size`) || '58';
+        const isActive = localStorage.getItem(`pos_printer_${target}_active`) === 'true';
+        const address = localStorage.getItem(`pos_printer_${target}_address`) || '';
+
+        document.getElementById('printerConnectionType').value = type;
+        document.getElementById('printerPaperSize').value = size;
+        document.getElementById('printerActiveToggle').checked = isActive;
+        document.getElementById('printerAddressStr').value = address;
+        
+        togglePrinterConnectionUI();
+      }
+
       function saveThermalConfig(btn) {
+        const target = document.getElementById('printerTargetSelection').value;
         const type = document.getElementById('printerConnectionType').value;
         const size = document.getElementById('printerPaperSize').value;
-        const isActive = document.getElementById('thermalToggle').checked;
+        const isActive = document.getElementById('printerActiveToggle').checked;
+        const address = document.getElementById('printerAddressStr').value;
 
-        localStorage.setItem('pos_printer_type', type);
-        localStorage.setItem('pos_printer_size', size);
-        localStorage.setItem('pos_printer_active', isActive ? 'true' : 'false');
+        localStorage.setItem(`pos_printer_${target}_type`, type);
+        localStorage.setItem(`pos_printer_${target}_size`, size);
+        localStorage.setItem(`pos_printer_${target}_active`, isActive ? 'true' : 'false');
+        localStorage.setItem(`pos_printer_${target}_address`, address);
+
+        // Khusus target 'kasir', sinkronkan juga dengan id global lama agar tombol main dashboard tidak error
+        if (target === 'kasir') {
+          localStorage.setItem('pos_printer_type', type);
+          localStorage.setItem('pos_printer_size', size);
+          localStorage.setItem('pos_printer_active', isActive ? 'true' : 'false');
+          document.getElementById('thermalToggle').checked = isActive;
+          toggleThermalSettingBtn();
+        }
         
         btn.innerHTML = '<i class="fas fa-check"></i> TERSIMPAN';
         btn.classList.replace('btn-dark', 'btn-success');
@@ -15051,7 +15091,6 @@
         setTimeout(() => {
           btn.innerHTML = 'SIMPAN PENGATURAN';
           btn.classList.replace('btn-success', 'btn-dark');
-          closeThermalSettingModal();
         }, 1000);
       }
 
@@ -15421,18 +15460,94 @@
         return bytes;
       }
 
+      async function buildKitchenBarEscPosBytes(transactionData, station) {
+        const items = transactionData.items.filter(item => {
+           if (!item.posKerja) return false;
+           const pos = item.posKerja.toLowerCase();
+           if (station === 'Kitchen' && (pos.includes('kitchen') || pos.includes('dapur'))) return true;
+           if (station === 'Bar' && (pos.includes('bar') || pos.includes('minum'))) return true;
+           return false;
+        });
+
+        if (items.length === 0) return null; 
+
+        const target = station.toLowerCase();
+        const paperSize = parseInt(localStorage.getItem(`pos_printer_${target}_size`)) || 58;
+        const maxChars = paperSize === 80 ? 48 : 32;
+
+        const cmd = {
+          init: [0x1B, 0x40],
+          alignCenter: [0x1B, 0x61, 0x01],
+          alignLeft: [0x1B, 0x61, 0x00],
+          boldOn: [0x1B, 0x45, 0x01],
+          boldOff: [0x1B, 0x45, 0x00],
+          sizeDouble: [0x1D, 0x21, 0x11], 
+          sizeNormal: [0x1D, 0x21, 0x00],
+          cut: [0x1D, 0x56, 0x41, 0x03],
+          beep: [0x1B, 0x42, 0x05, 0x02] 
+        };
+
+        let bytes = [];
+        const pushTxt = (str) => {
+          str.split('').forEach(char => bytes.push(char.charCodeAt(0)));
+          bytes.push(0x0A);
+        };
+
+        bytes.push(...cmd.init);
+        bytes.push(...cmd.beep);
+
+        // Header
+        bytes.push(...cmd.alignCenter);
+        bytes.push(...cmd.sizeDouble);
+        bytes.push(...cmd.boldOn);
+        pushTxt(`TIKET ${station.toUpperCase()}`);
+        bytes.push(...cmd.sizeNormal);
+        bytes.push(...cmd.boldOff);
+        
+        // Info
+        bytes.push(...cmd.alignLeft);
+        pushTxt(`Order ID : ${transactionData.orderId || 'ORD-NEW'}`);
+        pushTxt(`Tipe     : ${transactionData.orderType || '-'}`);
+        pushTxt(`Waktu    : ${new Date().toLocaleTimeString('id-ID')}`);
+        if (transactionData.customerInfo && transactionData.customerInfo.nama) {
+           pushTxt(`Pemesan  : ${transactionData.customerInfo.nama}`);
+        }
+        pushTxt('-'.repeat(maxChars));
+
+        // Items
+        bytes.push(...cmd.sizeDouble);
+        items.forEach(i => {
+           bytes.push(...cmd.boldOn);
+           pushTxt(`${i.qty}x ${i.name}`);
+           bytes.push(...cmd.boldOff);
+           if (i.note) {
+              bytes.push(...cmd.sizeNormal);
+              pushTxt(`   Catatan: ${i.note}`);
+              bytes.push(...cmd.sizeDouble);
+           }
+        });
+        bytes.push(...cmd.sizeNormal);
+
+        pushTxt('-'.repeat(maxChars));
+        pushTxt('\n\n\n');
+        bytes.push(...cmd.cut);
+
+        return bytes;
+      }
+
+      const BLUETOOTH_DEVICES = { kasir: null, kitchen: null, bar: null };
+
       // 5. Eksekutor Cetak Web Bluetooth API (Mobile/Tablet)
-      async function executeBluetoothPrint(bytes) {
+      async function executeBluetoothPrint(bytes, target) {
         try {
-          if (!BLUETOOTH_DEVICE || !BLUETOOTH_DEVICE.gatt.connected) {
-            BLUETOOTH_DEVICE = await navigator.bluetooth.requestDevice({
+          if (!BLUETOOTH_DEVICES[target] || !BLUETOOTH_DEVICES[target].gatt.connected) {
+            BLUETOOTH_DEVICES[target] = await navigator.bluetooth.requestDevice({
               acceptAllDevices: true,
               optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2']
             });
           }
 
-          const server = await BLUETOOTH_DEVICE.gatt.connect();
-          // Mencari service printer standard
+          const server = await BLUETOOTH_DEVICES[target].gatt.connect();
           const services = await server.getPrimaryServices();
           if (services.length === 0) throw new Error("Service tidak ditemukan di perangkat Bluetooth.");
           const service = services[0];
@@ -15440,10 +15555,8 @@
           const characteristics = await service.getCharacteristics();
           if (characteristics.length === 0) throw new Error("Karakteristik Bluetooth tidak valid.");
           
-          // Cari endpoint untuk "write"
           const characteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse) || characteristics[0];
 
-          // Karena Bluetooth LE punya limit ukuran per-paket, kita pecah bytes menjadi chunk (potongan)
           const chunkSize = 256; 
           for (let i = 0; i < bytes.length; i += chunkSize) {
             const chunk = new Uint8Array(bytes.slice(i, i + chunkSize));
@@ -15452,22 +15565,23 @@
           
         } catch (error) {
           console.error("Bluetooth Error:", error);
-          alert("Gagal mencetak via Bluetooth: " + error.message + "\n(Pastikan Bluetooth nyala & Printer sudah dipairing)");
+          alert(`Gagal mencetak via Bluetooth (${target}): ` + error.message + "\n(Pastikan Bluetooth nyala & Printer sudah dipairing)");
           throw error;
         }
       }
 
       // 6. Eksekutor Cetak QZ Tray (Desktop PC/Mac)
-      async function executeQZPrint(bytes) {
+      async function executeQZPrint(bytes, address) {
         try {
           if (!qz.websocket.isActive()) {
             await qz.websocket.connect();
           }
-          // Mengambil printer default di OS Windows/Mac
-          const defaultPrinter = await qz.printers.getDefault();
-          const config = qz.configs.create(defaultPrinter);
+          let printerTarget = address;
+          if (!printerTarget) {
+            printerTarget = await qz.printers.getDefault();
+          }
+          const config = qz.configs.create(printerTarget);
           
-          // QZ Tray menerima Hex Array
           const hexData = bytes.map(b => b.toString(16).padStart(2, '0')).join('');
           
           const dataObj = [{
@@ -15486,27 +15600,63 @@
         }
       }
 
+      async function executeLanPrint(bytes, ipAddress) {
+        if (typeof qz !== 'undefined' && qz.websocket && (qz.websocket.isActive() || await qz.websocket.connect())) {
+             await executeQZPrint(bytes, ipAddress);
+        } else {
+             if (window.Android && typeof window.Android.printLan === 'function') {
+                 let binary = '';
+                 bytes.forEach((b) => binary += String.fromCharCode(b));
+                 window.Android.printLan(ipAddress, window.btoa(binary));
+             } else {
+                 throw new Error("LAN tidak didukung murni oleh browser. Gunakan QZ Tray di PC atau tambahkan JavascriptInterface pada APK.");
+             }
+        }
+      }
+
+      async function printToTarget(target, bytes) {
+        const type = localStorage.getItem(`pos_printer_${target}_type`) || 'bluetooth';
+        const address = localStorage.getItem(`pos_printer_${target}_address`) || '';
+
+        if (type === 'bluetooth') {
+           if (window.Android && typeof window.Android.printBluetooth === 'function') {
+               let binary = ''; bytes.forEach((b) => binary += String.fromCharCode(b));
+               window.Android.printBluetooth(address, window.btoa(binary));
+           } else {
+               await executeBluetoothPrint(bytes, target);
+           }
+        } else if (type === 'usb') {
+           await executeQZPrint(bytes, address);
+        } else if (type === 'lan') {
+           await executeLanPrint(bytes, address);
+        }
+      }
+
       // 7. Master Controller
       async function autoPrintReceipt(transactionData) {
-        // [PERBAIKAN] 1. Cek apakah Induk Fitur Invoice Upgrade Aktif. Jika OFF, hiraukan pencetakan
         if (localStorage.getItem('pos_invoice_main_active') !== 'true') return;
 
-        // [PERBAIKAN] 2. Cek apakah Sub-Fitur Thermal Printer Aktif
-        if (localStorage.getItem('pos_printer_active') !== 'true') return;
-
-        const connType = localStorage.getItem('pos_printer_type') || 'bluetooth';
-
         try {
-          const bytes = await buildEscPosBytes(transactionData);
-          
-          // --- KODE PRINT ASLI ---
-          if (connType === 'bluetooth') {
-            await executeBluetoothPrint(bytes);
-          } else {
-            await executeQZPrint(bytes);
+          if (localStorage.getItem('pos_printer_kasir_active') === 'true' || localStorage.getItem('pos_printer_active') === 'true') {
+            const bytesKasir = await buildEscPosBytes(transactionData);
+            await printToTarget('kasir', bytesKasir).catch(e => console.warn("Kasir print error", e));
+          }
+
+          if (localStorage.getItem('pos_printer_kitchen_active') === 'true') {
+            const bytesKitchen = await buildKitchenBarEscPosBytes(transactionData, 'Kitchen');
+            if (bytesKitchen) {
+              await printToTarget('kitchen', bytesKitchen).catch(e => console.warn("Kitchen print error", e));
+            }
+          }
+
+          if (localStorage.getItem('pos_printer_bar_active') === 'true') {
+            const bytesBar = await buildKitchenBarEscPosBytes(transactionData, 'Bar');
+            if (bytesBar) {
+              await printToTarget('bar', bytesBar).catch(e => console.warn("Bar print error", e));
+            }
           }
         } catch (e) {
-          console.warn("Proses cetak terhenti: ", e);
+          console.warn("Proses cetak multi-printer terhenti: ", e);
         }
       }
 
@@ -15927,12 +16077,8 @@
           pushTxt('\n\n\n');
           bytes.push(...cmd.cut);
 
-          // --- KODE PRINT ASLI ---
-          if (connType === 'bluetooth') {
-            await executeBluetoothPrint(bytes);
-          } else {
-            await executeQZPrint(bytes);
-          }
+          // --- KODE PRINT BARU MENDUKUNG 3 PRINTER (DEFAULT REKAP KE KASIR) ---
+          await printToTarget('kasir', bytes);
 
         } catch(e) {
           console.warn("Gagal cetak rekap thermal", e);
@@ -17443,12 +17589,32 @@
         </div>
         
         <div class="mb-3">
-          <label class="small fw-bold text-muted mb-1">TIPE KONEKSI</label>
-          <select class="form-select border-2 fw-bold" id="printerConnectionType">
-            <option value="bluetooth">Bluetooth (Web Bluetooth API)</option>
-            <option value="usb">USB Desktop (QZ Tray)</option>
+          <label class="small fw-bold text-muted mb-1">TARGET PRINTER</label>
+          <select class="form-select border-2 fw-bold text-primary" id="printerTargetSelection" onchange="loadPrinterSettingsByTarget()">
+            <option value="kasir">Printer Kasir (Struk Utama)</option>
+            <option value="kitchen">Printer Kitchen (Tiket Dapur)</option>
+            <option value="bar">Printer Bar (Tiket Minuman)</option>
           </select>
-          <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height:1.2;">Browser web butuh WebAPI untuk menembus perangkat keras (hardware) Anda.</small>
+        </div>
+
+        <div class="form-check form-switch mb-3 bg-light p-2 rounded border d-flex align-items-center">
+          <input class="form-check-input m-0 ms-2" type="checkbox" id="printerActiveToggle" role="switch" style="width: 35px; height: 18px; cursor:pointer;">
+          <label class="form-check-label fw-bold ms-3" for="printerActiveToggle">Aktifkan Printer Ini</label>
+        </div>
+
+        <div class="mb-3">
+          <label class="small fw-bold text-muted mb-1">TIPE KONEKSI</label>
+          <select class="form-select border-2 fw-bold" id="printerConnectionType" onchange="togglePrinterConnectionUI()">
+            <option value="bluetooth">Bluetooth (Web API / APK)</option>
+            <option value="usb">USB Desktop (QZ Tray)</option>
+            <option value="lan">LAN / Network (QZ Tray / APK)</option>
+          </select>
+        </div>
+
+        <div class="mb-3" id="printerAddressContainer" style="display:none;">
+          <label class="small fw-bold text-muted mb-1">NAMA PRINTER / IP ADDRESS</label>
+          <input type="text" class="form-control border-2 fw-bold" id="printerAddressStr" placeholder="Contoh: 192.168.1.100 atau EPSON TM-T82">
+          <small class="text-muted d-block mt-1" style="font-size:0.65rem; line-height:1.2;">Untuk QZ Tray: Nama Printer Windows/Mac atau alamat IP. Untuk APK (LAN): Alamat IP Printer.</small>
         </div>
 
         <div class="mb-4">
