@@ -14898,6 +14898,18 @@
         const container = document.getElementById('printerDetectorContainer');
         if (!container) return;
 
+        // Izin klik cepat untuk setting printer: Hanya untuk Owner dan Admin
+        const isOwnerOrAdmin = (USER_ROLE === 'ADMIN') || (typeof ACTIVE_CASHIER !== 'undefined' && ACTIVE_CASHIER && ACTIVE_CASHIER.toLowerCase() === 'owner');
+        if (isOwnerOrAdmin) {
+          container.style.cursor = 'pointer';
+          container.setAttribute('title', 'Klik untuk Setting Printer');
+          container.onclick = openThermalSettingModal;
+        } else {
+          container.style.cursor = 'default';
+          container.removeAttribute('title');
+          container.onclick = null;
+        }
+
         const posView = document.getElementById('view-pos');
         const monitorView = document.getElementById('view-monitor');
         const financeView = document.getElementById('view-finance');
