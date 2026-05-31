@@ -1827,6 +1827,39 @@
         min-height: 0;
       }
       
+      /* Gaya Khusus Tab SOP Baru */
+      .sop-tab-sidebar {
+        width: 320px;
+        background: #ffffff;
+        border-right: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+      }
+      .sop-tab-content {
+        flex: 1;
+        overflow: hidden;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+      }
+      @media (max-width: 768px) {
+        .sop-tab-sidebar {
+          width: 100% !important;
+          display: flex !important;
+        }
+        .sop-tab-sidebar.d-none-mobile {
+          display: none !important;
+        }
+        .sop-tab-content {
+          width: 100% !important;
+          display: none !important;
+        }
+        .sop-tab-content.d-block-mobile {
+          display: flex !important;
+        }
+      }
+      
       /* Wizard Stepper Styling */
       .sop-stepper {
         display: flex;
@@ -2375,7 +2408,7 @@
                 <p class="text-muted small m-0 ms-2" style="transform: translateY(-4px);">Kelola karyawan, gaji, dan atur jadwal shift kerja.</p>
               </div>
               <div class="d-flex gap-2">
-                <button class="btn btn-outline-primary px-4 rounded-pill shadow-sm fw-bold d-flex align-items-center" onclick="openSOPDashboard()" style="height: 38px;">
+                <button id="btnAturSopManning" class="btn btn-outline-primary px-4 rounded-pill shadow-sm fw-bold d-flex align-items-center" onclick="openSOPDashboard()" style="height: 38px;">
                   <i class="fas fa-tasks me-2"></i>Atur SOP
                 </button>
                 <button class="btn btn-primary px-4 rounded-pill shadow-sm fw-bold d-flex align-items-center" onclick="openStaffModal()" style="height: 38px;">
@@ -2491,6 +2524,43 @@
           </div>
           </div> <!-- Closes #manningContentArea -->
         </div> <!-- Closes #view-manning -->
+
+        <!-- DEDICATED SOP VIEW / TAB -->
+        <div id="view-sop" class="app-view p-0" style="display:none; background: #f8fafc; height: calc(100vh - var(--bottom-nav-height) - env(safe-area-inset-bottom)); overflow: hidden; flex-direction: row !important;">
+          
+          <div id="sopTabLoadingArea" class="text-center py-5 w-100 align-self-center">
+            <div class="spinner-border text-warning mb-3" style="width: 3.5rem; height: 3.5rem; border-width: 0.3rem;" role="status"></div>
+            <h5 class="fw-bold text-dark mb-1">Memuat Data SOP...</h5>
+            <p class="text-muted small">Sinkronisasi data dengan server, mohon tunggu.</p>
+          </div>
+
+          <div id="sopTabContentArea" class="d-none w-100 h-100 d-flex flex-row overflow-hidden">
+            <!-- Left Sidebar: SOP List -->
+            <div class="sop-tab-sidebar">
+              <div class="p-3 border-bottom bg-light">
+                <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="height: 38px;">
+                  <span class="input-group-text bg-transparent border-0"><i class="fas fa-search text-muted"></i></span>
+                  <input type="text" id="searchTabSOP" class="form-control border-0 bg-transparent fw-bold" placeholder="Cari SOP..." oninput="filterSopTabList()">
+                </div>
+              </div>
+              <div class="sop-list-container" id="sopTabListItems">
+                <!-- Dynamic SOP list items will be injected here -->
+              </div>
+            </div>
+            
+            <!-- Right Side: SOP Details / Beautiful Preview -->
+            <div class="sop-tab-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 20px;">
+              <div class="sop-detail-card d-flex flex-column align-items-center justify-content-center text-center p-5 text-muted h-100" id="sopTabDetailPlaceholder">
+                <i class="fas fa-book-reader fa-3x text-warning mb-3 opacity-50"></i>
+                <h5 class="fw-bold text-dark">Silakan Pilih SOP</h5>
+                <p class="small">Pilih salah satu SOP dari daftar sebelah kiri untuk melihat detail instruksi kerja outlet.</p>
+              </div>
+              <div class="sop-detail-card d-none h-100 shadow-sm" id="sopTabDetailContent" style="display: flex; flex-direction: column; min-height: 0; padding: 20px; background: white; border-radius: 1.25rem; border: 1px solid #f1f5f9;">
+                <!-- Dynamic preview will be injected here -->
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- PREMIUM SOP DASHBOARD & WIZARD MODAL -->
         <div id="modalSOP" class="sop-dashboard-overlay">
@@ -6069,6 +6139,256 @@
         if (overlay) overlay.classList.remove('active');
       }
 
+      function initSopTab() {
+        const opLoader = document.getElementById('sopTabLoadingArea');
+        const contentArea = document.getElementById('sopTabContentArea');
+        
+        if (opLoader) opLoader.classList.remove('d-none');
+        if (contentArea) contentArea.classList.add('d-none');
+
+        if (SOP_DATA && SOP_DATA.length > 0) {
+          if (opLoader) opLoader.classList.add('d-none');
+          if (contentArea) contentArea.classList.remove('d-none');
+          renderSopTabUI();
+          return;
+        }
+
+        google.script.run.withSuccessHandler(res => {
+          if (res.status === 'success') {
+            SOP_DATA = res.sops || [];
+            STAFF_DATA = res.staff || [];
+            SCHEDULE_DATA = res.schedules || [];
+            STAFF_FACES = res.faces || {};
+          }
+          if (opLoader) opLoader.classList.add('d-none');
+          if (contentArea) contentArea.classList.remove('d-none');
+          renderSopTabUI();
+        }).getManningData();
+      }
+
+      function renderSopTabUI() {
+        const sidebarItems = document.getElementById('sopTabListItems');
+        if (!sidebarItems) return;
+
+        sidebarItems.innerHTML = "";
+        if (!SOP_DATA || SOP_DATA.length === 0) {
+          sidebarItems.innerHTML = '<div class="text-center py-4 text-muted small">Belum ada SOP yang dibuat.</div>';
+          return;
+        }
+
+        SOP_DATA.forEach(sop => {
+          const posisiLabel = Array.isArray(sop.posisi) ? sop.posisi.join(", ") : String(sop.posisi);
+          const waktuLabel = Array.isArray(sop.waktu) ? sop.waktu.join(", ") : String(sop.waktu);
+          
+          const item = document.createElement('div');
+          item.className = 'sop-list-item';
+          item.id = `sop-tab-item-${sop.id}`;
+          item.onclick = () => renderSopTabDetail(sop.id);
+          item.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="badge bg-dark rounded-pill" style="font-size:0.65rem;">${sop.id}</span>
+              <span class="small text-muted" style="font-size:0.7rem;"><i class="far fa-clock me-1"></i>${waktuLabel}</span>
+            </div>
+            <h6 class="fw-bold text-dark mt-2 mb-1">${posisiLabel}</h6>
+            <div class="text-muted" style="font-size:0.75rem;">
+              <i class="far fa-calendar-alt me-1"></i>${sop.tanggal || '-'}
+            </div>
+          `;
+          sidebarItems.appendChild(item);
+        });
+
+        // Auto select first SOP if there is one and we are on desktop
+        if (SOP_DATA.length > 0 && window.innerWidth > 768) {
+          const selectedId = window.CURRENT_SELECTED_TAB_SOP_ID || SOP_DATA[0].id;
+          renderSopTabDetail(selectedId);
+        } else {
+          document.getElementById('sopTabDetailPlaceholder').classList.remove('d-none');
+          document.getElementById('sopTabDetailContent').classList.add('d-none');
+        }
+      }
+
+      function renderSopTabDetail(sopId) {
+        const sop = SOP_DATA.find(s => s.id === sopId);
+        if (!sop) return;
+
+        window.CURRENT_SELECTED_TAB_SOP_ID = sopId;
+
+        const sidebar = document.querySelector('.sop-tab-sidebar');
+        const content = document.querySelector('.sop-tab-content');
+
+        if (window.innerWidth <= 768) {
+          sidebar.classList.add('d-none-mobile');
+          content.classList.add('d-block-mobile');
+        }
+
+        document.querySelectorAll('#sopTabListItems .sop-list-item').forEach(el => el.classList.remove('active'));
+        const activeItem = document.getElementById(`sop-tab-item-${sopId}`);
+        if (activeItem) activeItem.classList.add('active');
+
+        const positions = Array.isArray(sop.posisi) ? sop.posisi.join(", ") : String(sop.posisi);
+        const date = sop.tanggal || "-";
+        const storeNameEl = document.getElementById('uiStoreName');
+        const storeName = storeNameEl ? storeNameEl.innerText.trim().toUpperCase() : "PLATARIUM POS";
+
+        let timesHtml = "";
+        if (Array.isArray(sop.waktu)) {
+          sop.waktu.forEach(w => {
+            const prepList = (sop.persiapan && sop.persiapan[w]) ? sop.persiapan[w] : [];
+            const stepsList = (sop.langkahInti && sop.langkahInti[w]) ? sop.langkahInti[w] : [];
+
+            let prepItemsHtml = "";
+            prepList.forEach(p => {
+              const text = typeof p === 'object' ? (p.text || "") : p;
+              const foto = typeof p === 'object' ? (p.foto || "") : "";
+              prepItemsHtml += `
+                <div class="col-12 mb-2 d-flex flex-column" style="text-align: left !important;">
+                  <div class="d-flex align-items-start gap-2">
+                    <span class="text-secondary fw-bold" style="font-size: 1.1rem; line-height: 1;">☐</span>
+                    <span class="fw-bold text-dark" style="font-size: 0.95rem;">${text}</span>
+                  </div>
+                  ${foto ? `<div class="mt-2 ps-4"><img src="${foto}" style="max-width: 240px; border-radius: 8px; border: 1px solid #cbd5e1; display: block; cursor:pointer;" onclick="openLargeSOPImage('${foto}')"></div>` : ""}
+                </div>
+              `;
+            });
+            if (prepList.length === 0) prepItemsHtml = `<div class="col-12 text-muted italic small ps-4">Tidak ada checklist persiapan untuk waktu ini.</div>`;
+
+            let stepsItemsHtml = "";
+            stepsList.forEach((s, idx) => {
+              const text = typeof s === 'object' ? (s.text || "") : s;
+              const foto = typeof s === 'object' ? (s.foto || "") : "";
+              stepsItemsHtml += `
+                <div class="col-12 mb-2 d-flex flex-column" style="text-align: left !important;">
+                  <div class="d-flex align-items-start gap-2">
+                    <span class="badge bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 1.5rem; height: 1.5rem; font-size: 0.75rem; flex-shrink: 0; margin-top: 2px;">${idx + 1}</span>
+                    <span class="fw-bold text-dark mt-1" style="font-size: 0.95rem;">${text}</span>
+                  </div>
+                  ${foto ? `<div class="mt-2 ps-4 ms-2"><img src="${foto}" style="max-width: 240px; border-radius: 8px; border: 1px solid #cbd5e1; display: block; cursor:pointer;" onclick="openLargeSOPImage('${foto}')"></div>` : ""}
+                </div>
+              `;
+            });
+            if (stepsList.length === 0) stepsItemsHtml = `<div class="col-12 text-muted italic small ps-4">Tidak ada langkah inti untuk waktu ini.</div>`;
+
+            timesHtml += `
+              <div class="card border-0 shadow-sm rounded-4 p-3 mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0 !important;">
+                <h5 class="fw-bold text-dark border-bottom pb-2 mb-3 text-start">
+                  <i class="fas fa-calendar-day me-2 text-warning"></i>WAKTU OPERASIONAL: <span class="text-uppercase text-warning">${w}</span>
+                </h5>
+                
+                <div class="mb-4">
+                  <h6 class="fw-bold text-muted mb-3 text-start"><i class="fas fa-check-double me-2 text-warning"></i>1. CHECKLIST PERSIAPAN OUTLET</h6>
+                  <div class="row g-2">${prepItemsHtml}</div>
+                </div>
+                
+                <div>
+                  <h6 class="fw-bold text-muted mb-3 text-start"><i class="fas fa-running me-2 text-warning"></i>2. LANGKAH INTI OPERASIONAL KERJA</h6>
+                  <div class="row g-2">${stepsItemsHtml}</div>
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        let emergencyHtml = "";
+        if (Array.isArray(sop.masalah)) {
+          sop.masalah.forEach(m => {
+            const fotoHtml = m.foto ? `<div class="mt-2"><img src="${m.foto}" style="max-width: 240px; border-radius: 8px; border: 1px solid #cbd5e1; display: block; cursor:pointer;" onclick="openLargeSOPImage('${m.foto}')"></div>` : "";
+            emergencyHtml += `
+              <div class="p-3 rounded-4 border mb-2 bg-white" style="border-color: #fed7d7 !important; text-align: left !important;">
+                <div class="fw-bold text-danger mb-1"><i class="fas fa-exclamation-circle me-2"></i>JIKA: ${m.if}</div>
+                <div class="fw-bold text-success"><i class="fas fa-check-circle me-2"></i>MAKA: ${m.then}</div>
+                ${fotoHtml}
+              </div>
+            `;
+          });
+        }
+        if (!sop.masalah || sop.masalah.length === 0) {
+          emergencyHtml = `<div class="text-muted small italic text-start ps-3">Tidak ada aturan darurat khusus.</div>`;
+        }
+
+        let visualImageHtml = "";
+        if (sop.foto) {
+          visualImageHtml = `
+            <div class="card border-0 shadow-sm rounded-4 p-3 mb-4" style="background: #ffffff; border: 1px solid #e2e8f0 !important;">
+              <h5 class="fw-bold text-muted border-bottom pb-2 mb-3 text-start"><i class="fas fa-image me-2 text-warning"></i>4. FOTO STANDAR VISUAL UTAMA</h5>
+              <div class="text-center d-flex justify-content-center">
+                <img src="${sop.foto}" style="max-width: 100%; max-height: 350px; border-radius: 12px; border: 2px solid #e2e8f0; display: block; object-fit: contain; cursor:pointer;" onclick="openLargeSOPImage('${sop.foto}')">
+              </div>
+            </div>
+          `;
+        }
+
+        const previewContainer = document.getElementById('sopTabDetailContent');
+        document.getElementById('sopTabDetailPlaceholder').classList.add('d-none');
+        previewContainer.classList.remove('d-none');
+
+        previewContainer.innerHTML = `
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 border-bottom pb-3">
+            <div class="d-flex align-items-center">
+              <button class="btn btn-outline-dark btn-sm rounded-pill fw-bold d-md-none me-2" onclick="goBackToSopList()">
+                <i class="fas fa-arrow-left me-1"></i>Kembali
+              </button>
+              <h5 class="fw-bold text-dark m-0"><i class="fas fa-eye me-2 text-warning"></i>Preview SOP</h5>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" id="btnTabDownloadSopPdf-${sop.id}" class="btn btn-danger btn-sm rounded-pill fw-bold d-flex align-items-center" onclick="downloadSOPPDF('${sop.id}')" style="font-size:0.8rem; padding: 8px 16px;">
+                <i class="fas fa-file-pdf me-1"></i>Download PDF
+              </button>
+              <button type="button" id="btnTabSendSopTelegram-${sop.id}" class="btn btn-primary btn-sm rounded-pill fw-bold d-flex align-items-center" onclick="sendSOPTelegram('${sop.id}')" style="font-size:0.8rem; padding: 8px 16px;">
+                <i class="fab fa-telegram-plane me-1"></i>Kirim Telegram
+              </button>
+            </div>
+          </div>
+
+          <div class="sop-full-preview-container flex-grow-1 overflow-auto pe-2" style="scrollbar-width: thin; max-height: calc(100vh - 250px);">
+            <div class="p-3 p-md-4 rounded-4 mb-4 text-white d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-bottom: 5px solid #d4af37; border-radius: 1.25rem;">
+              <div class="text-start">
+                <h3 class="fw-bold m-0" style="letter-spacing: 0.5px; font-size: 1.4rem; color: #ffffff !important;">STANDAR OPERASIONAL PROSEDUR</h3>
+                <h5 class="fw-bold mt-2 text-warning" style="opacity: 0.95; font-size: 1.1rem; color: #ffc107 !important;">Staff / Posisi: ${positions}</h5>
+              </div>
+              <div class="text-start text-md-end">
+                <div class="small text-white-50" style="font-weight: 600;">${storeName} SYSTEM</div>
+                <div class="small mt-1 text-white" style="font-size: 0.8rem;"><i class="far fa-clock me-1 text-warning"></i>Pembaruan: ${date}</div>
+              </div>
+            </div>
+            
+            ${timesHtml}
+            
+            <div class="card border-0 shadow-sm rounded-4 p-3 mb-4" style="background: #fff5f5; border: 1px solid #fed7d7 !important;">
+              <h5 class="fw-bold text-danger border-bottom pb-2 mb-3 text-start">
+                <i class="fas fa-exclamation-triangle me-2"></i>3. PENANGANAN MASALAH (GOLDEN RULES)
+              </h5>
+              <div class="d-flex flex-column">${emergencyHtml}</div>
+            </div>
+            
+            ${visualImageHtml}
+            
+            <div class="text-center mt-4 pt-3 border-top text-muted small" style="font-size: 0.75rem;">
+              Dokumen ini diterbitkan oleh <b>${storeName}</b> untuk menjaga standardisasi kualitas pelayanan outlet F&B.
+            </div>
+          </div>
+        `;
+      }
+
+      function filterSopTabList() {
+        const q = document.getElementById('searchTabSOP').value.toLowerCase().trim();
+        const items = document.querySelectorAll('#sopTabListItems .sop-list-item');
+        items.forEach(item => {
+          const text = item.innerText.toLowerCase();
+          if (text.includes(q)) {
+            item.style.display = 'block';
+          } else {
+            item.style.display = 'none';
+          }
+        });
+      }
+
+      function goBackToSopList() {
+        const sidebar = document.querySelector('.sop-tab-sidebar');
+        const content = document.querySelector('.sop-tab-content');
+        if (sidebar) sidebar.classList.remove('d-none-mobile');
+        if (content) content.classList.remove('d-block-mobile');
+      }
+
       function renderSOPList() {
         const container = document.getElementById('sopListItems');
         if (!container) return;
@@ -6430,8 +6750,9 @@
         const sop = SOP_DATA.find(s => s.id === sopId);
         if (!sop) return;
         
-        const btn = document.getElementById(`btnSendSopTelegram-${sopId}`);
-        const ogHtml = btn.innerHTML;
+        let btn = document.getElementById(`btnSendSopTelegram-${sopId}`);
+        if (!btn) btn = document.getElementById(`btnTabSendSopTelegram-${sopId}`);
+        const ogHtml = btn ? btn.innerHTML : '';
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Kirim...';
         
@@ -6500,7 +6821,8 @@
         const sop = SOP_DATA.find(s => s.id === sopId);
         if (!sop) return;
         
-        const btn = document.getElementById(`btnDownloadSopPdf-${sopId}`);
+        let btn = document.getElementById(`btnDownloadSopPdf-${sopId}`);
+        if (!btn) btn = document.getElementById(`btnTabDownloadSopPdf-${sopId}`);
         let ogHtml = '';
         if (btn) {
           ogHtml = btn.innerHTML;
@@ -7469,6 +7791,24 @@
         } else {
             if (scheduleGrid) scheduleGrid.classList.remove('d-none');
             if (btnTambahStaff) btnTambahStaff.classList.remove('d-none');
+        }
+
+        // Sembunyikan Tombol SOP di tab Staff jika login Admin yang MultiOwner OFF
+        const btnAturSop = document.getElementById('btnAturSopManning');
+        if (btnAturSop) {
+          if (USER_ROLE === 'ADMIN') {
+            if (ACTIVE_CASHIER === 'Owner') {
+              btnAturSop.classList.remove('d-none');
+            } else {
+              if (IS_MULTI_OWNER) {
+                btnAturSop.classList.remove('d-none');
+              } else {
+                btnAturSop.classList.add('d-none');
+              }
+            }
+          } else {
+            btnAturSop.classList.add('d-none');
+          }
         }
 
         // --- SORTING LOGIC: Admin -> Cashier -> Kitchen -> Barista ---
@@ -8740,6 +9080,8 @@
         updateOwnerSettingUI(document.getElementById('settingOwnerPass').value);
         saveSettingConfig(); 
         
+        buildNavigation(); 
+        
         // ---> TAMBAHKAN KODE INI UNTUK TELEGRAM & AUDIT LOG <---
         const statusText = IS_MULTI_OWNER ? "Aktif" : "Non-Aktif";
         triggerAuditLog("SETTING MULTI OWNER", `Mengubah status Multi Owner / Saham menjadi ${statusText}.`);
@@ -9965,6 +10307,19 @@
           {id: 'setting', label: 'Setting', icon: 'fa-cog', roles: ['ADMIN']}
         ];
 
+        // Sisipkan tab SOP secara dinamis jika memenuhi kondisi
+        const showSopTab = ['CASHIER', 'BARISTA', 'KITCHEN', 'MONITOR'].includes(USER_ROLE) ||
+                           (USER_ROLE === 'ADMIN' && ACTIVE_CASHIER !== 'Owner' && !IS_MULTI_OWNER);
+        
+        if (showSopTab) {
+          const idx = menuItems.findIndex(item => item.id === 'setting');
+          if (idx !== -1) {
+            menuItems.splice(idx, 0, {id: 'sop', label: 'SOP', icon: 'fa-book-open', roles: [USER_ROLE]});
+          } else {
+            menuItems.push({id: 'sop', label: 'SOP', icon: 'fa-book-open', roles: [USER_ROLE]});
+          }
+        }
+
         const mob = document.getElementById('mobileMenu');
         const navList = document.getElementById('mobileNavList');
         if (mob) mob.innerHTML = '';
@@ -11172,10 +11527,12 @@
           loadSettingConfig();
         } else if (viewId === 'monitor') {
           renderMonitorUI();
+        } else if (viewId === 'sop') {
+          initSopTab();
         }
 
-        // PERBAIKAN: Pastikan POS & Monitor selalu berformat flex untuk menjaga struktur Grid dan Split-Screen
-        targetView.style.display = (viewId === 'pos' || viewId === 'monitor') ? 'flex' : 'block';
+        // PERBAIKAN: Pastikan POS, Monitor & SOP selalu berformat flex untuk menjaga struktur Grid, Split-Screen dan Dual-Pane
+        targetView.style.display = (viewId === 'pos' || viewId === 'monitor' || viewId === 'sop') ? 'flex' : 'block';
 
         document.querySelectorAll('.nav-item-custom, .nav-icon-mob').forEach(el => el.classList.remove('active'));
         const dEl = document.getElementById('desk-' + viewId);
