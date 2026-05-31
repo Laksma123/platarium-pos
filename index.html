@@ -1696,7 +1696,7 @@
         color: #1e293b;
         width: 95%;
         max-width: 1050px;
-        height: calc(85vh + 200px);
+        height: calc(85vh + 400px);
         max-height: calc(100vh - 30px);
         border-radius: 1.75rem;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -2691,7 +2691,7 @@
                   </div>
 
                   <!-- Photo Uploader Card -->
-                  <div class="card border-0 shadow-sm rounded-4 p-4">
+                  <div class="card border-0 shadow-sm rounded-4 p-4 d-none">
                     <h5 class="fw-bold text-dark mb-3"><i class="fas fa-image text-warning me-2"></i>Foto/Gambar Standar Visual (Opsional)</h5>
                     <p class="text-muted small mb-3">Unggah panduan foto standard (misalnya: standar kebersihan bar, tata letak kulkas, atau plating makanan).</p>
                     
@@ -6102,9 +6102,12 @@
 
         let emergencyHtml = "";
         sop.masalah.forEach(m => {
+          let fotoHtml = m.foto ? `<div class="mt-2"><img src="${m.foto}" style="max-width:200px; border-radius:0.5rem; border:1px solid #ddd; cursor:pointer;" onclick="openLargeSOPImage('${m.foto}')"></div>` : "";
+          
           emergencyHtml += `<div class="p-3 rounded-4 border mb-2" style="background:#fff5f5; border-color:#fed7d7 !important;">
             <div class="fw-bold text-danger mb-1"><i class="fas fa-exclamation-circle me-2"></i>JIKA: ${m.if}</div>
             <div class="fw-bold text-success"><i class="fas fa-check-circle me-2"></i>MAKA: ${m.then}</div>
+            ${fotoHtml}
           </div>`;
         });
         if (sop.masalah.length === 0) emergencyHtml = `<div class="text-muted small italic">Tidak ada aturan darurat.</div>`;
@@ -6190,18 +6193,32 @@
 
         let prepHtml = "";
         prep.forEach(p => {
-          prepHtml += `<li class="list-group-item d-flex align-items-start border-0 px-0 py-2 bg-transparent text-dark">
-            <input class="form-check-input me-3 border-2 border-secondary" type="checkbox" style="width:1.2rem; height:1.2rem; cursor:pointer;">
-            <span class="fw-bold">${p}</span>
+          let text = typeof p === 'object' ? (p.text || "") : p;
+          let foto = typeof p === 'object' ? (p.foto || "") : "";
+          let fotoHtml = foto ? `<div class="mt-1"><img src="${foto}" style="max-width:200px; border-radius:0.5rem; border:1px solid #ddd; cursor:pointer;" onclick="openLargeSOPImage('${foto}')"></div>` : "";
+          
+          prepHtml += `<li class="list-group-item d-flex flex-column border-0 px-0 py-2 bg-transparent text-dark">
+            <div class="d-flex align-items-start">
+              <input class="form-check-input me-3 border-2 border-secondary" type="checkbox" style="width:1.2rem; height:1.2rem; cursor:pointer;">
+              <span class="fw-bold">${text}</span>
+            </div>
+            ${fotoHtml}
           </li>`;
         });
         if (prep.length === 0) prepHtml = `<li class="list-group-item border-0 px-0 py-2 text-muted italic small">Tidak ada checklist persiapan untuk waktu ini.</li>`;
 
         let stepsHtml = "";
         steps.forEach((s, idx) => {
-          stepsHtml += `<li class="list-group-item d-flex align-items-start border-0 px-0 py-2 bg-transparent text-dark">
-            <span class="badge bg-warning text-dark me-3 rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:1.6rem; height:1.6rem; flex-shrink:0; font-size:0.75rem;">${idx + 1}</span>
-            <span class="fw-bold mt-1">${s}</span>
+          let text = typeof s === 'object' ? (s.text || "") : s;
+          let foto = typeof s === 'object' ? (s.foto || "") : "";
+          let fotoHtml = foto ? `<div class="mt-1 ps-4 ms-2"><img src="${foto}" style="max-width:200px; border-radius:0.5rem; border:1px solid #ddd; cursor:pointer;" onclick="openLargeSOPImage('${foto}')"></div>` : "";
+
+          stepsHtml += `<li class="list-group-item d-flex flex-column border-0 px-0 py-2 bg-transparent text-dark">
+            <div class="d-flex align-items-start">
+              <span class="badge bg-warning text-dark me-3 rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:1.6rem; height:1.6rem; flex-shrink:0; font-size:0.75rem;">${idx + 1}</span>
+              <span class="fw-bold mt-1">${text}</span>
+            </div>
+            ${fotoHtml}
           </li>`;
         });
         if (steps.length === 0) stepsHtml = `<li class="list-group-item border-0 px-0 py-2 text-muted italic small">Tidak ada langkah inti untuk waktu ini.</li>`;
@@ -6261,7 +6278,7 @@
             SOP_WIZARD_PREP_DATA = JSON.parse(JSON.stringify(sop.persiapan || {}));
             SOP_WIZARD_STEPS_DATA = JSON.parse(JSON.stringify(sop.langkahInti || {}));
             
-            sop.masalah.forEach(m => addEmergencyRow(m.if, m.then));
+            sop.masalah.forEach(m => addEmergencyRow(m));
             
             if (sop.foto) {
               SOP_WIZARD_BASE64_IMG = sop.foto;
@@ -6338,8 +6355,13 @@
       function saveCurrentWizardPrepData() {
         if (!SOP_WIZARD_ACTIVE_TIME_TAB) return;
         let items = [];
-        document.querySelectorAll('#wizardChecklistContainer input').forEach(input => {
-          if (input.value.trim()) items.push(input.value.trim());
+        document.querySelectorAll('#wizardChecklistContainer .dynamic-row-input').forEach(row => {
+          const textInput = row.querySelector('input[type="text"]');
+          const val = textInput ? textInput.value.trim() : "";
+          const img = row.dataset.image || "";
+          if (val) {
+            items.push({ text: val, foto: img });
+          }
         });
         SOP_WIZARD_PREP_DATA[SOP_WIZARD_ACTIVE_TIME_TAB] = items;
       }
@@ -6347,8 +6369,13 @@
       function saveCurrentWizardStepsData() {
         if (!SOP_WIZARD_ACTIVE_TIME_TAB) return;
         let items = [];
-        document.querySelectorAll('#wizardStepsContainer input').forEach(input => {
-          if (input.value.trim()) items.push(input.value.trim());
+        document.querySelectorAll('#wizardStepsContainer .dynamic-row-input').forEach(row => {
+          const textInput = row.querySelector('input[type="text"]');
+          const val = textInput ? textInput.value.trim() : "";
+          const img = row.dataset.image || "";
+          if (val) {
+            items.push({ text: val, foto: img });
+          }
         });
         SOP_WIZARD_STEPS_DATA[SOP_WIZARD_ACTIVE_TIME_TAB] = items;
       }
@@ -6438,7 +6465,10 @@
             // Validasi: Pastikan semua waktu yang dipilih memiliki minimal 1 item checklist
             for (let w of SOP_WIZARD_SELECTED_TIMES) {
               const items = SOP_WIZARD_PREP_DATA[w] || [];
-              const filledItems = items.filter(Boolean);
+              const filledItems = items.filter(item => {
+                const text = typeof item === 'object' ? item.text : item;
+                return text && text.trim();
+              });
               if (filledItems.length === 0) {
                 // Alihkan tab aktif ke tab waktu yang belum diisi agar user sadar
                 SOP_WIZARD_ACTIVE_TIME_TAB = w;
@@ -6458,7 +6488,10 @@
             // Validasi: Pastikan semua waktu memiliki minimal 1 langkah kerja inti
             for (let w of SOP_WIZARD_SELECTED_TIMES) {
               const items = SOP_WIZARD_STEPS_DATA[w] || [];
-              const filledItems = items.filter(Boolean);
+              const filledItems = items.filter(item => {
+                const text = typeof item === 'object' ? item.text : item;
+                return text && text.trim();
+              });
               if (filledItems.length === 0) {
                 SOP_WIZARD_ACTIVE_TIME_TAB = w;
                 renderWizardStepsInputs();
@@ -6501,26 +6534,92 @@
         updateWizardStepUI();
       }
 
+      function triggerRowImage(btn) {
+        const row = btn.closest('.dynamic-row-input') || btn.closest('.card');
+        const fileInput = row.querySelector('.row-image-file');
+        if (fileInput) fileInput.click();
+      }
+
+      function handleRowImage(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        if (file.size > 3 * 1024 * 1024) {
+          alert("Ukuran gambar maksimal 3MB untuk menjaga performa server Google Sheets!");
+          input.value = "";
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const base64 = e.target.result;
+          const row = input.closest('.dynamic-row-input') || input.closest('.card');
+          row.dataset.image = base64;
+          
+          // Update the preview area
+          const imgArea = row.querySelector('.row-image-area');
+          imgArea.innerHTML = `<div class="row-img-preview" style="position:relative; width:45px; height:45px; border-radius:8px; overflow:hidden; border:1px solid #ddd; flex-shrink:0;">
+            <img src="${base64}" style="width:100%; height:100%; object-fit:cover; cursor:pointer;" onclick="openLargeSOPImage('${base64}')">
+            <button type="button" class="btn btn-danger p-0 d-flex align-items-center justify-content-center" style="position:absolute; top:0; right:0; width:15px; height:15px; font-size:8px; border-radius:0 0 0 4px;" onclick="removeRowImage(this)" title="Hapus Gambar">×</button>
+          </div>`;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function removeRowImage(btn) {
+        const row = btn.closest('.dynamic-row-input') || btn.closest('.card');
+        row.dataset.image = "";
+        const fileInput = row.querySelector('.row-image-file');
+        if (fileInput) fileInput.value = "";
+        
+        const imgArea = row.querySelector('.row-image-area');
+        imgArea.innerHTML = `<button type="button" class="btn btn-light rounded-circle p-2 border-0 btn-upload-row" onclick="triggerRowImage(this)" title="Unggah Gambar"><i class="fas fa-camera text-muted"></i></button>`;
+      }
+
       function addChecklistRow(val = "") {
+        let text = typeof val === 'object' ? (val.text || "") : val;
+        let foto = typeof val === 'object' ? (val.foto || "") : "";
+
         const container = document.getElementById('wizardChecklistContainer');
         const row = document.createElement('div');
         row.className = 'dynamic-row-input';
+        row.dataset.image = foto;
+        
+        let imgPreviewHtml = foto ? `<div class="row-img-preview" style="position:relative; width:45px; height:45px; border-radius:8px; overflow:hidden; border:1px solid #ddd; flex-shrink:0;">
+          <img src="${foto}" style="width:100%; height:100%; object-fit:cover; cursor:pointer;" onclick="openLargeSOPImage('${foto}')">
+          <button type="button" class="btn btn-danger p-0 d-flex align-items-center justify-content-center" style="position:absolute; top:0; right:0; width:15px; height:15px; font-size:8px; border-radius:0 0 0 4px;" onclick="removeRowImage(this)" title="Hapus Gambar">×</button>
+        </div>` : `<button type="button" class="btn btn-light rounded-circle p-2 border-0 btn-upload-row" onclick="triggerRowImage(this)" title="Unggah Gambar"><i class="fas fa-camera text-muted"></i></button>`;
+
         row.innerHTML = `
           <i class="fas fa-check-circle text-muted fs-5"></i>
-          <input type="text" class="form-control border-0 bg-transparent fw-bold shadow-none" placeholder="Contoh: Menyalakan mesin kopi..." value="${val}">
+          <input type="text" class="form-control border-0 bg-transparent fw-bold shadow-none" placeholder="Contoh: Menyalakan mesin kopi..." value="${text}">
+          <div class="row-image-area d-flex align-items-center justify-content-center" style="width:45px; height:45px; flex-shrink:0;">${imgPreviewHtml}</div>
+          <input type="file" class="d-none row-image-file" accept="image/*" onchange="handleRowImage(this)">
           <button type="button" class="btn btn-light rounded-circle p-2 border-0" onclick="this.parentElement.remove()" title="Hapus"><i class="fas fa-trash text-danger"></i></button>
         `;
         container.appendChild(row);
       }
 
       function addWizardStepRow(val = "") {
+        let text = typeof val === 'object' ? (val.text || "") : val;
+        let foto = typeof val === 'object' ? (val.foto || "") : "";
+
         const container = document.getElementById('wizardStepsContainer');
         const rowCount = container.children.length + 1;
         const row = document.createElement('div');
         row.className = 'dynamic-row-input';
+        row.dataset.image = foto;
+        
+        let imgPreviewHtml = foto ? `<div class="row-img-preview" style="position:relative; width:45px; height:45px; border-radius:8px; overflow:hidden; border:1px solid #ddd; flex-shrink:0;">
+          <img src="${foto}" style="width:100%; height:100%; object-fit:cover; cursor:pointer;" onclick="openLargeSOPImage('${foto}')">
+          <button type="button" class="btn btn-danger p-0 d-flex align-items-center justify-content-center" style="position:absolute; top:0; right:0; width:15px; height:15px; font-size:8px; border-radius:0 0 0 4px;" onclick="removeRowImage(this)" title="Hapus Gambar">×</button>
+        </div>` : `<button type="button" class="btn btn-light rounded-circle p-2 border-0 btn-upload-row" onclick="triggerRowImage(this)" title="Unggah Gambar"><i class="fas fa-camera text-muted"></i></button>`;
+
         row.innerHTML = `
-          <span class="badge bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:1.5rem; height:1.5rem; font-size:0.75rem;">${rowCount}</span>
-          <input type="text" class="form-control border-0 bg-transparent fw-bold shadow-none" placeholder="Contoh: Langkah ${rowCount}: Tuang susu dingin..." value="${val}">
+          <span class="badge bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:1.5rem; height:1.5rem; font-size:0.75rem; flex-shrink:0;">${rowCount}</span>
+          <input type="text" class="form-control border-0 bg-transparent fw-bold shadow-none" placeholder="Contoh: Langkah ${rowCount}: Tuang susu dingin..." value="${text}">
+          <div class="row-image-area d-flex align-items-center justify-content-center" style="width:45px; height:45px; flex-shrink:0;">${imgPreviewHtml}</div>
+          <input type="file" class="d-none row-image-file" accept="image/*" onchange="handleRowImage(this)">
           <button type="button" class="btn btn-light rounded-circle p-2 border-0" onclick="this.parentElement.remove(); reindexWizardSteps();" title="Hapus"><i class="fas fa-trash text-danger"></i></button>
         `;
         container.appendChild(row);
@@ -6535,22 +6634,44 @@
       }
 
       function addEmergencyRow(ifVal = "", thenVal = "") {
+        let textIf = ifVal;
+        let textThen = thenVal;
+        let foto = "";
+        
+        if (typeof ifVal === 'object') {
+          textIf = ifVal.if || "";
+          textThen = ifVal.then || "";
+          foto = ifVal.foto || "";
+        }
+        
         const container = document.getElementById('wizardEmergencyContainer');
         const row = document.createElement('div');
         row.className = 'card border-0 bg-light p-3 rounded-4 mb-3 border-start border-4 border-danger';
+        row.dataset.image = foto;
+        
+        let imgPreviewHtml = foto ? `<div class="row-img-preview" style="position:relative; width:45px; height:45px; border-radius:8px; overflow:hidden; border:1px solid #ddd; flex-shrink:0;">
+          <img src="${foto}" style="width:100%; height:100%; object-fit:cover; cursor:pointer;" onclick="openLargeSOPImage('${foto}')">
+          <button type="button" class="btn btn-danger p-0 d-flex align-items-center justify-content-center" style="position:absolute; top:0; right:0; width:15px; height:15px; font-size:8px; border-radius:0 0 0 4px;" onclick="removeRowImage(this)" title="Hapus Gambar">×</button>
+        </div>` : `<button type="button" class="btn btn-light rounded-circle p-2 border-0 btn-upload-row" onclick="triggerRowImage(this)" title="Unggah Gambar"><i class="fas fa-camera text-muted"></i></button>`;
+
         row.innerHTML = `
           <div class="row g-2 align-items-center">
-            <div class="col-11">
+            <div class="col-10 col-md-11">
               <div class="mb-2">
                 <span class="small fw-bold text-danger d-block mb-1">KONDISI MASALAH (JIKA)</span>
-                <input type="text" class="form-control fw-bold border-2" placeholder="JIKA: Ada komplain rasa minuman..." value="${ifVal}">
+                <input type="text" class="form-control fw-bold border-2" placeholder="JIKA: Ada komplain rasa minuman..." value="${textIf}">
               </div>
-              <div>
+              <div class="mb-2">
                 <span class="small fw-bold text-success d-block mb-1">TINDAKAN SOLUSI (MAKA)</span>
-                <input type="text" class="form-control fw-bold border-2" placeholder="MAKA: Minta maaf dengan tulus & ganti baru..." value="${thenVal}">
+                <input type="text" class="form-control fw-bold border-2" placeholder="MAKA: Minta maaf dengan tulus & ganti baru..." value="${textThen}">
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="small fw-bold text-muted" style="font-size: 0.75rem;">FOTO MASALAH / SOLUSI (OPSIONAL):</span>
+                <div class="row-image-area d-inline-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">${imgPreviewHtml}</div>
+                <input type="file" class="d-none row-image-file" accept="image/*" onchange="handleRowImage(this)">
               </div>
             </div>
-            <div class="col-1 text-center">
+            <div class="col-2 col-md-1 text-center">
               <button type="button" class="btn btn-outline-danger border-0 p-2 rounded-circle shadow-none" onclick="this.parentElement.parentElement.parentElement.remove()" title="Hapus"><i class="fas fa-trash"></i></button>
             </div>
           </div>
@@ -6732,9 +6853,16 @@
           const preps = SOP_WIZARD_PREP_DATA[w] || [];
           let prepItemsHtml = "";
           preps.forEach(p => {
-            if (p) prepItemsHtml += `<div class="ms-4 py-1 text-dark fw-bold small"><i class="far fa-check-circle text-success me-2"></i>${p}</div>`;
+            let text = typeof p === 'object' ? (p.text || "") : p;
+            let foto = typeof p === 'object' ? (p.foto || "") : "";
+            let fotoHtml = foto ? `<div class="mt-1 ps-4"><img src="${foto}" style="max-width:120px; border-radius:0.4rem; border:1px solid #ddd; cursor:pointer;" onclick="openLargeSOPImage('${foto}')"></div>` : "";
+            
+            if (text) prepItemsHtml += `<div class="ms-4 py-1 text-dark fw-bold small">
+              <div class="d-flex align-items-center"><i class="far fa-check-circle text-success me-2"></i>${text}</div>
+              ${fotoHtml}
+            </div>`;
           });
-          if (preps.filter(Boolean).length > 0) {
+          if (preps.length > 0) {
             prepContainer.innerHTML += `
               <div class="mb-2">
                 <span class="badge bg-dark rounded-pill px-2 py-1 mb-1" style="font-size:0.7rem;">${w}</span>
@@ -6747,9 +6875,16 @@
           const steps = SOP_WIZARD_STEPS_DATA[w] || [];
           let stepItemsHtml = "";
           steps.forEach((s, idx) => {
-            if (s) stepItemsHtml += `<div class="ms-4 py-1 text-dark fw-bold small"><span class="badge bg-warning text-dark me-2 rounded-circle">${idx + 1}</span>${s}</div>`;
+            let text = typeof s === 'object' ? (s.text || "") : s;
+            let foto = typeof s === 'object' ? (s.foto || "") : "";
+            let fotoHtml = foto ? `<div class="mt-1 ps-4 ms-2"><img src="${foto}" style="max-width:120px; border-radius:0.4rem; border:1px solid #ddd; cursor:pointer;" onclick="openLargeSOPImage('${foto}')"></div>` : "";
+            
+            if (text) stepItemsHtml += `<div class="ms-4 py-1 text-dark fw-bold small">
+              <div class="d-flex align-items-center"><span class="badge bg-warning text-dark me-2 rounded-circle">${idx + 1}</span>${text}</div>
+              ${fotoHtml}
+            </div>`;
           });
-          if (steps.filter(Boolean).length > 0) {
+          if (steps.length > 0) {
             stepsContainer.innerHTML += `
               <div class="mb-2">
                 <span class="badge bg-dark rounded-pill px-2 py-1 mb-1" style="font-size:0.7rem;">${w}</span>
@@ -6767,11 +6902,15 @@
           const inputs = card.querySelectorAll('input');
           const ifVal = inputs[0].value.trim();
           const thenVal = inputs[1].value.trim();
+          const foto = card.dataset.image || "";
+          let fotoHtml = foto ? `<div class="mt-2"><img src="${foto}" style="max-width:120px; border-radius:0.4rem; border:1px solid #ddd; cursor:pointer;" onclick="openLargeSOPImage('${foto}')"></div>` : "";
+          
           if (ifVal && thenVal) {
             emergencyContainer.innerHTML += `
               <div class="p-3 border rounded-4 mb-2 bg-light">
                 <div class="fw-bold text-danger"><i class="fas fa-exclamation-circle me-2"></i>JIKA: ${ifVal}</div>
                 <div class="fw-bold text-success mt-1"><i class="fas fa-check-circle me-2"></i>MAKA: ${thenVal}</div>
+                ${fotoHtml}
               </div>
             `;
           }
@@ -6800,8 +6939,9 @@
           const inputs = card.querySelectorAll('input');
           const ifVal = inputs[0].value.trim();
           const thenVal = inputs[1].value.trim();
+          const foto = card.dataset.image || "";
           if (ifVal && thenVal) {
-            masalah.push({ if: ifVal, then: thenVal });
+            masalah.push({ if: ifVal, then: thenVal, foto: foto });
           }
         });
 
