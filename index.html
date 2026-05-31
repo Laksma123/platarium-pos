@@ -1694,10 +1694,11 @@
       .sop-modal-card {
         background: #ffffff;
         color: #1e293b;
-        width: 95%;
-        max-width: 1050px;
-        height: calc(85vh + 400px);
-        max-height: calc(100vh - 30px);
+        width: calc(100% - calc(20px / var(--apk-zoom, 1))) !important;
+        height: calc(100% - calc(20px / var(--apk-zoom, 1))) !important;
+        max-width: none !important;
+        max-height: none !important;
+        margin: calc(10px / var(--apk-zoom, 1)) !important;
         border-radius: 1.75rem;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         border: 1px solid rgba(226, 232, 240, 0.8);
@@ -3494,6 +3495,28 @@
               <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold" id="btnChangeImage" onclick="">
                 <i class="fas fa-camera-rotate me-2"></i>GANTI GAMBAR
               </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="modalSOPRowPreview" class="preview-overlay" onclick="if(event.target === this) closeSOPRowPreview()" style="z-index: 25000; display: none;">
+          <div class="preview-content">
+            <div class="preview-header">
+              <button class="btn-close-preview" onclick="closeSOPRowPreview()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="preview-img-wrapper d-flex justify-content-center align-items-center" style="background: #f0f2f5; padding: 30px; aspect-ratio: 1/1;">
+              <img id="imgSOPRowPreview" src="" class="shadow-sm" style="width: 100%; height: 100%; object-fit: cover; max-width: 250px; max-height: 250px; transition: 0.3s; border-radius: 8px;">
+            </div>
+            <div class="preview-footer">
+              <h5 class="fw-bold mb-4">Panduan Foto SOP</h5>
+              <div class="d-flex gap-2">
+                <button class="btn btn-light w-100 py-3 rounded-pill fw-bold text-danger border shadow-sm" id="btnDeleteSOPRowImg" onclick="deleteSOPRowImage()">
+                  <i class="fas fa-trash me-2"></i>HAPUS
+                </button>
+                <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm" id="btnReplaceSOPRowImg" onclick="replaceSOPRowImage()">
+                  <i class="fas fa-folder-open me-2"></i>PILIH FOTO
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -6550,20 +6573,61 @@
           return;
         }
 
+        activeSopRowElement = input.closest('.dynamic-row-input') || input.closest('.card');
+        CURRENT_UPLOAD_ID = 'SOP_ROW';
+        SELECTED_FILE_NAME = file.name;
+
         const reader = new FileReader();
         reader.onload = function(e) {
-          const base64 = e.target.result;
-          const row = input.closest('.dynamic-row-input') || input.closest('.card');
-          row.dataset.image = base64;
+          const imageElement = document.getElementById('imageToCrop');
+          imageElement.src = e.target.result;
           
-          // Update the preview area
-          const imgArea = row.querySelector('.row-image-area');
-          imgArea.innerHTML = `<div class="row-img-preview" style="position:relative; width:45px; height:45px; border-radius:8px; overflow:hidden; border:1px solid #ddd; flex-shrink:0;">
-            <img src="${base64}" style="width:100%; height:100%; object-fit:cover; cursor:pointer;" onclick="openLargeSOPImage('${base64}')">
-            <button type="button" class="btn btn-danger p-0 d-flex align-items-center justify-content-center" style="position:absolute; top:0; right:0; width:15px; height:15px; font-size:8px; border-radius:0 0 0 4px;" onclick="removeRowImage(this)" title="Hapus Gambar">×</button>
-          </div>`;
+          const modal = document.getElementById('modalCrop');
+          document.body.appendChild(modal); 
+          modal.classList.remove('d-none');
+          modal.style.display = "flex";
+
+          if (CROPPER) { CROPPER.destroy(); }
+
+          let aspectR = 1/1;
+          const cropContainer = imageElement.parentElement;
+          cropContainer.classList.remove('cropper-circle'); 
+
+          setTimeout(() => {
+            CROPPER = new Cropper(imageElement, {
+              aspectRatio: aspectR,
+              viewMode: 0,
+              dragMode: 'move',
+              autoCropArea: 1,
+              restore: false,
+              guides: false,
+              center: false,
+              highlight: false,
+              cropBoxMovable: false,
+              cropBoxResizable: false,
+              toggleDragModeOnDblclick: false,
+              ready: function() {
+                const imageData = CROPPER.getImageData();
+                const initialRatio = (imageData && imageData.width && imageData.naturalWidth)
+                  ? (imageData.width / imageData.naturalWidth)
+                  : 1.0;
+                CROPPER.initialRatio = initialRatio;
+                initZoomSlider();
+              },
+              zoom: function(event) {
+                if (event.detail.originalEvent) {
+                  const slider = document.getElementById('zoomSlider');
+                  if (slider && CROPPER && CROPPER.initialRatio) {
+                    const relativeRatio = event.detail.ratio / CROPPER.initialRatio;
+                    slider.value = relativeRatio.toFixed(6);
+                  }
+                }
+              }
+            });
+          }, 150);
         };
         reader.readAsDataURL(file);
+        input.value = ''; 
       }
 
       function removeRowImage(btn) {
@@ -6573,7 +6637,7 @@
         if (fileInput) fileInput.value = "";
         
         const imgArea = row.querySelector('.row-image-area');
-        imgArea.innerHTML = `<button type="button" class="btn btn-light rounded-circle p-2 border-0 btn-upload-row" onclick="triggerRowImage(this)" title="Unggah Gambar"><i class="fas fa-camera text-muted"></i></button>`;
+        imgArea.innerHTML = `<button type="button" class="btn btn-light rounded-circle p-2 border-0 btn-upload-row" onclick="openSOPRowImageManager(this)" title="Unggah Gambar"><i class="fas fa-camera text-muted"></i></button>`;
       }
 
       function addChecklistRow(val = "") {
@@ -6586,9 +6650,9 @@
         row.dataset.image = foto;
         
         let imgPreviewHtml = foto ? `<div class="row-img-preview" style="position:relative; width:45px; height:45px; border-radius:8px; overflow:hidden; border:1px solid #ddd; flex-shrink:0;">
-          <img src="${foto}" style="width:100%; height:100%; object-fit:cover; cursor:pointer;" onclick="openLargeSOPImage('${foto}')">
+          <img src="${foto}" style="width:100%; height:100%; object-fit:cover; cursor:pointer;" onclick="openSOPRowImageManager(this)">
           <button type="button" class="btn btn-danger p-0 d-flex align-items-center justify-content-center" style="position:absolute; top:0; right:0; width:15px; height:15px; font-size:8px; border-radius:0 0 0 4px;" onclick="removeRowImage(this)" title="Hapus Gambar">×</button>
-        </div>` : `<button type="button" class="btn btn-light rounded-circle p-2 border-0 btn-upload-row" onclick="triggerRowImage(this)" title="Unggah Gambar"><i class="fas fa-camera text-muted"></i></button>`;
+        </div>` : `<button type="button" class="btn btn-light rounded-circle p-2 border-0 btn-upload-row" onclick="openSOPRowImageManager(this)" title="Unggah Gambar"><i class="fas fa-camera text-muted"></i></button>`;
 
         row.innerHTML = `
           <i class="fas fa-check-circle text-muted fs-5"></i>
@@ -6611,9 +6675,9 @@
         row.dataset.image = foto;
         
         let imgPreviewHtml = foto ? `<div class="row-img-preview" style="position:relative; width:45px; height:45px; border-radius:8px; overflow:hidden; border:1px solid #ddd; flex-shrink:0;">
-          <img src="${foto}" style="width:100%; height:100%; object-fit:cover; cursor:pointer;" onclick="openLargeSOPImage('${foto}')">
+          <img src="${foto}" style="width:100%; height:100%; object-fit:cover; cursor:pointer;" onclick="openSOPRowImageManager(this)">
           <button type="button" class="btn btn-danger p-0 d-flex align-items-center justify-content-center" style="position:absolute; top:0; right:0; width:15px; height:15px; font-size:8px; border-radius:0 0 0 4px;" onclick="removeRowImage(this)" title="Hapus Gambar">×</button>
-        </div>` : `<button type="button" class="btn btn-light rounded-circle p-2 border-0 btn-upload-row" onclick="triggerRowImage(this)" title="Unggah Gambar"><i class="fas fa-camera text-muted"></i></button>`;
+        </div>` : `<button type="button" class="btn btn-light rounded-circle p-2 border-0 btn-upload-row" onclick="openSOPRowImageManager(this)" title="Unggah Gambar"><i class="fas fa-camera text-muted"></i></button>`;
 
         row.innerHTML = `
           <span class="badge bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:1.5rem; height:1.5rem; font-size:0.75rem; flex-shrink:0;">${rowCount}</span>
@@ -6650,9 +6714,9 @@
         row.dataset.image = foto;
         
         let imgPreviewHtml = foto ? `<div class="row-img-preview" style="position:relative; width:45px; height:45px; border-radius:8px; overflow:hidden; border:1px solid #ddd; flex-shrink:0;">
-          <img src="${foto}" style="width:100%; height:100%; object-fit:cover; cursor:pointer;" onclick="openLargeSOPImage('${foto}')">
+          <img src="${foto}" style="width:100%; height:100%; object-fit:cover; cursor:pointer;" onclick="openSOPRowImageManager(this)">
           <button type="button" class="btn btn-danger p-0 d-flex align-items-center justify-content-center" style="position:absolute; top:0; right:0; width:15px; height:15px; font-size:8px; border-radius:0 0 0 4px;" onclick="removeRowImage(this)" title="Hapus Gambar">×</button>
-        </div>` : `<button type="button" class="btn btn-light rounded-circle p-2 border-0 btn-upload-row" onclick="triggerRowImage(this)" title="Unggah Gambar"><i class="fas fa-camera text-muted"></i></button>`;
+        </div>` : `<button type="button" class="btn btn-light rounded-circle p-2 border-0 btn-upload-row" onclick="openSOPRowImageManager(this)" title="Unggah Gambar"><i class="fas fa-camera text-muted"></i></button>`;
 
         row.innerHTML = `
           <div class="row g-2 align-items-center">
@@ -10507,12 +10571,88 @@
             }
           }).uploadConfigImage(CURRENT_UPLOAD_ID, base64Data, 'cropped_' + SELECTED_FILE_NAME);
         } 
+        else if (CURRENT_UPLOAD_ID === 'SOP_ROW') {
+          if (activeSopRowElement) {
+            activeSopRowElement.dataset.image = base64Data;
+            const imgArea = activeSopRowElement.querySelector('.row-image-area');
+            if (imgArea) {
+              imgArea.innerHTML = `<div class="row-img-preview" style="position:relative; width:45px; height:45px; border-radius:8px; overflow:hidden; border:1px solid #ddd; flex-shrink:0;">
+                <img src="${base64Data}" style="width:100%; height:100%; object-fit:cover; cursor:pointer;" onclick="openSOPRowImageManager(this)">
+                <button type="button" class="btn btn-danger p-0 d-flex align-items-center justify-content-center" style="position:absolute; top:0; right:0; width:15px; height:15px; font-size:8px; border-radius:0 0 0 4px;" onclick="removeRowImage(this)" title="Hapus Gambar">×</button>
+              </div>`;
+            }
+          }
+          
+          document.getElementById('imgSOPRowPreview').src = base64Data;
+          document.getElementById('btnDeleteSOPRowImg').style.display = 'block';
+          
+          btn.disabled = false;
+          cancelCrop();
+          
+          document.getElementById('modalSOPRowPreview').style.display = 'flex';
+        }
         else {
           btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Mengupdate...';
           google.script.run.withSuccessHandler(res => {
             btn.disabled = false; btn.innerHTML = '<i class="fas fa-check me-2"></i> SIMPAN FOTO';
             if(res.status === 'success') { loadProductsTable(); loadProducts(); cancelCrop(); }
           }).uploadProductImage(CURRENT_UPLOAD_ID, base64Data, 'cropped_' + SELECTED_FILE_NAME);
+        }
+      }
+
+      let activeSopRowElement = null;
+
+      function openSOPRowImageManager(element) {
+        const modal = document.getElementById('modalSOPRowPreview');
+        document.body.appendChild(modal);
+
+        const row = element.closest('.dynamic-row-input') || element.closest('.card');
+        activeSopRowElement = row;
+        
+        const currentImg = row.dataset.image;
+        const isSet = currentImg && currentImg.trim() !== "";
+        
+        const imgPreview = document.getElementById('imgSOPRowPreview');
+        imgPreview.src = isSet ? currentImg : 'https://via.placeholder.com/300x300?text=KOSONG';
+        
+        const btnDelete = document.getElementById('btnDeleteSOPRowImg');
+        if (isSet) {
+          btnDelete.style.display = 'block';
+        } else {
+          btnDelete.style.display = 'none';
+        }
+        
+        modal.style.display = 'flex';
+      }
+
+      function closeSOPRowPreview() {
+        document.getElementById('modalSOPRowPreview').style.display = 'none';
+      }
+
+      function deleteSOPRowImage() {
+        if (activeSopRowElement) {
+          activeSopRowElement.dataset.image = "";
+          
+          const fileInput = activeSopRowElement.querySelector('.row-image-file');
+          if (fileInput) fileInput.value = "";
+          
+          const imgArea = activeSopRowElement.querySelector('.row-image-area');
+          if (imgArea) {
+            imgArea.innerHTML = `<button type="button" class="btn btn-light rounded-circle p-2 border-0 btn-upload-row" onclick="openSOPRowImageManager(this)" title="Unggah Gambar"><i class="fas fa-camera text-muted"></i></button>`;
+          }
+        }
+        closeSOPRowPreview();
+      }
+
+      function replaceSOPRowImage() {
+        if (activeSopRowElement) {
+          const fileInput = activeSopRowElement.querySelector('.row-image-file');
+          if (fileInput) {
+            closeSOPRowPreview();
+            CURRENT_UPLOAD_ID = 'SOP_ROW';
+            fileInput.value = '';
+            fileInput.click();
+          }
         }
       }
 
