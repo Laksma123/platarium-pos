@@ -4552,7 +4552,12 @@
 
         if (method === 'CASH') {
           window.CHECKOUT_SURCHARGE_INFO = null;
-          window.CHECKOUT_ADJUSTED_TOTAL = baseTotal;
+          const roundingVal = getActiveCashRoundValue();
+          if (roundingVal > 0) {
+            window.CHECKOUT_ADJUSTED_TOTAL = Math.floor(baseTotal / roundingVal) * roundingVal;
+          } else {
+            window.CHECKOUT_ADJUSTED_TOTAL = Math.round(baseTotal);
+          }
         } else {
           let bankType = null;
           const bankTypeEl = document.querySelector('input[name="bankType"]:checked');
@@ -7303,6 +7308,7 @@
         // 2. Memuat ulang setting global dari server (Termasuk setting Tax) untuk SEMUA role
         google.script.run.withSuccessHandler(res => {
           // Perbarui variabel global yang mempengaruhi kalkulasi
+          TELEGRAM_CONFIG = res;
           IS_MULTI_OWNER = res.multiOwner;
           IS_TAX_ACTIVE = res.taxActive;
           TAX_PERCENTAGE = res.taxPercent;
@@ -7314,7 +7320,6 @@
 
           // Perbarui UI form Setting khusus untuk Admin
           if (USER_ROLE === 'ADMIN') {
-              TELEGRAM_CONFIG = res;
               
               const tgTgl = document.getElementById('tgToggle');
               if (tgTgl) tgTgl.checked = res.active;
