@@ -15041,10 +15041,16 @@
       function togglePrinterConnectionUI() {
         const type = document.getElementById('printerConnectionType').value;
         const addressContainer = document.getElementById('printerAddressContainer');
-        if (type === 'usb' || type === 'lan') {
-          addressContainer.style.display = 'block';
-        } else {
-          addressContainer.style.display = 'none';
+        const hintEl = addressContainer.querySelector('small.text-muted');
+        
+        addressContainer.style.display = 'block';
+        
+        if (type === 'bluetooth') {
+           hintEl.innerHTML = 'Kosongkan untuk Web API Browser. Isi <b>MAC Address</b> (misal: 00:11:22:33:44:55) jika pakai APK Android.';
+        } else if (type === 'usb') {
+           hintEl.innerHTML = 'Isi <b>Nama Printer</b> yang terdaftar di komputer (Windows/Mac) untuk QZ Tray.';
+        } else if (type === 'lan') {
+           hintEl.innerHTML = 'Isi <b>IP Address</b> printer jaringan Anda (misal: 192.168.1.100).';
         }
       }
 
