@@ -6174,7 +6174,7 @@
               <p class="text-muted small m-0"><i class="far fa-clock me-1"></i>Pembaruan Terakhir: ${sop.tanggal || '-'}</p>
             </div>
             <div class="d-flex gap-2">
-              <button type="button" class="btn btn-outline-danger btn-sm rounded-pill fw-bold d-flex align-items-center" onclick="downloadSOPPDF('${sop.id}')" style="font-size:0.75rem; padding: 6px 14px;">
+              <button type="button" id="btnDownloadSopPdf-${sop.id}" class="btn btn-outline-danger btn-sm rounded-pill fw-bold d-flex align-items-center" onclick="downloadSOPPDF('${sop.id}')" style="font-size:0.75rem; padding: 6px 14px;">
                 <i class="fas fa-file-pdf me-1"></i>Download PDF
               </button>
               <button type="button" id="btnSendSopTelegram-${sop.id}" class="btn btn-outline-primary btn-sm rounded-pill fw-bold d-flex align-items-center" onclick="sendSOPTelegram('${sop.id}')" style="font-size:0.75rem; padding: 6px 14px;">
@@ -6435,118 +6435,157 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Kirim...';
         
-        const savedZoom = document.documentElement.style.zoom || '1';
-        document.documentElement.style.zoom = '1';
-        
         const overlay = document.getElementById('screenshotLoadingOverlay');
         if (overlay) {
           overlay.querySelector('h5').innerText = "Sedang Menyusun Gambar SOP...";
           overlay.classList.remove('d-none');
         }
-        
-        generateSOPCaptureHtml(sop);
-        const capDiv = document.getElementById('sopCaptureContainer');
-        
-        waitImagesToLoad(capDiv).then(() => {
-          html2canvas(capDiv, { scale: 2.5, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
-            document.documentElement.style.zoom = savedZoom;
-            if (overlay) overlay.classList.add('d-none');
-            
-            const base64Data = canvas.toDataURL('image/jpeg', 0.85);
-            const posisiLabel = Array.isArray(sop.posisi) ? sop.posisi.join(", ") : String(sop.posisi);
-            
-            const captionMsg = `📋 <b>Standard Operasional Prosedur (SOP)</b>\n` +
-                               `<b>Staff / Posisi:</b> ${posisiLabel}\n` +
-                               `<b>Terakhir Diperbarui:</b> ${sop.tanggal || '-'}\n\n` +
-                               `<i>Detail SOP lengkap terlampir dalam gambar resolusi tinggi (HD) di atas. Silakan tim pelajari dan jalankan dengan disiplin!</i>`;
-            
-            google.script.run.withSuccessHandler(res => {
+
+        // setTimeout agar spinner dan overlay sempat dirender oleh browser (UI thread tidak terblokir)
+        setTimeout(() => {
+          const savedZoom = document.documentElement.style.zoom || '1';
+          document.documentElement.style.zoom = '1';
+          
+          generateSOPCaptureHtml(sop);
+          const capDiv = document.getElementById('sopCaptureContainer');
+          
+          waitImagesToLoad(capDiv).then(() => {
+            // Resolusi ditingkatkan (scale: 3.5)
+            html2canvas(capDiv, { scale: 3.5, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+              document.documentElement.style.zoom = savedZoom;
+              if (overlay) overlay.classList.add('d-none');
+              
+              const base64Data = canvas.toDataURL('image/jpeg', 0.85);
+              const posisiLabel = Array.isArray(sop.posisi) ? sop.posisi.join(", ") : String(sop.posisi);
+              
+              const captionMsg = `📋 <b>Standard Operasional Prosedur (SOP)</b>\n` +
+                                 `<b>Staff / Posisi:</b> ${posisiLabel}\n` +
+                                 `<b>Terakhir Diperbarui:</b> ${sop.tanggal || '-'}\n\n` +
+                                 `<i>Detail SOP lengkap terlampir dalam gambar resolusi tinggi (HD) di atas. Silakan tim pelajari dan jalankan dengan disiplin!</i>`;
+              
+              google.script.run.withSuccessHandler(res => {
+                btn.innerHTML = ogHtml;
+                btn.disabled = false;
+                if (res.status === 'success') {
+                  alert("SOP berhasil dikirim ke Grup Telegram Schedule!");
+                } else {
+                  alert("Gagal mengirim Telegram: " + res.message);
+                }
+              }).withFailureHandler(err => {
+                btn.innerHTML = ogHtml;
+                btn.disabled = false;
+                alert("Server Error: Gagal mengirim Telegram. Hubungi tim IT.");
+              }).sendScheduleToTelegram(base64Data, captionMsg);
+              
+            }).catch(err => {
+              document.documentElement.style.zoom = savedZoom;
+              if (overlay) overlay.classList.add('d-none');
               btn.innerHTML = ogHtml;
               btn.disabled = false;
-              if (res.status === 'success') {
-                alert("SOP berhasil dikirim ke Grup Telegram Schedule!");
-              } else {
-                alert("Gagal mengirim Telegram: " + res.message);
-              }
-            }).withFailureHandler(err => {
-              btn.innerHTML = ogHtml;
-              btn.disabled = false;
-              alert("Server Error: Gagal mengirim Telegram. Hubungi tim IT.");
-            }).sendScheduleToTelegram(base64Data, captionMsg);
-            
-          }).catch(err => {
+              alert("Gagal memproses screenshot SOP: " + err);
+            });
+          }).catch(imgErr => {
             document.documentElement.style.zoom = savedZoom;
             if (overlay) overlay.classList.add('d-none');
             btn.innerHTML = ogHtml;
             btn.disabled = false;
-            alert("Gagal memproses screenshot SOP: " + err);
+            alert("Gagal memuat gambar-gambar SOP.");
           });
-        }).catch(imgErr => {
-          document.documentElement.style.zoom = savedZoom;
-          if (overlay) overlay.classList.add('d-none');
-          btn.innerHTML = ogHtml;
-          btn.disabled = false;
-          alert("Gagal memuat gambar-gambar SOP.");
-        });
+        }, 50);
       }
 
       function downloadSOPPDF(sopId) {
         const sop = SOP_DATA.find(s => s.id === sopId);
         if (!sop) return;
         
-        const savedZoom = document.documentElement.style.zoom || '1';
-        document.documentElement.style.zoom = '1';
-        
+        const btn = document.getElementById(`btnDownloadSopPdf-${sopId}`);
+        let ogHtml = '';
+        if (btn) {
+          ogHtml = btn.innerHTML;
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>PDF...';
+        }
+
         const overlay = document.getElementById('screenshotLoadingOverlay');
         if (overlay) {
           overlay.querySelector('h5').innerText = "Sedang Menyusun Dokumen PDF...";
           overlay.classList.remove('d-none');
         }
         
-        generateSOPCaptureHtml(sop);
-        const capDiv = document.getElementById('sopCaptureContainer');
-        
-        waitImagesToLoad(capDiv).then(() => {
-          html2canvas(capDiv, { scale: 2.5, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
-            document.documentElement.style.zoom = savedZoom;
-            if (overlay) overlay.classList.add('d-none');
-            
-            const imgData = canvas.toDataURL('image/jpeg', 0.9);
-            const jsPDF = window.jspdf ? (window.jspdf.jsPDF || window.jspdf) : window.jsPDF;
-            
-            if (!jsPDF) {
-              alert("Gagal: Pustaka PDF (jsPDF) tidak dapat dimuat.");
-              return;
-            }
-            
-            const canvasWidth = canvas.width;
-            const canvasHeight = canvas.height;
-            
-            const widthPt = 900;
-            const heightPt = (canvasHeight / canvasWidth) * widthPt;
-            
-            const pdf = new jsPDF({
-              orientation: heightPt > widthPt ? 'p' : 'l',
-              unit: 'pt',
-              format: [widthPt, heightPt]
+        // setTimeout agar spinner dan overlay sempat dirender oleh browser
+        setTimeout(() => {
+          const savedZoom = document.documentElement.style.zoom || '1';
+          document.documentElement.style.zoom = '1';
+          
+          generateSOPCaptureHtml(sop);
+          const capDiv = document.getElementById('sopCaptureContainer');
+          
+          waitImagesToLoad(capDiv).then(() => {
+            // Resolusi ditingkatkan (scale: 3.5)
+            html2canvas(capDiv, { scale: 3.5, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+              document.documentElement.style.zoom = savedZoom;
+              if (overlay) overlay.classList.add('d-none');
+              
+              const imgData = canvas.toDataURL('image/jpeg', 0.9);
+              const jsPDF = window.jspdf ? (window.jspdf.jsPDF || window.jspdf) : window.jsPDF;
+              
+              if (!jsPDF) {
+                if(btn){ btn.innerHTML = ogHtml; btn.disabled = false; }
+                alert("Gagal: Pustaka PDF (jsPDF) tidak dapat dimuat.");
+                return;
+              }
+              
+              const canvasWidth = canvas.width;
+              const canvasHeight = canvas.height;
+              
+              const widthPt = 900;
+              const heightPt = (canvasHeight / canvasWidth) * widthPt;
+              
+              const pdf = new jsPDF({
+                orientation: heightPt > widthPt ? 'p' : 'l',
+                unit: 'pt',
+                format: [widthPt, heightPt]
+              });
+              
+              pdf.addImage(imgData, 'JPEG', 0, 0, widthPt, heightPt, undefined, 'FAST');
+              
+              const posisiLabel = Array.isArray(sop.posisi) ? sop.posisi.join(", ") : String(sop.posisi);
+              const filename = `SOP_${posisiLabel.replace(/[\s,]+/g, '_')}_${Date.now()}.pdf`;
+              
+              // Fallback share untuk Android Webview APK jika memungkinkan
+              if (navigator.share && /android|iphone|ipad|ipod/i.test(navigator.userAgent)) {
+                try {
+                  const pdfBlob = pdf.output('blob');
+                  const file = new File([pdfBlob], filename, { type: 'application/pdf' });
+                  navigator.share({
+                    title: filename,
+                    files: [file]
+                  }).catch(e => {
+                     console.log("Share dibatalkan atau gagal:", e);
+                     pdf.save(filename);
+                  });
+                } catch(e) {
+                  pdf.save(filename);
+                }
+              } else {
+                pdf.save(filename);
+              }
+
+              if(btn){ btn.innerHTML = ogHtml; btn.disabled = false; }
+              
+            }).catch(err => {
+              document.documentElement.style.zoom = savedZoom;
+              if (overlay) overlay.classList.add('d-none');
+              if(btn){ btn.innerHTML = ogHtml; btn.disabled = false; }
+              alert("Gagal memproses PDF: " + err);
             });
-            
-            pdf.addImage(imgData, 'JPEG', 0, 0, widthPt, heightPt, undefined, 'FAST');
-            
-            const posisiLabel = Array.isArray(sop.posisi) ? sop.posisi.join(", ") : String(sop.posisi);
-            const filename = `SOP_${posisiLabel.replace(/[\s,]+/g, '_')}_${Date.now()}.pdf`;
-            pdf.save(filename);
-            
-          }).catch(err => {
+          }).catch(imgErr => {
             document.documentElement.style.zoom = savedZoom;
             if (overlay) overlay.classList.add('d-none');
-            alert("Gagal memproses PDF: " + err);
+            if(btn){ btn.innerHTML = ogHtml; btn.disabled = false; }
+            alert("Gagal memuat gambar untuk ekspor PDF.");
           });
-        }).catch(imgErr => {
-          document.documentElement.style.zoom = savedZoom;
-          if (overlay) overlay.classList.add('d-none');
-          alert("Gagal memuat gambar untuk ekspor PDF.");
-        });
+        }, 50);
       }
 
       function startSOPWizard(existingSopId = "") {
