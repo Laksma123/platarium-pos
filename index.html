@@ -2450,6 +2450,9 @@
 
           <div class="row mb-4 d-none" id="netProfitContainer">
             <div class="col-12">
+              <!-- Markup Profit Extra Label Container -->
+              <div id="markupExtraProfitLabelContainer" class="d-none mb-3"></div>
+
               <div class="card border-0 shadow-sm rounded-4 p-4" style="padding-bottom: 30px !important;">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                   <span class="fw-bold text-muted small"><i class="fas fa-wallet me-1"></i> Progress Profit vs Cost</span>
@@ -6129,6 +6132,39 @@
               `;
           });
 
+          // Profit Loss Pembulatan Tanpa Markup
+          let totalRoundingLoss = 0;
+          if (typeof TELEGRAM_CONFIG !== 'undefined' && TELEGRAM_CONFIG.markupSaran === 'Tidak') {
+              if (typeof CURRENT_RENDERED_FINANCE !== 'undefined' && CURRENT_RENDERED_FINANCE) {
+                  CURRENT_RENDERED_FINANCE.forEach(t => {
+                      if (t.status !== 'Komplimen' && t.method === 'CASH') {
+                          let tSubtotal = 0;
+                          t.items.forEach(i => {
+                              tSubtotal += i.price * i.qty;
+                          });
+                          let tBaseTotal = tSubtotal;
+                          if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
+                              tBaseTotal += tSubtotal * (TAX_PERCENTAGE / 100);
+                          }
+                          let tRoundingLoss = tBaseTotal - t.total;
+                          if (tRoundingLoss > 0) {
+                              totalRoundingLoss += tRoundingLoss;
+                          }
+                      }
+                  });
+              }
+              if (totalRoundingLoss > 0) {
+                  totalCost += totalRoundingLoss;
+                  html += `
+                  <tr>
+                      <td class="fw-bold text-dark"><i class="fas fa-coins text-danger me-2"></i>Profit Loss : Pembulatan Tanpa Markup</td>
+                      <td class="text-end fw-bold text-danger">Rp ${totalRoundingLoss.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                      <td class="text-center"><span class="badge bg-light text-muted border px-3">Auto</span></td>
+                  </tr>
+                  `;
+              }
+          }
+
           tbody.innerHTML = html;
 
           // Eksekusi Profit vs Cost (Sinkronisasi dengan global filter)
@@ -6564,7 +6600,7 @@
       // ==========================================
       // FUNGSI TAB SETTING (TELEGRAM)
       // ==========================================
-      let TELEGRAM_CONFIG = { active: false, token: '', chatAudit: '', chatTrans: '', chatSchedule: '', chatOwner: '', cashRoundMode: 'OFF', cashRoundManualValue: 0 };
+      let TELEGRAM_CONFIG = { active: false, token: '', chatAudit: '', chatTrans: '', chatSchedule: '', chatOwner: '', cashRoundMode: 'OFF', cashRoundManualValue: 0, markupSaran: 'Tidak', markupValue: 0 };
 
       function loadSettingConfig(isBackground = false) {
         const btn = document.getElementById('btnSaveSetting');
@@ -6605,6 +6641,16 @@
           toggleInvoiceInputs();
           updateOwnerSettingUI(res.ownerPass); 
           updateCashRoundingUI();
+
+          const mstIya = document.getElementById('mstIya');
+          const mstTidak = document.getElementById('mstTidak');
+          if (mstIya && mstTidak) {
+            if (res.markupSaran === 'Iya') {
+              mstIya.checked = true;
+            } else {
+              mstTidak.checked = true;
+            }
+          }
 
           if (!isBackground) {
             if (loadingArea) loadingArea.classList.add('d-none');
@@ -6762,7 +6808,9 @@
           ownerPass: document.getElementById('settingOwnerPass') ? document.getElementById('settingOwnerPass').value : '',
           isOwner: ACTIVE_CASHIER === 'Owner',
           cashRoundMode: TELEGRAM_CONFIG.cashRoundMode || 'OFF',
-          cashRoundManualValue: TELEGRAM_CONFIG.cashRoundManualValue || 0
+          cashRoundManualValue: TELEGRAM_CONFIG.cashRoundManualValue || 0,
+          markupSaran: (document.getElementById('mstIya') && document.getElementById('mstIya').checked) ? 'Iya' : 'Tidak',
+          markupValue: TELEGRAM_CONFIG.markupValue || 0
         };
 
         IS_TAX_ACTIVE = TELEGRAM_CONFIG.taxActive;
@@ -6983,10 +7031,18 @@
           // Revert toggle in setting row back to "Tidak"
           const mstTidak = document.getElementById('mstTidak');
           if (mstTidak) mstTidak.checked = true;
+          TELEGRAM_CONFIG.markupSaran = 'Tidak';
+          TELEGRAM_CONFIG.markupValue = 0;
+          saveCashRoundingSettingToServer();
         } else {
           // Keep toggle in setting row at "Iya"
           const mstIya = document.getElementById('mstIya');
           if (mstIya) mstIya.checked = true;
+          TELEGRAM_CONFIG.markupSaran = 'Iya';
+          saveCashRoundingSettingToServer();
+        }
+        if (typeof renderFinanceUI === 'function') {
+          renderFinanceUI();
         }
       }
 
@@ -7000,6 +7056,9 @@
             // Revert toggle to "Tidak"
             const mstTidak = document.getElementById('mstTidak');
             if (mstTidak) mstTidak.checked = true;
+            TELEGRAM_CONFIG.markupSaran = 'Tidak';
+            TELEGRAM_CONFIG.markupValue = 0;
+            saveCashRoundingSettingToServer();
           } else {
             section.style.opacity = '1';
             section.style.pointerEvents = 'auto';
@@ -7029,6 +7088,8 @@
             btn.innerHTML = originalText;
           }
           if (res && res.status === 'success') {
+            TELEGRAM_CONFIG.markupSaran = 'Iya';
+            TELEGRAM_CONFIG.markupValue = val;
             // Close modal keeping toggle at "Iya"
             closeGlobalMarkupSuggest(true);
             
@@ -7056,11 +7117,19 @@
       }
 
       function handleMarkupLanjutManual() {
+        const val = getActiveCashRoundValue();
+        TELEGRAM_CONFIG.markupSaran = 'Iya';
+        TELEGRAM_CONFIG.markupValue = val;
         closeGlobalMarkupSuggest(true);
       }
 
       function handleMarkupTidak() {
-        // Sementara kosong
+        TELEGRAM_CONFIG.markupSaran = 'Tidak';
+        TELEGRAM_CONFIG.markupValue = 0;
+        saveCashRoundingSettingToServer();
+        if (typeof renderFinanceUI === 'function') {
+          renderFinanceUI();
+        }
       }
 
       function toggleTaxSetting(isUserAction = false) {
@@ -11183,10 +11252,81 @@
           }).join('');
         }
 
+        let totalExtraProfit = 0;
+        let cashTransactionsCount = 0;
+        let totalRoundingEvents = 0;
+
+        if (TELEGRAM_CONFIG.markupSaran === 'Iya' && TELEGRAM_CONFIG.markupValue > 0) {
+            filteredData.forEach(t => {
+                if (t.status !== 'Komplimen' && t.method === 'CASH') {
+                    cashTransactionsCount++;
+                    let tSubtotal = 0;
+                    let qtyCASH = 0;
+                    t.items.forEach(i => {
+                        tSubtotal += i.price * i.qty;
+                        qtyCASH += i.qty;
+                    });
+                    let tBaseTotal = tSubtotal;
+                    if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
+                        tBaseTotal += tSubtotal * (TAX_PERCENTAGE / 100);
+                    }
+                    let tRoundingLoss = tBaseTotal - t.total;
+                    if (tRoundingLoss < 0) tRoundingLoss = 0;
+                    if (tRoundingLoss > 0) {
+                        totalRoundingEvents++;
+                    }
+                    let tExtraProfit = (qtyCASH * TELEGRAM_CONFIG.markupValue) - tRoundingLoss;
+                    totalExtraProfit += tExtraProfit;
+                }
+            });
+        }
+
+        const labelContainer = document.getElementById('markupExtraProfitLabelContainer');
+        if (labelContainer) {
+            if (TELEGRAM_CONFIG.markupSaran === 'Iya' && cashTransactionsCount > 0) {
+                labelContainer.innerHTML = `
+                    <div class="card border-0 shadow-sm rounded-4 p-3" style="background: linear-gradient(135deg, #e8f8f5, #d1f2eb); border: 1px solid rgba(22, 160, 133, 0.2);">
+                      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center">
+                          <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: rgba(22, 160, 133, 0.1); color: #16a085;">
+                            <i class="fas fa-coins" style="font-size: 1.2rem;"></i>
+                          </div>
+                          <div>
+                            <h6 class="fw-bold m-0" style="color: #117864; font-size: 0.9rem;">Profit Ekstra Markup Pembulatan CASH</h6>
+                            <small style="color: #16a085; font-size: 0.75rem; font-weight: 600;">
+                              Terdeteksi ${cashTransactionsCount} transaksi CASH, terjadi ${totalRoundingEvents} pembulatan.
+                            </small>
+                          </div>
+                        </div>
+                        <div class="text-end">
+                          <span class="badge fw-bold px-3 py-2 fs-6" style="background-color: #16a085; color: white;">
+                            Rp ${totalExtraProfit.toLocaleString(undefined, {maximumFractionDigits:0})}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                `;
+                labelContainer.classList.remove('d-none');
+            } else {
+                labelContainer.classList.add('d-none');
+            }
+        }
+
         const profitKotor = totalRev - totalHPP;
-        document.getElementById('dashTotalRevenue').innerText = `Rp ${totalRev.toLocaleString()}`;
+        
+        if (TELEGRAM_CONFIG.markupSaran === 'Iya' && totalExtraProfit > 0) {
+            document.getElementById('dashTotalRevenue').innerHTML = `Rp ${totalRev.toLocaleString()} <span style="color: #1b5e20; font-weight: 800; font-size: 0.75rem; margin-left: 2px;">+ Rp ${totalExtraProfit.toLocaleString()}</span>`;
+            document.getElementById('dashNetProfit').innerText = `Rp ${(profitKotor + totalExtraProfit).toLocaleString()}`;
+            window.CURRENT_FILTERED_REVENUE = totalRev + totalExtraProfit;
+            window.CURRENT_FILTERED_PROFIT = profitKotor + totalExtraProfit;
+        } else {
+            document.getElementById('dashTotalRevenue').innerText = `Rp ${totalRev.toLocaleString()}`;
+            document.getElementById('dashNetProfit').innerText = `Rp ${profitKotor.toLocaleString()}`;
+            window.CURRENT_FILTERED_REVENUE = totalRev;
+            window.CURRENT_FILTERED_PROFIT = profitKotor;
+        }
+
         document.getElementById('dashTotalHPP').innerText = `Rp ${totalHPP.toLocaleString()}`;
-        document.getElementById('dashNetProfit').innerText = `Rp ${profitKotor.toLocaleString()}`;
         document.getElementById('dashTotalOrders').innerText = validOrders;
 
         const getWinners = (dataObj, isProduct = false) => {
@@ -11202,10 +11342,6 @@
         
         const chartDataNormal = filteredData.filter(t => t.status !== 'Komplimen');
         updateSalesChart(chartDataNormal);
-        
-        // --- SIMPAN CALCULATED FILTER KE VARIABEL GLOBAL ---
-        window.CURRENT_FILTERED_REVENUE = totalRev;
-        window.CURRENT_FILTERED_PROFIT = profitKotor;
 
         // Picu pembaruan kalkulasi Operational Cost & Pajak agar sesuai dengan filter yang aktif
         if (!IS_OPCOST_LOADED) {
