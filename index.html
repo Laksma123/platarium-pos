@@ -13161,10 +13161,55 @@
           pushTxt('-'.repeat(maxChars));
           
           bytes.push(...cmd.alignLeft);
+          const revenueVal = parseInt(totalRev.replace(/[^\d]/g, '')) || 0;
+          const hppVal = parseInt(totalHPP.replace(/[^\d]/g, '')) || 0;
+          const profitKotorVal = revenueVal - hppVal;
+
           pushTxt(padText("Pendapatan:", totalRev, maxChars));
           pushTxt(padText("Total HPP:", totalHPP, maxChars));
-          pushTxt(padText("Profit Kotor:", netProfit, maxChars));
+          pushTxt(padText("Profit Kotor:", "Rp " + profitKotorVal.toLocaleString('id-ID'), maxChars));
           pushTxt(padText("Total Pesanan:", totalOrders, maxChars));
+
+          // Hitung data pembulatan secara konsisten
+          let totalExtraProfit = 0;
+          let totalRoundingLoss = 0;
+          const roundingVal = getActiveCashRoundValue();
+          
+          filteredData.forEach(t => {
+            if (t.status !== 'Komplimen' && t.method === 'CASH') {
+              let qtyCASH = 0;
+              let tSubtotal = 0;
+              t.items.forEach(i => {
+                qtyCASH += Number(i.qty);
+                tSubtotal += i.price * i.qty;
+              });
+              let tBaseTotal = tSubtotal;
+              if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
+                tBaseTotal += tSubtotal * (TAX_PERCENTAGE / 100);
+              }
+              let diff = Math.round(tBaseTotal) - Math.round(t.total);
+              let tRoundingLoss = 0;
+              if (roundingVal > 0) {
+                tRoundingLoss = diff % roundingVal;
+                if (tRoundingLoss < 0) tRoundingLoss = 0;
+              }
+              totalRoundingLoss += tRoundingLoss;
+              let tExtraProfit = (qtyCASH * (TELEGRAM_CONFIG.markupValue || 0)) - tRoundingLoss;
+              totalExtraProfit += tExtraProfit;
+            }
+          });
+
+          if (TELEGRAM_CONFIG.markupSaran === 'Iya') {
+            const finalProfit = profitKotorVal + totalExtraProfit;
+            const finalProfitStr = finalProfit >= 0 ? "= Rp " + finalProfit.toLocaleString('id-ID') : "= -Rp " + Math.abs(finalProfit).toLocaleString('id-ID');
+            pushTxt(padText("Profit Ekstra (Pembulatan)", "= Rp " + totalExtraProfit.toLocaleString('id-ID'), maxChars));
+            pushTxt(padText("Total Profit (Net Profit)", finalProfitStr, maxChars));
+          } else {
+            const finalProfit = profitKotorVal - totalRoundingLoss;
+            const finalProfitStr = finalProfit >= 0 ? "= Rp " + finalProfit.toLocaleString('id-ID') : "= -Rp " + Math.abs(finalProfit).toLocaleString('id-ID');
+            pushTxt(padText("Pengurangan Pembulatan", "= -Rp " + totalRoundingLoss.toLocaleString('id-ID'), maxChars));
+            pushTxt(padText("Total Profit (Net Profit)", finalProfitStr, maxChars));
+          }
           
           // --- RINGKASAN BIAYA METODE BAYAR ---
           let totalBankFee = 0;
@@ -13402,6 +13447,58 @@
             const customDate = document.getElementById('customDateText').innerText;
             let periodStr = filterType === 'custom' ? customDate : filterText;
 
+            // Filter data transaksi sesuai filter aktif untuk kalkulasi pembulatan
+            const mFilter = document.getElementById('methodFilter') ? document.getElementById('methodFilter').value : 'all';
+            const now = new Date();
+            const todayStr = Utilities_formatDateIndo(now);
+            const monthStr = (now.getMonth() + 1).toString().padStart(2, '0') + '/' + now.getFullYear();
+            const selectedCustom = window.SELECTED_CUSTOM_DATE || "";
+
+            const filteredData = TRANSACTIONS_DATA.filter(t => {
+              const tDate = t.timestamp.split(' ')[0];
+              let timeMatch = true;
+              if (filterType === 'today') timeMatch = (tDate === todayStr);
+              else if (filterType === 'month') timeMatch = tDate.includes(monthStr);
+              else if (filterType === 'year') timeMatch = tDate.includes(now.getFullYear().toString());
+              else if (filterType === 'custom') timeMatch = (tDate === selectedCustom);
+              else if (filterType === 'all') timeMatch = true;
+
+              let methodMatch = true;
+              if (mFilter !== 'all') {
+                methodMatch = (t.method === mFilter);
+              }
+              return timeMatch && methodMatch;
+            });
+
+            // Hitung data pembulatan secara konsisten
+            let totalExtraProfit = 0;
+            let totalRoundingLoss = 0;
+            const roundingVal = getActiveCashRoundValue();
+            
+            filteredData.forEach(t => {
+              if (t.status !== 'Komplimen' && t.method === 'CASH') {
+                let qtyCASH = 0;
+                let tSubtotal = 0;
+                t.items.forEach(i => {
+                  qtyCASH += Number(i.qty);
+                  tSubtotal += i.price * i.qty;
+                });
+                let tBaseTotal = tSubtotal;
+                if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
+                  tBaseTotal += tSubtotal * (TAX_PERCENTAGE / 100);
+                }
+                let diff = Math.round(tBaseTotal) - Math.round(t.total);
+                let tRoundingLoss = 0;
+                if (roundingVal > 0) {
+                  tRoundingLoss = diff % roundingVal;
+                  if (tRoundingLoss < 0) tRoundingLoss = 0;
+                }
+                totalRoundingLoss += tRoundingLoss;
+                let tExtraProfit = (qtyCASH * (TELEGRAM_CONFIG.markupValue || 0)) - tRoundingLoss;
+                totalExtraProfit += tExtraProfit;
+              }
+            });
+
             document.getElementById('lapCapPeriode').innerText = 'Periode: ' + periodStr;
             document.getElementById('lapCapTime').innerText = new Date().toLocaleString('id-ID');
             document.getElementById('lapCapRev').innerText = document.getElementById('dashTotalRevenue').innerText;
@@ -13443,7 +13540,31 @@
                 });
             }
 
-            const profitBersih = window.CURRENT_FILTERED_PROFIT !== undefined ? window.CURRENT_FILTERED_PROFIT : getPureProfitBersih(); 
+            // Tambahkan Pengurangan Pembulatan ke Rincian Operational Cost jika toggle "Tidak"
+            if (TELEGRAM_CONFIG.markupSaran === 'Tidak' && totalRoundingLoss > 0) {
+                totalCost += totalRoundingLoss;
+                rincianCost += `   - Pengurangan Pembulatan: -Rp ${totalRoundingLoss.toLocaleString('id-ID', {maximumFractionDigits:0})}\n`;
+            }
+
+            let profitBersih = window.CURRENT_FILTERED_PROFIT !== undefined ? window.CURRENT_FILTERED_PROFIT : getPureProfitBersih();
+            
+            // Tambahkan profit ekstra ke profitBersih jika toggle "Iya" dan profitBersih belum terisi/terkalkulasi dengan profit ekstra
+            if (TELEGRAM_CONFIG.markupSaran === 'Iya' && totalExtraProfit > 0) {
+                if (window.CURRENT_FILTERED_PROFIT === undefined) {
+                    let calculatedProfitKotor = 0;
+                    filteredData.forEach(t => {
+                        if (t.status !== 'Komplimen') {
+                            calculatedProfitKotor += getNetRevenue(t);
+                            t.items.forEach(i => {
+                                let itemHPP = PRODUCT_HPP_MAP[i.id] || 0;
+                                calculatedProfitKotor -= (itemHPP * i.qty);
+                            });
+                        }
+                    });
+                    profitBersih = calculatedProfitKotor + totalExtraProfit;
+                }
+            }
+            
             const netProfit = profitBersih - totalCost; 
 
             // Populate Operational Cost UI in Capture
@@ -13472,6 +13593,24 @@
                 `;
               });
             }
+
+            // Tambahkan baris pembulatan tunai ke capture table
+            if (TELEGRAM_CONFIG.markupSaran === 'Tidak' && totalRoundingLoss > 0) {
+              capOpCostHtml += `
+                <tr>
+                  <td class="fw-bold text-danger"><i class="fas fa-coins text-danger me-2"></i>Pengurangan Pembulatan</td>
+                  <td class="text-end fw-bold text-danger">-Rp ${totalRoundingLoss.toLocaleString('id-ID', {maximumFractionDigits:0})}</td>
+                </tr>
+              `;
+            } else if (TELEGRAM_CONFIG.markupSaran === 'Iya' && totalExtraProfit > 0) {
+              capOpCostHtml += `
+                <tr>
+                  <td class="fw-bold text-success"><i class="fas fa-coins text-success me-2"></i>Profit Ekstra (Pembulatan)</td>
+                  <td class="text-end fw-bold text-success">+Rp ${totalExtraProfit.toLocaleString('id-ID', {maximumFractionDigits:0})}</td>
+                </tr>
+              `;
+            }
+
             document.getElementById('lapCapOpCostTableBody').innerHTML = capOpCostHtml;
             document.getElementById('lapCapOpTotalCost').innerText = 'Rp ' + totalCost.toLocaleString('id-ID', {maximumFractionDigits:0});
             
@@ -13616,8 +13755,13 @@
               let captionMsg = `📊 <b>Rekap Laporan Keuangan</b>\n` +
                 `<b>Periode:</b> ${periodStr}\n` +
                 `<b>Total Pendapatan:</b> ${document.getElementById('dashTotalRevenue').innerText}\n` +
-                `<b>Profit Kotor:</b> ${document.getElementById('dashNetProfit').innerText}\n\n` +
-                `<b>Rincian Operational Cost:</b>\n${rincianCost}` +
+                `<b>Profit Kotor:</b> ${document.getElementById('dashNetProfit').innerText}\n`;
+
+              if (TELEGRAM_CONFIG.markupSaran === 'Iya' && totalExtraProfit > 0) {
+                captionMsg += `   - Profit Ekstra (Pembulatan): +Rp ${totalExtraProfit.toLocaleString('id-ID', {maximumFractionDigits:0})}\n`;
+              }
+
+              captionMsg += `\n<b>Rincian Operational Cost:</b>\n${rincianCost}` +
                 `<b>Total Cost:</b> Rp ${totalCost.toLocaleString('id-ID', {maximumFractionDigits:0})}\n\n` +
                 `<b>Net Profit :</b> ${formatNetProfit}\n`;
 
