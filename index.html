@@ -13,6 +13,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.2/qz-tray.min.js"></script>
@@ -1797,9 +1798,19 @@
         border-color: #1e293b;
         box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
       }
+      .sop-list-item.active .text-dark,
+      .sop-list-item.active .text-muted,
+      .sop-list-item.active .fw-bold {
+        color: #ffffff !important;
+      }
+      .sop-list-item.active .badge.bg-dark {
+        background-color: rgba(255, 255, 255, 0.25) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.4) !important;
+      }
       .sop-content-detail {
         flex: 1;
-        overflow-y: auto;
+        overflow: hidden;
         padding: 2rem;
         display: flex;
         flex-direction: column;
@@ -1811,6 +1822,9 @@
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         border: 1px solid #f1f5f9;
         flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
       }
       
       /* Wizard Stepper Styling */
@@ -6159,19 +6173,25 @@
               <h4 class="fw-bold text-dark mb-1">SOP ${posisiLabel}</h4>
               <p class="text-muted small m-0"><i class="far fa-clock me-1"></i>Pembaruan Terakhir: ${sop.tanggal || '-'}</p>
             </div>
-            ${hasFullAccess ? `
-              <div class="d-flex gap-2">
-                <button class="btn btn-outline-warning btn-sm rounded-pill fw-bold" onclick="startSOPWizard('${sop.id}')">
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-outline-danger btn-sm rounded-pill fw-bold d-flex align-items-center" onclick="downloadSOPPDF('${sop.id}')" style="font-size:0.75rem; padding: 6px 14px;">
+                <i class="fas fa-file-pdf me-1"></i>Download PDF
+              </button>
+              <button type="button" id="btnSendSopTelegram-${sop.id}" class="btn btn-outline-primary btn-sm rounded-pill fw-bold d-flex align-items-center" onclick="sendSOPTelegram('${sop.id}')" style="font-size:0.75rem; padding: 6px 14px;">
+                <i class="fab fa-telegram-plane me-1"></i>Kirim Telegram
+              </button>
+              ${hasFullAccess ? `
+                <button type="button" class="btn btn-outline-warning btn-sm rounded-pill fw-bold d-flex align-items-center" onclick="startSOPWizard('${sop.id}')" style="font-size:0.75rem; padding: 6px 14px;">
                   <i class="fas fa-edit me-1"></i>Edit
                 </button>
-                <button class="btn btn-outline-danger btn-sm rounded-pill fw-bold" onclick="deleteSOPRecord('${sop.id}')">
+                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill fw-bold d-flex align-items-center" onclick="deleteSOPRecord('${sop.id}')" style="font-size:0.75rem; padding: 6px 14px;">
                   <i class="fas fa-trash me-1"></i>Hapus
                 </button>
-              </div>
-            ` : ''}
+              ` : ''}
+            </div>
           </div>
           
-          <div class="overflow-auto pe-2" style="max-height: calc(85vh - 180px); scrollbar-width: thin;">
+          <div class="overflow-auto pe-2 flex-grow-1" style="scrollbar-width: thin;">
             
             ${timeTabsHtml}
 
@@ -6262,6 +6282,242 @@
         overlay.onclick = () => overlay.remove();
         overlay.innerHTML = `<img src="${url}" style="max-width:90%; max-height:90%; border-radius:1rem; border:3px solid #ffffff; box-shadow:0 10px 30px rgba(0,0,0,0.5);">`;
         document.body.appendChild(overlay);
+      }
+
+      function generateSOPCaptureHtml(sop) {
+        const positions = Array.isArray(sop.posisi) ? sop.posisi.join(", ") : String(sop.posisi);
+        const date = sop.tanggal || "-";
+        
+        let timesHtml = "";
+        if (Array.isArray(sop.waktu)) {
+          sop.waktu.forEach(w => {
+            const prepList = (sop.persiapan && sop.persiapan[w]) ? sop.persiapan[w] : [];
+            const stepsList = (sop.langkahInti && sop.langkahInti[w]) ? sop.langkahInti[w] : [];
+            
+            let prepItemsHtml = "";
+            prepList.forEach(p => {
+              const text = typeof p === 'object' ? (p.text || "") : p;
+              const foto = typeof p === 'object' ? (p.foto || "") : "";
+              prepItemsHtml += `
+                <div class="col-12 mb-2 d-flex flex-column" style="text-align: left !important;">
+                  <div class="d-flex align-items-start gap-2">
+                    <span class="text-secondary fw-bold" style="font-size: 1.1rem; line-height: 1;">☐</span>
+                    <span class="fw-bold text-dark" style="font-size: 0.95rem;">${text}</span>
+                  </div>
+                  ${foto ? `<div class="mt-2 ps-4"><img src="${foto}" style="max-width: 320px; border-radius: 8px; border: 1px solid #cbd5e1; display: block;"></div>` : ""}
+                </div>
+              `;
+            });
+            if (prepList.length === 0) prepItemsHtml = `<div class="col-12 text-muted italic small ps-4">Tidak ada checklist persiapan untuk waktu ini.</div>`;
+            
+            let stepsItemsHtml = "";
+            stepsList.forEach((s, idx) => {
+              const text = typeof s === 'object' ? (s.text || "") : s;
+              const foto = typeof s === 'object' ? (s.foto || "") : "";
+              stepsItemsHtml += `
+                <div class="col-12 mb-2 d-flex flex-column" style="text-align: left !important;">
+                  <div class="d-flex align-items-start gap-2">
+                    <span class="badge bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 1.5rem; height: 1.5rem; font-size: 0.75rem; flex-shrink: 0; margin-top: 2px;">${idx + 1}</span>
+                    <span class="fw-bold text-dark mt-1" style="font-size: 0.95rem;">${text}</span>
+                  </div>
+                  ${foto ? `<div class="mt-2 ps-4 ms-2"><img src="${foto}" style="max-width: 320px; border-radius: 8px; border: 1px solid #cbd5e1; display: block;"></div>` : ""}
+                </div>
+              `;
+            });
+            if (stepsList.length === 0) stepsItemsHtml = `<div class="col-12 text-muted italic small ps-4">Tidak ada langkah inti untuk waktu ini.</div>`;
+            
+            timesHtml += `
+              <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0 !important; border-radius: 1.25rem;">
+                <h4 class="fw-bold text-dark border-bottom pb-2 mb-3" style="color: #0f172a !important; text-align: left !important;">
+                  <i class="fas fa-calendar-day me-2 text-warning"></i>WAKTU OPERASIONAL: <span class="text-uppercase text-warning">${w}</span>
+                </h4>
+                
+                <div class="mb-4">
+                  <h6 class="fw-bold text-muted mb-3" style="text-align: left !important;"><i class="fas fa-check-double me-2 text-warning"></i>1. CHECKLIST PERSIAPAN OUTLET</h6>
+                  <div class="row g-2">${prepItemsHtml}</div>
+                </div>
+                
+                <div>
+                  <h6 class="fw-bold text-muted mb-3" style="text-align: left !important;"><i class="fas fa-running me-2 text-warning"></i>2. LANGKAH INTI OPERASIONAL KERJA</h6>
+                  <div class="row g-2">${stepsItemsHtml}</div>
+                </div>
+              </div>
+            `;
+          });
+        }
+        
+        let emergencyHtml = "";
+        if (Array.isArray(sop.masalah)) {
+          sop.masalah.forEach(m => {
+            const fotoHtml = m.foto ? `<div class="mt-2"><img src="${m.foto}" style="max-width: 320px; border-radius: 8px; border: 1px solid #cbd5e1; display: block;"></div>` : "";
+            emergencyHtml += `
+              <div class="p-3 rounded-4 border mb-2 bg-white" style="border-color: #fed7d7 !important; border-radius: 1rem; text-align: left !important;">
+                <div class="fw-bold text-danger mb-1"><i class="fas fa-exclamation-circle me-2"></i>JIKA: ${m.if}</div>
+                <div class="fw-bold text-success"><i class="fas fa-check-circle me-2"></i>MAKA: ${m.then}</div>
+                ${fotoHtml}
+              </div>
+            `;
+          });
+        }
+        if (!sop.masalah || sop.masalah.length === 0) {
+          emergencyHtml = `<div class="text-muted small italic text-start ps-3">Tidak ada aturan darurat khusus.</div>`;
+        }
+        
+        let visualImageHtml = "";
+        if (sop.foto) {
+          visualImageHtml = `
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" style="background: #ffffff; border: 1px solid #e2e8f0 !important; border-radius: 1.25rem;">
+              <h5 class="fw-bold text-muted border-bottom pb-2 mb-3" style="text-align: left !important;"><i class="fas fa-image me-2 text-warning"></i>4. FOTO STANDAR VISUAL UTAMA</h5>
+              <div class="text-center d-flex justify-content-center">
+                <img src="${sop.foto}" style="max-width: 600px; max-height: 450px; border-radius: 16px; border: 3px solid #e2e8f0; display: block; object-fit: contain;">
+              </div>
+            </div>
+          `;
+        }
+        
+        const containerHtml = `
+          <!-- Header SOP -->
+          <div class="p-4 rounded-4 mb-4 text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-bottom: 5px solid #d4af37; border-radius: 1.25rem;">
+            <div style="text-align: left !important;">
+              <h2 class="fw-bold m-0" style="letter-spacing: 0.5px; font-size: 1.6rem; color: #ffffff !important;">STANDAR OPERASIONAL PROSEDUR (SOP)</h2>
+              <h4 class="fw-bold mt-2 text-warning" style="opacity: 0.95; font-size: 1.2rem; color: #ffc107 !important;">Staff / Posisi: ${positions}</h4>
+            </div>
+            <div style="text-align: right !important;">
+              <div class="small text-white-50" style="font-weight: 600;">PLATARIUM POS SYSTEM</div>
+              <div class="small mt-1 text-white" style="font-size: 0.8rem;"><i class="far fa-clock me-1 text-warning"></i>Pembaruan: ${date}</div>
+            </div>
+          </div>
+          
+          <!-- Detail Waktu -->
+          ${timesHtml}
+          
+          <!-- Emergency Rules -->
+          <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" style="background: #fff5f5; border: 1px solid #fed7d7 !important; border-radius: 1.25rem;">
+            <h4 class="fw-bold text-danger border-bottom pb-2 mb-3" style="text-align: left !important; color: #dc3545 !important;">
+              <i class="fas fa-exclamation-triangle me-2"></i>3. PENANGANAN MASALAH (GOLDEN RULES)
+            </h4>
+            <div class="d-flex flex-column">${emergencyHtml}</div>
+          </div>
+          
+          <!-- Visual Image -->
+          ${visualImageHtml}
+          
+          <!-- Footer Branding -->
+          <div class="text-center mt-5 pt-3 border-top text-muted small" style="font-size: 0.75rem;">
+            Dokumen ini diterbitkan oleh <b>Platarium POS</b> untuk menjaga standardisasi kualitas pelayanan outlet F&B.
+          </div>
+        `;
+        
+        const captureContainer = document.getElementById('sopCaptureContainer');
+        captureContainer.innerHTML = containerHtml;
+      }
+
+      function sendSOPTelegram(sopId) {
+        const sop = SOP_DATA.find(s => s.id === sopId);
+        if (!sop) return;
+        
+        const btn = document.getElementById(`btnSendSopTelegram-${sopId}`);
+        const ogHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Kirim...';
+        
+        const savedZoom = document.documentElement.style.zoom || '1';
+        document.documentElement.style.zoom = '1';
+        
+        const overlay = document.getElementById('screenshotLoadingOverlay');
+        if (overlay) {
+          overlay.querySelector('h5').innerText = "Sedang Menyusun Gambar SOP...";
+          overlay.classList.remove('d-none');
+        }
+        
+        generateSOPCaptureHtml(sop);
+        
+        setTimeout(() => {
+          const capDiv = document.getElementById('sopCaptureContainer');
+          
+          html2canvas(capDiv, { scale: 4, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+            document.documentElement.style.zoom = savedZoom;
+            
+            if (overlay) overlay.classList.add('d-none');
+            
+            const base64Data = canvas.toDataURL('image/jpeg', 0.9);
+            const posisiLabel = Array.isArray(sop.posisi) ? sop.posisi.join(", ") : String(sop.posisi);
+            
+            const captionMsg = `📋 <b>Standard Operasional Prosedur (SOP)</b>\n` +
+                               `<b>Staff / Posisi:</b> ${posisiLabel}\n` +
+                               `<b>Terakhir Diperbarui:</b> ${sop.tanggal || '-'}\n\n` +
+                               `<i>Detail SOP lengkap terlampir dalam gambar resolusi tinggi (HD) di atas. Silakan tim pelajari dan jalankan dengan disiplin!</i>`;
+            
+            google.script.run.withSuccessHandler(res => {
+              btn.innerHTML = ogHtml;
+              btn.disabled = false;
+              if (res.status === 'success') {
+                alert("SOP berhasil dikirim ke Grup Telegram Schedule!");
+              } else {
+                alert("Gagal mengirim Telegram: " + res.message);
+              }
+            }).sendScheduleToTelegram(base64Data, captionMsg);
+            
+          }).catch(err => {
+            document.documentElement.style.zoom = savedZoom;
+            if (overlay) overlay.classList.add('d-none');
+            btn.innerHTML = ogHtml;
+            btn.disabled = false;
+            alert("Gagal memproses screenshot SOP: " + err);
+          });
+        }, 300);
+      }
+
+      function downloadSOPPDF(sopId) {
+        const sop = SOP_DATA.find(s => s.id === sopId);
+        if (!sop) return;
+        
+        const savedZoom = document.documentElement.style.zoom || '1';
+        document.documentElement.style.zoom = '1';
+        
+        const overlay = document.getElementById('screenshotLoadingOverlay');
+        if (overlay) {
+          overlay.querySelector('h5').innerText = "Sedang Menyusun Dokumen PDF...";
+          overlay.classList.remove('d-none');
+        }
+        
+        generateSOPCaptureHtml(sop);
+        
+        setTimeout(() => {
+          const capDiv = document.getElementById('sopCaptureContainer');
+          
+          html2canvas(capDiv, { scale: 4, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+            document.documentElement.style.zoom = savedZoom;
+            
+            if (overlay) overlay.classList.add('d-none');
+            
+            const imgData = canvas.toDataURL('image/jpeg', 1.0);
+            const { jsPDF } = window.jspdf;
+            
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+            
+            const widthPt = 900;
+            const heightPt = (canvasHeight / canvasWidth) * widthPt;
+            
+            const pdf = new jsPDF({
+              orientation: heightPt > widthPt ? 'p' : 'l',
+              unit: 'pt',
+              format: [widthPt, heightPt]
+            });
+            
+            pdf.addImage(imgData, 'JPEG', 0, 0, widthPt, heightPt, undefined, 'FAST');
+            
+            const posisiLabel = Array.isArray(sop.posisi) ? sop.posisi.join(", ") : String(sop.posisi);
+            const filename = `SOP_${posisiLabel.replace(/[\s,]+/g, '_')}_${Date.now()}.pdf`;
+            pdf.save(filename);
+            
+          }).catch(err => {
+            document.documentElement.style.zoom = savedZoom;
+            if (overlay) overlay.classList.add('d-none');
+            alert("Gagal membuat dokumen PDF: " + err);
+          });
+        }, 300);
       }
 
       function startSOPWizard(existingSopId = "") {
@@ -16980,6 +17236,8 @@
         <button class="btn btn-luxury w-100 py-3 rounded-pill fw-bold" onclick="closeDetailPromoModal()">TUTUP</button>
       </div>
     </div>
+
+    <div id="sopCaptureContainer" class="bg-white p-5" style="position: absolute; left: -9999px; top: -9999px; width: 900px; color: #1e293b; z-index: -1; font-family: 'Poppins', sans-serif;"></div>
 
     <div id="laporanGridToCapture" class="bg-white p-4" style="position: absolute; left: -9999px; top: -9999px; width: 800px; color: #333; z-index: -1;">
       <div class="text-center mb-4">
