@@ -2550,24 +2550,48 @@
                       </div>
                     </div>
 
-                    <div class="row g-3">
+                    <div class="row g-4">
                       <div class="col-md-6">
-                        <label class="small fw-bold text-muted mb-2">POSISI / STAF TARGET</label>
-                        <select id="wizardSopPosisi" class="form-select border-2 fw-bold" style="border-radius: 0.75rem;">
-                          <option value="Barista">Barista</option>
-                          <option value="Waiter">Waiter</option>
-                          <option value="Kitchen">Kitchen</option>
-                          <option value="Kasir">Kasir</option>
-                        </select>
+                        <label class="small fw-bold text-muted d-block mb-3"><i class="fas fa-users text-primary me-2"></i>POSISI / STAF TARGET (Bisa Pilih Lebih Dari 1)</label>
+                        <div class="d-flex flex-wrap gap-2">
+                          <label class="btn btn-outline-dark rounded-pill fw-bold px-3 py-2 text-capitalize cursor-pointer d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                            <input type="checkbox" name="wizardSopPosisiCheckbox" value="Barista" class="form-check-input border-2 m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
+                            <span>Barista</span>
+                          </label>
+                          <label class="btn btn-outline-dark rounded-pill fw-bold px-3 py-2 text-capitalize cursor-pointer d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                            <input type="checkbox" name="wizardSopPosisiCheckbox" value="Kasir" class="form-check-input border-2 m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
+                            <span>Kasir</span>
+                          </label>
+                          <label class="btn btn-outline-dark rounded-pill fw-bold px-3 py-2 text-capitalize cursor-pointer d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                            <input type="checkbox" name="wizardSopPosisiCheckbox" value="Waiter" class="form-check-input border-2 m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
+                            <span>Waiter</span>
+                          </label>
+                          <label class="btn btn-outline-dark rounded-pill fw-bold px-3 py-2 text-capitalize cursor-pointer d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                            <input type="checkbox" name="wizardSopPosisiCheckbox" value="Kitchen" class="form-check-input border-2 m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
+                            <span>Kitchen</span>
+                          </label>
+                        </div>
                       </div>
                       <div class="col-md-6">
-                        <label class="small fw-bold text-muted mb-2">WAKTU PELAKSANAAN</label>
-                        <select id="wizardSopWaktu" class="form-select border-2 fw-bold" style="border-radius: 0.75rem;">
-                          <option value="Opening">Opening (Buka Outlet)</option>
-                          <option value="Shift Change">Shift Change (Ganti Shift)</option>
-                          <option value="Closing">Closing (Tutup Outlet)</option>
-                          <option value="Kondisi Ramai">Kondisi Ramai (Peak Hour)</option>
-                        </select>
+                        <label class="small fw-bold text-muted d-block mb-3"><i class="fas fa-clock text-warning me-2"></i>WAKTU PELAKSANAAN (Bisa Pilih Lebih Dari 1)</label>
+                        <div class="d-flex flex-wrap gap-2">
+                          <label class="btn btn-outline-warning rounded-pill fw-bold px-3 py-2 cursor-pointer d-flex align-items-center gap-2 text-dark" style="font-size: 0.85rem;">
+                            <input type="checkbox" name="wizardSopWaktuCheckbox" value="Opening" class="form-check-input border-2 border-warning m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
+                            <span>Opening</span>
+                          </label>
+                          <label class="btn btn-outline-warning rounded-pill fw-bold px-3 py-2 cursor-pointer d-flex align-items-center gap-2 text-dark" style="font-size: 0.85rem;">
+                            <input type="checkbox" name="wizardSopWaktuCheckbox" value="Shift Change" class="form-check-input border-2 border-warning m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
+                            <span>Shift Change</span>
+                          </label>
+                          <label class="btn btn-outline-warning rounded-pill fw-bold px-3 py-2 cursor-pointer d-flex align-items-center gap-2 text-dark" style="font-size: 0.85rem;">
+                            <input type="checkbox" name="wizardSopWaktuCheckbox" value="Closing" class="form-check-input border-2 border-warning m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
+                            <span>Closing</span>
+                          </label>
+                          <label class="btn btn-outline-warning rounded-pill fw-bold px-3 py-2 cursor-pointer d-flex align-items-center gap-2 text-dark" style="font-size: 0.85rem;">
+                            <input type="checkbox" name="wizardSopWaktuCheckbox" value="Kondisi Ramai" class="form-check-input border-2 border-warning m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
+                            <span>Kondisi Ramai</span>
+                          </label>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -2579,6 +2603,12 @@
                     <h5 class="fw-bold text-dark mb-3"><i class="fas fa-clipboard-list text-warning me-2"></i>Checklist Persiapan (The "Before" Phase)</h5>
                     <p class="text-muted small mb-4">"Bagus! Sekarang, apa saja 3-5 hal pertama yang wajib mereka cek atau siapkan begitu sampai di outlet? Biar mereka tidak bingung mulai dari mana."</p>
                     
+                    <!-- Dynamic Time Tabs Selector -->
+                    <div class="mb-4 bg-light p-3 rounded-4 border">
+                      <span class="small fw-bold text-muted d-block mb-2" style="font-size:0.75rem;"><i class="fas fa-calendar-day me-1"></i>PILIH WAKTU OPERASIONAL UNTUK DIISI:</span>
+                      <div class="d-flex flex-wrap gap-2" id="sopWizardStep2Tabs"></div>
+                    </div>
+
                     <!-- Dynamic Checklist items -->
                     <div id="wizardChecklistContainer"></div>
                     <button type="button" class="btn btn-outline-warning w-100 py-3 rounded-4 fw-bold border-2 mb-4 d-flex align-items-center justify-content-center" onclick="addChecklistRow('')">
@@ -2604,6 +2634,12 @@
                     <h5 class="fw-bold text-dark mb-3"><i class="fas fa-running text-warning me-2"></i>Langkah Inti Kerja (The "Core" Phase)</h5>
                     <p class="text-muted small mb-4">"Ini bagian paling penting. Tuliskan instruksi kerja utama mereka secara berurutan. Buat sesingkat mungkin agar mudah dibaca saat outlet sedang ramai."</p>
                     
+                    <!-- Dynamic Time Tabs Selector -->
+                    <div class="mb-4 bg-light p-3 rounded-4 border">
+                      <span class="small fw-bold text-muted d-block mb-2" style="font-size:0.75rem;"><i class="fas fa-calendar-day me-1"></i>PILIH WAKTU OPERASIONAL UNTUK DIISI:</span>
+                      <div class="d-flex flex-wrap gap-2" id="sopWizardStep3Tabs"></div>
+                    </div>
+
                     <!-- Dynamic Core Steps -->
                     <div id="wizardStepsContainer"></div>
                     <button type="button" class="btn btn-outline-warning w-100 py-3 rounded-4 fw-bold border-2 mb-4 d-flex align-items-center justify-content-center" onclick="addWizardStepRow('')">
@@ -5921,8 +5957,15 @@
       /* ========================================= */
       /* PREMIUM SOP DASHBOARD & WIZARD CONTROLLER */
       /* ========================================= */
+      /* ========================================= */
+      /* PREMIUM SOP DASHBOARD & WIZARD CONTROLLER */
+      /* ========================================= */
       let SOP_WIZARD_ACTIVE_STEP = 1;
       let SOP_WIZARD_BASE64_IMG = "";
+      let SOP_WIZARD_SELECTED_TIMES = [];
+      let SOP_WIZARD_ACTIVE_TIME_TAB = "";
+      let SOP_WIZARD_PREP_DATA = {}; // {"Opening": [...], "Closing": [...]}
+      let SOP_WIZARD_STEPS_DATA = {}; // {"Opening": [...], "Closing": [...]}
 
       function openSOPDashboard() {
         const overlay = document.getElementById('modalSOP');
@@ -5961,16 +6004,19 @@
         }
 
         SOP_DATA.forEach(sop => {
+          const posisiLabel = Array.isArray(sop.posisi) ? sop.posisi.join(", ") : String(sop.posisi);
+          const waktuLabel = Array.isArray(sop.waktu) ? sop.waktu.join(", ") : String(sop.waktu);
+          
           const item = document.createElement('div');
           item.className = 'sop-list-item';
           item.id = `sop-item-${sop.id}`;
           item.onclick = () => selectSOP(sop.id);
           item.innerHTML = `
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="badge bg-dark text-white rounded-pill small">${sop.posisi}</span>
-              <span class="text-muted" style="font-size: 0.65rem;">${sop.waktu}</span>
+              <span class="badge bg-dark text-white rounded-pill small text-truncate" style="max-width:140px;" title="${posisiLabel}">${posisiLabel}</span>
+              <span class="text-muted text-truncate" style="font-size: 0.65rem; max-width:90px;" title="${waktuLabel}">${waktuLabel}</span>
             </div>
-            <div class="fw-bold text-dark small text-truncate" style="max-width: 250px;">SOP ${sop.posisi} - ${sop.waktu}</div>
+            <div class="fw-bold text-dark small text-truncate" style="max-width: 250px;">SOP ${posisiLabel}</div>
             <div class="text-muted mt-1" style="font-size: 0.6rem;"><i class="far fa-clock me-1"></i>${sop.tanggal || 'Baru dibuat'}</div>
           `;
           container.appendChild(item);
@@ -5991,7 +6037,6 @@
       }
 
       function selectSOP(sopId) {
-        // Ganti class active di sidebar
         document.querySelectorAll('#sopListItems .sop-list-item').forEach(el => el.classList.remove('active'));
         const activeItem = document.getElementById(`sop-item-${sopId}`);
         if (activeItem) activeItem.classList.add('active');
@@ -6003,24 +6048,24 @@
         const contentArea = document.getElementById('sopDetailContent');
         contentArea.classList.remove('d-none');
 
-        // Cek akses penuh (Owner atau Admin dengan Multi-Owner aktif)
         const hasFullAccess = (ACTIVE_CASHIER === 'Owner') || (typeof IS_MULTI_OWNER !== 'undefined' && IS_MULTI_OWNER && USER_ROLE === 'ADMIN');
         
-        let prepHtml = "";
-        sop.persiapan.forEach(p => {
-          prepHtml += `<li class="list-group-item d-flex align-items-start border-0 px-0 py-2 bg-transparent text-dark">
-            <input class="form-check-input me-3 border-2 border-secondary" type="checkbox" style="width:1.2rem; height:1.2rem; cursor:pointer;">
-            <span class="fw-bold">${p}</span>
-          </li>`;
-        });
+        const posisiLabel = Array.isArray(sop.posisi) ? sop.posisi.join(", ") : String(sop.posisi);
 
-        let stepsHtml = "";
-        sop.langkahInti.forEach(s => {
-          stepsHtml += `<li class="list-group-item d-flex align-items-start border-0 px-0 py-2 bg-transparent text-dark">
-            <span class="badge bg-warning text-dark me-3 rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:1.6rem; height:1.6rem; flex-shrink:0;">${stepsHtml.split('<li').length}</span>
-            <span class="fw-bold mt-1">${s}</span>
-          </li>`;
-        });
+        // Build Time Tabs untuk detail view
+        let timeTabsHtml = "";
+        if (Array.isArray(sop.waktu) && sop.waktu.length > 0) {
+          timeTabsHtml = `
+            <div class="mb-4 bg-light p-2 rounded-4 border d-flex flex-wrap align-items-center gap-2">
+              <span class="small fw-bold text-muted me-2" style="font-size:0.75rem;"><i class="fas fa-calendar-day me-1"></i>PILIH WAKTU:</span>
+              ${sop.waktu.map((w, idx) => `
+                <button type="button" class="btn btn-sm ${idx === 0 ? 'btn-warning' : 'btn-light'} rounded-pill fw-bold px-3 py-1" onclick="switchDetailSOPTime('${sop.id}', '${w}', this)">
+                  ${w}
+                </button>
+              `).join('')}
+            </div>
+          `;
+        }
 
         let emergencyHtml = "";
         sop.masalah.forEach(m => {
@@ -6029,6 +6074,7 @@
             <div class="fw-bold text-success"><i class="fas fa-check-circle me-2"></i>MAKA: ${m.then}</div>
           </div>`;
         });
+        if (sop.masalah.length === 0) emergencyHtml = `<div class="text-muted small italic">Tidak ada aturan darurat.</div>`;
 
         let imgHtml = "";
         if (sop.foto) {
@@ -6045,7 +6091,7 @@
         contentArea.innerHTML = `
           <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-4">
             <div>
-              <h4 class="fw-bold text-dark mb-1">SOP ${sop.posisi} - ${sop.waktu}</h4>
+              <h4 class="fw-bold text-dark mb-1">SOP ${posisiLabel}</h4>
               <p class="text-muted small m-0"><i class="far fa-clock me-1"></i>Pembaruan Terakhir: ${sop.tanggal || '-'}</p>
             </div>
             ${hasFullAccess ? `
@@ -6061,14 +6107,17 @@
           </div>
           
           <div class="overflow-auto pe-2" style="max-height: calc(85vh - 180px); scrollbar-width: thin;">
+            
+            ${timeTabsHtml}
+
             <div class="mb-4">
               <h6 class="fw-bold text-muted mb-3"><i class="fas fa-check-double me-2 text-warning"></i>1. CHECKLIST PERSIAPAN OUTLET (PILIH UNTUK VERIFIKASI)</h6>
-              <ul class="list-group list-group-flush bg-transparent m-0">${prepHtml}</ul>
+              <ul class="list-group list-group-flush bg-transparent m-0" id="sopDetailPrepArea"></ul>
             </div>
             
             <div class="mb-4">
               <h6 class="fw-bold text-muted mb-3"><i class="fas fa-running me-2 text-warning"></i>2. LANGKAH INTI OPERASIONAL KERJA</h6>
-              <ul class="list-group list-group-flush bg-transparent m-0">${stepsHtml}</ul>
+              <ul class="list-group list-group-flush bg-transparent m-0" id="sopDetailStepsArea"></ul>
             </div>
             
             <div class="mb-4">
@@ -6079,17 +6128,61 @@
             ${imgHtml}
           </div>
         `;
+
+        // Trigger loading first tab data
+        if (Array.isArray(sop.waktu) && sop.waktu.length > 0) {
+          setTimeout(() => {
+            const firstTabBtn = contentArea.querySelector('button.btn-warning');
+            if (firstTabBtn) {
+              switchDetailSOPTime(sop.id, sop.waktu[0], firstTabBtn);
+            }
+          }, 50);
+        }
+      }
+
+      function switchDetailSOPTime(sopId, waktu, btn) {
+        const container = btn.parentElement;
+        container.querySelectorAll('button').forEach(b => {
+          b.classList.remove('btn-warning');
+          b.classList.add('btn-light');
+        });
+        btn.classList.remove('btn-light');
+        btn.classList.add('btn-warning');
+
+        const sop = SOP_DATA.find(s => s.id === sopId);
+        if (!sop) return;
+
+        const prep = (sop.persiapan && sop.persiapan[waktu]) ? sop.persiapan[waktu] : [];
+        const steps = (sop.langkahInti && sop.langkahInti[waktu]) ? sop.langkahInti[waktu] : [];
+
+        let prepHtml = "";
+        prep.forEach(p => {
+          prepHtml += `<li class="list-group-item d-flex align-items-start border-0 px-0 py-2 bg-transparent text-dark">
+            <input class="form-check-input me-3 border-2 border-secondary" type="checkbox" style="width:1.2rem; height:1.2rem; cursor:pointer;">
+            <span class="fw-bold">${p}</span>
+          </li>`;
+        });
+        if (prep.length === 0) prepHtml = `<li class="list-group-item border-0 px-0 py-2 text-muted italic small">Tidak ada checklist persiapan untuk waktu ini.</li>`;
+
+        let stepsHtml = "";
+        steps.forEach((s, idx) => {
+          stepsHtml += `<li class="list-group-item d-flex align-items-start border-0 px-0 py-2 bg-transparent text-dark">
+            <span class="badge bg-warning text-dark me-3 rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:1.6rem; height:1.6rem; flex-shrink:0; font-size:0.75rem;">${idx + 1}</span>
+            <span class="fw-bold mt-1">${s}</span>
+          </li>`;
+        });
+        if (steps.length === 0) stepsHtml = `<li class="list-group-item border-0 px-0 py-2 text-muted italic small">Tidak ada langkah inti untuk waktu ini.</li>`;
+
+        document.getElementById('sopDetailPrepArea').innerHTML = prepHtml;
+        document.getElementById('sopDetailStepsArea').innerHTML = stepsHtml;
       }
 
       function openLargeSOPImage(url) {
-        if (typeof openWallpaperManager === 'function') {
-          // Buat overlay sederhana untuk visualisasi foto resolusi penuh
-          const overlay = document.createElement('div');
-          overlay.style = "position:fixed; inset:0; z-index:11000; background:rgba(0,0,0,0.9); display:flex; justify-content:center; align-items:center; cursor:pointer;";
-          overlay.onclick = () => overlay.remove();
-          overlay.innerHTML = `<img src="${url}" style="max-width:90%; max-height:90%; border-radius:1rem; border:3px solid #ffffff; box-shadow:0 10px 30px rgba(0,0,0,0.5);">`;
-          document.body.appendChild(overlay);
-        }
+        const overlay = document.createElement('div');
+        overlay.style = "position:fixed; inset:0; z-index:11000; background:rgba(0,0,0,0.9); display:flex; justify-content:center; align-items:center; cursor:pointer;";
+        overlay.onclick = () => overlay.remove();
+        overlay.innerHTML = `<img src="${url}" style="max-width:90%; max-height:90%; border-radius:1rem; border:3px solid #ffffff; box-shadow:0 10px 30px rgba(0,0,0,0.5);">`;
+        document.body.appendChild(overlay);
       }
 
       function startSOPWizard(existingSopId = "") {
@@ -6099,7 +6192,15 @@
         // Reset wizard state
         SOP_WIZARD_ACTIVE_STEP = 1;
         SOP_WIZARD_BASE64_IMG = "";
+        SOP_WIZARD_SELECTED_TIMES = [];
+        SOP_WIZARD_ACTIVE_TIME_TAB = "";
+        SOP_WIZARD_PREP_DATA = {};
+        SOP_WIZARD_STEPS_DATA = {};
         document.getElementById('wizardSopId').value = existingSopId;
+        
+        // Uncheck all Step 1 checkboxes
+        document.querySelectorAll('input[name="wizardSopPosisiCheckbox"]').forEach(el => el.checked = false);
+        document.querySelectorAll('input[name="wizardSopWaktuCheckbox"]').forEach(el => el.checked = false);
         
         // Reset dynamic containers
         document.getElementById('wizardChecklistContainer').innerHTML = "";
@@ -6111,11 +6212,22 @@
           // Mode Edit
           const sop = SOP_DATA.find(s => s.id === existingSopId);
           if (sop) {
-            document.getElementById('wizardSopPosisi').value = sop.posisi;
-            document.getElementById('wizardSopWaktu').value = sop.waktu;
+            // Checkboxes Posisi
+            const posArr = Array.isArray(sop.posisi) ? sop.posisi : [sop.posisi];
+            document.querySelectorAll('input[name="wizardSopPosisiCheckbox"]').forEach(el => {
+              if (posArr.includes(el.value)) el.checked = true;
+            });
             
-            sop.persiapan.forEach(p => addChecklistRow(p));
-            sop.langkahInti.forEach(s => addWizardStepRow(s));
+            // Checkboxes Waktu
+            const wktArr = Array.isArray(sop.waktu) ? sop.waktu : [sop.waktu];
+            document.querySelectorAll('input[name="wizardSopWaktuCheckbox"]').forEach(el => {
+              if (wktArr.includes(el.value)) el.checked = true;
+            });
+            
+            // Load Dynamic Data per waktu
+            SOP_WIZARD_PREP_DATA = JSON.parse(JSON.stringify(sop.persiapan || {}));
+            SOP_WIZARD_STEPS_DATA = JSON.parse(JSON.stringify(sop.langkahInti || {}));
+            
             sop.masalah.forEach(m => addEmergencyRow(m.if, m.then));
             
             if (sop.foto) {
@@ -6125,14 +6237,11 @@
               document.getElementById('sopImageDeleteBtnArea').classList.remove('d-none');
             }
             
-            document.getElementById('wizardTitleText').innerHTML = `<i class="fas fa-edit me-2 text-warning"></i>Edit SOP: Staf ${sop.posisi}`;
+            document.getElementById('wizardTitleText').innerHTML = `<i class="fas fa-edit me-2 text-warning"></i>Edit SOP Modul`;
           }
         } else {
           // Mode Baru
           document.getElementById('wizardTitleText').innerHTML = `<i class="fas fa-magic me-2 text-warning"></i>Wizard SOP F&B Profesional`;
-          // Inisialisasi baris kosong minimal
-          addChecklistRow("");
-          addWizardStepRow("");
           addEmergencyRow("", "");
         }
 
@@ -6181,32 +6290,158 @@
         }
       }
 
+      function switchWizardTimeTab(time, step) {
+        if (step === 2) {
+          saveCurrentWizardPrepData();
+          SOP_WIZARD_ACTIVE_TIME_TAB = time;
+          renderWizardPrepInputs();
+        } else if (step === 3) {
+          saveCurrentWizardStepsData();
+          SOP_WIZARD_ACTIVE_TIME_TAB = time;
+          renderWizardStepsInputs();
+        }
+      }
+
+      function saveCurrentWizardPrepData() {
+        if (!SOP_WIZARD_ACTIVE_TIME_TAB) return;
+        let items = [];
+        document.querySelectorAll('#wizardChecklistContainer input').forEach(input => {
+          if (input.value.trim()) items.push(input.value.trim());
+        });
+        SOP_WIZARD_PREP_DATA[SOP_WIZARD_ACTIVE_TIME_TAB] = items;
+      }
+
+      function saveCurrentWizardStepsData() {
+        if (!SOP_WIZARD_ACTIVE_TIME_TAB) return;
+        let items = [];
+        document.querySelectorAll('#wizardStepsContainer input').forEach(input => {
+          if (input.value.trim()) items.push(input.value.trim());
+        });
+        SOP_WIZARD_STEPS_DATA[SOP_WIZARD_ACTIVE_TIME_TAB] = items;
+      }
+
+      function renderWizardPrepInputs() {
+        // Update active class on tab buttons
+        document.querySelectorAll('#sopWizardStep2Tabs button').forEach(btn => {
+          if (btn.getAttribute('data-time') === SOP_WIZARD_ACTIVE_TIME_TAB) {
+            btn.className = "btn btn-sm btn-warning rounded-pill fw-bold px-3 py-1";
+          } else {
+            btn.className = "btn btn-sm btn-light rounded-pill fw-bold px-3 py-1";
+          }
+        });
+
+        const container = document.getElementById('wizardChecklistContainer');
+        container.innerHTML = "";
+        const items = SOP_WIZARD_PREP_DATA[SOP_WIZARD_ACTIVE_TIME_TAB] || [];
+        if (items.length === 0) {
+          addChecklistRow("");
+        } else {
+          items.forEach(item => addChecklistRow(item));
+        }
+      }
+
+      function renderWizardStepsInputs() {
+        // Update active class on tab buttons
+        document.querySelectorAll('#sopWizardStep3Tabs button').forEach(btn => {
+          if (btn.getAttribute('data-time') === SOP_WIZARD_ACTIVE_TIME_TAB) {
+            btn.className = "btn btn-sm btn-warning rounded-pill fw-bold px-3 py-1";
+          } else {
+            btn.className = "btn btn-sm btn-light rounded-pill fw-bold px-3 py-1";
+          }
+        });
+
+        const container = document.getElementById('wizardStepsContainer');
+        container.innerHTML = "";
+        const items = SOP_WIZARD_STEPS_DATA[SOP_WIZARD_ACTIVE_TIME_TAB] || [];
+        if (items.length === 0) {
+          addWizardStepRow("");
+        } else {
+          items.forEach(item => addWizardStepRow(item));
+        }
+      }
+
       function navigateSOPWizard(dir) {
         if (dir === 1) {
-          // Validasi Form sebelum pindah ke langkah berikutnya
+          // --- VALIDASI & TRANSISI LANGKAH ---
           if (SOP_WIZARD_ACTIVE_STEP === 1) {
-            const pos = document.getElementById('wizardSopPosisi').value;
-            const wkt = document.getElementById('wizardSopWaktu').value;
-            if (!pos || !wkt) return alert("Harap isi Posisi dan Waktu!");
+            // Membaca Pilihan Multi Posisi
+            let selectedPosisi = [];
+            document.querySelectorAll('input[name="wizardSopPosisiCheckbox"]:checked').forEach(el => {
+              selectedPosisi.push(el.value);
+            });
+            if (selectedPosisi.length === 0) return alert("Pilih minimal 1 Posisi Target!");
+
+            // Membaca Pilihan Multi Waktu
+            let selectedWaktu = [];
+            document.querySelectorAll('input[name="wizardSopWaktuCheckbox"]:checked').forEach(el => {
+              selectedWaktu.push(el.value);
+            });
+            if (selectedWaktu.length === 0) return alert("Pilih minimal 1 Waktu Pelaksanaan!");
+
+            SOP_WIZARD_SELECTED_TIMES = selectedWaktu;
+            SOP_WIZARD_ACTIVE_TIME_TAB = SOP_WIZARD_SELECTED_TIMES[0];
+
+            // Inisialisasi dynamic time tabs di HTML Langkah 2 & 3
+            const tab2 = document.getElementById('sopWizardStep2Tabs');
+            const tab3 = document.getElementById('sopWizardStep3Tabs');
+            tab2.innerHTML = "";
+            tab3.innerHTML = "";
+            
+            SOP_WIZARD_SELECTED_TIMES.forEach((w, idx) => {
+              const activeClass = (w === SOP_WIZARD_ACTIVE_TIME_TAB) ? 'btn-warning' : 'btn-light';
+              tab2.innerHTML += `<button type="button" class="btn btn-sm ${activeClass} rounded-pill fw-bold px-3 py-1" data-time="${w}" onclick="switchWizardTimeTab('${w}', 2)">${w}</button>`;
+              tab3.innerHTML += `<button type="button" class="btn btn-sm ${activeClass} rounded-pill fw-bold px-3 py-1" data-time="${w}" onclick="switchWizardTimeTab('${w}', 3)">${w}</button>`;
+              
+              if (!SOP_WIZARD_PREP_DATA[w]) SOP_WIZARD_PREP_DATA[w] = [];
+              if (!SOP_WIZARD_STEPS_DATA[w]) SOP_WIZARD_STEPS_DATA[w] = [];
+            });
+
+            renderWizardPrepInputs();
+
           } else if (SOP_WIZARD_ACTIVE_STEP === 2) {
-            const inputs = document.querySelectorAll('#wizardChecklistContainer input');
-            let filled = 0;
-            inputs.forEach(i => { if (i.value.trim()) filled++; });
-            if (filled === 0) return alert("Harap tambahkan minimal 1 checklist persiapan!");
+            // Simpan data dari layar aktif saat ini
+            saveCurrentWizardPrepData();
+            
+            // Validasi: Pastikan semua waktu yang dipilih memiliki minimal 1 item checklist
+            for (let w of SOP_WIZARD_SELECTED_TIMES) {
+              const items = SOP_WIZARD_PREP_DATA[w] || [];
+              const filledItems = items.filter(Boolean);
+              if (filledItems.length === 0) {
+                // Alihkan tab aktif ke tab waktu yang belum diisi agar user sadar
+                SOP_WIZARD_ACTIVE_TIME_TAB = w;
+                renderWizardPrepInputs();
+                return alert(`Harap isi minimal 1 checklist persiapan untuk waktu: ${w}!`);
+              }
+            }
+
+            // Inisialisasi tab aktif pertama Langkah 3
+            SOP_WIZARD_ACTIVE_TIME_TAB = SOP_WIZARD_SELECTED_TIMES[0];
+            renderWizardStepsInputs();
+
           } else if (SOP_WIZARD_ACTIVE_STEP === 3) {
-            const inputs = document.querySelectorAll('#wizardStepsContainer input');
-            let filled = 0;
-            inputs.forEach(i => { if (i.value.trim()) filled++; });
-            if (filled === 0) return alert("Harap tambahkan minimal 1 langkah kerja inti!");
+            // Simpan data dari layar aktif saat ini
+            saveCurrentWizardStepsData();
+
+            // Validasi: Pastikan semua waktu memiliki minimal 1 langkah kerja inti
+            for (let w of SOP_WIZARD_SELECTED_TIMES) {
+              const items = SOP_WIZARD_STEPS_DATA[w] || [];
+              const filledItems = items.filter(Boolean);
+              if (filledItems.length === 0) {
+                SOP_WIZARD_ACTIVE_TIME_TAB = w;
+                renderWizardStepsInputs();
+                return alert(`Harap isi minimal 1 langkah kerja operasional untuk waktu: ${w}!`);
+              }
+            }
+
           } else if (SOP_WIZARD_ACTIVE_STEP === 4) {
-            const ifs = document.querySelectorAll('#wizardEmergencyContainer input[placeholder*="JIKA"]');
+            // Validasi Emergency
+            const ifs = document.querySelectorAll('#wizardEmergencyContainer input');
             let filled = 0;
-            ifs.forEach(i => { if (i.value.trim()) filled++; });
+            ifs.forEach(input => { if (input.value.trim()) filled++; });
             if (filled === 0) return alert("Harap tambahkan minimal 1 aturan penanganan masalah!");
           }
 
           if (SOP_WIZARD_ACTIVE_STEP === 5) {
-            // Selesai -> Simpan
             saveSOPFromWizard();
             return;
           }
@@ -6216,7 +6451,19 @@
             renderSOPReviewSummary();
           }
         } else {
+          // Navigasi Mundur: Simpan data layar saat ini sebelum bergeser mundur
+          if (SOP_WIZARD_ACTIVE_STEP === 2) {
+            saveCurrentWizardPrepData();
+          } else if (SOP_WIZARD_ACTIVE_STEP === 3) {
+            saveCurrentWizardStepsData();
+          }
           SOP_WIZARD_ACTIVE_STEP--;
+          
+          if (SOP_WIZARD_ACTIVE_STEP === 2) {
+            renderWizardPrepInputs();
+          } else if (SOP_WIZARD_ACTIVE_STEP === 3) {
+            renderWizardStepsInputs();
+          }
         }
         updateWizardStepUI();
       }
@@ -6282,7 +6529,6 @@
         const file = input.files[0];
         if (!file) return;
         
-        // Membatasi ukuran maksimum file ke 3MB demi integritas Apps Script
         if (file.size > 3 * 1024 * 1024) {
           alert("Ukuran gambar maksimal 3MB untuk menjaga performa server Google Sheets!");
           input.value = "";
@@ -6313,57 +6559,115 @@
 
       function applySOPTemplate(type) {
         if (confirm("Gunakan template ini? Seluruh data yang sedang Anda ketik di form saat ini akan digantikan.")) {
+          // Reset Step 1 checkboxes
+          document.querySelectorAll('input[name="wizardSopPosisiCheckbox"]').forEach(el => el.checked = false);
+          document.querySelectorAll('input[name="wizardSopWaktuCheckbox"]').forEach(el => el.checked = false);
+          
           document.getElementById('wizardChecklistContainer').innerHTML = "";
           document.getElementById('wizardStepsContainer').innerHTML = "";
           document.getElementById('wizardEmergencyContainer').innerHTML = "";
           removeWizardSOPImage();
 
+          SOP_WIZARD_PREP_DATA = {};
+          SOP_WIZARD_STEPS_DATA = {};
+
           if (type === 'cafe') {
-            document.getElementById('wizardSopPosisi').value = "Barista";
-            document.getElementById('wizardSopWaktu').value = "Opening";
+            // Check Barista & Kasir
+            document.querySelectorAll('input[name="wizardSopPosisiCheckbox"]').forEach(el => {
+              if (["Barista", "Kasir"].includes(el.value)) el.checked = true;
+            });
+            
+            // Check Opening, Closing, Kondisi Ramai
+            document.querySelectorAll('input[name="wizardSopWaktuCheckbox"]').forEach(el => {
+              if (["Opening", "Closing", "Kondisi Ramai"].includes(el.value)) el.checked = true;
+            });
 
-            const checklists = [
-              "Menyalakan mesin kopi & grinder",
-              "Melakukan kalibrasi espresso (tasting & flow time)",
-              "Memastikan kebersihan bar & meja pelanggan",
-              "Menyiapkan susu, cup, sedotan, dan bahan baku",
-              "Mengaktifkan tablet POS & printer kasir"
-            ];
-            checklists.forEach(item => addChecklistRow(item));
+            // Populate multi-time data
+            SOP_WIZARD_PREP_DATA = {
+              "Opening": [
+                "Menyalakan mesin kopi & grinder",
+                "Melakukan kalibrasi espresso (tasting & flow time)",
+                "Memastikan kebersihan bar & meja pelanggan",
+                "Menyiapkan susu, cup, sedotan, dan bahan baku",
+                "Mengaktifkan tablet POS & printer kasir"
+              ],
+              "Closing": [
+                "Mematikan mesin espresso & grinder",
+                "Membersihkan milk pitcher, shaker, & portafilter",
+                "Melakukan setoran kasir & cetak rekap shift",
+                "Membuang sampah bar & menyapu/mengepel dining area"
+              ],
+              "Kondisi Ramai": [
+                "Barista fokus menyeduh minuman cepat",
+                "Kasir membantu packing/takeaway jika antrean panjang",
+                "Membantu membilas cup & alat bar secara berkala"
+              ]
+            };
 
-            const steps = [
-              "Langkah 1: Terima orderan dari kasir & baca catatan dengan teliti",
-              "Langkah 2: Seduh minuman sesuai takaran & standard recipe",
-              "Langkah 3: Lakukan latte art dengan rapi & bersihkan bibir cup",
-              "Langkah 4: Sajikan minuman dengan ramah (senyum, salam, sapa)"
-            ];
-            steps.forEach(item => addWizardStepRow(item));
+            SOP_WIZARD_STEPS_DATA = {
+              "Opening": [
+                "Langkah 1: Terima orderan dari kasir & baca catatan dengan teliti",
+                "Langkah 2: Seduh minuman sesuai takaran & standard recipe",
+                "Langkah 3: Lakukan latte art dengan rapi & bersihkan bibir cup",
+                "Langkah 4: Sajikan minuman dengan ramah (senyum, salam, sapa)"
+              ],
+              "Closing": [
+                "Langkah 1: Lakukan backflush mesin espresso dengan chemical khusus",
+                "Langkah 2: Kosongkan bean hopper dan simpan biji kopi di wadah kedap",
+                "Langkah 3: Hitung uang laci kasir dan rekap rekapitulasi shift"
+              ],
+              "Kondisi Ramai": [
+                "Langkah 1: Posisikan barista kedua untuk fokus di bagian milk steaming",
+                "Langkah 2: Gunakan double-grouphead mesin espresso secara maksimal"
+              ]
+            };
 
             const emergencies = [
               { if: "Komplain minuman terlalu manis/pahit", then: "Minta maaf dengan ramah dan segera buatkan minuman pengganti dengan kalibrasi yang tepat." },
-              { if: "Mesin espresso mati mendadak atau eror", then: "Periksa sekring listrik, matikan sementara menu espresso di POS, dan laporkan supervisor." }
+              { if: "Mesin espresso mati mendadak atau eror", then: "Periksa sekring listrik, matikan sementara menu espresso di POS, dan segera laporkan supervisor." }
             ];
             emergencies.forEach(item => addEmergencyRow(item.if, item.then));
+
           } else if (type === 'restoran') {
-            document.getElementById('wizardSopPosisi').value = "Waiter";
-            document.getElementById('wizardSopWaktu').value = "Opening";
+            // Check Waiter & Kitchen
+            document.querySelectorAll('input[name="wizardSopPosisiCheckbox"]').forEach(el => {
+              if (["Waiter", "Kitchen"].includes(el.value)) el.checked = true;
+            });
+            
+            // Check Opening & Closing
+            document.querySelectorAll('input[name="wizardSopWaktuCheckbox"]').forEach(el => {
+              if (["Opening", "Closing"].includes(el.value)) el.checked = true;
+            });
 
-            const checklists = [
-              "Membersihkan area dining (sapu, pel, dan lap meja)",
-              "Menata cutlery (sendok, garpu, tisu) di setiap meja",
-              "Memeriksa ketersediaan buku menu & promo hari ini",
-              "Memakai seragam bersih & memastikan penampilan rapi",
-              "Melakukan briefing pagi bersama seluruh tim"
-            ];
-            checklists.forEach(item => addChecklistRow(item));
+            // Populate multi-time data
+            SOP_WIZARD_PREP_DATA = {
+              "Opening": [
+                "Membersihkan area dining (sapu, pel, dan lap meja)",
+                "Menata cutlery (sendok, garpu, tisu) di setiap meja",
+                "Memeriksa ketersediaan buku menu & promo hari ini",
+                "Melakukan briefing pagi bersama seluruh tim kitchen & waiter"
+              ],
+              "Closing": [
+                "Merendam cutlery dalam air hangat & sabun pembersih",
+                "Membersihkan grill, kompor, dan exhaust hood di kitchen",
+                "Melakukan checklist inventaris bahan baku sisa hari ini",
+                "Mengunci pintu gudang pendingin (chiller/freezer)"
+              ]
+            };
 
-            const steps = [
-              "Langkah 1: Sambut tamu yang datang & antarkan ke meja kosong",
-              "Langkah 2: Berikan menu dan tawarkan menu rekomendasi/promo",
-              "Langkah 3: Catat pesanan dengan detail dan konfirmasi ulang ke tamu",
-              "Langkah 4: Antarkan makanan/minuman dengan posisi piring yang benar"
-            ];
-            steps.forEach(item => addWizardStepRow(item));
+            SOP_WIZARD_STEPS_DATA = {
+              "Opening": [
+                "Langkah 1: Sambut tamu yang datang & antarkan ke meja kosong",
+                "Langkah 2: Berikan menu dan tawarkan menu rekomendasi/promo",
+                "Langkah 3: Catat pesanan dengan detail dan konfirmasi ulang ke tamu",
+                "Langkah 4: Antarkan makanan/minuman dengan posisi piring yang benar"
+              ],
+              "Closing": [
+                "Langkah 1: Lap meja dining menggunakan cairan sanitizer",
+                "Langkah 2: Pastikan seluruh kompor gas telah mati & gas diputus",
+                "Langkah 3: Buang seluruh sisa makanan basah hari ini ke pembuangan luar"
+              ]
+            };
 
             const emergencies = [
               { if: "Pesanan tamu salah atau ada rambut di makanan", then: "Minta maaf dengan tulus, ambil makanannya kembali, laporkan ke Kitchen untuk diganti baru." },
@@ -6371,36 +6675,54 @@
             ];
             emergencies.forEach(item => addEmergencyRow(item.if, item.then));
           }
-          alert("Template berhasil diterapkan! Silakan sesuaikan form jika diperlukan.");
+          alert("Template profesional berhasil diterapkan! Silakan navigasi ke Langkah 2 & 3 untuk melihat data.");
         }
       }
 
       function renderSOPReviewSummary() {
-        const posisi = document.getElementById('wizardSopPosisi').value;
-        const waktu = document.getElementById('wizardSopWaktu').value;
-        
-        document.getElementById('reviewSopPosisi').innerText = posisi;
-        document.getElementById('reviewSopWaktu').innerText = waktu;
-
-        // Render checklist
-        const prepContainer = document.getElementById('reviewSopChecklist');
-        prepContainer.innerHTML = "";
-        const checklists = document.querySelectorAll('#wizardChecklistContainer input');
-        checklists.forEach(input => {
-          if (input.value.trim()) {
-            prepContainer.innerHTML += `<li class="list-group-item d-flex align-items-center border-0 px-0 bg-transparent py-1 text-dark fw-bold">
-              <i class="far fa-check-circle text-success me-2 fs-5"></i>${input.value}
-            </li>`;
-          }
+        // Ambil Posisi Target
+        let posisi = [];
+        document.querySelectorAll('input[name="wizardSopPosisiCheckbox"]:checked').forEach(el => {
+          posisi.push(el.value);
         });
+        document.getElementById('reviewSopPosisi').innerText = posisi.join(", ");
+        document.getElementById('reviewSopWaktu').innerText = SOP_WIZARD_SELECTED_TIMES.join(", ");
 
-        // Render steps
+        // Render terstruktur: memisahkan review per Waktu Operasional
+        const prepContainer = document.getElementById('reviewSopChecklist');
         const stepsContainer = document.getElementById('reviewSopSteps');
+        prepContainer.innerHTML = "";
         stepsContainer.innerHTML = "";
-        const steps = document.querySelectorAll('#wizardStepsContainer input');
-        steps.forEach(input => {
-          if (input.value.trim()) {
-            stepsContainer.innerHTML += `<li class="list-group-item border-0 px-0 bg-transparent py-1 text-dark fw-bold">${input.value}</li>`;
+
+        SOP_WIZARD_SELECTED_TIMES.forEach(w => {
+          // Prep checklist
+          const preps = SOP_WIZARD_PREP_DATA[w] || [];
+          let prepItemsHtml = "";
+          preps.forEach(p => {
+            if (p) prepItemsHtml += `<div class="ms-4 py-1 text-dark fw-bold small"><i class="far fa-check-circle text-success me-2"></i>${p}</div>`;
+          });
+          if (preps.filter(Boolean).length > 0) {
+            prepContainer.innerHTML += `
+              <div class="mb-2">
+                <span class="badge bg-dark rounded-pill px-2 py-1 mb-1" style="font-size:0.7rem;">${w}</span>
+                ${prepItemsHtml}
+              </div>
+            `;
+          }
+
+          // Core steps
+          const steps = SOP_WIZARD_STEPS_DATA[w] || [];
+          let stepItemsHtml = "";
+          steps.forEach((s, idx) => {
+            if (s) stepItemsHtml += `<div class="ms-4 py-1 text-dark fw-bold small"><span class="badge bg-warning text-dark me-2 rounded-circle">${idx + 1}</span>${s}</div>`;
+          });
+          if (steps.filter(Boolean).length > 0) {
+            stepsContainer.innerHTML += `
+              <div class="mb-2">
+                <span class="badge bg-dark rounded-pill px-2 py-1 mb-1" style="font-size:0.7rem;">${w}</span>
+                ${stepItemsHtml}
+              </div>
+            `;
           }
         });
 
@@ -6433,23 +6755,13 @@
       }
 
       function saveSOPFromWizard() {
-        const id = document.getElementById('wizardSopId').value;
-        const posisi = document.getElementById('wizardSopPosisi').value;
-        const waktu = document.getElementById('wizardSopWaktu').value;
-
-        // Gather checklist
-        let persiapan = [];
-        document.querySelectorAll('#wizardChecklistContainer input').forEach(i => {
-          if (i.value.trim()) persiapan.push(i.value.trim());
+        // Ambil Posisi Target
+        let posisi = [];
+        document.querySelectorAll('input[name="wizardSopPosisiCheckbox"]:checked').forEach(el => {
+          posisi.push(el.value);
         });
 
-        // Gather steps
-        let langkahInti = [];
-        document.querySelectorAll('#wizardStepsContainer input').forEach(i => {
-          if (i.value.trim()) langkahInti.push(i.value.trim());
-        });
-
-        // Gather emergency
+        // Simpan data Langkah 4 (Emergency)
         let masalah = [];
         document.querySelectorAll('#wizardEmergencyContainer .card').forEach(card => {
           const inputs = card.querySelectorAll('input');
@@ -6460,6 +6772,7 @@
           }
         });
 
+        const id = document.getElementById('wizardSopId').value;
         const nextBtn = document.getElementById('btnSopNext');
         const originalHtml = nextBtn.innerHTML;
         nextBtn.disabled = true;
@@ -6473,15 +6786,12 @@
           if (res.status === 'success') {
             alert("SOP berhasil disimpan dan diterbitkan!");
             
-            // Tutup wizard dan kembali ke dasbor
             document.getElementById('sopWizardPanel').classList.add('d-none');
             document.getElementById('sopDashboardPanel').classList.remove('d-none');
             
-            // Refresh data Manning Tab dari Google Sheet
             SOP_DATA = [];
             initManningTab();
             
-            // Tunggu load sinkronisasi selesai lalu re-open list
             setTimeout(() => {
               openSOPDashboard();
             }, 800);
@@ -6490,12 +6800,12 @@
           }
         }).saveSOP(
           id,
-          posisi,
-          waktu,
-          JSON.stringify(persiapan),
-          JSON.stringify(langkahInti),
+          JSON.stringify(posisi),
+          JSON.stringify(SOP_WIZARD_SELECTED_TIMES),
+          JSON.stringify(SOP_WIZARD_PREP_DATA),
+          JSON.stringify(SOP_WIZARD_STEPS_DATA),
           JSON.stringify(masalah),
-          SOP_WIZARD_BASE64_IMG.startsWith('http') ? "" : SOP_WIZARD_BASE64_IMG // Hanya kirim base64 baru, bukan url http lama
+          SOP_WIZARD_BASE64_IMG.startsWith('http') ? "" : SOP_WIZARD_BASE64_IMG
         );
       }
 
