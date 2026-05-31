@@ -1695,8 +1695,9 @@
         background: #ffffff;
         color: #1e293b;
         width: 95%;
-        max-width: 950px;
-        height: 85vh;
+        max-width: 1050px;
+        height: calc(85vh + 200px);
+        max-height: calc(100vh - 30px);
         border-radius: 1.75rem;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         border: 1px solid rgba(226, 232, 240, 0.8);
@@ -1704,6 +1705,38 @@
         flex-direction: column;
         overflow: hidden;
         animation: sopSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      /* Custom styles for non-sticky checkbox pills in SOP Wizard */
+      #sopWizardPanel .sop-checkbox-pill {
+        transition: all 0.2s ease !important;
+      }
+      #sopWizardPanel .sop-checkbox-pill:focus,
+      #sopWizardPanel .sop-checkbox-pill:hover,
+      #sopWizardPanel .sop-checkbox-pill:focus-within {
+        background-color: transparent !important;
+        box-shadow: none !important;
+      }
+      #sopWizardPanel .btn-outline-dark.sop-checkbox-pill:focus,
+      #sopWizardPanel .btn-outline-dark.sop-checkbox-pill:hover,
+      #sopWizardPanel .btn-outline-dark.sop-checkbox-pill:focus-within {
+        color: #212529 !important;
+        border-color: #212529 !important;
+      }
+      #sopWizardPanel .btn-outline-warning.sop-checkbox-pill:focus,
+      #sopWizardPanel .btn-outline-warning.sop-checkbox-pill:hover,
+      #sopWizardPanel .btn-outline-warning.sop-checkbox-pill:focus-within {
+        color: #212529 !important;
+        border-color: #ffc107 !important;
+      }
+      #sopWizardPanel .sop-checkbox-pill:active {
+        transform: scale(0.96) !important;
+      }
+      #sopWizardPanel .btn-outline-dark.sop-checkbox-pill:active {
+        background-color: rgba(33, 37, 41, 0.1) !important;
+      }
+      #sopWizardPanel .btn-outline-warning.sop-checkbox-pill:active {
+        background-color: rgba(255, 193, 7, 0.15) !important;
       }
       @keyframes sopSlideUp {
         from { transform: translateY(30px) scale(0.98); opacity: 0; }
@@ -2554,19 +2587,19 @@
                       <div class="col-md-6">
                         <label class="small fw-bold text-muted d-block mb-3"><i class="fas fa-users text-primary me-2"></i>POSISI / STAF TARGET (Bisa Pilih Lebih Dari 1)</label>
                         <div class="d-flex flex-wrap gap-2">
-                          <label class="btn btn-outline-dark rounded-pill fw-bold px-3 py-2 text-capitalize cursor-pointer d-flex align-items-center gap-2" style="font-size: 0.85rem;">
-                            <input type="checkbox" name="wizardSopPosisiCheckbox" value="Barista" class="form-check-input border-2 m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
-                            <span>Barista</span>
+                          <label class="btn btn-outline-dark sop-checkbox-pill rounded-pill fw-bold px-3 py-2 text-capitalize cursor-pointer d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                            <input type="checkbox" name="wizardSopPosisiCheckbox" value="Admin" class="form-check-input border-2 m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
+                            <span>Admin</span>
                           </label>
-                          <label class="btn btn-outline-dark rounded-pill fw-bold px-3 py-2 text-capitalize cursor-pointer d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                          <label class="btn btn-outline-dark sop-checkbox-pill rounded-pill fw-bold px-3 py-2 text-capitalize cursor-pointer d-flex align-items-center gap-2" style="font-size: 0.85rem;">
                             <input type="checkbox" name="wizardSopPosisiCheckbox" value="Kasir" class="form-check-input border-2 m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
                             <span>Kasir</span>
                           </label>
-                          <label class="btn btn-outline-dark rounded-pill fw-bold px-3 py-2 text-capitalize cursor-pointer d-flex align-items-center gap-2" style="font-size: 0.85rem;">
-                            <input type="checkbox" name="wizardSopPosisiCheckbox" value="Waiter" class="form-check-input border-2 m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
-                            <span>Waiter</span>
+                          <label class="btn btn-outline-dark sop-checkbox-pill rounded-pill fw-bold px-3 py-2 text-capitalize cursor-pointer d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                            <input type="checkbox" name="wizardSopPosisiCheckbox" value="Barista" class="form-check-input border-2 m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
+                            <span>Barista</span>
                           </label>
-                          <label class="btn btn-outline-dark rounded-pill fw-bold px-3 py-2 text-capitalize cursor-pointer d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                          <label class="btn btn-outline-dark sop-checkbox-pill rounded-pill fw-bold px-3 py-2 text-capitalize cursor-pointer d-flex align-items-center gap-2" style="font-size: 0.85rem;">
                             <input type="checkbox" name="wizardSopPosisiCheckbox" value="Kitchen" class="form-check-input border-2 m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
                             <span>Kitchen</span>
                           </label>
@@ -2575,19 +2608,19 @@
                       <div class="col-md-6">
                         <label class="small fw-bold text-muted d-block mb-3"><i class="fas fa-clock text-warning me-2"></i>WAKTU PELAKSANAAN (Bisa Pilih Lebih Dari 1)</label>
                         <div class="d-flex flex-wrap gap-2">
-                          <label class="btn btn-outline-warning rounded-pill fw-bold px-3 py-2 cursor-pointer d-flex align-items-center gap-2 text-dark" style="font-size: 0.85rem;">
+                          <label class="btn btn-outline-warning sop-checkbox-pill rounded-pill fw-bold px-3 py-2 cursor-pointer d-flex align-items-center gap-2 text-dark" style="font-size: 0.85rem;">
                             <input type="checkbox" name="wizardSopWaktuCheckbox" value="Opening" class="form-check-input border-2 border-warning m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
                             <span>Opening</span>
                           </label>
-                          <label class="btn btn-outline-warning rounded-pill fw-bold px-3 py-2 cursor-pointer d-flex align-items-center gap-2 text-dark" style="font-size: 0.85rem;">
+                          <label class="btn btn-outline-warning sop-checkbox-pill rounded-pill fw-bold px-3 py-2 cursor-pointer d-flex align-items-center gap-2 text-dark" style="font-size: 0.85rem;">
                             <input type="checkbox" name="wizardSopWaktuCheckbox" value="Shift Change" class="form-check-input border-2 border-warning m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
                             <span>Shift Change</span>
                           </label>
-                          <label class="btn btn-outline-warning rounded-pill fw-bold px-3 py-2 cursor-pointer d-flex align-items-center gap-2 text-dark" style="font-size: 0.85rem;">
+                          <label class="btn btn-outline-warning sop-checkbox-pill rounded-pill fw-bold px-3 py-2 cursor-pointer d-flex align-items-center gap-2 text-dark" style="font-size: 0.85rem;">
                             <input type="checkbox" name="wizardSopWaktuCheckbox" value="Closing" class="form-check-input border-2 border-warning m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
                             <span>Closing</span>
                           </label>
-                          <label class="btn btn-outline-warning rounded-pill fw-bold px-3 py-2 cursor-pointer d-flex align-items-center gap-2 text-dark" style="font-size: 0.85rem;">
+                          <label class="btn btn-outline-warning sop-checkbox-pill rounded-pill fw-bold px-3 py-2 cursor-pointer d-flex align-items-center gap-2 text-dark" style="font-size: 0.85rem;">
                             <input type="checkbox" name="wizardSopWaktuCheckbox" value="Kondisi Ramai" class="form-check-input border-2 border-warning m-0" style="width:1.1rem; height:1.1rem; cursor:pointer;">
                             <span>Kondisi Ramai</span>
                           </label>
@@ -6629,9 +6662,9 @@
             emergencies.forEach(item => addEmergencyRow(item.if, item.then));
 
           } else if (type === 'restoran') {
-            // Check Waiter & Kitchen
+            // Check Kasir & Kitchen
             document.querySelectorAll('input[name="wizardSopPosisiCheckbox"]').forEach(el => {
-              if (["Waiter", "Kitchen"].includes(el.value)) el.checked = true;
+              if (["Kitchen", "Kasir"].includes(el.value)) el.checked = true;
             });
             
             // Check Opening & Closing
