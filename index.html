@@ -444,14 +444,6 @@
         .mobile-cart-summ { display: none !important; }
       }
 
-      /* In-App Split-Screen Customer Display Style */
-      #splitCustomerPanel {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-      @media (max-width: 1199px) {
-        #splitCustomerPanel { display: none !important; }
-      }
-
       /* FIX UI CART MOBILE (Hanya Portrait dan Layar Kecil) */
       @media (max-width: 991px) and (orientation: portrait) {
         .pos-cart { 
@@ -2314,33 +2306,6 @@
               <div class="d-flex justify-content-between mb-1 text-muted" style="font-size: 0.9rem;"><span>Subtotal</span><span id="txtSubtotal">Rp 0</span></div>
               <div class="d-flex justify-content-between mb-2 fs-5 fw-bold"><span>Total</span><span id="txtTotal" class="text-warning">Rp 0</span></div>
               <button onclick="processCheckout()" class="btn btn-luxury w-100 py-3 rounded-4 fw-bold fs-5">BAYAR SEKARANG</button>
-            </div>
-          </div>
-
-          <!-- PANEL CUSTOMER DISPLAY SPLIT-SCREEN (IN-APP) -->
-          <div id="splitCustomerPanel" class="pos-cart border-start d-none flex-column" style="background: #121212 !important; width: 360px; color: #fff; z-index: 49; box-shadow: -5px 0 15px rgba(0,0,0,0.15); height: calc(100% - var(--bottom-nav-height) - env(safe-area-inset-bottom)); position: sticky; top: 0;">
-            <div class="p-3 d-flex justify-content-between align-items-center" style="background: #1a1a1a; border-bottom: 3px solid #c5a059;">
-              <h5 class="fw-bold m-0 text-white" style="font-size: 0.95rem; letter-spacing: 1px; color: #c5a059 !important;"><i class="fas fa-shopping-bag me-2"></i>PESANAN ANDA</h5>
-              <button class="btn btn-sm btn-dark text-white border-0" onclick="closeInAppSplitCustomer()" title="Tutup Split Screen"><i class="fas fa-times"></i></button>
-            </div>
-            
-            <!-- Video Promo Youtube -->
-            <div class="split-video-container" style="position: relative; width: 100%; height: 180px; background: #000; overflow: hidden;">
-              <iframe id="splitPromoIframe" src="" style="width: 100%; height: 100%; border: none;" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-            </div>
-            
-            <!-- Daftar Belanja -->
-            <div class="p-3 flex-fill overflow-y-auto" id="splitCdItems" style="background: #1a1512; max-height: calc(100% - 320px); scrollbar-width: thin;">
-              <div class="text-center text-muted py-4" style="font-style: italic; font-size: 0.85rem;">Belum ada pesanan</div>
-            </div>
-            
-            <!-- Total Footer -->
-            <div class="p-3 bg-dark border-top" style="border-color: #2c2520 !important;">
-              <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="small fw-bold text-muted">TOTAL</span>
-                <span class="fs-5 fw-extrabold text-warning" id="splitCdTotal">Rp 0</span>
-              </div>
-              <div id="splitCdTaxNote" class="text-danger fw-bold text-end" style="display: none; font-size: 0.65rem;">*Sudah termasuk PPN</div>
             </div>
           </div>
         </div>
@@ -11575,19 +11540,9 @@
         if (viewId === 'pos') {
           if (topSearchContainer) { topSearchContainer.classList.remove('d-none'); topSearchContainer.classList.add('d-flex'); }
           if (topCashierContainer) { topCashierContainer.classList.remove('d-none'); topCashierContainer.classList.add('input-group'); }
-          
-          // Auto launch split screen if enabled and set to split
-          const isDualActive = localStorage.getItem('pos_dual_monitor_active') === 'true';
-          const dualType = localStorage.getItem('pos_dual_monitor_type') || 'popup';
-          if (isDualActive && dualType === 'split') {
-            if (typeof launchCustomerDisplay === 'function') launchCustomerDisplay();
-          } else {
-            if (typeof closeInAppSplitCustomer === 'function') closeInAppSplitCustomer();
-          }
         } else {
           if (topSearchContainer) { topSearchContainer.classList.remove('d-flex'); topSearchContainer.classList.add('d-none'); }
           if (topCashierContainer) { topCashierContainer.classList.remove('input-group'); topCashierContainer.classList.add('d-none'); }
-          if (typeof closeInAppSplitCustomer === 'function') closeInAppSplitCustomer();
         }
 
         if (viewId === 'absensi') {
@@ -15385,9 +15340,6 @@
           document.getElementById('dualPosToggle').checked = true;
           document.getElementById('dualPosControls').classList.remove('d-none');
         }
-        if (localStorage.getItem('pos_dual_monitor_type')) {
-          document.getElementById('dualPosType').value = localStorage.getItem('pos_dual_monitor_type');
-        }
         if (localStorage.getItem('pos_dual_monitor_video_url')) {
           document.getElementById('dualPosVideoUrl').value = localStorage.getItem('pos_dual_monitor_video_url');
         }
@@ -16829,13 +16781,8 @@
         
         if (isChecked) {
           controls.classList.remove('d-none');
-          const dualType = localStorage.getItem('pos_dual_monitor_type') || 'popup';
-          if (dualType === 'split') {
-            launchCustomerDisplay();
-          }
         } else {
           controls.classList.add('d-none');
-          closeInAppSplitCustomer();
         }
         localStorage.setItem('pos_dual_monitor_active', isChecked ? 'true' : 'false');
       }
@@ -16843,240 +16790,128 @@
       function saveDualPosVideo() {
         const urlValue = document.getElementById('dualPosVideoUrl').value.trim();
         localStorage.setItem('pos_dual_monitor_video_url', urlValue);
-        // Jika mode split screen sedang aktif, perbarui pemutaran video secara instan
-        const isChecked = document.getElementById('dualPosToggle').checked;
-        const dualType = localStorage.getItem('pos_dual_monitor_type') || 'popup';
-        if (isChecked && dualType === 'split') {
-          const iframe = document.getElementById('splitPromoIframe');
-          if (iframe) {
-            const youtubeId = extractYouTubeId(urlValue);
-            iframe.src = `https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${youtubeId}`;
-          }
-        }
+        // Data link YouTube akan ikut dikirim ke GSheet saat menekan tombol "SIMPAN & TUTUP" (saveSettingConfig)
       }
 
-      function saveDualPosType() {
-        const typeValue = document.getElementById('dualPosType').value;
-        localStorage.setItem('pos_dual_monitor_type', typeValue);
-        const isChecked = document.getElementById('dualPosToggle').checked;
-        if (isChecked && typeValue === 'split') {
-          launchCustomerDisplay();
-        } else {
-          closeInAppSplitCustomer();
-        }
-      }
-
-      function closeInAppSplitCustomer() {
-        const panel = document.getElementById('splitCustomerPanel');
-        if (panel) {
-          panel.classList.remove('d-flex');
-          panel.classList.add('d-none');
-          const iframe = document.getElementById('splitPromoIframe');
-          if (iframe) iframe.src = ""; // Hentikan video untuk menghemat CPU/RAM
-        }
-      }
-
-      function renderInAppCustomerCart(cart, total, taxActive, taxPercent, taxAmount) {
-        const container = document.getElementById('splitCdItems');
-        const totalEl = document.getElementById('splitCdTotal');
-        const taxNoteEl = document.getElementById('splitCdTaxNote');
-        if (!container || !totalEl || !taxNoteEl) return;
-
-        if (!cart || cart.length === 0) {
-          container.innerHTML = '<div class="text-center text-muted py-4" style="font-style: italic; font-size: 0.85rem;">Belum ada pesanan</div>';
-          totalEl.innerText = 'Rp 0';
-          taxNoteEl.style.display = 'none';
+      function launchCustomerDisplay() {
+        const customerWindow = window.open('', 'CustomerDisplay', 'width=1024,height=768');
+        
+        if (!customerWindow) {
+          alert("Popup diblokir oleh browser! Mohon izinkan popup untuk web ini.");
           return;
         }
 
-        let htmlString = '';
-        cart.forEach(item => {
-          let subtotal = (item.price * item.qty).toLocaleString('id-ID');
-          htmlString += `
-            <div class="d-flex justify-content-between align-items-start py-2 border-bottom border-secondary border-dashed" style="font-size: 0.8rem; border-color: rgba(255,255,255,0.08) !important;">
-              <div style="flex: 1; padding-right: 10px;">
-                <span class="fw-bold text-white d-block" style="line-height: 1.2;">${item.name}</span>
-                <span class="badge mt-1" style="font-size: 0.65rem; padding: 2px 6px; background-color: #8b4513; color: #ffeb3b;">x${item.qty}</span>
-              </div>
-              <span class="fw-bold text-white">Rp ${subtotal}</span>
+        const savedUrl = localStorage.getItem('pos_dual_monitor_video_url') || "";
+        const youtubeId = extractYouTubeId(savedUrl);
+
+        customerWindow.document.write(`
+          <!DOCTYPE html>
+          <html lang="id">
+          <head>
+            <meta charset="UTF-8">
+            <title>Platarium Customer Display</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+            <style>
+              body { margin: 0; overflow: hidden; background: #000; font-family: 'Poppins', sans-serif; display: flex; height: 100vh; }
+              .video-container { flex: 7; position: relative; background: #000; }
+              .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; pointer-events: none; }
+              .cart-container { flex: 3; background: #fff; display: flex; flex-direction: column; box-shadow: -10px 0 25px rgba(0,0,0,0.15); z-index: 10; }
+              .cart-header { background: #1a1a1a; color: #fff; padding: 15px; text-align: center; border-bottom: 3px solid #c5a059; }
+              .cart-header h4 { font-size: 1rem; letter-spacing: 1px; font-weight: 600; margin: 0; }
+              .cart-items { flex: 1; overflow-y: auto; padding: 15px; background: #fafafa; }
+              .item-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #ddd; font-size: 0.85rem; line-height: 1.3; }
+              .item-name { font-weight: 600; color: #2d3436; display: block; }
+              .item-qty { color: #c5a059; font-weight: 700; margin-left: 5px; font-size: 0.8rem; }
+              .item-price { font-weight: 600; color: #2d3436; white-space: nowrap; }
+              .cart-footer { background: #fff; padding: 20px; border-top: 2px solid #eee; }
+              .total-row { display: flex; justify-content: space-between; align-items: center; font-size: 1.3rem; font-weight: 700; color: #2d3436; }
+              .total-price { color: #d35400; font-weight: 800; }
+              .empty-state { text-align: center; color: #999; margin-top: 40px; font-size: 0.85rem; font-style: italic; }
+              .tax-note { font-size: 0.75rem; color: #e74c3c; font-weight: bold; text-align: right; margin-top: 5px; }
+            </style>
+          </head>
+          <body>
+            <div class="video-container">
+              <iframe src="https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${youtubeId}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
             </div>
-          `;
-        });
-        container.innerHTML = htmlString;
-        totalEl.innerText = 'Rp ' + total.toLocaleString('id-ID', {maximumFractionDigits:0});
-
-        if (taxActive && taxAmount > 0) {
-          taxNoteEl.innerText = '*Sudah termasuk PPN ' + taxPercent + '% (Rp ' + taxAmount.toLocaleString('id-ID', {maximumFractionDigits:0}) + ')';
-          taxNoteEl.style.display = 'block';
-        } else {
-          taxNoteEl.style.display = 'none';
-        }
-
-        container.scrollTop = container.scrollHeight;
-      }
-
-      // Hubungkan BroadcastChannel ke halaman POS utama untuk sinkronisasi split screen real-time
-      posSyncChannel.onmessage = (event) => {
-        const data = event.data;
-        if (data.type === 'UPDATE_CART') {
-          renderInAppCustomerCart(data.cart, data.total, data.taxActive, data.taxPercent, data.taxAmount);
-        } else if (data.type === 'CLEAR_CART') {
-          renderInAppCustomerCart([], 0, false, 0, 0);
-        }
-      };
-
-      function launchCustomerDisplay() {
-        const isChecked = document.getElementById('dualPosToggle').checked;
-        if (!isChecked) return;
-
-        const monitorType = localStorage.getItem('pos_dual_monitor_type') || 'popup';
-
-        if (monitorType === 'split') {
-          // Buka Mode Split-Screen In-App
-          const panel = document.getElementById('splitCustomerPanel');
-          if (panel) {
-            panel.classList.remove('d-none');
-            panel.classList.add('d-flex');
-
-            // Set YouTube iframe src secara aman
-            const savedUrl = localStorage.getItem('pos_dual_monitor_video_url') || "";
-            const youtubeId = extractYouTubeId(savedUrl);
-            const iframe = document.getElementById('splitPromoIframe');
-            if (iframe && (!iframe.src || !iframe.src.includes(youtubeId))) {
-              iframe.src = `https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${youtubeId}`;
-            }
-
-            // Trigger pemutakhiran UI pertama kali
-            let activeTaxAmount = 0;
-            if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
-                const subtotal = CART.reduce((sum, item) => sum + (item.price * item.qty), 0);
-                activeTaxAmount = subtotal * (TAX_PERCENTAGE / 100);
-            }
-            renderInAppCustomerCart(CART, CURRENT_TOTAL, (typeof IS_TAX_ACTIVE !== 'undefined' ? IS_TAX_ACTIVE : false), (typeof TAX_PERCENTAGE !== 'undefined' ? TAX_PERCENTAGE : 0), activeTaxAmount);
-          }
-        } else {
-          // Tutup panel split screen jika sebelumnya terbuka
-          closeInAppSplitCustomer();
-
-          const customerWindow = window.open('', 'CustomerDisplay', 'width=1024,height=768');
-          
-          if (!customerWindow) {
-            alert("Popup diblokir oleh browser! Jika Anda menggunakan APK WebView pada Android Tablet, silakan ganti tipe layar pelanggan ke 'Split-Screen In-App' di menu Advance Invoice Setting.");
-            return;
-          }
-
-          const savedUrl = localStorage.getItem('pos_dual_monitor_video_url') || "";
-          const youtubeId = extractYouTubeId(savedUrl);
-
-          customerWindow.document.write(`
-            <!DOCTYPE html>
-            <html lang="id">
-            <head>
-              <meta charset="UTF-8">
-              <title>Platarium Customer Display</title>
-              <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-              <style>
-                body { margin: 0; overflow: hidden; background: #000; font-family: 'Poppins', sans-serif; display: flex; height: 100vh; }
-                .video-container { flex: 7; position: relative; background: #000; }
-                .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; pointer-events: none; }
-                .cart-container { flex: 3; background: #fff; display: flex; flex-direction: column; box-shadow: -10px 0 25px rgba(0,0,0,0.15); z-index: 10; }
-                .cart-header { background: #1a1a1a; color: #fff; padding: 15px; text-align: center; border-bottom: 3px solid #c5a059; }
-                .cart-header h4 { font-size: 1rem; letter-spacing: 1px; font-weight: 600; margin: 0; }
-                .cart-items { flex: 1; overflow-y: auto; padding: 15px; background: #fafafa; }
-                .item-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #ddd; font-size: 0.85rem; line-height: 1.3; }
-                .item-name { font-weight: 600; color: #2d3436; display: block; }
-                .item-qty { color: #c5a059; font-weight: 700; margin-left: 5px; font-size: 0.8rem; }
-                .item-price { font-weight: 600; color: #2d3436; white-space: nowrap; }
-                .cart-footer { background: #fff; padding: 20px; border-top: 2px solid #eee; }
-                .total-row { display: flex; justify-content: space-between; align-items: center; font-size: 1.3rem; font-weight: 700; color: #2d3436; }
-                .total-price { color: #d35400; font-weight: 800; }
-                .empty-state { text-align: center; color: #999; margin-top: 40px; font-size: 0.85rem; font-style: italic; }
-                .tax-note { font-size: 0.75rem; color: #e74c3c; font-weight: bold; text-align: right; margin-top: 5px; }
-              </style>
-            </head>
-            <body>
-              <div class="video-container">
-                <iframe src="https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${youtubeId}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            <div class="cart-container">
+              <div class="cart-header">
+                <h4 style="color: #c5a059;">PESANAN ANDA</h4>
               </div>
-              <div class="cart-container">
-                <div class="cart-header">
-                  <h4 style="color: #c5a059;">PESANAN ANDA</h4>
-                </div>
-                <div class="cart-items" id="cdItems">
-                  <div class="empty-state">Belum ada pesanan</div>
-                </div>
-                <div class="cart-footer">
-                  <div class="total-row">
-                    <span>TOTAL</span>
-                    <span class="total-price" id="cdTotal">Rp 0</span>
-                  </div>
-                  <div id="cdTaxNote" class="tax-note" style="display: none;">*Sudah termasuk PPN</div>
-                </div>
+              <div class="cart-items" id="cdItems">
+                <div class="empty-state">Belum ada pesanan</div>
               </div>
+              <div class="cart-footer">
+                <div class="total-row">
+                  <span>TOTAL</span>
+                  <span class="total-price" id="cdTotal">Rp 0</span>
+                </div>
+                <div id="cdTaxNote" class="tax-note" style="display: none;">*Sudah termasuk PPN</div>
+              </div>
+            </div>
 
-              <script>
-                const syncChannel = new BroadcastChannel('platarium_pos_sync');
-                syncChannel.onmessage = (event) => {
-                  const data = event.data;
-                  if (data.type === 'UPDATE_CART') { 
-                    renderCart(data.cart, data.total, data.taxActive, data.taxPercent, data.taxAmount); 
-                  }
-                  else if (data.type === 'CLEAR_CART') { 
-                    renderCart([], 0, false, 0, 0); 
-                  }
-                };
-
-                function renderCart(cart, total, taxActive, taxPercent, taxAmount) {
-                  const container = document.getElementById('cdItems');
-                  const totalEl = document.getElementById('cdTotal');
-                  const taxNoteEl = document.getElementById('cdTaxNote');
-
-                  if (!cart || cart.length === 0) {
-                    container.innerHTML = '<div class="empty-state">Belum ada pesanan</div>';
-                    totalEl.innerText = 'Rp 0';
-                    taxNoteEl.style.display = 'none';
-                    return;
-                  }
-                  let htmlString = '';
-                  cart.forEach(item => {
-                    let subtotal = (item.price * item.qty).toLocaleString('id-ID');
-                    htmlString += '<div class="item-row"><div><span class="item-name">' + item.name + '<span class="item-qty">x' + item.qty + '</span></span></div><span class="item-price">Rp ' + subtotal + '</span></div>';
-                  });
-                  container.innerHTML = htmlString;
-                  
-                  totalEl.innerText = 'Rp ' + total.toLocaleString('id-ID', {maximumFractionDigits:0});
-                  
-                  if (taxActive && taxAmount > 0) {
-                    taxNoteEl.innerText = '*Sudah termasuk PPN ' + taxPercent + '% (Rp ' + taxAmount.toLocaleString('id-ID', {maximumFractionDigits:0}) + ')';
-                    taxNoteEl.style.display = 'block';
-                  } else {
-                    taxNoteEl.style.display = 'none';
-                  }
-
-                  container.scrollTop = container.scrollHeight;
+            <script>
+              const syncChannel = new BroadcastChannel('platarium_pos_sync');
+              syncChannel.onmessage = (event) => {
+                const data = event.data;
+                if (data.type === 'UPDATE_CART') { 
+                  renderCart(data.cart, data.total, data.taxActive, data.taxPercent, data.taxAmount); 
                 }
-              <\/script>
-            </body>
-            </html>
-          `);
-          customerWindow.document.close();
-          
-          let activeTaxAmount = 0;
-          if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
-              const subtotal = CART.reduce((sum, item) => sum + (item.price * item.qty), 0);
-              activeTaxAmount = subtotal * (TAX_PERCENTAGE / 100);
-          }
+                else if (data.type === 'CLEAR_CART') { 
+                  renderCart([], 0, false, 0, 0); 
+                }
+              };
 
-          // Trigger tampilan pertama kali setelah popup terbuka
-          posSyncChannel.postMessage({ 
-            type: 'UPDATE_CART', 
-            cart: CART, 
-            total: CURRENT_TOTAL,
-            taxActive: (typeof IS_TAX_ACTIVE !== 'undefined' ? IS_TAX_ACTIVE : false),
-            taxPercent: (typeof TAX_PERCENTAGE !== 'undefined' ? TAX_PERCENTAGE : 0),
-            taxAmount: activeTaxAmount 
-          });
+              function renderCart(cart, total, taxActive, taxPercent, taxAmount) {
+                const container = document.getElementById('cdItems');
+                const totalEl = document.getElementById('cdTotal');
+                const taxNoteEl = document.getElementById('cdTaxNote');
+
+                if (!cart || cart.length === 0) {
+                  container.innerHTML = '<div class="empty-state">Belum ada pesanan</div>';
+                  totalEl.innerText = 'Rp 0';
+                  taxNoteEl.style.display = 'none';
+                  return;
+                }
+                let htmlString = '';
+                cart.forEach(item => {
+                  let subtotal = (item.price * item.qty).toLocaleString('id-ID');
+                  htmlString += '<div class="item-row"><div><span class="item-name">' + item.name + '<span class="item-qty">x' + item.qty + '</span></span></div><span class="item-price">Rp ' + subtotal + '</span></div>';
+                });
+                container.innerHTML = htmlString;
+                
+                totalEl.innerText = 'Rp ' + total.toLocaleString('id-ID', {maximumFractionDigits:0});
+                
+                if (taxActive && taxAmount > 0) {
+                  taxNoteEl.innerText = '*Sudah termasuk PPN ' + taxPercent + '% (Rp ' + taxAmount.toLocaleString('id-ID', {maximumFractionDigits:0}) + ')';
+                  taxNoteEl.style.display = 'block';
+                } else {
+                  taxNoteEl.style.display = 'none';
+                }
+
+                container.scrollTop = container.scrollHeight;
+              }
+            <\/script>
+          </body>
+          </html>
+        `);
+        customerWindow.document.close();
+        
+        let activeTaxAmount = 0;
+        if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
+            const subtotal = CART.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            activeTaxAmount = subtotal * (TAX_PERCENTAGE / 100);
         }
+
+        // Trigger tampilan pertama kali setelah popup terbuka
+        posSyncChannel.postMessage({ 
+          type: 'UPDATE_CART', 
+          cart: CART, 
+          total: CURRENT_TOTAL,
+          taxActive: (typeof IS_TAX_ACTIVE !== 'undefined' ? IS_TAX_ACTIVE : false),
+          taxPercent: (typeof TAX_PERCENTAGE !== 'undefined' ? TAX_PERCENTAGE : 0),
+          taxAmount: activeTaxAmount 
+        });
       }
 
       function showDoneTicketDetail(orderId) {
@@ -17912,18 +17747,11 @@
             
             <div id="dualPosControls" class="d-none mt-3">
               <div class="mb-2">
-                <label class="small fw-bold text-muted mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">TIPE MONITOR KEDUA</label>
-                <select id="dualPosType" class="form-select form-select-sm border-2 fw-bold text-primary mb-2" onchange="saveDualPosType()">
-                  <option value="popup">Pop-up Browser (Rekomendasi PC / Chrome)</option>
-                  <option value="split">Split-Screen In-App (Rekomendasi Tablet / APK)</option>
-                </select>
-              </div>
-              <div class="mb-2">
                 <label class="small fw-bold text-muted mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">LINK VIDEO PROMO (YOUTUBE)</label>
                 <input type="text" id="dualPosVideoUrl" class="form-control form-control-sm border-2 fw-bold" placeholder="https://www.youtube.com/watch?v=..." oninput="saveDualPosVideo()">
               </div>
               <button class="btn btn-sm btn-outline-primary w-100 fw-bold mt-2" id="btnLaunchDualPos" onclick="launchCustomerDisplay()">
-                <i class="fas fa-desktop me-1"></i> Aktifkan Layar Pelanggan
+                <i class="fas fa-desktop me-1"></i> Buka Layar Pelanggan
               </button>
             </div>
           </div>
