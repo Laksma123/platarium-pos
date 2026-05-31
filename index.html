@@ -2405,7 +2405,7 @@
                   <i class="fas fa-chart-pie" style="font-size: 0.85rem;"></i>
                 </div>
                 <div class="ms-2 overflow-hidden w-100">
-                  <div class="text-muted fw-bold text-uppercase" style="font-size: 0.55rem; letter-spacing: 0.5px;">Profit Kotor</div>
+                  <div class="text-muted fw-bold text-uppercase" id="dashNetProfitLabel" style="font-size: 0.55rem; letter-spacing: 0.5px;">Profit Kotor</div>
                   <div class="fw-bold text-success text-truncate lh-1 mt-1" id="dashNetProfit" style="font-size: 0.85rem;">Rp 0</div>
                 </div>
               </div>
@@ -6146,7 +6146,13 @@
                           if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
                               tBaseTotal += tSubtotal * (TAX_PERCENTAGE / 100);
                           }
-                          let tRoundingLoss = tBaseTotal - t.total;
+                          const roundingVal = getActiveCashRoundValue();
+                          let diff = Math.round(tBaseTotal) - Math.round(t.total);
+                          let tRoundingLoss = 0;
+                          if (roundingVal > 0) {
+                              tRoundingLoss = diff % roundingVal;
+                              if (tRoundingLoss < 0) tRoundingLoss = 0;
+                          }
                           if (tRoundingLoss > 0) {
                               totalRoundingLoss += tRoundingLoss;
                           }
@@ -11255,6 +11261,7 @@
         let totalExtraProfit = 0;
         let cashTransactionsCount = 0;
         let totalRoundingEvents = 0;
+        const roundingVal = getActiveCashRoundValue();
 
         if (TELEGRAM_CONFIG.markupSaran === 'Iya' && TELEGRAM_CONFIG.markupValue > 0) {
             filteredData.forEach(t => {
@@ -11270,8 +11277,14 @@
                     if (typeof IS_TAX_ACTIVE !== 'undefined' && IS_TAX_ACTIVE && TAX_PERCENTAGE > 0) {
                         tBaseTotal += tSubtotal * (TAX_PERCENTAGE / 100);
                     }
-                    let tRoundingLoss = tBaseTotal - t.total;
-                    if (tRoundingLoss < 0) tRoundingLoss = 0;
+                    
+                    let diff = Math.round(tBaseTotal) - Math.round(t.total);
+                    let tRoundingLoss = 0;
+                    if (roundingVal > 0) {
+                        tRoundingLoss = diff % roundingVal;
+                        if (tRoundingLoss < 0) tRoundingLoss = 0;
+                    }
+                    
                     if (tRoundingLoss > 0) {
                         totalRoundingEvents++;
                     }
@@ -11313,14 +11326,21 @@
         }
 
         const profitKotor = totalRev - totalHPP;
+        const profitKotorLabel = document.getElementById('dashNetProfitLabel');
+        
+        document.getElementById('dashTotalRevenue').innerText = `Rp ${totalRev.toLocaleString()}`;
         
         if (TELEGRAM_CONFIG.markupSaran === 'Iya' && totalExtraProfit > 0) {
-            document.getElementById('dashTotalRevenue').innerHTML = `Rp ${totalRev.toLocaleString()} <span style="color: #1b5e20; font-weight: 800; font-size: 0.75rem; margin-left: 2px;">+ Rp ${totalExtraProfit.toLocaleString()}</span>`;
+            if (profitKotorLabel) {
+                profitKotorLabel.innerHTML = 'Profit Kotor + <span class="text-success fw-bold" style="color: #1b5e20; font-size: 0.5rem; text-transform: uppercase;">Profit Ekstra (Markup)</span>';
+            }
             document.getElementById('dashNetProfit').innerText = `Rp ${(profitKotor + totalExtraProfit).toLocaleString()}`;
-            window.CURRENT_FILTERED_REVENUE = totalRev + totalExtraProfit;
+            window.CURRENT_FILTERED_REVENUE = totalRev;
             window.CURRENT_FILTERED_PROFIT = profitKotor + totalExtraProfit;
         } else {
-            document.getElementById('dashTotalRevenue').innerText = `Rp ${totalRev.toLocaleString()}`;
+            if (profitKotorLabel) {
+                profitKotorLabel.innerText = 'Profit Kotor';
+            }
             document.getElementById('dashNetProfit').innerText = `Rp ${profitKotor.toLocaleString()}`;
             window.CURRENT_FILTERED_REVENUE = totalRev;
             window.CURRENT_FILTERED_PROFIT = profitKotor;
