@@ -6566,15 +6566,17 @@
       // ==========================================
       let TELEGRAM_CONFIG = { active: false, token: '', chatAudit: '', chatTrans: '', chatSchedule: '', chatOwner: '', cashRoundMode: 'OFF', cashRoundManualValue: 0 };
 
-      function loadSettingConfig() {
+      function loadSettingConfig(isBackground = false) {
         const btn = document.getElementById('btnSaveSetting');
         const loadingArea = document.getElementById('settingLoadingArea');
         const contentArea = document.getElementById('settingContentArea');
         const headerArea = document.getElementById('settingHeaderArea');
         
-        if (loadingArea) loadingArea.classList.remove('d-none');
-        if (contentArea) contentArea.classList.add('d-none');
-        if (headerArea) headerArea.classList.add('d-none');
+        if (!isBackground) {
+          if (loadingArea) loadingArea.classList.remove('d-none');
+          if (contentArea) contentArea.classList.add('d-none');
+          if (headerArea) headerArea.classList.add('d-none');
+        }
         
         google.script.run.withSuccessHandler(res => {
           TELEGRAM_CONFIG = res;
@@ -6604,9 +6606,11 @@
           updateOwnerSettingUI(res.ownerPass); 
           updateCashRoundingUI();
 
-          if (loadingArea) loadingArea.classList.add('d-none');
-          if (contentArea) contentArea.classList.remove('d-none');
-          if (headerArea) headerArea.classList.remove('d-none');
+          if (!isBackground) {
+            if (loadingArea) loadingArea.classList.add('d-none');
+            if (contentArea) contentArea.classList.remove('d-none');
+            if (headerArea) headerArea.classList.remove('d-none');
+          }
 
         }).getSettingConfig(ACTIVE_CASHIER); 
       }
@@ -7080,6 +7084,7 @@
         startRealtimeClock();
         initCategoryScroller();
         triggerAuditLog("LOGIN", "User berhasil masuk ke dalam sistem webapp.");
+        loadSettingConfig(true);
       }
 
       function promptStoreNameChange() {
