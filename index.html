@@ -6299,6 +6299,8 @@
       function generateSOPCaptureHtml(sop) {
         const positions = Array.isArray(sop.posisi) ? sop.posisi.join(", ") : String(sop.posisi);
         const date = sop.tanggal || "-";
+        const storeNameEl = document.getElementById('uiStoreName');
+        const storeName = storeNameEl ? storeNameEl.innerText.trim().toUpperCase() : "PLATARIUM POS";
         
         let timesHtml = "";
         if (Array.isArray(sop.waktu)) {
@@ -6395,7 +6397,7 @@
               <h4 class="fw-bold mt-2 text-warning" style="opacity: 0.95; font-size: 1.2rem; color: #ffc107 !important;">Staff / Posisi: ${positions}</h4>
             </div>
             <div style="text-align: right !important;">
-              <div class="small text-white-50" style="font-weight: 600;">PLATARIUM POS SYSTEM</div>
+              <div class="small text-white-50" style="font-weight: 600;">${storeName} SYSTEM</div>
               <div class="small mt-1 text-white" style="font-size: 0.8rem;"><i class="far fa-clock me-1 text-warning"></i>Pembaruan: ${date}</div>
             </div>
           </div>
@@ -6416,7 +6418,7 @@
           
           <!-- Footer Branding -->
           <div class="text-center mt-5 pt-3 border-top text-muted small" style="font-size: 0.75rem;">
-            Dokumen ini diterbitkan oleh <b>Platarium POS</b> untuk menjaga standardisasi kualitas pelayanan outlet F&B.
+            Dokumen ini diterbitkan oleh <b>${storeName}</b> untuk menjaga standardisasi kualitas pelayanan outlet F&B.
           </div>
         `;
         
