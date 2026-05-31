@@ -6435,6 +6435,10 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Kirim...';
         
+        // [FIX] Reset zoom before showing overlay so it appears fullscreen instantly without glitch
+        const savedZoom = document.documentElement.style.zoom || '1';
+        document.documentElement.style.zoom = '1';
+
         const overlay = document.getElementById('screenshotLoadingOverlay');
         if (overlay) {
           overlay.querySelector('h5').innerText = "Sedang Menyusun Gambar SOP...";
@@ -6443,8 +6447,6 @@
 
         // setTimeout agar spinner dan overlay sempat dirender oleh browser (UI thread tidak terblokir)
         setTimeout(() => {
-          const savedZoom = document.documentElement.style.zoom || '1';
-          document.documentElement.style.zoom = '1';
           
           generateSOPCaptureHtml(sop);
           const capDiv = document.getElementById('sopCaptureContainer');
@@ -6506,6 +6508,10 @@
           btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>PDF...';
         }
 
+        // [FIX] Reset zoom before showing overlay
+        const savedZoom = document.documentElement.style.zoom || '1';
+        document.documentElement.style.zoom = '1';
+
         const overlay = document.getElementById('screenshotLoadingOverlay');
         if (overlay) {
           overlay.querySelector('h5').innerText = "Sedang Menyusun Dokumen PDF...";
@@ -6514,8 +6520,6 @@
         
         // setTimeout agar spinner dan overlay sempat dirender oleh browser
         setTimeout(() => {
-          const savedZoom = document.documentElement.style.zoom || '1';
-          document.documentElement.style.zoom = '1';
           
           generateSOPCaptureHtml(sop);
           const capDiv = document.getElementById('sopCaptureContainer');
@@ -6552,8 +6556,11 @@
               const posisiLabel = Array.isArray(sop.posisi) ? sop.posisi.join(", ") : String(sop.posisi);
               const filename = `SOP_${posisiLabel.replace(/[\s,]+/g, '_')}_${Date.now()}.pdf`;
               
-              // Fallback share untuk Android Webview APK jika memungkinkan
-              if (navigator.share && /android|iphone|ipad|ipod/i.test(navigator.userAgent)) {
+              // Fallback Webview APK Custom Downloader (JavascriptInterface)
+              if (window.AndroidDownloader) {
+                const base64Pdf = pdf.output('datauristring').split(',')[1];
+                window.AndroidDownloader.saveBase64Pdf(base64Pdf, filename);
+              } else if (navigator.share && /android|iphone|ipad|ipod/i.test(navigator.userAgent)) {
                 try {
                   const pdfBlob = pdf.output('blob');
                   const file = new File([pdfBlob], filename, { type: 'application/pdf' });
